@@ -1,12 +1,12 @@
-from template import get_card_front
+from template import get_card
 import nose
 
 
-# get_card front returns correct Front card template for first card
-def test_card_front():
-    act = get_card_front(1)
+# get_card returns correct card template for first card
+def test_card():
+    act = get_card(1)
 
-    exp: str = """<div class="reference">
+    exp = """<div class="reference">
     {{Reference}}
 </div>
 <span id="s1" style='display:none'>
@@ -16,27 +16,27 @@ def test_card_front():
     var meta = JSON.parse(document.getElementById("s1").textContent);
     var nAnswers = meta.answers.length;
     if(nAnswers > 1) {
-        document.getElementById("h").innerHTML = "(1 / " + nAnswers + ")";
-        document.getElementById("dots").innerHTML = '<li><span class="dots">...</span></li>';
+        document.getElementById("h").innerHTML = "(1 / " + nAnswers + ")"; 
+        document.getElementById("dots").innerHTML = '<li><span class="dots"> ... </span></li>';
     } else {
-        document.getElementById("dots").innerHTML = '<span class="dots">...</span>';
+        document.getElementById("dots").innerHTML = '<span class="dots"> ... </span>';
     }
 </script>
 <hr id="question">
-    {{Question}}
+{{Question}}
 <span id="h">
 </span>
 <hr id="answer">
 <span id="dots">
 </span>"""
 
-    assert act == exp
+    assert act[0] == exp
 
+# get_card returns correct card template for answer 5
+def test_card_five():
+    act = get_card(5)
 
-def test_card_front_five():
-    act = get_card_front(5)
-
-    exp: str = """{{#Answer 5}}
+    exp = """{{#Answer 5}}
 <div class="reference">
     {{Reference}}
 </div>
@@ -75,12 +75,9 @@ def test_card_front_five():
 <hr id="answer">
 <li>
     <span class="dots">
-        ...
+        {{Answer 5}}
     </span>
 </li>
 {{/Answer 5}}"""
-    assert act == exp
+    assert act[1] == exp
 
-
-if __name__ == '__main__':
-    nose.run()
