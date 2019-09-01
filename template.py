@@ -1,5 +1,6 @@
 from consts import *
 
+
 # receives an id that represents the card to be created and returns a list with
 # front and back template
 def get_card(cid):
@@ -22,3 +23,25 @@ def get_card(cid):
                     X_CARD_QT + hint + X_CARD_BTN % asw + \
                     '\n{{/' + X_FLDS[X_FLDS_IDS[cid + 1]] + '}}'
     return [card_front, card_back]
+
+
+# adds the default smr model to the collection and returns it
+def add_x_model(col):
+    models = col.models
+    x_model = models.new(X_MODEL_NAME)
+    # Add fields:
+    for fldId in X_FLDS_IDS:
+        fld = models.newField(X_FLDS[fldId])
+        models.addField(x_model, fld)
+    # Add templates
+    for cid, name in enumerate(X_CARD_NAMES, start=1):
+        template = models.newTemplate(name)
+        card = get_card(cid)
+        template['qfmt'] = card[0]
+        template['afmt'] = card[1]
+        models.addTemplate(x_model, template)
+    x_model['css'] = X_CARD_CSS
+    x_model['sortf'] = 0  # set sortfield to ID
+
+    models.add(x_model)
+    return x_model
