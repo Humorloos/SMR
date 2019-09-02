@@ -1,6 +1,5 @@
 from template import get_card, add_x_model
 from tests.shared import getEmptyCol
-import nose
 
 
 # get_card returns correct card template for first card
@@ -32,6 +31,7 @@ def test_card():
 </span>"""
 
     assert act[0] == exp
+
 
 # get_card returns correct card template for answer 5
 def test_card_five():
@@ -82,6 +82,7 @@ def test_card_five():
 {{/Answer 5}}"""
     assert act[1] == exp
 
+
 def test_add_x_model():
     col = getEmptyCol()
 
@@ -91,4 +92,3 @@ def test_add_x_model():
     assert len(act['tmpls']) == 20
     assert act['name'] == 'Stepwise Map Retrieval'
     assert act['sortf'] == 0
-
