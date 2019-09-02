@@ -9,4 +9,4 @@ def on_profile_loaded():
 
 
 # Add-on setup at profile-load time
-addHook("profileLoaded", on_profile_loaded())
+addHook("profileLoaded", on_profile_loaded)
