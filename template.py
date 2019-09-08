@@ -1,4 +1,4 @@
-from consts import *
+from XmindImport.consts import *
 
 
 # receives an id that represents the card to be created and returns a list with
