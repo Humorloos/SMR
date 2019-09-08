@@ -1,3 +1,5 @@
+import os
+
 X_MODEL_NAME = 'Stepwise Map Retrieval'
 
 X_MAX_ANSWERS = 20
@@ -102,3 +104,8 @@ X_CARD_CSS = """.card {
     background-color: white;
     font-weight: bold;
 }"""
+
+
+ADDON_PATH = os.path.dirname(__file__)
+
+ICONS_PATH = os.path.join(ADDON_PATH, "icons")
