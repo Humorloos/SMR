@@ -2,6 +2,7 @@
 from PyQt5 import QtCore, QtWidgets
 
 from xsheet import SheetElement
+from xminder import SheetImport
 
 from aqt.qt import *
 import aqt
@@ -12,15 +13,15 @@ from XmindImport.consts import ICONS_PATH
 # TODO: Make a superclass SheetSelector and have both selectors inherit from it
 
 class SingleSheetSelector(QDialog):
-    def __init__(self, sheet: SheetElement):
+    def __init__(self, sheet: SheetElement, topic):
         try:
             self.parent = aqt.mw.app.activeWindow()
         except:
             self.parent = None
         super().__init__(parent=self.parent)
-        self.sheet = sheet
-        self.sheet_names = ""
+        self.sheet = SheetImport(sheet, "")
         self.user_input = None
+        self.topic = topic
         self.build()
 
     def build(self):
@@ -29,7 +30,7 @@ class SingleSheetSelector(QDialog):
         if not self.parent:
             width *= 2
             height *= 2
-        title = self.sheet.getTitle()
+        title = self.sheet.sheet.getTitle()
         txt = 'Enter name for sheet "' + title + '":'
 
         self.setWindowTitle('Xmind Import')
@@ -73,7 +74,8 @@ class SingleSheetSelector(QDialog):
             self.on_cancel)
 
     def on_ok(self):
-        self.sheet_names = self.user_input.text()
+        self.sheet.tag = (self.topic + self.user_input.text()).\
+            replace(" ", "_")
         self.close()
 
     def on_cancel(self):
@@ -81,18 +83,20 @@ class SingleSheetSelector(QDialog):
 
 
 class MultiSheetSelector(QDialog):
-    def __init__(self, sheets):
+    def __init__(self, sheets, topic):
         try:
             self.parent = aqt.mw.app.activeWindow() or aqt.mw
         except:
             self.parent = None
 
         super().__init__(parent=self.parent)
-        self.sheets = sheets
+        self.sheets = list()
+        for sheet in sheets:
+            sheet_import = SheetImport(sheet, "")
+            self.sheets.append(sheet_import)
         self.sheet_user_inputs = list()
         self.sheet_checkboxes = list()
-        self.sheet_names = list()
-        self.selected_sheets = list()
+        self.topic = topic
         self.build()
 
     def build(self):
@@ -123,7 +127,7 @@ class MultiSheetSelector(QDialog):
         sheet_v_layout_1 = QtWidgets.QVBoxLayout()
         sheet_v_layout_2 = QtWidgets.QVBoxLayout()
         for sheet in self.sheets:
-            title = sheet.getTitle()
+            title = sheet.sheet.getTitle()
 
             sheet_checkbox = QtWidgets.QCheckBox(layout)
             sheet_checkbox.setText(title)
@@ -159,10 +163,15 @@ class MultiSheetSelector(QDialog):
             self.on_cancel)
 
     def on_ok(self):
+        new_sheets = list()
         for box_id, box in enumerate(self.sheet_checkboxes, start=0):
             if box.isChecked():
-                self.selected_sheets.append(box_id)
-                self.sheet_names.append(self.sheet_user_inputs[box_id].text())
+                new_sheet = self.sheets[box_id]
+                new_sheet.tag = self.topic + "_" + \
+                                self.sheet_user_inputs[box_id].text().\
+                                    replace(" ", "_")
+                new_sheets.append(new_sheet)
+        self.sheets = new_sheets
         self.close()
 
     def on_cancel(self):

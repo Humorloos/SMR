@@ -24,11 +24,13 @@ class XmindImporter(NoteImporter):
         mw.progress.finish()
         doc = load(self.file)
         imp_sheets = doc.getSheets()
+        doc_title = os.path.basename(self.file)[:-6]
         if len(imp_sheets) > 1:
-            selector = MultiSheetSelector(imp_sheets)
+            selector = MultiSheetSelector(imp_sheets, doc_title)
         else:
-            selector = SingleSheetSelector(imp_sheets[0])
+            selector = SingleSheetSelector(imp_sheets[0], doc_title)
         selector.exec_()
+
         return
 
 
