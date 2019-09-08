@@ -12,14 +12,20 @@ from XmindImport.consts import ICONS_PATH
 
 class SingleSheetSelector(QDialog):
     def __init__(self, sheet: SheetElement):
-        parent = aqt.mw.app.activeWindow()
-        super().__init__(parent=parent)
+        try:
+            self.parent = aqt.mw.app.activeWindow()
+        except:
+            self.parent = None
+        super().__init__(parent=self.parent)
         self.sheet = sheet
         self.build()
 
     def build(self):
         width = 500
         height = 100
+        if not self.parent:
+            width *= 2
+            height *= 2
         title = self.sheet.getTitle()
         txt = 'Enter name for sheet "' + title + '":'
 
