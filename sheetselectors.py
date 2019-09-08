@@ -23,7 +23,6 @@ class SheetSelector(QDialog):
         for sheet in sheets:
             sheet_import = SheetImport(sheet, "")
             self.sheets.append(sheet_import)
-        self.user_input = None
         self.topic = topic
         self.width = 600
         self.height = 100
@@ -31,6 +30,9 @@ class SheetSelector(QDialog):
         self.build()
 
     def build(self):
+        return
+
+    def on_ok(self):
         return
 
     def on_cancel(self):
