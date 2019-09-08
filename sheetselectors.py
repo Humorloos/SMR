@@ -1,7 +1,6 @@
 # Qt Dialogs for selecting and naming sheets to import
 from PyQt5 import QtCore, QtWidgets
 
-from xsheet import SheetElement
 from xminder import SheetImport
 
 from aqt.qt import *
@@ -40,6 +39,7 @@ class SheetSelector(QDialog):
 
 class SingleSheetSelector(SheetSelector):
     def __init__(self, sheets, topic):
+        self.user_input = None
         super().__init__(sheets, topic)
 
     def build(self):

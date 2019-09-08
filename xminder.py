@@ -16,9 +16,10 @@ class XmindImporter(NoteImporter):
 
     def run(self):
         self.log = ['fertig']
-        self.get_x_sheets()
+        selected_sheets = self.get_x_sheets()
+        print("fertig")
 
-
+    # returns list of
     def get_x_sheets(self):
         mw = aqt.mw.app.activeWindow() or aqt.mw
         mw.progress.finish()
@@ -28,10 +29,9 @@ class XmindImporter(NoteImporter):
         if len(imp_sheets) > 1:
             selector = MultiSheetSelector(imp_sheets, doc_title)
         else:
-            selector = SingleSheetSelector(imp_sheets[0], doc_title)
+            selector = SingleSheetSelector(imp_sheets, doc_title)
         selector.exec_()
-
-        return
+        return selector.sheets
 
 
 class SheetImport:
