@@ -30,3 +30,9 @@ class XmindImporter(NoteImporter):
             selector = SingleSheetSelector(imp_sheets[0])
         selector.exec_()
         return
+
+
+class SheetImport:
+    def __init__(self, sheet, tag):
+        self.sheet = sheet
+        self.tag = tag
