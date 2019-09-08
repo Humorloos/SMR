@@ -13,7 +13,7 @@ from PyQt5 import QtWidgets
 #     app = QtWidgets.QApplication(sys.argv)
 #     file = os.path.join(ADDON_PATH, 'tests', 'support', 'testmap1sheet.xmind')
 #     doc = load(file)
-#     sheet = doc.getSheets()[0]
+#     sheet = doc.getSheets()
 #     Dialog = SingleSheetSelector(sheet, os.path.basename(file)[:-6])
 #     Dialog.show()
 #     sys.exit(app.exec_())
