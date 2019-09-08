@@ -30,7 +30,7 @@ class SingleSheetSelector(QDialog):
         txt = 'Enter name for sheet "' + title + '":'
 
         self.setWindowTitle('Xmind Import')
-        self.setWindowIcon(QIcon(os.path.join(ICONS_PATH, "icon.png")))
+        self.setWindowIcon(QIcon(os.path.join(ICONS_PATH, "icon.ico")))
         self.resize(width, height)
 
         layout = QtWidgets.QWidget(self)
