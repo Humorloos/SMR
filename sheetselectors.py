@@ -48,7 +48,22 @@ class SingleSheetSelector(QDialog):
         label.setText(txt)
         h_layout_1.addWidget(label)
 
-        h_layout_2 = QtWidgets.QHBoxLayout()
+        v_layout_2 = QtWidgets.QVBoxLayout()
+        label_deck = QtWidgets.QLabel(layout)
+        label_deck.setText(self.deck_text)
+        v_layout_2.addWidget(label_deck)
+        label_tag = QtWidgets.QLabel(layout)
+        label_tag.setText(tag_text)
+        v_layout_2.addWidget(label_tag)
+
+        v_layout_3 = QtWidgets.QVBoxLayout()
+        deckarea = QtWidgets.QWidget(layout)
+        try:
+            self.deck = aqt.deckchooser.DeckChooser(
+                self.parent, deckarea, label=False)
+        except:
+            self.deck = None
+        v_layout_3.addWidget(deckarea)
         self.user_input = QtWidgets.QLineEdit(layout)
         self.user_input.setText(title)
         h_layout_2.addWidget(self.user_input)
@@ -118,10 +133,17 @@ class MultiSheetSelector(QDialog):
         v_layout = QtWidgets.QVBoxLayout(layout)
         v_layout.setContentsMargins(0, 0, 0, 0)
 
-        h_layout_1 = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel(layout)
-        label.setText(txt)
-        h_layout_1.addWidget(label)
+        h_layout_deck = QtWidgets.QHBoxLayout()
+        label_deck = QtWidgets.QLabel(layout)
+        label_deck.setText(self.deck_text)
+        h_layout_deck.addWidget(label_deck)
+        deckarea = QtWidgets.QWidget(layout)
+        try:
+            self.deck = aqt.deckchooser.DeckChooser(
+                self.parent, deckarea, label=False)
+        except:
+            self.deck = None
+        h_layout_deck.addWidget(deckarea)
 
         h_layout_2 = QtWidgets.QHBoxLayout()
         sheet_v_layout_1 = QtWidgets.QVBoxLayout()
