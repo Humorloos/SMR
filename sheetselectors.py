@@ -5,6 +5,7 @@ from xsheet import SheetElement
 from xminder import SheetImport
 
 from aqt.qt import *
+from aqt.deckchooser import DeckChooser
 import aqt
 
 from XmindImport.consts import ICONS_PATH
@@ -12,41 +13,52 @@ from XmindImport.consts import ICONS_PATH
 
 # TODO: Make a superclass SheetSelector and have both selectors inherit from it
 
-class SingleSheetSelector(QDialog):
-    def __init__(self, sheet: SheetElement, topic):
+class SheetSelector(QDialog):
+    def __init__(self, sheets, topic):
         try:
-            self.parent = aqt.mw.app.activeWindow()
+            self.parent = aqt.mw.app.activeWindow() or aqt.mw
         except:
             self.parent = None
         super().__init__(parent=self.parent)
-        self.sheet = SheetImport(sheet, "")
+        self.sheets = list()
+        for sheet in sheets:
+            sheet_import = SheetImport(sheet, "")
+            self.sheets.append(sheet_import)
         self.user_input = None
         self.topic = topic
+        self.width = 600
+        self.height = 100
+        self.deck_text = 'Choose Deck:'
         self.build()
 
     def build(self):
-        width = 500
-        height = 100
-        if not self.parent:
-            width *= 2
-            height *= 2
-        title = self.sheet.sheet.getTitle()
-        txt = 'Enter name for sheet "' + title + '":'
+        return
 
+    def on_cancel(self):
+        self.close()
+
+
+class SingleSheetSelector(SheetSelector):
+    def __init__(self, sheets, topic):
+        super().__init__(sheets, topic)
+
+    def build(self):
+        if not self.parent:
+            self.width *= 2
+            self.height *= 2
+        title = self.sheets[0].sheet.getTitle()
+        tag_text = 'Enter name for sheet "' + title + '":'
         self.setWindowTitle('Xmind Import')
         self.setWindowIcon(QIcon(os.path.join(ICONS_PATH, "icon.ico")))
-        self.resize(width, height)
+        self.resize(self.width, self.height)
 
         layout = QtWidgets.QWidget(self)
-        layout.setGeometry(QtCore.QRect(10, 10, width - 20, height - 20))
+        layout.setGeometry(QtCore.QRect(10, 10, self.width - 20, self.height - 20))
 
-        v_layout = QtWidgets.QVBoxLayout(layout)
-        v_layout.setContentsMargins(0, 0, 0, 0)
+        v_layout_1 = QtWidgets.QVBoxLayout(layout)
+        v_layout_1.setContentsMargins(0, 0, 0, 0)
 
         h_layout_1 = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel(layout)
-        label.setText(txt)
-        h_layout_1.addWidget(label)
 
         v_layout_2 = QtWidgets.QVBoxLayout()
         label_deck = QtWidgets.QLabel(layout)
@@ -66,7 +78,10 @@ class SingleSheetSelector(QDialog):
         v_layout_3.addWidget(deckarea)
         self.user_input = QtWidgets.QLineEdit(layout)
         self.user_input.setText(title)
-        h_layout_2.addWidget(self.user_input)
+        v_layout_3.addWidget(self.user_input)
+
+        h_layout_1.addLayout(v_layout_2)
+        h_layout_1.addLayout(v_layout_3)
 
         h_layout_3 = QtWidgets.QHBoxLayout()
         buttons = QtWidgets.QDialogButtonBox(layout)
@@ -74,9 +89,8 @@ class SingleSheetSelector(QDialog):
             QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         h_layout_3.addWidget(buttons)
 
-        v_layout.addLayout(h_layout_1)
-        v_layout.addLayout(h_layout_2)
-        v_layout.addLayout(h_layout_3)
+        v_layout_1.addLayout(h_layout_1)
+        v_layout_1.addLayout(h_layout_3)
 
         frame = self.frameGeometry()
         window_center = QDesktopWidget().availableGeometry().center()
@@ -89,46 +103,32 @@ class SingleSheetSelector(QDialog):
             self.on_cancel)
 
     def on_ok(self):
-        self.sheet.tag = (self.topic + self.user_input.text()).\
+        self.sheets[0].tag = (self.topic + self.user_input.text()).\
             replace(" ", "_")
         self.close()
 
-    def on_cancel(self):
-        self.close()
 
-
-class MultiSheetSelector(QDialog):
+class MultiSheetSelector(SheetSelector):
     def __init__(self, sheets, topic):
-        try:
-            self.parent = aqt.mw.app.activeWindow() or aqt.mw
-        except:
-            self.parent = None
-
-        super().__init__(parent=self.parent)
-        self.sheets = list()
-        for sheet in sheets:
-            sheet_import = SheetImport(sheet, "")
-            self.sheets.append(sheet_import)
-        self.sheet_user_inputs = list()
         self.sheet_checkboxes = list()
-        self.topic = topic
-        self.build()
+        self.sheet_user_inputs = list()
+        super().__init__(sheets, topic)
 
     def build(self):
-        width = 700
-        height = 100 + (len(self.sheets) * 24)
+        self.height += ((len(self.sheets) + 2) * 20)
         # For Debugging: set size to twice the original size
         if not self.parent:
-            width *= 2
-            height *= 2
-        txt = 'Choose Xmind sheets for import and enter names:'
+            self.width *= 2
+            self.height *= 2
+        sheet_text = 'Choose Xmind sheets for import and enter names:'
 
         self.setWindowTitle('Xmind Import')
         self.setWindowIcon(QIcon(os.path.join(ICONS_PATH, "icon.ico")))
-        self.resize(width, height)
+        self.resize(self.width, self.height)
 
         layout = QtWidgets.QWidget(self)
-        layout.setGeometry(QtCore.QRect(10, 10, width - 20, height - 20))
+        layout.setGeometry(QtCore.QRect(
+            10, 10, self.width - 20, self.height - 20))
 
         v_layout = QtWidgets.QVBoxLayout(layout)
         v_layout.setContentsMargins(0, 0, 0, 0)
@@ -145,9 +145,15 @@ class MultiSheetSelector(QDialog):
             self.deck = None
         h_layout_deck.addWidget(deckarea)
 
-        h_layout_2 = QtWidgets.QHBoxLayout()
+        h_layout_sheet_text = QtWidgets.QHBoxLayout()
+        label_text = QtWidgets.QLabel(layout)
+        label_text.setText(sheet_text)
+        h_layout_sheet_text.addWidget(label_text)
+
+        h_layout_sheets = QtWidgets.QHBoxLayout()
         sheet_v_layout_1 = QtWidgets.QVBoxLayout()
         sheet_v_layout_2 = QtWidgets.QVBoxLayout()
+
         for sheet in self.sheets:
             title = sheet.sheet.getTitle()
 
@@ -160,8 +166,8 @@ class MultiSheetSelector(QDialog):
             sheet_user_input.setText(title)
             self.sheet_user_inputs.append(sheet_user_input)
             sheet_v_layout_2.addWidget(sheet_user_input)
-        h_layout_2.addLayout(sheet_v_layout_1)
-        h_layout_2.addLayout(sheet_v_layout_2)
+        h_layout_sheets.addLayout(sheet_v_layout_1)
+        h_layout_sheets.addLayout(sheet_v_layout_2)
 
         h_layout_3 = QtWidgets.QHBoxLayout()
         buttons = QtWidgets.QDialogButtonBox(layout)
@@ -169,8 +175,9 @@ class MultiSheetSelector(QDialog):
             QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         h_layout_3.addWidget(buttons)
 
-        v_layout.addLayout(h_layout_1)
-        v_layout.addLayout(h_layout_2)
+        v_layout.addLayout(h_layout_deck)
+        v_layout.addLayout(h_layout_sheet_text)
+        v_layout.addLayout(h_layout_sheets)
         v_layout.addLayout(h_layout_3)
 
         # move dialog to center position
@@ -194,7 +201,4 @@ class MultiSheetSelector(QDialog):
                                     replace(" ", "_")
                 new_sheets.append(new_sheet)
         self.sheets = new_sheets
-        self.close()
-
-    def on_cancel(self):
         self.close()
