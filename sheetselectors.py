@@ -8,7 +8,7 @@ import aqt
 
 from XmindImport.consts import ICONS_PATH
 
-
+# TODO: Make a superclass SheetSelector and have both selectors inherit from it
 
 class SingleSheetSelector(QDialog):
     def __init__(self, sheet: SheetElement):
