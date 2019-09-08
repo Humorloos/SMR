@@ -3,7 +3,7 @@ from anki.lang import _
 import anki.importing as importing
 
 from config import *
-from xminder import XmindImporter
+from XmindImport.xminder import XmindImporter
 
 
 # creates smr model when loading profile if necessary
