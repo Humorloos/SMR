@@ -1,4 +1,4 @@
-from template import get_card, add_x_model
+from XmindImport.template import get_card, add_x_model
 from tests.shared import getEmptyCol
 
 
