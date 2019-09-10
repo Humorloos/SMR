@@ -5,6 +5,14 @@ from sheetselectors import *
 
 from XmindImport.consts import *
 
+
+class SheetImport:
+    def __init__(self, sheet: SheetElement, tag):
+        self.sheet = sheet
+        self.tag = tag
+        self.deckId = None
+
+
 class XmindImporter(NoteImporter):
     needMapper = False
 
