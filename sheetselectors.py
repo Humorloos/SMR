@@ -27,6 +27,7 @@ class SheetSelector(QDialog):
         self.width = 600
         self.height = 100
         self.deck_text = 'Choose Deck:'
+        self.deck = None
         self.build()
 
     def build(self):
@@ -107,6 +108,7 @@ class SingleSheetSelector(SheetSelector):
     def on_ok(self):
         self.sheets[0].tag = (self.topic + self.user_input.text()).\
             replace(" ", "_")
+        self.sheets[0].deckId = self.deck.selectedId
         self.close()
 
 
@@ -201,6 +203,7 @@ class MultiSheetSelector(SheetSelector):
                 new_sheet.tag = self.topic + "_" + \
                                 self.sheet_user_inputs[box_id].text().\
                                     replace(" ", "_")
+                new_sheet.deckId = self.deck.selectedId()
                 new_sheets.append(new_sheet)
         self.sheets = new_sheets
         self.close()
