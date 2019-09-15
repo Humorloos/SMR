@@ -59,11 +59,13 @@ class XmindImporter(NoteImporter):
         self.mw.checkpoint(_("Import"))
         rootTopic = sheetImport.sheet.getRootTopic()
         self.tag = sheetImport.tag
+        # Set model to Stepwise map retrieval model
         self.col.models.setCurrent(self.col.models.byName(X_MODEL_NAME))
         deck = self.col.decks.get(self.deckId)
         notes = list()
         for i in rootTopic.getSubTopics():
-            notes.append(self.col.newNote())
+            # forDeck=False so that the chosen model does not depend on the deck
+            notes.append(self.col.newNote(forDeck=False))
         self.getQuestions(answer=rootTopic, sheet=sheetImport.sheet,
                           notes=notes)
 
@@ -92,7 +94,7 @@ class XmindImporter(NoteImporter):
 
         answers = question.getSubTopics()
         nextNotes = list()
-        for aId, answer in enumerate(answers, start = 1):
+        for aId, answer in enumerate(answers, start=1):
             # Set Answer fields
             note.fields[1 + aId] = answer.getTitle()
             # Create Notes for next questions for Question nids in Meta field
