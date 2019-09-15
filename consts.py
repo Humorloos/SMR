@@ -91,14 +91,14 @@ X_CARD_CSS = """.card {
 }
 .reference {
     font-family: arial;
-    font-size: 16px;
+    font-size: 18px;
     text-align: left;
     color: black;
     background-color: white;
 }
 .dots {
     font-family: arial;
-    font-size: 16px;
+    font-size: 18px;
     text-align: left;
     color: blue;
     background-color: white;
