@@ -1,3 +1,7 @@
+import json
+
+from time import sleep
+
 from anki.importing.noteimp import NoteImporter
 from anki.lang import _
 from anki.collection import _Collection
@@ -27,6 +31,7 @@ class XmindImporter(NoteImporter):
         self.sheets = None
         self.mw = aqt.mw.app.activeWindow() or aqt.mw
         self.deckId = None
+        self.tag = ""
 
     def run(self):
         selectedSheets = self.get_x_sheets()
@@ -53,37 +58,67 @@ class XmindImporter(NoteImporter):
         self.mw.progress.start(immediate=True)
         self.mw.checkpoint(_("Import"))
         rootTopic = sheetImport.sheet.getRootTopic()
-        self.getQuestions(rootTopic)
+        self.tag = sheetImport.tag
+        self.col.models.setCurrent(self.col.models.byName(X_MODEL_NAME))
+        deck = self.col.decks.get(self.deckId)
+        notes = list()
+        for i in rootTopic.getSubTopics():
+            notes.append(self.col.newNote())
+        self.getQuestions(answer=rootTopic, sheet=sheetImport.sheet,
+                          notes=notes)
 
         self.mw.progress.finish()
 
-    def getQuestions(self, answer: TopicElement, ref="", aId=""):
+    def getQuestions(self, answer: TopicElement, sheet: SheetElement,
+                     notes: list, ref="", aId=""):
         if answer.getParentNode().tagName == 'sheet':
             ref = answer.getTitle()
         else:
             ref = ref + '\n' +  ': ' + answer.getTitle()
         for qId, question in enumerate(answer.getSubTopics(), start=1):
             nextId = aId + self.getId(qId)
-            self.createNotes(question=question, ref=ref, qId=nextId)
+            if notes:
+                self.createNotes(question=question, sheet=sheet, ref=ref,
+                             qId=nextId, note=notes[qId - 1])
+            else:
+                self.createNotes(question=question, sheet=sheet, ref=ref,
+                                 qId=nextId, note=notes)
 
-    def createNotes(self, question: TopicElement, ref, qId):
-        self.col.models.setCurrent(self.col.models.byName(X_MODEL_NAME))
-        deck = self.col.decks.get(self.deckId)
-        note = self.col.newNote()
-        # set note fields
+    def createNotes(self, question: TopicElement, sheet: SheetElement, ref,
+                    qId, note):
+        # Set tag
+        note.tags.append(self.tag)
+
+        # set field ID
         note.fields[0] = qId
+        # Set field Question
         note.fields[1] = question.getTitle()
+
         answers = question.getSubTopics()
+        nextNotes = list()
         for aId, answer in enumerate(answers, start = 1):
+            # Set Answer fields
             note.fields[1 + aId] = answer.getTitle()
+            # Create Notes for next questions for Question nids in Meta field
+            nextQs = answer.getSubTopics()
+            # Add list for questions of this answer
+            nextNotes.append(list())
+            # Add one new note for each question following this answer
+            for i in nextQs:
+                nextNotes[aId - 1].append(self.col.newNote())
+                # wait some milliseconds to create note with a different nid
+                sleep(0.001)
+        # Set field Reference
         note.fields[X_MAX_ANSWERS + 2] = ref
-        meta = ""
+        # set field Meta
+        meta = self.getXMindMeta(question=question, sheet=sheet,
+                                 notes=nextNotes)
         note.fields[X_MAX_ANSWERS + 3] = meta
 
         for answer in answers:
             ref = ref + '\n' + answer.getTitle()
 
-
+        self.col.addNote(note)
 
         a = 0
 
@@ -93,3 +128,21 @@ class XmindImporter(NoteImporter):
             return str(id)
         else:
             return chr(id + 55)
+
+    # receives a question, sheet and list of notes possibly following this question and returns a json file
+    def getXMindMeta(self, question: TopicElement, sheet: SheetElement,
+                     notes: list):
+        xMindMeta = dict()
+        xMindMeta['sheetId'] = sheet.getID()
+        xMindMeta['questionId'] = question.getID()
+        xMindMeta['answers'] = list()
+        answers = question.getSubTopics()
+        for aId, answer in enumerate(answers, start=0):
+            xMindMeta['answers'].append(dict())
+            xMindMeta['answers'][aId]['answerId'] = answers[aId].getID()
+            xMindMeta['answers'][aId]['children'] = list()
+            for note in notes[aId]:
+                xMindMeta['answers'][aId]['children'].append(note.id)
+        return json.dumps(xMindMeta)
+
+
