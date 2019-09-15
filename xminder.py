@@ -39,6 +39,7 @@ class XmindImporter(NoteImporter):
                                      'collection.media')
         self.srcDir = tempfile.mkdtemp()
         self.xZip = zipfile.ZipFile(file, 'r')
+        self.warnings = []
 
     def run(self):
         selectedSheets = self.get_x_sheets()
@@ -88,8 +89,13 @@ class XmindImporter(NoteImporter):
             ref = ref + ': ' + answer.getTitle() + '</li>'
         for qId, question in enumerate(answer.getSubTopics(), start=1):
             nextId = aId + self.getId(qId)
-            self.createNote(question=question, ref=ref,
-                            qId=nextId, note=notes[qId - 1])
+            if len(question.getSubTopics()) > 0:
+                self.createNote(question=question, ref=ref,
+                                qId=nextId, note=notes[qId - 1])
+            else:
+                self.warnings.append(
+                    'Es fehlen Antworten für die Relation "' +
+                    question.getTitle() + '" (Pfad "' + aId + '")')
 
     # fills an Anki note for a given question and its answers
     def createNote(self, question: TopicElement, ref, qId, note):
