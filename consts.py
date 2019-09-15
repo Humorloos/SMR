@@ -85,7 +85,7 @@ X_CARD_HT = """<li>
 X_CARD_CSS = """.card {
     font-family: arial;
     font-size: 20px;
-    text-align: left;
+    text-align: center;
     color: black;
     background-color: white;
 }
