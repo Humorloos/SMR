@@ -85,20 +85,20 @@ X_CARD_HT = """<li>
 X_CARD_CSS = """.card {
     font-family: arial;
     font-size: 20px;
-    text-align: center;
+    text-align: left;
     color: black;
     background-color: white;
 }
 .reference {
     font-family: arial;
-    font-size: 14px;
+    font-size: 16px;
     text-align: left;
     color: black;
     background-color: white;
 }
 .dots {
     font-family: arial;
-    font-size: 20px;
+    font-size: 16px;
     text-align: left;
     color: blue;
     background-color: white;
