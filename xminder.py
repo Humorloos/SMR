@@ -2,6 +2,7 @@ import json
 import zipfile
 import tempfile
 import shutil
+import urllib.parse
 
 from time import sleep
 
@@ -33,8 +34,7 @@ class XmindImporter(NoteImporter):
         self.model = col.models.byName(X_MODEL_NAME)
         self.sheets = None
         self.mw = aqt.mw.app.activeWindow() or aqt.mw
-        self.deckId = None
-        self.tag = ""
+        self.currentSheetImport = None
         self.mediaDir = os.path.join(os.path.dirname(col.path),
                                      'collection.media')
         self.srcDir = tempfile.mkdtemp()
@@ -43,8 +43,11 @@ class XmindImporter(NoteImporter):
     def run(self):
         selectedSheets = self.get_x_sheets()
         self.deckId = selectedSheets[0].deckId
+        self.mw.progress.start(immediate=True)
+        self.mw.checkpoint(_("Import"))
         for sheetImport in selectedSheets:
             self.importMap(sheetImport)
+        self.mw.progress.finish()
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
         print("fertig")
@@ -64,43 +67,38 @@ class XmindImporter(NoteImporter):
         return selector.sheets
 
     def importMap(self, sheetImport: SheetImport):
-        self.mw.progress.start(immediate=True)
-        self.mw.checkpoint(_("Import"))
         rootTopic = sheetImport.sheet.getRootTopic()
-        self.tag = sheetImport.tag
+        self.currentSheetImport = sheetImport
         # Set model to Stepwise map retrieval model
-        self.col.models.setCurrent(self.col.models.byName(X_MODEL_NAME))
-        deck = self.col.decks.get(self.deckId)
+        xModel = self.col.models.byName(X_MODEL_NAME)
+        self.col.decks.select(self.currentSheetImport.deckId)
+        self.col.decks.current()['mid'] = xModel['id']
+        # self.col.models.setCurrent(self.col.models.byName(X_MODEL_NAME))
         notes = list()
         for i in rootTopic.getSubTopics():
             # forDeck=False so that the chosen model does not depend on the deck
-            notes.append(self.col.newNote(forDeck=False))
-        self.getQuestions(answer=rootTopic, sheet=sheetImport.sheet,
-                          notes=notes)
+            notes.append(self.col.newNote())
+            sleep(0.001)
+        self.getQuestions(answer=rootTopic, notes=notes,
+                          ref=rootTopic.getTitle())
 
-        self.mw.progress.finish()
-
-    def getQuestions(self, answer: TopicElement, sheet: SheetElement,
-                     notes: list, ref="", aId=""):
-        if answer.getParentNode().tagName == 'sheet':
-            ref = answer.getTitle()
-        else:
-            ref = ref + '\n' +  ': ' + answer.getTitle()
+    # calls createNotes for each answer
+    def getQuestions(self, answer: TopicElement, notes: list, ref="", aId=""):
+        if not answer.getParentNode().tagName == 'sheet':
+            ref = ref + ': ' + answer.getTitle() + '</li>'
         for qId, question in enumerate(answer.getSubTopics(), start=1):
             nextId = aId + self.getId(qId)
-            self.createNotes(question=question, sheet=sheet, ref=ref,
-                             qId=nextId, note=notes[qId - 1])
+            self.createNote(question=question, ref=ref,
+                            qId=nextId, note=notes[qId - 1])
 
-    def createNotes(self, question: TopicElement, sheet: SheetElement, ref,
-                    qId, note):
-        # Set tag
-        note.tags.append(self.tag)
-
+    # fills an Anki note for a given question and its answers
+    def createNote(self, question: TopicElement, ref, qId, note):
+        # Set deck
+        note.model()['did'] = self.currentSheetImport.deckId
         # set field ID
         note.fields[0] = qId
         # Set field Question
         note.fields[1] = self.getContent(question)
-
         answers = question.getSubTopics()
         nextNotes = list()
         for aId, answer in enumerate(answers, start=1):
@@ -118,28 +116,27 @@ class XmindImporter(NoteImporter):
         # Set field Reference
         note.fields[X_MAX_ANSWERS + 2] = ref
         # set field Meta
-        meta = self.getXMindMeta(question=question, sheet=sheet,
-                                 notes=nextNotes)
+        meta = self.getXMindMeta(question=question, notes=nextNotes)
         note.fields[X_MAX_ANSWERS + 3] = meta
-
-        for answer in answers:
-            ref = ref + '\n' + answer.getTitle()
-
+        # Set tag
+        note.tags.append(self.currentSheetImport.tag)
         self.col.addNote(note)
+
+        ref = ref + '<li>' + question.getTitle()
+        # make notes for following cards
+        for aId, answer in enumerate(answers, start=1):
+            self.getQuestions(answer=answer, notes=nextNotes[aId - 1], ref=ref,
+                              aId=qId + self.getId(aId))
 
     # returns numbers 1 : 9 or letters starting with A starting at 10
     def getId(self, id):
-        if id < 10:
-            return str(id)
-        else:
-            return chr(id + 55)
+            return chr(id + 64)
 
     # receives a question, sheet and list of notes possibly following this question and returns a json file
-    def getXMindMeta(self, question: TopicElement, sheet: SheetElement,
-                     notes: list):
+    def getXMindMeta(self, question: TopicElement, notes: list):
         xMindMeta = dict()
         xMindMeta['path'] = self.file
-        xMindMeta['sheetId'] = sheet.getID()
+        xMindMeta['sheetId'] = self.currentSheetImport.sheet.getID()
         xMindMeta['questionId'] = question.getID()
         xMindMeta['answers'] = list()
         answers = question.getSubTopics()
@@ -174,11 +171,9 @@ class XmindImporter(NoteImporter):
             self.addImage(attachment)
             content = content + '<br><img src="%s">' % attachment[12:]
         except:
-            content = content
-
+            pass
         # if necessary add audio file
         audioAttr = node.getAttribute('xlink:href')
         if audioAttr:
             content = content + '<br>[sound:%s]' % self.addAudio(audioAttr)
-
         return content
