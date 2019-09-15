@@ -131,6 +131,7 @@ class XmindImporter(NoteImporter):
     def getXMindMeta(self, question: TopicElement, sheet: SheetElement,
                      notes: list):
         xMindMeta = dict()
+        xMindMeta['path'] = self.file
         xMindMeta['sheetId'] = sheet.getID()
         xMindMeta['questionId'] = question.getID()
         xMindMeta['answers'] = list()
