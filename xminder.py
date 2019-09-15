@@ -1,4 +1,7 @@
 import json
+import zipfile
+import tempfile
+import shutil
 
 from time import sleep
 
@@ -32,12 +35,18 @@ class XmindImporter(NoteImporter):
         self.mw = aqt.mw.app.activeWindow() or aqt.mw
         self.deckId = None
         self.tag = ""
+        self.mediaDir = os.path.join(os.path.dirname(col.path),
+                                     'collection.media')
+        self.srcDir = tempfile.mkdtemp()
+        self.xZip = zipfile.ZipFile(file, 'r')
 
     def run(self):
         selectedSheets = self.get_x_sheets()
         self.deckId = selectedSheets[0].deckId
         for sheetImport in selectedSheets:
             self.importMap(sheetImport)
+        # Remove temp dir and its files
+        shutil.rmtree(self.srcDir)
         print("fertig")
         self.log = ['fertig']
 
@@ -90,13 +99,13 @@ class XmindImporter(NoteImporter):
         # set field ID
         note.fields[0] = qId
         # Set field Question
-        note.fields[1] = question.getTitle()
+        note.fields[1] = self.getContent(question)
 
         answers = question.getSubTopics()
         nextNotes = list()
         for aId, answer in enumerate(answers, start=1):
             # Set Answer fields
-            note.fields[1 + aId] = answer.getTitle()
+            note.fields[1 + aId] = self.getContent(answer)
             # Create Notes for next questions for Question nids in Meta field
             nextQs = answer.getSubTopics()
             # Add list for questions of this answer
@@ -117,8 +126,6 @@ class XmindImporter(NoteImporter):
             ref = ref + '\n' + answer.getTitle()
 
         self.col.addNote(note)
-
-        a = 0
 
     # returns numbers 1 : 9 or letters starting with A starting at 10
     def getId(self, id):
@@ -144,4 +151,21 @@ class XmindImporter(NoteImporter):
                 xMindMeta['answers'][aId]['children'].append(note.id)
         return json.dumps(xMindMeta)
 
+    def addImage(self, attachment):
+        # extract image to anki media directory
+        self.xZip.extract(attachment, self.srcDir)
+        # get image from subdirectory attachments in mediaDir
+        srcPath = os.path.join(self.srcDir, attachment)
+        self.col.media.addFile(srcPath)
 
+    def getContent(self, node: TopicElement):
+        content = node.getTitle()
+        # if necessary add image
+        try:
+            attachment = node.getFirstChildNodeByTagName('xhtml:img').\
+                             getAttribute('xhtml:src')[4:]
+            self.addImage(attachment)
+            content = content + '<br><img src="%s">' % attachment[12:]
+        except:
+            content = content
+        return content
