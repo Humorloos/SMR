@@ -158,6 +158,13 @@ class XmindImporter(NoteImporter):
         srcPath = os.path.join(self.srcDir, attachment)
         self.col.media.addFile(srcPath)
 
+    def addAudio(self, audioAttr):
+        audioPath = urllib.parse.unquote(audioAttr[7:])
+        audioExt = os.path.splitext(audioPath)[1]
+        if audioExt in ['.mp3', '.wav']:
+            self.col.media.addFile(audioPath)
+        return os.path.basename(audioPath)
+
     def getContent(self, node: TopicElement):
         content = node.getTitle()
         # if necessary add image
@@ -168,4 +175,10 @@ class XmindImporter(NoteImporter):
             content = content + '<br><img src="%s">' % attachment[12:]
         except:
             content = content
+
+        # if necessary add audio file
+        audioAttr = node.getAttribute('xlink:href')
+        if audioAttr:
+            content = content + '<br>[sound:%s]' % self.addAudio(audioAttr)
+
         return content
