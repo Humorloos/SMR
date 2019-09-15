@@ -77,12 +77,8 @@ class XmindImporter(NoteImporter):
             ref = ref + '\n' +  ': ' + answer.getTitle()
         for qId, question in enumerate(answer.getSubTopics(), start=1):
             nextId = aId + self.getId(qId)
-            if notes:
-                self.createNotes(question=question, sheet=sheet, ref=ref,
+            self.createNotes(question=question, sheet=sheet, ref=ref,
                              qId=nextId, note=notes[qId - 1])
-            else:
-                self.createNotes(question=question, sheet=sheet, ref=ref,
-                                 qId=nextId, note=notes)
 
     def createNotes(self, question: TopicElement, sheet: SheetElement, ref,
                     qId, note):
