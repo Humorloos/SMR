@@ -100,17 +100,9 @@ class XmindImporter(NoteImporter):
 
     # fills an Anki note for a given question and its answers
     def createNote(self, question: TopicElement, ref, qId, note):
-        # Set deck
-        note.model()['did'] = self.currentSheetImport.deckId
-        # set field ID
-        note.fields[0] = qId
-        # Set field Question
-        note.fields[1] = self.getContent(question)
         answers = question.getSubTopics()
         nextNotes = list()
         for aId, answer in enumerate(answers, start=1):
-            # Set Answer fields
-            note.fields[1 + aId] = self.getContent(answer)
             # Create Notes for next questions for Question nids in Meta field
             nextQs = answer.getSubTopics()
             # Add list for questions of this answer
@@ -120,6 +112,15 @@ class XmindImporter(NoteImporter):
                 nextNotes[aId - 1].append(self.col.newNote())
                 # wait some milliseconds to create note with a different nid
                 sleep(0.001)
+        # Set deck
+        note.model()['did'] = self.currentSheetImport.deckId
+        # set field ID
+        note.fields[0] = qId
+        # Set field Question
+        note.fields[1] = self.getContent(question)
+        for aId, answer in enumerate(answers, start=1):
+            # Set Answer fields
+            note.fields[1 + aId] = self.getContent(answer)
         # Set field Reference
         note.fields[X_MAX_ANSWERS + 2] = ref
         # set field Meta
