@@ -82,7 +82,8 @@ class XmindImporter(NoteImporter):
             sleep(0.001)
         self.getQuestions(answer=rootTopic, notes=notes,
                           ref=rootTopic.getTitle())
-
+    # TODO: change tag name to include deck name instead of map title
+    # TODO: make code for setting fields separate method
     # calls createNotes for each answer
     def getQuestions(self, answer: TopicElement, notes: list, ref="", aId=""):
         if not answer.getParentNode().tagName == 'sheet':
@@ -133,7 +134,7 @@ class XmindImporter(NoteImporter):
         for aId, answer in enumerate(answers, start=1):
             self.getQuestions(answer=answer, notes=nextNotes[aId - 1], ref=ref,
                               aId=qId + self.getId(aId))
-
+    # TODO: check out hierarchical tags, may be useful
     # returns numbers 1 : 9 or letters starting with A starting at 10
     def getId(self, id):
             return chr(id + 64)
