@@ -100,18 +100,8 @@ class XmindImporter(NoteImporter):
 
     # fills an Anki note for a given question and its answers
     def createNote(self, question: TopicElement, ref, qId, note):
-        answers = question.getSubTopics()
-        nextNotes = list()
-        for aId, answer in enumerate(answers, start=1):
-            # Create Notes for next questions for Question nids in Meta field
-            nextQs = answer.getSubTopics()
-            # Add list for questions of this answer
-            nextNotes.append(list())
-            # Add one new note for each question following this answer
-            for i in nextQs:
-                nextNotes[aId - 1].append(self.col.newNote())
-                # wait some milliseconds to create note with a different nid
-                sleep(0.001)
+        # Create Notes for next questions for Question nids in Meta field
+        answers, nextNotes = self.getNextNotes(question)
         # Set deck
         note.model()['did'] = self.currentSheetImport.deckId
         # set field ID
@@ -137,8 +127,8 @@ class XmindImporter(NoteImporter):
                               aId=qId + self.getId(aId))
     # TODO: check out hierarchical tags, may be useful
     # returns numbers 1 : 9 or letters starting with A starting at 10
-    def getId(self, id):
-            return chr(id + 64)
+    def getId(self, xId):
+            return chr(xId + 64)
 
     # receives a question, sheet and list of notes possibly following this question and returns a json file
     def getXMindMeta(self, question: TopicElement, notes: list):
@@ -185,3 +175,36 @@ class XmindImporter(NoteImporter):
         if audioAttr:
             content = content + '<br>[sound:%s]' % self.addAudio(audioAttr)
         return content
+
+    def isEmptyNode(self, node: TopicElement):
+        if node.getTitle():
+            return False
+        if node.getFirstChildNodeByTagName('xhtml:img'):
+            return False
+        if node.getAttribute('xlink:href'):
+            return False
+        return True
+
+    def getNextNotes(self, question):
+        answers = question.getSubTopics()
+        nextNotes = []
+        for aId, answer in enumerate(answers, start=1):
+            # Add one new note for each question following this answer
+            nextNotes.append(self.getNoteListForQuestions(answer))
+        return answers, nextNotes
+
+    def getNoteListForQuestions(self, answer: TopicElement):
+        noteList = []
+        nextQs = answer.getSubTopics()
+        for nextQ in nextQs:
+            if not(self.isEmptyNode(nextQ)):
+                noteList.append(self.col.newNote())
+            else:
+                # code in brackets is for unlisting:
+                # https://stackoverflow.com/a/952952
+                noteList.extend(
+                    [item for sublist in self.getNextNotes(nextQ)[1]
+                     for item in sublist])
+            # wait some milliseconds to create note with a different nid
+            sleep(0.001)
+        return noteList
