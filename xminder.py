@@ -39,6 +39,8 @@ class XmindImporter(NoteImporter):
         self.xZip = zipfile.ZipFile(file, 'r')
         self.warnings = []
         self.deckId = ''
+        self.notesToAdd = list()
+        self.running = True
 
     def run(self):
         selectedSheets = self.get_x_sheets()
@@ -46,12 +48,17 @@ class XmindImporter(NoteImporter):
         self.mw.progress.start(immediate=True)
         self.mw.checkpoint("Import")
         for sheetImport in selectedSheets:
-            self.importMap(sheetImport)
+            if self.running:
+                self.importMap(sheetImport)
+
+        # add all notes to collection
+        if self.running:
+            for note in self.notesToAdd:
+                self.col.addNote(note)
         self.mw.progress.finish()
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
         print("fertig")
-        self.log = ['fertig']
 
     # returns list of
     def get_x_sheets(self):
@@ -101,12 +108,12 @@ class XmindImporter(NoteImporter):
                                           ref=ref)
         for qId, questionDict in enumerate(questionDicts, start=1):
             nextId = aId + getId(qId)
-            if not(len(questionDict['question'].getSubTopics()) > 0):
-                self.warnings.append(
-                    'Es fehlen Antworten für die Relation "' +
-                    questionDict['question'].getTitle() + '" (Pfad "' + aId +
-                    '")')
-            else:
+            if not (len(questionDict['question'].getSubTopics()) > 0):
+                self.running = False
+                self.log = ["""Warning:
+A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept Map and try again.""" %
+                            (questionDict['question'].getTitle(), aId)]
+            if self.running:
                 self.addNote(question=questionDict['question'],
                              ref=questionDict['ref'], qId=nextId,
                              note=notes[qId - 1])
@@ -120,26 +127,30 @@ class XmindImporter(NoteImporter):
     # recursively calls getQuestions() to add notes following this note
     def addNote(self, question: TopicElement, ref, qId, note):
 
-        answerDicts = findAnswerDicts(question)
+        answerDicts = self.findAnswerDicts(question)
 
-        # Create Notes for next questions for Question nids in Meta field
-        nextNotes = self.getNextNotes(answerDicts)
+        if self.running:
+            # Create Notes for next questions for Question nids in Meta field
+            nextNotes = self.getNextNotes(answerDicts)
 
-        # configure and add note to collection
-        self.makeXNote(note=note, qId=qId, question=question,
-                       answerDicts=answerDicts, ref=ref, nextNotes=nextNotes)
+            # configure and add note to collection
+            self.makeXNote(note=note, qId=qId, question=question,
+                           answerDicts=answerDicts, ref=ref,
+                           nextNotes=nextNotes)
 
-        # add notes for questions following this note
-        ref = ref + '<li>' + question.getTitle()
-        for aId, answerDict in enumerate(answerDicts, start=1):
-            if answerDicts[aId - 1]['isAnswer']:
-                answerContent = note.fields[list(X_FLDS.keys()).index(
-                    'a' + answerDict['aId'])]
-            else:
-                answerContent = ''
-            self.getQuestions(
-                answerDict=answerDict, notes=nextNotes[aId - 1], answerContent=answerContent,
-                ref=ref, aId=qId + getId(aId))
+            # add notes for questions following this note
+            ref = ref + '<li>' + question.getTitle()
+            for aId, answerDict in enumerate(answerDicts, start=1):
+                if answerDicts[aId - 1]['isAnswer']:
+                    answerContent = note.fields[list(X_FLDS.keys()).index(
+                        'a' + answerDict['aId'])]
+                else:
+                    answerContent = ''
+                self.getQuestions(
+                    answerDict=answerDict, notes=nextNotes[aId - 1],
+                    answerContent=answerContent,
+                    ref=ref, aId=qId + getId(aId))
+
     # TODO: check out hierarchical tags, may be useful
 
     # receives a question, sheet and list of notes possibly following this question and returns a json file
@@ -181,7 +192,7 @@ class XmindImporter(NoteImporter):
             content += node.getTitle()
         # if necessary add image
         try:
-            attachment = node.getFirstChildNodeByTagName('xhtml:img').\
+            attachment = node.getFirstChildNodeByTagName('xhtml:img'). \
                              getAttribute('xhtml:src')[4:]
             self.addImage(attachment)
             if content != '':
@@ -203,8 +214,9 @@ class XmindImporter(NoteImporter):
         nextNotes = []
         for answerDict in answerDicts:
             # Add one new note for each question following this subTopic
-            nextNotes.append(self.getNoteListForQuestions(
-                answerDict['subTopic']))
+            noteListForQuestions = self.getNoteListForQuestions(
+                answerDict['subTopic'])
+            nextNotes.append(noteListForQuestions)
         return nextNotes
 
     # receives an xmind node and returns a list of anki notes containing one
@@ -213,10 +225,10 @@ class XmindImporter(NoteImporter):
         noteList = []
         questions = subTopic.getSubTopics()
         for question in questions:
-            if not(isEmptyNode(question)):
+            if not (isEmptyNode(question)):
                 noteList.append(self.col.newNote())
             else:
-                nextAnswerDicts = findAnswerDicts(question)
+                nextAnswerDicts = self.findAnswerDicts(question)
                 # code in brackets is for unlisting:
                 # https://stackoverflow.com/a/952952
                 followingNotes = [item for sublist in self.getNextNotes(
@@ -243,7 +255,7 @@ class XmindImporter(NoteImporter):
         for answerDict in answerDicts:
             if answerDict['isAnswer']:
                 aId += 1
-                note.fields[list(X_FLDS.keys()).index('a' + str(aId))] =\
+                note.fields[list(X_FLDS.keys()).index('a' + str(aId))] = \
                     self.getContent(answerDict['subTopic'])
                 answerDict['aId'] = str(aId)
 
@@ -259,4 +271,23 @@ class XmindImporter(NoteImporter):
         note.tags.append(self.currentSheetImport.tag)
 
         # add to col
-        self.col.addNote(note)
+        self.notesToAdd.append(note)
+
+    # receives a question node and returns a list of dictionaries containing the
+    # subtopics and whether the subtopics contain an answer or not
+    def findAnswerDicts(self, question: TopicElement):
+        answerDicts = list()
+        for subTopic in question.getSubTopics():
+            isAnswer = True
+            if isEmptyNode(subTopic):
+                isAnswer = False
+            answerDicts.append(
+                dict(subTopic=subTopic, isAnswer=isAnswer, aId=str(0)))
+        actualAnswers = list(filter(
+            lambda answerDict: answerDict['isAnswer'], answerDicts))
+        if len(actualAnswers) > X_MAX_ANSWERS:
+            self.running = False
+            self.log = ["""Warning:
+A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than 20 Answers and try again.""" %
+                        (question.getTitle(), X_MAX_ANSWERS)]
+        return answerDicts

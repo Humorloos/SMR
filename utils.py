@@ -31,15 +31,3 @@ def findQuestionDicts(answer: TopicElement, ref):
         else:
             questionDicts.append(dict(question=followRel, ref=ref))
     return questionDicts
-
-
-# receives a question node and returns a list of dictionaries containing the
-# subtopics and whether the subtopics contain an answer or not
-def findAnswerDicts(question: TopicElement):
-    answerDicts = list()
-    for subTopic in question.getSubTopics():
-        isAnswer = True
-        if isEmptyNode(subTopic):
-            isAnswer = False
-        answerDicts.append(dict(subTopic=subTopic, isAnswer=isAnswer, aId=str(0)))
-    return answerDicts
