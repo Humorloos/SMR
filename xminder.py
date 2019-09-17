@@ -17,7 +17,7 @@ from xtopic import TopicElement
 from sheetselectors import *
 
 from XmindImport.consts import *
-# TODO: change nextQ to question in getNoteListforquestinos()
+
 class SheetImport:
     def __init__(self, sheet: SheetElement, tag):
         self.sheet = sheet
@@ -180,15 +180,15 @@ class XmindImporter(NoteImporter):
 
     def getNoteListForQuestions(self, answer: TopicElement):
         noteList = []
-        nextQs = answer.getSubTopics()
-        for nextQ in nextQs:
-            if not(self.isEmptyNode(nextQ)):
+        questions = answer.getSubTopics()
+        for question in questions:
+            if not(self.isEmptyNode(question)):
                 noteList.append(self.col.newNote())
             else:
                 # code in brackets is for unlisting:
                 # https://stackoverflow.com/a/952952
                 noteList.extend(
-                    [item for sublist in self.getNextNotes(nextQ)[1]
+                    [item for sublist in self.getNextNotes(question)[1]
                      for item in sublist])
             # wait some milliseconds to create note with a different nid
             sleep(0.001)
