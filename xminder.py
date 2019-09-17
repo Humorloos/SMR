@@ -12,11 +12,12 @@ from anki.collection import _Collection
 
 from xxmind import load
 from xsheet import SheetElement
-from xtopic import TopicElement
 
 from sheetselectors import *
+from utils import *
 
 from XmindImport.consts import *
+
 
 class SheetImport:
     def __init__(self, sheet: SheetElement, tag):
@@ -39,6 +40,7 @@ class XmindImporter(NoteImporter):
         self.srcDir = tempfile.mkdtemp()
         self.xZip = zipfile.ZipFile(file, 'r')
         self.warnings = []
+        self.deckId = ''
 
     def run(self):
         selectedSheets = self.get_x_sheets()
@@ -73,10 +75,9 @@ class XmindImporter(NoteImporter):
         xModel = self.col.models.byName(X_MODEL_NAME)
         self.col.decks.select(self.currentSheetImport.deckId)
         self.col.decks.current()['mid'] = xModel['id']
-        # self.col.models.setCurrent(self.col.models.byName(X_MODEL_NAME))
+        # create first notes for this sheet
         notes = list()
-        for i in rootTopic.getSubTopics():
-            # forDeck=False so that the chosen model does not depend on the deck
+        for question in rootTopic.getSubTopics():
             notes.append(self.col.newNote())
             sleep(0.001)
         self.getQuestions(answer=rootTopic, notes=notes,
@@ -88,7 +89,7 @@ class XmindImporter(NoteImporter):
             ref = ref + ': ' + answer.getTitle() + '</li>'
         questionDicts = self.findQuestions(answer=answer, ref=ref)
         for qId, questionDict in enumerate(questionDicts, start=1):
-            nextId = aId + self.getId(qId)
+            nextId = aId + getId(qId)
             if not(len(questionDict['question'].getSubTopics()) > 0):
                 self.warnings.append(
                     'Es fehlen Antworten für die Relation "' +
@@ -109,11 +110,8 @@ class XmindImporter(NoteImporter):
         # make notes for following cards
         for aId, answer in enumerate(answers, start=1):
             self.getQuestions(answer=answer, notes=nextNotes[aId - 1], ref=ref,
-                              aId=qId + self.getId(aId))
+                              aId=qId + getId(aId))
     # TODO: check out hierarchical tags, may be useful
-    # returns numbers 1 : 9 or letters starting with A starting at 10
-    def getId(self, xId):
-            return chr(xId + 64)
 
     # receives a question, sheet and list of notes possibly following this question and returns a json file
     def getXMindMeta(self, question: TopicElement, notes: list):
@@ -161,15 +159,6 @@ class XmindImporter(NoteImporter):
             content = content + '<br>[sound:%s]' % self.addAudio(audioAttr)
         return content
 
-    def isEmptyNode(self, node: TopicElement):
-        if node.getTitle():
-            return False
-        if node.getFirstChildNodeByTagName('xhtml:img'):
-            return False
-        if node.getAttribute('xlink:href'):
-            return False
-        return True
-
     def getNextNotes(self, question):
         answers = question.getSubTopics()
         nextNotes = []
@@ -182,7 +171,7 @@ class XmindImporter(NoteImporter):
         noteList = []
         questions = answer.getSubTopics()
         for question in questions:
-            if not(self.isEmptyNode(question)):
+            if not(isEmptyNode(question)):
                 noteList.append(self.col.newNote())
             else:
                 # code in brackets is for unlisting:
@@ -201,7 +190,7 @@ class XmindImporter(NoteImporter):
         followRels = answer.getSubTopics()
         questionDicts = []
         for followRel in followRels:
-            if self.isEmptyNode(followRel):
+            if isEmptyNode(followRel):
                 for nextA in followRel.getSubTopics():
                     nextQPairs = self.findQuestions(
                         answer=nextA, ref=ref + '<li>' + nextA.getTitle())
