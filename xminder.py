@@ -17,8 +17,6 @@ from xtopic import TopicElement
 from sheetselectors import *
 
 from XmindImport.consts import *
-# TODO: move reference field to first and ID field to almost last and adjust
-#  code
 # TODO: change nextQ to question in getNoteListforquestinos()
 class SheetImport:
     def __init__(self, sheet: SheetElement, tag):
@@ -216,17 +214,18 @@ class XmindImporter(NoteImporter):
         # Set deck
         note.model()['did'] = self.currentSheetImport.deckId
         # set field ID
-        note.fields[0] = qId
+        note.fields[list(X_FLDS.keys()).index('id')] = qId
         # Set field Question
-        note.fields[1] = self.getContent(question)
+        note.fields[list(X_FLDS.keys()).index('qt')] = self.getContent(question)
         for aId, answer in enumerate(answers, start=1):
             # Set Answer fields
-            note.fields[1 + aId] = self.getContent(answer)
+            note.fields[list(X_FLDS.keys()).index('a' + str(aId))] =\
+                self.getContent(answer)
         # Set field Reference
-        note.fields[X_MAX_ANSWERS + 2] = ref
+        note.fields[list(X_FLDS.keys()).index('rf')] = ref
         # set field Meta
         meta = self.getXMindMeta(question=question, notes=nextNotes)
-        note.fields[X_MAX_ANSWERS + 3] = meta
+        note.fields[list(X_FLDS.keys()).index('mt')] = meta
         # Set tag
         note.tags.append(self.currentSheetImport.tag)
         self.col.addNote(note)

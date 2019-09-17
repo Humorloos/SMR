@@ -41,7 +41,7 @@ def add_x_model(col):
         template['afmt'] = card[1]
         models.addTemplate(x_model, template)
     x_model['css'] = X_CARD_CSS
-    x_model['sortf'] = 0  # set sortfield to ID
+    x_model['sortf'] = list(X_FLDS.keys()).index('id')  # set sortfield to ID
 
     models.add(x_model)
     return x_model

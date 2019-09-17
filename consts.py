@@ -1,4 +1,5 @@
 import os
+from collections import OrderedDict
 
 X_MODEL_NAME = 'Stepwise Map Retrieval'
 
@@ -6,21 +7,18 @@ X_MAX_ANSWERS = 20
 X_CARD_NAMES = list(map(lambda aswid: 'Answer ' + str(aswid),
                         list(range(1, X_MAX_ANSWERS + 1))))
 
-X_FLDS = {
-    'id': 'ID',
-    'qt': 'Question',
-}
+X_FLDS = OrderedDict((('rf', 'Reference'), ('qt', 'Question')))
 for i in range(1, X_MAX_ANSWERS + 1):
     X_FLDS['a' + str(i)] = 'Answer ' + str(i)
 X_FLDS.update({
-    'rf': 'Reference',
+    'id': 'ID',
     'mt': 'Meta'
 })
 
-X_FLDS_IDS = ['id', 'qt'] + \
+X_FLDS_IDS = ['rf', 'qt'] + \
              list(map(lambda aswid: 'a' + str(aswid),
                       list(range(1, X_MAX_ANSWERS + 1)))) + \
-             ['rf', 'mt']
+             ['id', 'mt']
 
 # Elements for creating Card-Fronts
 
