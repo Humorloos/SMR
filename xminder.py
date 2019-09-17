@@ -88,15 +88,18 @@ class XmindImporter(NoteImporter):
     def getQuestions(self, answer: TopicElement, notes: list, ref="", aId=""):
         if not answer.getParentNode().tagName == 'sheet':
             ref = ref + ': ' + answer.getTitle() + '</li>'
-        for qId, question in enumerate(answer.getSubTopics(), start=1):
+        questionDicts = self.findQuestions(answer=answer, ref=ref)
+        for qId, questionDict in enumerate(questionDicts, start=1):
             nextId = aId + self.getId(qId)
-            if len(question.getSubTopics()) > 0:
-                self.createNote(question=question, ref=ref,
-                                qId=nextId, note=notes[qId - 1])
-            else:
+            if not(len(questionDict['question'].getSubTopics()) > 0):
                 self.warnings.append(
                     'Es fehlen Antworten für die Relation "' +
-                    question.getTitle() + '" (Pfad "' + aId + '")')
+                    questionDict['question'].getTitle() + '" (Pfad "' + aId +
+                    '")')
+            else:
+                self.createNote(question=questionDict['question'],
+                                ref=questionDict['ref'], qId=nextId,
+                                note=notes[qId - 1])
 
     # fills an Anki note for a given question and its answers
     def createNote(self, question: TopicElement, ref, qId, note):
@@ -208,3 +211,19 @@ class XmindImporter(NoteImporter):
             # wait some milliseconds to create note with a different nid
             sleep(0.001)
         return noteList
+
+    # receives an answer node and returns all questions following this answer
+    # including questions following multiple topics
+    def findQuestions(self, answer: TopicElement, ref):
+
+        followRels = answer.getSubTopics()
+        questionDicts = []
+        for followRel in followRels:
+            if self.isEmptyNode(followRel):
+                for nextA in followRel.getSubTopics():
+                    nextQPairs = self.findQuestions(
+                        answer=nextA, ref=ref + '<li>' + nextA.getTitle())
+                    questionDicts.extend(nextQPairs)
+            else:
+                questionDicts.append(dict(question=followRel, ref=ref))
+        return questionDicts
