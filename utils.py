@@ -19,13 +19,13 @@ def getId(xId):
 
 # receives an answer node and returns all questions following this answer
 # including questions following multiple topics
-def findQuestions(answer: TopicElement, ref):
+def findQuestionDicts(answer: TopicElement, ref):
     followRels = answer.getSubTopics()
     questionDicts = []
     for followRel in followRels:
         if isEmptyNode(followRel):
             for nextA in followRel.getSubTopics():
-                nextQPairs = findQuestions(
+                nextQPairs = findQuestionDicts(
                     answer=nextA, ref=ref + '<li>' + nextA.getTitle())
                 questionDicts.extend(nextQPairs)
         else:
@@ -33,10 +33,13 @@ def findQuestions(answer: TopicElement, ref):
     return questionDicts
 
 
-# receives a question node and returns all Answers that are not empty nodes
-def findAnswers(question: TopicElement):
-    answers = list()
-    for answer in question.getSubTopics():
-        if not(isEmptyNode(answer)):
-            answers.append(answer)
-    return answers
+# receives a question node and returns a list of dictionaries containing the
+# subtopics and whether the subtopics contain an answer or not
+def findAnswerDicts(question: TopicElement):
+    answerDicts = list()
+    for subTopic in question.getSubTopics():
+        isAnswer = True
+        if isEmptyNode(subTopic):
+            isAnswer = False
+        answerDicts.append(dict(subTopic=subTopic, isAnswer=isAnswer, aId=str(0)))
+    return answerDicts
