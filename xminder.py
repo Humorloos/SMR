@@ -8,12 +8,11 @@ from time import sleep
 
 from anki.importing.noteimp import NoteImporter
 
-from xxmind import load
-from xsheet import SheetElement
+from XmindImport.xmind.xxmind import load
+from XmindImport.xmind.xsheet import SheetElement
 
-from sheetselectors import *
-from utils import *
-
+from XmindImport.sheetselectors import *
+from XmindImport.utils import *
 from XmindImport.consts import *
 
 

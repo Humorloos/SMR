@@ -1,4 +1,4 @@
-from xtopic import TopicElement
+from XmindImport.xmind.xtopic import TopicElement
 
 
 # checks whether a node contains any text, images or link

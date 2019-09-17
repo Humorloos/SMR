@@ -2,7 +2,7 @@ from anki.hooks import addHook
 from anki.lang import _
 import anki.importing as importing
 
-from config import *
+from XmindImport.config import *
 from XmindImport.xminder import XmindImporter
 
 

@@ -1,6 +1,6 @@
 from aqt import mw
 
-from template import *
+from XmindImport.template import *
 
 
 def get_or_create_model():

@@ -13,7 +13,7 @@
 __author__ = "aiqi@xmind.net <Woody Ai>"
 
 import xconst
-from xcore import Element
+from XmindImport.xmind.xcore import Element
 import xutils
 
 

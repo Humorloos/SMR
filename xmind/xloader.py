@@ -14,7 +14,8 @@ __author__ = "aiqi@xmind.net <Woody Ai>"
 
 import xconst
 import xutils
-from xworkbook import WorkbookDocument
+
+from XmindImport.xmind.xworkbook import WorkbookDocument
 
 
 class WorkbookLoader(object):

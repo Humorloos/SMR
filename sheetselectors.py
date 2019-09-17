@@ -1,12 +1,11 @@
 # Qt Dialogs for selecting and naming sheets to import
 from PyQt5 import QtCore, QtWidgets
 
-from xminder import SheetImport
-
 from aqt.qt import *
 from aqt.deckchooser import DeckChooser
 import aqt
 
+from XmindImport.xminder import SheetImport
 from XmindImport.consts import ICONS_PATH
 
 class SheetSelector(QDialog):

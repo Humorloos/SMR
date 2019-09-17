@@ -13,7 +13,7 @@
 __author__ = "stanypub@gmail.com <Stany MARCEL>"
 
 import xconst
-from xmixin import WorkbookMixinElement
+from XmindImport.xmind.xmixin import WorkbookMixinElement
 
 
 class MarkerId:

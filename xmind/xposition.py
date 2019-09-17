@@ -14,7 +14,7 @@ __author__ = "aiqi@xmind.net <Woody Ai>"
 
 import xconst
 
-from xmixin import WorkbookMixinElement
+from XmindImport.xmind.xmixin import WorkbookMixinElement
 
 
 class PositionElement(WorkbookMixinElement):

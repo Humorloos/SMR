@@ -13,8 +13,8 @@
 
 __version__ = "0.1a.0"
 __author__ = "aiqi@xmind.net <Woody Ai>"
-from xloader import WorkbookLoader
-from xsaver import WorkbookSaver
+from XmindImport.xmind.xloader import WorkbookLoader
+from XmindImport.xmind.xsaver import WorkbookSaver
 
 
 def load(path):

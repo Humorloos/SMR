@@ -14,7 +14,7 @@ __author__ = "aiqi@xmind.net <Woody Ai>"
 
 import xconst
 
-from xmixin import TopicMixinElement
+from XmindImport.xmind.xmixin import TopicMixinElement
 
 
 class NotesElement(TopicMixinElement):
