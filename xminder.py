@@ -116,7 +116,7 @@ class XmindImporter(NoteImporter):
     # TODO: check out hierarchical tags, may be useful
 
     # receives a question, sheet and list of notes possibly following this question and returns a json file
-    def getXMindMeta(self, question: TopicElement, notes: list):
+    def getXMindMeta(self, question: TopicElement, notes: list, nAnswers):
         xMindMeta = dict()
         xMindMeta['path'] = self.file
         xMindMeta['sheetId'] = self.currentSheetImport.sheet.getID()
@@ -129,6 +129,7 @@ class XmindImporter(NoteImporter):
             xMindMeta['answers'][sId]['children'] = list()
             for note in notes[sId]:
                 xMindMeta['answers'][sId]['children'].append(note.id)
+        xMindMeta['nAnswers'] = nAnswers
         return json.dumps(xMindMeta)
 
     def addImage(self, attachment):
@@ -185,6 +186,8 @@ class XmindImporter(NoteImporter):
             sleep(0.001)
         return noteList
 
+    # sets the deck, fields and tag of an xmind note and adds it to the
+    # collection
     def makeXNote(self, note, qId, question, answers, ref, nextNotes):
         # Set deck
         note.model()['did'] = self.currentSheetImport.deckId
@@ -199,7 +202,8 @@ class XmindImporter(NoteImporter):
         # Set field Reference
         note.fields[list(X_FLDS.keys()).index('rf')] = ref
         # set field Meta
-        meta = self.getXMindMeta(question=question, notes=nextNotes)
+        meta = self.getXMindMeta(question=question, notes=nextNotes,
+                                 nAnswers=len(answers))
         note.fields[list(X_FLDS.keys()).index('mt')] = meta
         # Set tag
         note.tags.append(self.currentSheetImport.tag)

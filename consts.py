@@ -36,7 +36,7 @@ X_CARD_HD = """<div class="reference">
 # JavaScript Card 1
 X_CARD_SR1 = """
     var meta = JSON.parse(document.getElementById("s1").textContent);
-    var nAnswers = meta.answers.length;
+    var nAnswers = meta.nAnswers;
     if(nAnswers > 1) {
         document.getElementById("h").innerHTML = "(1 / " + nAnswers + ")"; 
         document.getElementById("dots").innerHTML = '<li><span class="dots"> %s </span></li>';
