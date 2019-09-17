@@ -7,8 +7,7 @@ import urllib.parse
 from time import sleep
 
 from anki.importing.noteimp import NoteImporter
-from anki.lang import _
-from anki.collection import _Collection
+import anki.collection
 
 from xxmind import load
 from xsheet import SheetElement
@@ -29,7 +28,7 @@ class SheetImport:
 class XmindImporter(NoteImporter):
     needMapper = False
 
-    def __init__(self, col: _Collection, file):
+    def __init__(self, col: anki.collection._Collection, file):
         NoteImporter.__init__(self, col, file)
         self.model = col.models.byName(X_MODEL_NAME)
         self.sheets = None
@@ -46,7 +45,7 @@ class XmindImporter(NoteImporter):
         selectedSheets = self.get_x_sheets()
         self.deckId = selectedSheets[0].deckId
         self.mw.progress.start(immediate=True)
-        self.mw.checkpoint(_("Import"))
+        self.mw.checkpoint("Import")
         for sheetImport in selectedSheets:
             self.importMap(sheetImport)
         self.mw.progress.finish()
@@ -90,7 +89,7 @@ class XmindImporter(NoteImporter):
                 ref = ref + '</li>'
             else:
                 ref = ref + ': ' + answer.getTitle() + '</li>'
-        questionDicts = self.findQuestions(answer=answer, ref=ref)
+        questionDicts = findQuestions(answer=answer, ref=ref)
         for qId, questionDict in enumerate(questionDicts, start=1):
             nextId = aId + getId(qId)
             if not(len(questionDict['question'].getSubTopics()) > 0):
@@ -163,7 +162,7 @@ class XmindImporter(NoteImporter):
         return content
 
     def getNextNotes(self, question):
-        answers = self.findAnswers(question)
+        answers = findAnswers(question)
         nextNotes = []
         for subTopic in question.getSubTopics():
             # Add one new note for each question following this subTopic
@@ -185,30 +184,6 @@ class XmindImporter(NoteImporter):
             # wait some milliseconds to create note with a different nid
             sleep(0.001)
         return noteList
-
-    # receives an answer node and returns all questions following this answer
-    # including questions following multiple topics
-    def findQuestions(self, answer: TopicElement, ref):
-        followRels = answer.getSubTopics()
-        questionDicts = []
-        for followRel in followRels:
-            if isEmptyNode(followRel):
-                for nextA in followRel.getSubTopics():
-                    nextQPairs = self.findQuestions(
-                        answer=nextA, ref=ref + '<li>' + nextA.getTitle())
-                    questionDicts.extend(nextQPairs)
-            else:
-                questionDicts.append(dict(question=followRel, ref=ref))
-        return questionDicts
-
-    # receives a question node and returns all Answers that are not empty nodes
-    def findAnswers(self, question: TopicElement):
-        answers = list()
-        for answer in question.getSubTopics():
-            if not(isEmptyNode(answer)):
-                answers.append(answer)
-
-        return answers
 
     def makeXNote(self, note, qId, question, answers, ref, nextNotes):
         # Set deck
