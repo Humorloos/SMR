@@ -17,8 +17,9 @@ from xtopic import TopicElement
 from sheetselectors import *
 
 from XmindImport.consts import *
-
-
+# TODO: move reference field to first and ID field to almost last and adjust
+#  code
+# TODO: change nextQ to question in getNoteListforquestinos()
 class SheetImport:
     def __init__(self, sheet: SheetElement, tag):
         self.sheet = sheet
