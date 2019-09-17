@@ -15,6 +15,10 @@ from XmindImport.sheetselectors import *
 from XmindImport.utils import *
 from XmindImport.consts import *
 
+# TODO: add warning when something is wrong with the map
+# TODO: add synchronization feature
+# TODO: change absolute to relative paths
+# TODO: add new prestentation order
 
 class XmindImporter(NoteImporter):
     needMapper = False
