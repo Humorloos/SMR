@@ -7,7 +7,6 @@ import urllib.parse
 from time import sleep
 
 from anki.importing.noteimp import NoteImporter
-import anki.collection
 
 from xxmind import load
 from xsheet import SheetElement
@@ -28,7 +27,7 @@ class SheetImport:
 class XmindImporter(NoteImporter):
     needMapper = False
 
-    def __init__(self, col: anki.collection._Collection, file):
+    def __init__(self, col, file):
         NoteImporter.__init__(self, col, file)
         self.model = col.models.byName(X_MODEL_NAME)
         self.sheets = None
@@ -76,6 +75,7 @@ class XmindImporter(NoteImporter):
         self.col.decks.current()['mid'] = xModel['id']
         # create first notes for this sheet
         notes = list()
+        # noinspection PyUnusedLocal
         for question in rootTopic.getSubTopics():
             notes.append(self.col.newNote())
             sleep(0.001)
