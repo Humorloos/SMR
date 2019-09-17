@@ -84,7 +84,6 @@ class XmindImporter(NoteImporter):
         self.getQuestions(answer=rootTopic, notes=notes,
                           ref=rootTopic.getTitle())
     # TODO: change tag name to include deck name instead of map title
-    # TODO: make code for setting fields separate method
     # calls createNotes for each answer
     def getQuestions(self, answer: TopicElement, notes: list, ref="", aId=""):
         if not answer.getParentNode().tagName == 'sheet':
@@ -106,24 +105,8 @@ class XmindImporter(NoteImporter):
     def createNote(self, question: TopicElement, ref, qId, note):
         # Create Notes for next questions for Question nids in Meta field
         answers, nextNotes = self.getNextNotes(question)
-        # Set deck
-        note.model()['did'] = self.currentSheetImport.deckId
-        # set field ID
-        note.fields[0] = qId
-        # Set field Question
-        note.fields[1] = self.getContent(question)
-        for aId, answer in enumerate(answers, start=1):
-            # Set Answer fields
-            note.fields[1 + aId] = self.getContent(answer)
-        # Set field Reference
-        note.fields[X_MAX_ANSWERS + 2] = ref
-        # set field Meta
-        meta = self.getXMindMeta(question=question, notes=nextNotes)
-        note.fields[X_MAX_ANSWERS + 3] = meta
-        # Set tag
-        note.tags.append(self.currentSheetImport.tag)
-        self.col.addNote(note)
-
+        self.makeXNote(note=note, qId=qId, question=question, answers=answers,
+                       ref=ref, nextNotes=nextNotes)
         ref = ref + '<li>' + question.getTitle()
         # make notes for following cards
         for aId, answer in enumerate(answers, start=1):
@@ -228,3 +211,22 @@ class XmindImporter(NoteImporter):
             else:
                 questionDicts.append(dict(question=followRel, ref=ref))
         return questionDicts
+
+    def makeXNote(self, note, qId, question, answers, ref, nextNotes):
+        # Set deck
+        note.model()['did'] = self.currentSheetImport.deckId
+        # set field ID
+        note.fields[0] = qId
+        # Set field Question
+        note.fields[1] = self.getContent(question)
+        for aId, answer in enumerate(answers, start=1):
+            # Set Answer fields
+            note.fields[1 + aId] = self.getContent(answer)
+        # Set field Reference
+        note.fields[X_MAX_ANSWERS + 2] = ref
+        # set field Meta
+        meta = self.getXMindMeta(question=question, notes=nextNotes)
+        note.fields[X_MAX_ANSWERS + 3] = meta
+        # Set tag
+        note.tags.append(self.currentSheetImport.tag)
+        self.col.addNote(note)
