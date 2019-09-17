@@ -9,9 +9,10 @@ def get_card(cid):
         card_front = X_CARD_HD + X_CARD_SR1 + X_CARD_QT + X_CARD_BT1 % '...'
         card_back = X_CARD_HD + X_CARD_SR1 + X_CARD_QT + X_CARD_BT1 % asw
     else:
-        hint = ''
+        hint = '<ul>'
         for x in range(1, cid):
             hint = hint + X_CARD_HT % X_FLDS[X_FLDS_IDS[x + 1]]
+        hint += '</ul>'
         card_front = '{{#' + X_FLDS[X_FLDS_IDS[cid + 1]] + '}}\n' + \
                      X_CARD_HD + X_CARD_SRN % cid + \
                      X_CARD_QT + hint + X_CARD_BTN % '...' + \

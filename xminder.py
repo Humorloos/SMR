@@ -248,7 +248,7 @@ class XmindImporter(NoteImporter):
                 answerDict['aId'] = str(aId)
 
         # Set field Reference
-        note.fields[list(X_FLDS.keys()).index('rf')] = ref
+        note.fields[list(X_FLDS.keys()).index('rf')] = '<ul>%s</ul>' % ref
 
         # set field Meta
         meta = self.getXMindMeta(question=question, notes=nextNotes,

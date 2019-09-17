@@ -67,11 +67,13 @@ X_CARD_BT1 = """<hr id="answer">
 
 # Bottom (Card n)
 X_CARD_BTN = """<hr id="answer">
-<li>
-    <span class="dots">
-        %s
-    </span>
-</li>"""
+<ul>
+    <li>
+        <span class="dots">
+            %s
+        </span>
+    </li>
+</ul>"""
 
 # Answer hint Card n
 X_CARD_HT = """<li>
