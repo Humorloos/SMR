@@ -81,7 +81,7 @@ class XmindImporter(NoteImporter):
             sleep(0.001)
         self.getQuestions(answer=rootTopic, notes=notes,
                           ref=rootTopic.getTitle())
-    # TODO: change tag name to include deck name instead of map title
+
     # calls createNotes for each answer
     def getQuestions(self, answer: TopicElement, notes: list, ref="", aId=""):
         if not answer.getParentNode().tagName == 'sheet':

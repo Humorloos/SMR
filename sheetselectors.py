@@ -9,9 +9,6 @@ import aqt
 
 from XmindImport.consts import ICONS_PATH
 
-
-# TODO: Make a superclass SheetSelector and have both selectors inherit from it
-
 class SheetSelector(QDialog):
     def __init__(self, sheets, topic):
         try:
@@ -38,6 +35,9 @@ class SheetSelector(QDialog):
 
     def on_cancel(self):
         self.close()
+
+    def getTag(self, userInput):
+        return (self.deck.deckName() + '_' + userInput).replace(" ", "_")
 
 
 class SingleSheetSelector(SheetSelector):
@@ -106,8 +106,7 @@ class SingleSheetSelector(SheetSelector):
             self.on_cancel)
 
     def on_ok(self):
-        self.sheets[0].tag = (self.topic + self.user_input.text()).\
-            replace(" ", "_")
+        self.sheets[0].tag = self.getTag(self.user_input.text())
         self.sheets[0].deckId = self.deck.selectedId
         self.close()
 
@@ -200,10 +199,10 @@ class MultiSheetSelector(SheetSelector):
         for box_id, box in enumerate(self.sheet_checkboxes, start=0):
             if box.isChecked():
                 new_sheet = self.sheets[box_id]
-                new_sheet.tag = self.topic + "_" + \
-                                self.sheet_user_inputs[box_id].text().\
-                                    replace(" ", "_")
+                new_sheet.tag = self.getTag(
+                    self.sheet_user_inputs[box_id].text())
                 new_sheet.deckId = self.deck.selectedId()
                 new_sheets.append(new_sheet)
         self.sheets = new_sheets
         self.close()
+
