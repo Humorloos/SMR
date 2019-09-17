@@ -55,6 +55,7 @@ class XmindImporter(NoteImporter):
         if self.running:
             for note in self.notesToAdd:
                 self.col.addNote(note)
+            self.log = ['Imported %s notes' % len(self.notesToAdd)]
         self.mw.progress.finish()
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
@@ -71,6 +72,9 @@ class XmindImporter(NoteImporter):
             selector = SingleSheetSelector(imp_sheets, doc_title)
         self.mw.progress.finish()
         selector.exec_()
+        if not selector.running:
+            self.running = False
+            self.log = ['Import canceled']
         return selector.sheets
 
     def importMap(self, sheetImport: SheetImport):

@@ -26,6 +26,7 @@ class SheetSelector(QDialog):
         self.deck_text = 'Choose Deck:'
         self.deck = None
         self.build()
+        self.running = True
 
     def build(self):
         return
@@ -33,11 +34,12 @@ class SheetSelector(QDialog):
     def on_ok(self):
         return
 
-    def on_cancel(self):
-        self.close()
-
     def getTag(self, userInput):
         return (self.deck.deckName() + '_' + userInput).replace(" ", "_")
+
+    def reject(self):
+        self.running = False
+        super().reject()
 
 
 class SingleSheetSelector(SheetSelector):
@@ -103,12 +105,12 @@ class SingleSheetSelector(SheetSelector):
         buttons.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(
             self.on_ok)
         buttons.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(
-            self.on_cancel)
+            self.reject)
 
     def on_ok(self):
         self.sheets[0].tag = self.getTag(self.user_input.text())
         self.sheets[0].deckId = self.deck.selectedId
-        self.close()
+        self.accept()
 
 
 class MultiSheetSelector(SheetSelector):
@@ -192,7 +194,7 @@ class MultiSheetSelector(SheetSelector):
         buttons.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(
             self.on_ok)
         buttons.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(
-            self.on_cancel)
+            self.reject)
 
     def on_ok(self):
         new_sheets = list()
@@ -204,5 +206,5 @@ class MultiSheetSelector(SheetSelector):
                 new_sheet.deckId = self.deck.selectedId()
                 new_sheets.append(new_sheet)
         self.sheets = new_sheets
-        self.close()
+        self.accept()
 
