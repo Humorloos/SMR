@@ -16,11 +16,11 @@ __author__ = "aiqi@xmind.net <Woody Ai>"
 
 
 from XmindImport.xmind.xcore import Document
-import xconst
+from XmindImport.xmind import xconst
 from XmindImport.xmind.xmixin import WorkbookMixinElement
 from XmindImport.xmind.xsheet import SheetElement
 from XmindImport.xmind.xtopic import TopicElement
-import xutils
+from XmindImport.xmind import xutils
 
 
 class WorkbookElement(WorkbookMixinElement):
@@ -225,8 +225,8 @@ class WorkbookDocument(Document):
 
     def get_path(self):
         if self._path:
-            return utils.get_abs_path(self._path)
+            return xutils.get_abs_path(self._path)
 
     def set_path(self, path):
-        self._path = utils.get_abs_path(path)
+        self._path = xutils.get_abs_path(path)
 

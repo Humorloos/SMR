@@ -14,8 +14,8 @@ __author__ = "aiqi@xmind.net <Woody Ai>"
 
 import codecs
 
-import xconst
-import xutils
+from XmindImport.xmind import xconst
+from XmindImport.xmind import xutils
 
 
 class WorkbookSaver(object):

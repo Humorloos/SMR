@@ -12,14 +12,14 @@
 
 __author__ = "aiqi@xmind.net <Woody Ai>"
 
-import xconst
+from XmindImport.xmind import xconst
 
 from XmindImport.xmind.xmixin import WorkbookMixinElement
 from XmindImport.xmind.xtitle import TitleElement
 from XmindImport.xmind.xposition import PositionElement
 from XmindImport.xmind.xnotes import NotesElement, PlainNotes
 from XmindImport.xmind.xmarkerref import MarkerRefElement, MarkerRefsElement
-import xutils
+from XmindImport.xmind import xutils
 
 
 def split_hyperlink(hyperlink):

@@ -12,8 +12,8 @@
 
 __author__ = "aiqi@xmind.net <Woody Ai>"
 
-import xconst
-import xutils
+from XmindImport.xmind import xconst
+from XmindImport.xmind import xutils
 
 from XmindImport.xmind.xworkbook import WorkbookDocument
 

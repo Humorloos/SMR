@@ -12,7 +12,7 @@
 
 __author__ = "stanypub@gmail.com <Stany MARCEL>"
 
-import xconst
+from XmindImport.xmind import xconst
 from XmindImport.xmind.xmixin import WorkbookMixinElement
 
 

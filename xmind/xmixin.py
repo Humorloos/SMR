@@ -12,9 +12,9 @@
 
 __author__ = "aiqi@xmind.net <Woody Ai>"
 
-import xconst
+from XmindImport.xmind import xconst
 from XmindImport.xmind.xcore import Element
-import xutils
+from XmindImport.xmind import xutils
 
 
 class WorkbookMixinElement(Element):
