@@ -86,7 +86,10 @@ class XmindImporter(NoteImporter):
     # calls createNotes for each answer
     def getQuestions(self, answer: TopicElement, notes: list, ref="", aId=""):
         if not answer.getParentNode().tagName == 'sheet':
-            ref = ref + ': ' + answer.getTitle() + '</li>'
+            if isEmptyNode(answer):
+                ref = ref + '</li>'
+            else:
+                ref = ref + ': ' + answer.getTitle() + '</li>'
         questionDicts = self.findQuestions(answer=answer, ref=ref)
         for qId, questionDict in enumerate(questionDicts, start=1):
             nextId = aId + getId(qId)
@@ -108,9 +111,9 @@ class XmindImporter(NoteImporter):
                        ref=ref, nextNotes=nextNotes)
         ref = ref + '<li>' + question.getTitle()
         # make notes for following cards
-        for aId, answer in enumerate(answers, start=1):
-            self.getQuestions(answer=answer, notes=nextNotes[aId - 1], ref=ref,
-                              aId=qId + getId(aId))
+        for sId, subTopic in enumerate(question.getSubTopics(), start=1):
+            self.getQuestions(answer=subTopic, notes=nextNotes[sId - 1],
+                              ref=ref, aId=qId + getId(sId))
     # TODO: check out hierarchical tags, may be useful
 
     # receives a question, sheet and list of notes possibly following this question and returns a json file
@@ -120,13 +123,13 @@ class XmindImporter(NoteImporter):
         xMindMeta['sheetId'] = self.currentSheetImport.sheet.getID()
         xMindMeta['questionId'] = question.getID()
         xMindMeta['answers'] = list()
-        answers = question.getSubTopics()
-        for aId, answer in enumerate(answers, start=0):
+        subTopics = question.getSubTopics()
+        for sId, subTopic in enumerate(subTopics, start=0):
             xMindMeta['answers'].append(dict())
-            xMindMeta['answers'][aId]['answerId'] = answers[aId].getID()
-            xMindMeta['answers'][aId]['children'] = list()
-            for note in notes[aId]:
-                xMindMeta['answers'][aId]['children'].append(note.id)
+            xMindMeta['answers'][sId]['answerId'] = subTopics[sId].getID()
+            xMindMeta['answers'][sId]['children'] = list()
+            for note in notes[sId]:
+                xMindMeta['answers'][sId]['children'].append(note.id)
         return json.dumps(xMindMeta)
 
     def addImage(self, attachment):
@@ -160,11 +163,11 @@ class XmindImporter(NoteImporter):
         return content
 
     def getNextNotes(self, question):
-        answers = question.getSubTopics()
+        answers = self.findAnswers(question)
         nextNotes = []
-        for aId, answer in enumerate(answers, start=1):
-            # Add one new note for each question following this answer
-            nextNotes.append(self.getNoteListForQuestions(answer))
+        for subTopic in question.getSubTopics():
+            # Add one new note for each question following this subTopic
+            nextNotes.append(self.getNoteListForQuestions(subTopic))
         return answers, nextNotes
 
     def getNoteListForQuestions(self, answer: TopicElement):
@@ -186,7 +189,6 @@ class XmindImporter(NoteImporter):
     # receives an answer node and returns all questions following this answer
     # including questions following multiple topics
     def findQuestions(self, answer: TopicElement, ref):
-
         followRels = answer.getSubTopics()
         questionDicts = []
         for followRel in followRels:
@@ -198,6 +200,15 @@ class XmindImporter(NoteImporter):
             else:
                 questionDicts.append(dict(question=followRel, ref=ref))
         return questionDicts
+
+    # receives a question node and returns all Answers that are not empty nodes
+    def findAnswers(self, question: TopicElement):
+        answers = list()
+        for answer in question.getSubTopics():
+            if not(isEmptyNode(answer)):
+                answers.append(answer)
+
+        return answers
 
     def makeXNote(self, note, qId, question, answers, ref, nextNotes):
         # Set deck
