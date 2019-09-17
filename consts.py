@@ -39,9 +39,7 @@ X_CARD_SR1 = """
     var nAnswers = meta.nAnswers;
     if(nAnswers > 1) {
         document.getElementById("h").innerHTML = "(1 / " + nAnswers + ")"; 
-        document.getElementById("dots").innerHTML = '<li><span class="dots"> %s </span></li>';
-    } else {
-        document.getElementById("dots").innerHTML = '<span class="dots"> %s </span>';
+        document.getElementById("dots").innerHTML = '<li>' + document.getElementById("dots").innerHTML + '</li>';
     }"""
 
 # JavaScript Card N
@@ -62,6 +60,9 @@ X_CARD_QT = """
 # Bottom (Card 1)
 X_CARD_BT1 = """<hr id="answer">
 <span id="dots">
+    <span class="dots">
+        %s
+    </span>
 </span>"""
 
 # Bottom (Card n)

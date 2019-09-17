@@ -6,10 +6,8 @@ from XmindImport.consts import *
 def get_card(cid):
     asw = '{{' + X_FLDS[X_FLDS_IDS[cid + 1]] + '}}'
     if cid == 1:
-        card_front = X_CARD_HD + X_CARD_SR1 % ('...', '...') + \
-                     X_CARD_QT + X_CARD_BT1
-        card_back = X_CARD_HD + X_CARD_SR1 % (asw, asw) + \
-                    X_CARD_QT + X_CARD_BT1
+        card_front = X_CARD_HD + X_CARD_SR1 + X_CARD_QT + X_CARD_BT1 % '...'
+        card_back = X_CARD_HD + X_CARD_SR1 + X_CARD_QT + X_CARD_BT1 % asw
     else:
         hint = ''
         for x in range(1, cid):
