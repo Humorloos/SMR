@@ -16,13 +16,6 @@ from XmindImport.utils import *
 from XmindImport.consts import *
 
 
-class SheetImport:
-    def __init__(self, sheet: SheetElement, tag):
-        self.sheet = sheet
-        self.tag = tag
-        self.deckId = None
-
-
 class XmindImporter(NoteImporter):
     needMapper = False
 
@@ -31,7 +24,7 @@ class XmindImporter(NoteImporter):
         self.model = col.models.byName(X_MODEL_NAME)
         self.sheets = None
         self.mw = aqt.mw.app.activeWindow() or aqt.mw
-        self.currentSheetImport = None
+        self.currentSheetImport = dict()
         self.mediaDir = os.path.join(os.path.dirname(col.path),
                                      'collection.media')
         self.srcDir = tempfile.mkdtemp()
@@ -43,7 +36,7 @@ class XmindImporter(NoteImporter):
 
     def run(self):
         selectedSheets = self.get_x_sheets()
-        self.deckId = selectedSheets[0].deckId
+        self.deckId = selectedSheets[0]['deckId']
         self.mw.progress.start(immediate=True)
         self.mw.checkpoint("Import")
         for sheetImport in selectedSheets:
@@ -76,12 +69,12 @@ class XmindImporter(NoteImporter):
             self.log = ['Import canceled']
         return selector.sheets
 
-    def importMap(self, sheetImport: SheetImport):
-        rootTopic = sheetImport.sheet.getRootTopic()
+    def importMap(self, sheetImport: dict):
+        rootTopic = sheetImport['sheet'].getRootTopic()
         self.currentSheetImport = sheetImport
         # Set model to Stepwise map retrieval model
         xModel = self.col.models.byName(X_MODEL_NAME)
-        self.col.decks.select(self.currentSheetImport.deckId)
+        self.col.decks.select(self.currentSheetImport['deckId'])
         self.col.decks.current()['mid'] = xModel['id']
         # create first notes for this sheet
         notes = list()
@@ -160,7 +153,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     def getXMindMeta(self, question: TopicElement, notes: list, nAnswers):
         xMindMeta = dict()
         xMindMeta['path'] = self.file
-        xMindMeta['sheetId'] = self.currentSheetImport.sheet.getID()
+        xMindMeta['sheetId'] = self.currentSheetImport['sheet'].getID()
         xMindMeta['questionId'] = question.getID()
         xMindMeta['answers'] = list()
         subTopics = question.getSubTopics()
@@ -245,7 +238,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     # collection
     def makeXNote(self, note, qId, question, answerDicts, ref, nextNotes):
         # Set deck
-        note.model()['did'] = self.currentSheetImport.deckId
+        note.model()['did'] = self.currentSheetImport['deckId']
 
         # set field ID
         note.fields[list(X_FLDS.keys()).index('id')] = qId
@@ -271,7 +264,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         note.fields[list(X_FLDS.keys()).index('mt')] = meta
 
         # Set tag
-        note.tags.append(self.currentSheetImport.tag)
+        note.tags.append(self.currentSheetImport['tag'])
 
         # add to col
         self.notesToAdd.append(note)

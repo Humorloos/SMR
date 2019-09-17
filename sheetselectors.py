@@ -5,7 +5,6 @@ from aqt.qt import *
 from aqt.deckchooser import DeckChooser
 import aqt
 
-from XmindImport.xminder import SheetImport
 from XmindImport.consts import ICONS_PATH
 
 class SheetSelector(QDialog):
@@ -17,8 +16,8 @@ class SheetSelector(QDialog):
         super().__init__(parent=self.parent)
         self.sheets = list()
         for sheet in sheets:
-            sheet_import = SheetImport(sheet, "")
-            self.sheets.append(sheet_import)
+            sheetImport = dict(sheet=sheet, tag="", deckId="")
+            self.sheets.append(sheetImport)
         self.topic = topic
         self.width = 600
         self.height = 100
@@ -50,7 +49,7 @@ class SingleSheetSelector(SheetSelector):
         if not self.parent:
             self.width *= 2
             self.height *= 2
-        title = self.sheets[0].sheet.getTitle()
+        title = self.sheets[0]['sheet'].getTitle()
         tag_text = 'Enter name for sheet "' + title + '":'
         self.setWindowTitle('Xmind Import')
         self.setWindowIcon(QIcon(os.path.join(ICONS_PATH, "icon.ico")))
@@ -107,8 +106,8 @@ class SingleSheetSelector(SheetSelector):
             self.reject)
 
     def on_ok(self):
-        self.sheets[0].tag = self.getTag(self.user_input.text())
-        self.sheets[0].deckId = self.deck.selectedId
+        self.sheets[0]['tag'] = self.getTag(self.user_input.text())
+        self.sheets[0]['deckId'] = self.deck.selectedId
         self.accept()
 
 
@@ -159,7 +158,7 @@ class MultiSheetSelector(SheetSelector):
         sheet_v_layout_2 = QtWidgets.QVBoxLayout()
 
         for sheet in self.sheets:
-            title = sheet.sheet.getTitle()
+            title = sheet['sheet'].getTitle()
 
             sheet_checkbox = QtWidgets.QCheckBox(layout)
             sheet_checkbox.setText(title)
@@ -200,9 +199,9 @@ class MultiSheetSelector(SheetSelector):
         for box_id, box in enumerate(self.sheet_checkboxes, start=0):
             if box.isChecked():
                 new_sheet = self.sheets[box_id]
-                new_sheet.tag = self.getTag(
+                new_sheet['tag'] = self.getTag(
                     self.sheet_user_inputs[box_id].text())
-                new_sheet.deckId = self.deck.selectedId()
+                new_sheet['deckId'] = self.deck.selectedId()
                 new_sheets.append(new_sheet)
         self.sheets = new_sheets
         self.accept()
