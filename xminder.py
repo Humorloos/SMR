@@ -139,7 +139,9 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                            nextNotes=nextNotes)
 
             # add notes for questions following this note
-            ref = ref + '<li>' + question.getTitle()
+
+            questionContent = note.fields[list(X_FLDS.keys()).index('qt')]
+            ref = ref + '<li>' + questionContent
             for aId, answerDict in enumerate(answerDicts, start=1):
                 if answerDicts[aId - 1]['isAnswer']:
                     answerContent = note.fields[list(X_FLDS.keys()).index(
