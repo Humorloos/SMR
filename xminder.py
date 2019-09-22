@@ -185,9 +185,20 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     # audio file with ending .mp3 or .wav, adds the file to the anki collection
     # and returns the audio's basename
     def addAudio(self, audioAttr):
-        audioPath = urllib.parse.unquote(audioAttr[7:])
+        inMap = False
+        if audioAttr[:4] == 'file':
+            audioPath = urllib.parse.unquote(audioAttr[7:])
+        elif audioAttr[:3] == 'xap':
+            inMap = True
+            audioPath = audioAttr[4:]
+        else:
+            audioPath = urllib.parse.unquote(audioAttr[7:])
         audioExt = os.path.splitext(audioPath)[1]
         if audioExt in ['.mp3', '.wav']:
+            if inMap:
+                # extract file and add it to temporary source directory
+                self.xZip.extract(audioPath, self.srcDir)
+                audioPath = os.path.join(self.srcDir, audioPath)
             self.col.media.addFile(audioPath)
         return os.path.basename(audioPath)
 
