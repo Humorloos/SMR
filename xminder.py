@@ -181,6 +181,9 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         srcPath = os.path.join(self.srcDir, attachment)
         self.col.media.addFile(srcPath)
 
+    # gets an link attribute from an xmind file checks whether it relates to an
+    # audio file with ending .mp3 or .wav, adds the file to the anki collection
+    # and returns the audio's basename
     def addAudio(self, audioAttr):
         audioPath = urllib.parse.unquote(audioAttr[7:])
         audioExt = os.path.splitext(audioPath)[1]
@@ -274,7 +277,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         # Set tag
         note.tags.append(self.currentSheetImport['tag'])
 
-        # add to col
+        # add to list of nodes to add
         self.notesToAdd.append(note)
 
     # receives a question node and returns a list of dictionaries containing the
