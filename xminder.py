@@ -19,6 +19,8 @@ from XmindImport.consts import *
 # TODO: add synchronization feature
 # TODO: change absolute to relative paths
 # TODO: add new prestentation order
+# TODO: Implement hints as part of the meta json instead of javascript and use
+#  sound=False to mute answers in hint
 
 class XmindImporter(NoteImporter):
     needMapper = False
