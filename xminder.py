@@ -142,12 +142,14 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
             # add notes for questions following this note
 
-            questionContent = note.fields[list(X_FLDS.keys()).index('qt')]
+            questionContent = replaceSound(
+                note.fields[list(X_FLDS.keys()).index('qt')])
             ref = ref + '<li>' + questionContent
             for aId, answerDict in enumerate(answerDicts, start=1):
                 if answerDicts[aId - 1]['isAnswer']:
-                    answerContent = note.fields[list(X_FLDS.keys()).index(
-                        'a' + answerDict['aId'])]
+                    answerContent = replaceSound(
+                        note.fields[list(X_FLDS.keys()).index(
+                            'a' + answerDict['aId'])])
                 else:
                     answerContent = ''
                 self.getQuestions(

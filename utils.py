@@ -1,3 +1,5 @@
+import re
+
 from XmindImport.xmind.xtopic import TopicElement
 
 
@@ -31,3 +33,7 @@ def findQuestionDicts(answer: TopicElement, ref):
         else:
             questionDicts.append(dict(question=followRel, ref=ref))
     return questionDicts
+
+
+def replaceSound(content: str):
+    return re.sub("\[sound:.*\]", '(sound)', content)
