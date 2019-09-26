@@ -15,13 +15,8 @@ def isEmptyNode(node: TopicElement):
 
 
 # receives a dictionary with an id for sorting the cards and an id for finding the card's position
-def updateIds(previousIds: dict, idToAppend):
-    newIds = dict.copy(previousIds)
-    newIds['sortId'] += chr(idToAppend + 122)
-    if newIds['refId'] != '':
-        newIds['refId'] += '.'
-    newIds['refId'] += str(idToAppend)
-    return newIds
+def updateId(previousId, idToAppend):
+    return previousId + chr(idToAppend + 122)
 
 
 # receives an answer node and returns all questions following this answer
@@ -43,3 +38,10 @@ def findQuestionDicts(answer: TopicElement, ref=''):
 
 def replaceSound(content: str):
     return re.sub("\[sound:.*\]", '(sound)', content)
+
+def getCoordsFromId(sortId):
+    indices = list(map(lambda index: str(ord(index) - 122), sortId))
+    coords = indices[0]
+    for index in indices[1:]:
+        coords += '.' + index
+    return coords
