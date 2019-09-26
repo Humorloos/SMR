@@ -23,6 +23,7 @@ from XmindImport.consts import *
 #  sound=False to mute answers in hint
 # TODO: Implement warning if an audio file can't be found
 # TODO: Use highest symbol in anki sorting mechanism for separator in ID codes
+# TODO: Come up with a better method to make ids
 
 class XmindImporter(NoteImporter):
     needMapper = False
