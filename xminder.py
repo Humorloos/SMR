@@ -22,6 +22,7 @@ from XmindImport.consts import *
 # TODO: Implement hints as part of the meta json instead of javascript and use
 #  sound=False to mute answers in hint
 # TODO: Implement warning if an audio file can't be found
+# TODO: Use highest symbol in anki sorting mechanism for separator in ID codes
 
 class XmindImporter(NoteImporter):
     needMapper = False
@@ -86,7 +87,7 @@ class XmindImporter(NoteImporter):
         # create first notes for this sheet
         notes = list()
         # noinspection PyUnusedLocal
-        for question in rootTopic.getSubTopics():
+        for question in findQuestionDicts(rootTopic):
             notes.append(self.col.newNote())
             sleep(0.001)
         rootDict = dict(subTopic=rootTopic, isAnswer=True, aId=str(1))
@@ -109,6 +110,7 @@ class XmindImporter(NoteImporter):
                 ref = ref + ': ' + answerContent + '</li>'
         questionDicts = findQuestionDicts(answer=answerDict['subTopic'],
                                           ref=ref)
+
         for qId, questionDict in enumerate(questionDicts, start=1):
             nextId = aId + getId(qId)
             if not (len(questionDict['question'].getSubTopics()) > 0):
@@ -160,7 +162,8 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
     # TODO: check out hierarchical tags, may be useful
 
-    # receives a question, sheet and list of notes possibly following this question and returns a json file
+    # receives a question, sheet and list of notes possibly following this
+    # question and returns a json file
     def getXMindMeta(self, question: TopicElement, notes: list, nAnswers):
         xMindMeta = dict()
         xMindMeta['path'] = self.file

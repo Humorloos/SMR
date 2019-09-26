@@ -20,8 +20,9 @@ def getId(xId):
 
 
 # receives an answer node and returns all questions following this answer
-# including questions following multiple topics
-def findQuestionDicts(answer: TopicElement, ref):
+# including questions following multiple topics as dictionaries of a question
+# node and its corresponding reference
+def findQuestionDicts(answer: TopicElement, ref=''):
     followRels = answer.getSubTopics()
     questionDicts = []
     for followRel in followRels:
