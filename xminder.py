@@ -21,6 +21,7 @@ from XmindImport.consts import *
 # TODO: add new prestentation order
 # TODO: Implement hints as part of the meta json instead of javascript and use
 #  sound=False to mute answers in hint
+# TODO: Implement warning if an audio file can't be found
 
 class XmindImporter(NoteImporter):
     needMapper = False
