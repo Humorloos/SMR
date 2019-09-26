@@ -92,8 +92,9 @@ class XmindImporter(NoteImporter):
             notes.append(self.col.newNote())
             sleep(0.001)
         rootDict = dict(subTopic=rootTopic, isAnswer=True, aId=str(1))
+        aIds = dict(sortId='', refId='')
         self.getQuestions(answerDict=rootDict, notes=notes,
-                          ref=rootTopic.getTitle())
+                          ref=rootTopic.getTitle(), aIds=aIds)
 
     # calls createNotes for each answer.
     # Inputs:
@@ -102,8 +103,8 @@ class XmindImporter(NoteImporter):
     # AnswerContent: content of parent answer in parent anki note
     # ref: current text for reference field
     # aId: current id for id field
-    def getQuestions(self, answerDict: dict, notes: list, answerContent='',
-                     ref="", aId=""):
+    def getQuestions(self, answerDict: dict, notes: list, aIds: dict,
+                     answerContent='', ref=""):
         if not answerDict['subTopic'].getParentNode().tagName == 'sheet':
             if isEmptyNode(answerDict['subTopic']):
                 ref = ref + '</li>'
@@ -113,15 +114,15 @@ class XmindImporter(NoteImporter):
                                           ref=ref)
 
         for qId, questionDict in enumerate(questionDicts, start=1):
-            nextId = aId + getId(qId)
+            nextIds = updateIds(previousIds=aIds, idToAppend=qId)
             if not (len(questionDict['question'].getSubTopics()) > 0):
                 self.running = False
                 self.log = ["""Warning:
 A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept Map and try again.""" %
-                            (questionDict['question'].getTitle(), aId)]
+                            (questionDict['question'].getTitle(), aIds['refId'])]
             if self.running:
                 self.addNote(question=questionDict['question'],
-                             ref=questionDict['ref'], qId=nextId,
+                             ref=questionDict['ref'], qIds=nextIds,
                              note=notes[qId - 1])
 
     # Inputs:
@@ -131,7 +132,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     # note: note to be added for the question node
     # creates notes for the children of this note, configures this note and
     # recursively calls getQuestions() to add notes following this note
-    def addNote(self, question: TopicElement, ref, qId, note):
+    def addNote(self, question: TopicElement, ref, qIds, note):
 
         answerDicts = self.findAnswerDicts(question)
 
@@ -140,12 +141,11 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             nextNotes = self.getNextNotes(answerDicts)
 
             # configure and add note to collection
-            self.makeXNote(note=note, qId=qId, question=question,
+            self.makeXNote(note=note, qId=qIds['sortId'], question=question,
                            answerDicts=answerDicts, ref=ref,
                            nextNotes=nextNotes)
 
             # add notes for questions following this note
-
             questionContent = replaceSound(
                 note.fields[list(X_FLDS.keys()).index('qt')])
             ref = ref + '<li>' + questionContent
@@ -159,7 +159,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                 self.getQuestions(
                     answerDict=answerDict, notes=nextNotes[aId - 1],
                     answerContent=answerContent,
-                    ref=ref, aId=qId + getId(aId))
+                    ref=ref, aIds=updateIds(previousIds=qIds, idToAppend=aId))
 
     # TODO: check out hierarchical tags, may be useful
 

@@ -14,9 +14,14 @@ def isEmptyNode(node: TopicElement):
     return True
 
 
-# returns numbers 1 : 9 or letters starting with A starting at 10
-def getId(xId):
-    return chr(xId + 64)
+# receives a dictionary with an id for sorting the cards and an id for finding the card's position
+def updateIds(previousIds: dict, idToAppend):
+    newIds = dict.copy(previousIds)
+    newIds['sortId'] += chr(idToAppend + 122)
+    if newIds['refId'] != '':
+        newIds['refId'] += '.'
+    newIds['refId'] += str(idToAppend)
+    return newIds
 
 
 # receives an answer node and returns all questions following this answer
