@@ -36,6 +36,8 @@ def findQuestionDicts(answer: TopicElement, ref=''):
     return questionDicts
 
 
+# replace the anki sound html code with (sound) to avoid anki playing sounds
+# when they are mentioned in the reference
 def replaceSound(content: str):
     return re.sub("\[sound:.*\]", '(sound)', content)
 

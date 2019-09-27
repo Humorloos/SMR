@@ -3,6 +3,7 @@ import zipfile
 import tempfile
 import shutil
 import urllib.parse
+import re
 
 from time import sleep
 
@@ -138,6 +139,10 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         if self.running:
             # Create Notes for next questions for Question nids in Meta field
             nextNotes = self.getNextNotes(answerDicts)
+            if qId == '{|':
+                print('hier')
+            if qId == '~{|':
+                print('hier')
 
             # configure and add note to collection
             self.makeXNote(note=note, qId=qId, question=question,
@@ -221,7 +226,8 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             self.addImage(attachment)
             if content != '':
                 content += '<br>'
-            content += '<img src="%s">' % attachment[12:]
+            fileName = re.search('/.*', attachment).group()[1:]
+            content += '<img src="%s">' % fileName
         except:
             pass
         # if necessary add audio file
