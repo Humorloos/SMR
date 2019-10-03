@@ -2,7 +2,6 @@ import os
 from collections import OrderedDict
 
 # SMR Template information
-
 X_MODEL_VERSION = '0.1.0'
 X_MODEL_NAME = 'Stepwise Map Retrieval'
 X_MAX_ANSWERS = 20

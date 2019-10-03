@@ -1,3 +1,5 @@
+from distutils.version import LooseVersion
+
 from aqt import mw
 
 from XmindImport.template import *
@@ -8,4 +10,7 @@ def get_or_create_model():
     if not model:
         # create model
         model = add_x_model(mw.col)
+    if len(model['vers']) == 0 or \
+            LooseVersion(model['vers'][-1]) < LooseVersion(X_MODEL_VERSION):
+        update_x_model(mw.col)
     return model

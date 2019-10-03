@@ -39,9 +39,21 @@ def add_x_model(col):
         template['qfmt'] = card[0]
         template['afmt'] = card[1]
         models.addTemplate(x_model, template)
-    x_model['css'] = X_CARD_CSS
-    x_model['sortf'] = list(X_FLDS.keys()).index('id')  # set sortfield to ID
-    x_model['vers'] = X_MODEL_VERSION
+    set_x_model_fields(x_model)
 
     models.add(x_model)
     return x_model
+
+def update_x_model(col):
+    x_model = col.models.byName(X_MODEL_NAME)
+    for cid, name in enumerate(X_CARD_NAMES, start=1):
+        card = get_card(cid)
+        x_model['tmpls'][cid - 1]['qfmt'] = card[0]
+        x_model['tmpls'][cid - 1]['afmt'] = card[1]
+    set_x_model_fields(x_model)
+    col.models.save()
+
+def set_x_model_fields(x_model):
+    x_model['css'] = X_CARD_CSS
+    x_model['sortf'] = list(X_FLDS.keys()).index('id')  # set sortfield to ID
+    x_model['vers'].append(X_MODEL_VERSION)
