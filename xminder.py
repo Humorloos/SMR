@@ -139,10 +139,6 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         if self.running:
             # Create Notes for next questions for Question nids in Meta field
             nextNotes = self.getNextNotes(answerDicts)
-            if qId == '{|':
-                print('hier')
-            if qId == '~{|':
-                print('hier')
 
             # configure and add note to collection
             self.makeXNote(note=note, qId=qId, question=question,
