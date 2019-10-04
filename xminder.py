@@ -5,6 +5,7 @@ import shutil
 import urllib.parse
 import re
 
+from bs4 import BeautifulSoup
 from time import sleep
 
 from anki.importing.noteimp import NoteImporter
@@ -42,6 +43,7 @@ class XmindImporter(NoteImporter):
         self.deckId = ''
         self.notesToAdd = list()
         self.running = True
+        self.soup = None
 
     def run(self):
         selectedSheets = self.get_x_sheets()
@@ -65,6 +67,8 @@ class XmindImporter(NoteImporter):
     # returns list of
     def get_x_sheets(self):
         doc = load(self.file)
+        self.soup = BeautifulSoup(doc.getOwnerDocument().toxml(),
+                                  features='html.parser')
         imp_sheets = doc.getSheets()
         doc_title = os.path.basename(self.file)[:-6]
         if len(imp_sheets) > 1:
@@ -213,8 +217,17 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     # necessary
     def getContent(self, node: TopicElement):
         content = ''
+        href = node.getHyperlink()
         if node.getTitle():
             content += node.getTitle()
+
+        # If the node contains a link to another node, add the text of that
+        # node. Use Beautifulsoup because minidom can't find nodes by attributes
+        if href and href.startswith('xmind:#'):
+            if content != '':
+                content += ' '
+            content += self.soup.find('topic', {'id': href[7:]}).next.text
+
         # if necessary add image
         try:
             attachment = node.getFirstChildNodeByTagName('xhtml:img'). \
@@ -227,11 +240,10 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         except:
             pass
         # if necessary add audio file
-        audioAttr = node.getAttribute('xlink:href')
-        if audioAttr:
+        if href and href.endswith(('.mp3', '.wav')):
             if content != '':
                 content += '<br>'
-            content += '[sound:%s]' % self.addAudio(audioAttr)
+            content += '[sound:%s]' % self.addAudio(href)
         return content
 
     # receives a list of answerDicts and returns a list of anki notes for each
