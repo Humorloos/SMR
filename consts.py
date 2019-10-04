@@ -8,7 +8,8 @@ X_MAX_ANSWERS = 20
 X_CARD_NAMES = list(map(lambda aswid: 'Answer ' + str(aswid),
                         list(range(1, X_MAX_ANSWERS + 1))))
 
-# Fields
+# Fields, use orderedDict to be able to access flds field in notes objects by
+# postition of dictionary key
 X_FLDS = OrderedDict((('rf', 'Reference'), ('qt', 'Question')))
 for i in range(1, X_MAX_ANSWERS + 1):
     X_FLDS['a' + str(i)] = 'Answer ' + str(i)
