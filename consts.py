@@ -2,7 +2,7 @@ import os
 from collections import OrderedDict
 
 # SMR Template information
-X_MODEL_VERSION = '0.1.0'
+X_MODEL_VERSION = '0.1.1'
 X_MODEL_NAME = 'Stepwise Map Retrieval'
 X_MAX_ANSWERS = 20
 X_CARD_NAMES = list(map(lambda aswid: 'Answer ' + str(aswid),
@@ -48,7 +48,7 @@ X_CARD_SR1 = """
 # JavaScript Card N
 X_CARD_SRN = """
     var meta = JSON.parse(document.getElementById("s1").textContent);
-    var nAnswers = meta.answers.length;
+    var nAnswers = meta.nAnswers;
     document.getElementById("h").innerHTML = "(%s / " + nAnswers + ")";"""
 
 # Question (All Cards)
