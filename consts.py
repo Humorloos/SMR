@@ -55,7 +55,7 @@ X_CARD_SRN = """
 X_CARD_QT = """
 </script>
 <hr id="question">
-{{%s}}?
+{{%s}}
 <span id="h">
 </span>
 """ % X_FLDS['qt']
