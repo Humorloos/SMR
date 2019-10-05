@@ -167,8 +167,8 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
     # TODO: check out hierarchical tags, may be useful
 
-    # receives a question, sheet and list of notes possibly following this
-    # question and returns a json file
+    # receives a question, sheet and list of notes possibly following each
+    # answer to this question and returns a json file
     def getXMindMeta(self, question: TopicElement, notes: list, nAnswers):
         xMindMeta = dict()
         xMindMeta['path'] = self.file
@@ -253,15 +253,15 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         for answerDict in answerDicts:
             # Add one new note for each question following this subTopic
             noteListForQuestions = self.getNoteListForQuestions(
-                answerDict['subTopic'])
+                answerDict)
             nextNotes.append(noteListForQuestions)
         return nextNotes
 
-    # receives an xmind node and returns a list of anki notes containing one
-    # note for each question following this node
-    def getNoteListForQuestions(self, subTopic: TopicElement):
+    # receives an answer dictionary and returns a list of anki notes containing
+    # one note for each question following this node
+    def getNoteListForQuestions(self, answerDict: dict):
         noteList = []
-        questions = subTopic.getSubTopics()
+        questions = answerDict['subTopic'].getSubTopics()
         for question in questions:
             if not (isEmptyNode(question)):
                 noteList.append(self.col.newNote())
@@ -316,11 +316,18 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     def findAnswerDicts(self, question: TopicElement):
         answerDicts = list()
         for subTopic in question.getSubTopics():
+            # Check whether subtopic is not empty and contains an answer
             isAnswer = True
             if isEmptyNode(subTopic):
                 isAnswer = False
+            # Check whether subtopic contains a crosslink
+            hasCrosslink = False
+            href = subTopic.getHyperlink()
+            if href and href.startswith('xmind:#'):
+                hasCrosslink = True
             answerDicts.append(
-                dict(subTopic=subTopic, isAnswer=isAnswer, aId=str(0)))
+                dict(subTopic=subTopic, isAnswer=isAnswer, aId=str(0),
+                     hasCrosslink=hasCrosslink))
         actualAnswers = list(filter(
             lambda answerDict: answerDict['isAnswer'], answerDicts))
         if len(actualAnswers) > X_MAX_ANSWERS:
