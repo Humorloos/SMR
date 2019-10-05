@@ -197,9 +197,9 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     # and returns the audio's basename
     def addAudio(self, audioAttr):
         inMap = False
-        if audioAttr[:4] == 'file':
+        if audioAttr.startswith('file'):
             audioPath = urllib.parse.unquote(audioAttr[7:])
-        elif audioAttr[:3] == 'xap':
+        elif audioAttr.startswith('xap'):
             inMap = True
             audioPath = audioAttr[4:]
         else:
@@ -326,6 +326,6 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         if len(actualAnswers) > X_MAX_ANSWERS:
             self.running = False
             self.log = ["""Warning:
-A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than 20 Answers and try again.""" %
-                        (question.getTitle(), X_MAX_ANSWERS)]
+A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
+                        (question.getTitle(), X_MAX_ANSWERS, X_MAX_ANSWERS)]
         return answerDicts
