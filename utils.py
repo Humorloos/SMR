@@ -82,11 +82,10 @@ def getTopicById(tId: str, soup: BeautifulSoup, doc):
     return topic
 
 
-# Receives the id of a Question node from the concept map and returns the
-# corresponding from the collection. Returns None if no note was found
-def getNoteByQuestion(qId, col: _Collection):
+# receives a string to search for in meta fields of SMR Notes and returns the
+# first note to contain the delivered String
+def getNoteFromMeta(query, col: _Collection):
     SMRNids = getSMRNids(col)
-    query = "\"questionId\": \"%s\"" % qId
     nIdString = ids2str(SMRNids)
     for nid, flds in col.db.execute(
             "select id, flds from notes where id in " + nIdString):
@@ -96,6 +95,20 @@ def getNoteByQuestion(qId, col: _Collection):
     return None
 
 
+# Receives the id of a Question node from the concept map and returns the
+# corresponding Note from the collection. Returns None if no note was found
+def getNoteFromQuestion(qId, col: _Collection):
+    query = "\"questionId\": \"%s\"" % qId
+    return getNoteFromMeta(query=query, col=col)
+
+
 # receives a collection and returns a list of nIds for all notes of type SMR
 def getSMRNids(col: _Collection):
     return col.findNotes('"note:%s"' % X_MODEL_NAME)
+
+
+# Receives the id of an Answer node from the concept map and returns the
+# corresponding Note from the collection. Returns None if no note was found
+def getNoteFromAnswer(aId, col: _Collection):
+    query = "\"answerId\": \"%s\"" % aId
+    return getNoteFromMeta(query=query, col=col)
