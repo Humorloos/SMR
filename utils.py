@@ -1,7 +1,11 @@
 import re
 from bs4 import BeautifulSoup
 
+from anki.collection import _Collection
+from anki.utils import ids2str, splitFields
+
 from XmindImport.xmind.xtopic import TopicElement
+from XmindImport.consts import X_MODEL_NAME, X_FLDS
 
 
 # checks whether a node contains any text, images or link
@@ -55,7 +59,7 @@ def getCoordsFromId(sortId):
 
 # receives a topic's id attribute, a BeautifulSoup object representing an
 # xmind content xml file and a WorkbookDocument for the same map and returns
-# the topic with the given topic id as a WorkbookElement
+# the corresponding topic as a WorkbookElement
 def getTopicById(tId: str, soup: BeautifulSoup, doc):
     tag = soup.find('topic', {'id': tId})
     # get tags that make up the path to the desired topic
@@ -76,3 +80,22 @@ def getTopicById(tId: str, soup: BeautifulSoup, doc):
         topicNr = len(list(topicTag.previous_siblings))
         topic = topic.getSubTopics()[topicNr]
     return topic
+
+
+# Receives the id of a Question node from the concept map and returns the
+# corresponding from the collection. Returns None if no note was found
+def getNoteByQuestion(qId, col: _Collection):
+    SMRNids = getSMRNids(col)
+    query = "\"questionId\": \"%s\"" % qId
+    nIdString = ids2str(SMRNids)
+    for nid, flds in col.db.execute(
+            "select id, flds from notes where id in " + nIdString):
+        splitFlds = splitFields(flds)
+        if query in splitFlds[list(X_FLDS.keys()).index('mt')]:
+            return nid
+    return None
+
+
+# receives a collection and returns a list of nIds for all notes of type SMR
+def getSMRNids(col: _Collection):
+    return col.findNotes('"note:%s"' % X_MODEL_NAME)
