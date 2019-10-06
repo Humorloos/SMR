@@ -112,3 +112,16 @@ def getSMRNids(col: _Collection):
 def getNoteFromAnswer(aId, col: _Collection):
     query = "\"answerId\": \"%s\"" % aId
     return getNoteFromMeta(query=query, col=col)
+
+
+# receives an xmind TopicElement and returns its parent Element as a minidom
+# Element
+def getParentTopic(topic: TopicElement):
+    return topic.getParentNode().parentNode.parentNode
+
+
+# Receives an xmind TopicElement and returns the id attribute of its parent
+# topic
+def getParentTopicId(topic: TopicElement):
+    parentTopic = getParentTopic(topic)
+    return parentTopic.getAttribute('id')
