@@ -257,24 +257,35 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             nextNotes.append(noteListForQuestions)
         return nextNotes
 
-    # receives an answer dictionary and returns a list of anki notes containing
-    # one note for each question following this node
-    def getNoteListForQuestions(self, answerDict: dict):
-        noteList = []
-        questions = answerDict['subTopic'].getSubTopics()
-        for question in questions:
-            if not (isEmptyNode(question)):
-                noteList.append(self.col.newNote())
+    # TODO: Use getTopicById() and getContent() in getContent to get the content
+    #  of a crosslinked topic
+    # receives an answerDict and returns a list of anki notes containing
+    # one note for each question following this answerDict
+    def getQuestionListForAnswer(self, answerDict: dict):
+
+        # get all nodes following the answer in answerDict, including those
+        # following a potential crosslink
+        # if answerDict['crosslink']:
+        #     crosslinkTopic = getTopicById(tId=answerDict['crosslink'],
+        #                                   soup=self.soup, doc=self.doc)
+        #     questions = crosslinkTopic.getSubTopics()
+        #     if crosslinkNote:
+        #         print('hier')
+        potentialQuestions = answerDict['subTopic'].getSubTopics()
+        # iterate through all questions
+        questionList = []
+        for potentialQuestion in potentialQuestions:
+            if not (isEmptyNode(potentialQuestion)):
+                questionList.append(potentialQuestion)
             else:
-                nextAnswerDicts = self.findAnswerDicts(question)
+                nextAnswerDicts = self.findAnswerDicts(potentialQuestion)
                 # code in brackets is for unlisting:
                 # https://stackoverflow.com/a/952952
-                followingNotes = [item for sublist in self.getNextNotes(
-                    nextAnswerDicts) for item in sublist]
-                noteList.extend(followingNotes)
-            # wait some milliseconds to create note with a different nid
-            sleep(0.001)
-        return noteList
+                followingQuestions = [item for sublist in
+                                  self.getNextNotes(nextAnswerDicts) for item in
+                                  sublist]
+                questionList.extend(followingQuestions)
+        return questionList
 
     # sets the deck, fields and tag of an xmind note and adds it to the
     # collection
