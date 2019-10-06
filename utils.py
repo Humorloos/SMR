@@ -1,4 +1,5 @@
 import re
+from bs4 import BeautifulSoup
 
 from XmindImport.xmind.xtopic import TopicElement
 
@@ -41,9 +42,37 @@ def findQuestionDicts(answer: TopicElement, ref=''):
 def replaceSound(content: str):
     return re.sub("\[sound:.*\]", '(sound)', content)
 
+
+# Receives a sortId of an anki note and returns the path that leads to the
+# corresponding node in the xmind document
 def getCoordsFromId(sortId):
     indices = list(map(lambda index: str(ord(index) - 122), sortId))
     coords = indices[0]
     for index in indices[1:]:
         coords += '.' + index
     return coords
+
+
+# receives a topic's id attribute, a BeautifulSoup object representing an
+# xmind content xml file and a WorkbookDocument for the same map and returns
+# the topic with the given topic id as a WorkbookElement
+def getTopicById(tId: str, soup: BeautifulSoup, doc):
+    tag = soup.find('topic', {'id': tId})
+    # get tags that make up the path to the desired topic
+    parents = list(tag.parents)
+    topicPath = [tag]
+    parentTopics = list(
+        filter(lambda parent: parent.name == 'topic', parents))
+    if len(parentTopics) > 1:
+        topicPath.extend(parentTopics[:-1])
+    # get the sheet that contains the topic
+    sheetTag = list(reversed(parents))[2]
+    sheetNr = len(list(sheetTag.previous_siblings))
+    sheet = doc.getSheets()[sheetNr]
+    # starting at the root topic follow the path described by the tags to
+    # get the desired topic
+    topic = sheet.getRootTopic()
+    for topicTag in reversed(topicPath):
+        topicNr = len(list(topicTag.previous_siblings))
+        topic = topic.getSubTopics()[topicNr]
+    return topic
