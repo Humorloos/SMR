@@ -125,3 +125,8 @@ def getParentTopic(topic: TopicElement):
 def getParentTopicId(topic: TopicElement):
     parentTopic = getParentTopic(topic)
     return parentTopic.getAttribute('id')
+
+
+def getSiblingTopics(topic: TopicElement):
+    print('')
+    # TODO: Implement this
