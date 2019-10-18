@@ -108,7 +108,10 @@ class XmindImporter(NoteImporter):
     # aId: current id for id field
     def getQuestions(self, answerDict: dict, notes: list, aId='',
                      answerContent='', ref=""):
+        # The reference doesn't have to be edited at the roottopic
         if not answerDict['subTopic'].getParentNode().tagName == 'sheet':
+            # if the answerdict contains nothing (i.e. questions
+            # following multiple answers), just close the reference
             if isEmptyNode(answerDict['subTopic']):
                 ref = ref + '</li>'
             else:
@@ -117,7 +120,9 @@ class XmindImporter(NoteImporter):
                                           ref=ref)
 
         for qId, questionDict in enumerate(questionDicts, start=1):
-            nextIds = updateId(previousId=aId, idToAppend=qId)
+            # Update the sorting ID
+            nextSortId = updateId(previousId=aId, idToAppend=qId)
+            # stop and warn if no nodes follow the question
             if not (len(questionDict['question'].getSubTopics()) > 0):
                 self.running = False
                 self.log = ["""Warning:
@@ -126,7 +131,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                              getCoordsFromId(aId))]
             if self.running:
                 self.addNote(question=questionDict['question'],
-                             ref=questionDict['ref'], qId=nextIds,
+                             ref=questionDict['ref'], sortId=nextSortId,
                              note=notes[qId - 1])
 
     # Inputs:
@@ -136,7 +141,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     # note: note to be added for the question node
     # creates notes for the children of this note, configures this note and
     # recursively calls getQuestions() to add notes following this note
-    def addNote(self, question: TopicElement, ref, qId, note):
+    def addNote(self, question: TopicElement, ref, sortId, note):
 
         answerDicts = self.findAnswerDicts(question)
 
@@ -145,7 +150,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             nextNotes = self.getNextNotes(answerDicts)
 
             # configure and add note to collection
-            self.makeXNote(note=note, qId=qId, question=question,
+            self.makeXNote(note=note, sortId=sortId, question=question,
                            answerDicts=answerDicts, ref=ref,
                            nextNotes=nextNotes)
 
@@ -163,7 +168,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                 self.getQuestions(
                     answerDict=answerDict, notes=nextNotes[aId - 1],
                     answerContent=answerContent,
-                    ref=ref, aId=updateId(previousId=qId, idToAppend=aId))
+                    ref=ref, aId=updateId(previousId=sortId, idToAppend=aId))
 
     # TODO: check out hierarchical tags, may be useful
 
@@ -289,12 +294,12 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
     # sets the deck, fields and tag of an xmind note and adds it to the
     # collection
-    def makeXNote(self, note, qId, question, answerDicts, ref, nextNotes):
+    def makeXNote(self, note, sortId, question, answerDicts, ref, nextNotes):
         # Set deck
         note.model()['did'] = self.currentSheetImport['deckId']
 
         # set field ID
-        note.fields[list(X_FLDS.keys()).index('id')] = qId
+        note.fields[list(X_FLDS.keys()).index('id')] = sortId
 
         # Set field Question
         note.fields[list(X_FLDS.keys()).index('qt')] = self.getContent(question)
@@ -323,11 +328,12 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         self.notesToAdd.append(note)
 
     # receives a question node and returns a list of dictionaries containing the
-    # subtopics and whether the subtopics contain an answer or not
+    # subtopics, whether the subtopics contain an answer or not and whether they
+    # contain a crosslink or not
     def findAnswerDicts(self, question: TopicElement):
         answerDicts = list()
         for subTopic in question.getSubTopics():
-            # Check whether subtopic is not empty and contains an answer
+            # Check whether subtopic is not empty
             isAnswer = True
             if isEmptyNode(subTopic):
                 isAnswer = False
