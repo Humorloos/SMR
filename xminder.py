@@ -58,8 +58,8 @@ class XmindImporter(NoteImporter):
         # add all notes to collection
         if self.running:
             for noteDict in self.notesToAdd:
-                print(
-                    'hi')  # TODO: make note from note dict and add it to the collection
+                self.col.addNote(self.noteFromNoteDict(noteDict))
+                sleep(0.001)
             self.log = ['Imported %s notes' % len(self.notesToAdd)]
         self.mw.progress.finish()
         # Remove temp dir and its files
@@ -293,6 +293,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         # Set deck
         # note.model()['did'] = self.currentSheetImport['deckId']
         noteDict = dict(rf='', qt='', an=dict(), id='', mt='', tag='')
+
         # set field ID
         noteDict['id'] = sortId
 
@@ -347,3 +348,16 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
                         (question.getTitle(), X_MAX_ANSWERS, X_MAX_ANSWERS)]
         return answerDicts
+
+    def noteFromNoteDict(self, noteDict):
+        note = self.col.newNote()
+        note.model()['did'] = self.deckId
+        note.fields[list(X_FLDS.keys()).index('id')] = noteDict['id']
+        note.fields[list(X_FLDS.keys()).index('qt')] = noteDict['qt']
+        for key in noteDict['an']:
+            note.fields[list(X_FLDS.keys()).index(key)] = noteDict['an'][key]
+        note.fields[list(X_FLDS.keys()).index('rf')] = noteDict['rf']
+        note.fields[list(X_FLDS.keys()).index('mt')] = noteDict['mt']
+        note.tags.append(noteDict['tag'])
+
+        return note
