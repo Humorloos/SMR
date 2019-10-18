@@ -17,6 +17,7 @@ from XmindImport.sheetselectors import *
 from XmindImport.utils import *
 from XmindImport.consts import *
 
+
 # TODO: add warning when something is wrong with the map
 # TODO: add synchronization feature
 # TODO: change absolute to relative paths
@@ -56,8 +57,9 @@ class XmindImporter(NoteImporter):
 
         # add all notes to collection
         if self.running:
-            for note in self.notesToAdd:
-                self.col.addNote(note)
+            for noteDict in self.notesToAdd:
+                print(
+                    'hi')  # TODO: make note from note dict and add it to the collection
             self.log = ['Imported %s notes' % len(self.notesToAdd)]
         self.mw.progress.finish()
         # Remove temp dir and its files
@@ -89,15 +91,8 @@ class XmindImporter(NoteImporter):
         xModel = self.col.models.byName(X_MODEL_NAME)
         self.col.decks.select(self.currentSheetImport['deckId'])
         self.col.decks.current()['mid'] = xModel['id']
-        # create first notes for this sheet
-        notes = list()
-        # noinspection PyUnusedLocal
-        for question in findQuestionDicts(rootTopic):
-            notes.append(self.col.newNote())
-            sleep(0.001)
         rootDict = dict(subTopic=rootTopic, isAnswer=True, aId=str(1))
-        self.getQuestions(answerDict=rootDict, notes=notes,
-                          ref=rootTopic.getTitle())
+        self.getQuestions(answerDict=rootDict, ref=rootTopic.getTitle())
 
     # calls createNotes for each answer.
     # Inputs:
@@ -106,7 +101,7 @@ class XmindImporter(NoteImporter):
     # AnswerContent: content of parent answer in parent anki note
     # ref: current text for reference field
     # aId: current id for id field
-    def getQuestions(self, answerDict: dict, notes: list, aId='',
+    def getQuestions(self, answerDict: dict, sortId='',
                      answerContent='', ref=""):
         # The reference doesn't have to be edited at the roottopic
         if not answerDict['subTopic'].getParentNode().tagName == 'sheet':
@@ -121,18 +116,17 @@ class XmindImporter(NoteImporter):
 
         for qId, questionDict in enumerate(questionDicts, start=1):
             # Update the sorting ID
-            nextSortId = updateId(previousId=aId, idToAppend=qId)
+            nextSortId = updateId(previousId=sortId, idToAppend=qId)
             # stop and warn if no nodes follow the question
             if not (len(questionDict['question'].getSubTopics()) > 0):
                 self.running = False
                 self.log = ["""Warning:
 A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept Map and try again.""" %
                             (questionDict['question'].getTitle(),
-                             getCoordsFromId(aId))]
+                             getCoordsFromId(sortId))]
             if self.running:
                 self.addNote(question=questionDict['question'],
-                             ref=questionDict['ref'], sortId=nextSortId,
-                             note=notes[qId - 1])
+                             ref=questionDict['ref'], sortId=nextSortId)
 
     # Inputs:
     # question: xmind question node
@@ -141,53 +135,54 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     # note: note to be added for the question node
     # creates notes for the children of this note, configures this note and
     # recursively calls getQuestions() to add notes following this note
-    def addNote(self, question: TopicElement, ref, sortId, note):
+    def addNote(self, question: TopicElement, ref, sortId):
 
         answerDicts = self.findAnswerDicts(question)
 
         if self.running:
             # Create Notes for next questions for Question nids in Meta field
-            nextNotes = self.getNextNotes(answerDicts)
+            nextQuestions = self.getNextQuestions(answerDicts)
 
-            # configure and add note to collection
-            self.makeXNote(note=note, sortId=sortId, question=question,
-                           answerDicts=answerDicts, ref=ref,
-                           nextNotes=nextNotes)
+            # get content of fields for the note to add for this question
+            noteDict = self.getNoteDict(sortId=sortId, question=question,
+                                        answerDicts=answerDicts, ref=ref,
+                                        nextQuestions=nextQuestions)
+            # add to list of notes to add
+            self.notesToAdd.append(noteDict)
 
             # add notes for questions following this note
-            questionContent = replaceSound(
-                note.fields[list(X_FLDS.keys()).index('qt')])
+            questionContent = replaceSound(noteDict['qt'])
             ref = ref + '<li>' + questionContent
             for aId, answerDict in enumerate(answerDicts, start=1):
                 if answerDicts[aId - 1]['isAnswer']:
                     answerContent = replaceSound(
-                        note.fields[list(X_FLDS.keys()).index(
-                            'a' + answerDict['aId'])])
+                        noteDict['an']['a' + answerDict['aId']])
                 else:
                     answerContent = ''
-                self.getQuestions(
-                    answerDict=answerDict, notes=nextNotes[aId - 1],
-                    answerContent=answerContent,
-                    ref=ref, aId=updateId(previousId=sortId, idToAppend=aId))
+                self.getQuestions(answerDict=answerDict,
+                                  answerContent=answerContent, ref=ref,
+                                  sortId=updateId(previousId=sortId,
+                                                  idToAppend=aId))
 
     # TODO: check out hierarchical tags, may be useful
 
     # receives a question, sheet and list of notes possibly following each
     # answer to this question and returns a json file
-    def getXMindMeta(self, question: TopicElement, notes: list, nAnswers):
+    def getXMindMeta(self, question: TopicElement, nextQuestions: list,
+                     answerDicts):
         xMindMeta = dict()
         xMindMeta['path'] = self.file
         xMindMeta['sheetId'] = self.currentSheetImport['sheet'].getID()
         xMindMeta['questionId'] = question.getID()
         xMindMeta['answers'] = list()
-        subTopics = question.getSubTopics()
-        for sId, subTopic in enumerate(subTopics, start=0):
+        for aId, answerDict in enumerate(answerDicts, start=0):
             xMindMeta['answers'].append(dict())
-            xMindMeta['answers'][sId]['answerId'] = subTopics[sId].getID()
-            xMindMeta['answers'][sId]['children'] = list()
-            for note in notes[sId]:
-                xMindMeta['answers'][sId]['children'].append(note.id)
-        xMindMeta['nAnswers'] = nAnswers
+            xMindMeta['answers'][aId]['answerId'] = answerDict[
+                'subTopic'].getID()
+            xMindMeta['answers'][aId]['children'] = list()
+            for question in nextQuestions[aId]:
+                xMindMeta['answers'][aId]['children'].append(question.getID())
+        xMindMeta['nAnswers'] = len(answerDicts)
         return json.dumps(xMindMeta)
 
     def addImage(self, attachment):
@@ -253,11 +248,11 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
     # receives a list of answerDicts and returns a list of anki notes for each
     # subtopic
-    def getNextNotes(self, answerDicts: list):
+    def getNextQuestions(self, answerDicts: list):
         nextNotes = []
         for answerDict in answerDicts:
             # Add one new note for each question following this subTopic
-            noteListForQuestions = self.getNoteListForQuestions(
+            noteListForQuestions = self.getQuestionListForAnswer(
                 answerDict)
             nextNotes.append(noteListForQuestions)
         return nextNotes
@@ -287,45 +282,44 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                 # code in brackets is for unlisting:
                 # https://stackoverflow.com/a/952952
                 followingQuestions = [item for sublist in
-                                  self.getNextNotes(nextAnswerDicts) for item in
-                                  sublist]
+                                      self.getNextQuestions(nextAnswerDicts) for
+                                      item in sublist]
                 questionList.extend(followingQuestions)
         return questionList
 
     # sets the deck, fields and tag of an xmind note and adds it to the
     # collection
-    def makeXNote(self, note, sortId, question, answerDicts, ref, nextNotes):
+    def getNoteDict(self, sortId, question, answerDicts, ref, nextQuestions):
         # Set deck
-        note.model()['did'] = self.currentSheetImport['deckId']
-
+        # note.model()['did'] = self.currentSheetImport['deckId']
+        noteDict = dict(rf='', qt='', an=dict(), id='', mt='', tag='')
         # set field ID
-        note.fields[list(X_FLDS.keys()).index('id')] = sortId
+        noteDict['id'] = sortId
 
         # Set field Question
-        note.fields[list(X_FLDS.keys()).index('qt')] = self.getContent(question)
+        noteDict['qt'] = self.getContent(question)
 
         # Set Answer fields
         aId = 0
         for answerDict in answerDicts:
             if answerDict['isAnswer']:
                 aId += 1
-                note.fields[list(X_FLDS.keys()).index('a' + str(aId))] = \
-                    self.getContent(answerDict['subTopic'])
+                noteDict['an']['a' + str(aId)] = self.getContent(
+                    answerDict['subTopic'])
                 answerDict['aId'] = str(aId)
 
         # Set field Reference
-        note.fields[list(X_FLDS.keys()).index('rf')] = '<ul>%s</ul>' % ref
+        noteDict['rf'] = '<ul>%s</ul>' % ref
 
         # set field Meta
-        meta = self.getXMindMeta(question=question, notes=nextNotes,
-                                 nAnswers=aId)
-        note.fields[list(X_FLDS.keys()).index('mt')] = meta
+        meta = self.getXMindMeta(question=question, nextQuestions=nextQuestions,
+                                 answerDicts=answerDicts)
+        noteDict['mt'] = meta
 
         # Set tag
-        note.tags.append(self.currentSheetImport['tag'])
+        noteDict['tag'] = self.currentSheetImport['tag']
 
-        # add to list of nodes to add
-        self.notesToAdd.append(note)
+        return noteDict
 
     # receives a question node and returns a list of dictionaries containing the
     # subtopics, whether the subtopics contain an answer or not and whether they
