@@ -177,6 +177,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         xMindMeta['answers'] = []
         globalQuestions = []
         nAnswers = 0
+        # TODO: Frage auf zweitem level aus M2Test muss vor crosslinkquestions kommen, muss also schon in getQuestionListforanswer hinzugefügt werden
         for aId, answerDict in enumerate(answerDicts, start=0):
             # write each answer and its following questions into meta
             if answerDict['isAnswer']:
@@ -277,12 +278,6 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
         # get all nodes following the answer in answerDict, including those
         # following a potential crosslink
-        # if answerDict['crosslink']:
-        #     crosslinkTopic = getTopicById(tId=answerDict['crosslink'],
-        #                                   soup=self.soup, doc=self.doc)
-        #     questions = crosslinkTopic.getSubTopics()
-        #     if crosslinkNote:
-        #         print('hier')
         potentialQuestions = answerDict['subTopic'].getSubTopics()
         # iterate through all questions
         questionList = []
@@ -297,6 +292,14 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                                       self.getNextQuestions(nextAnswerDicts) for
                                       item in sublist]
                 questionList.extend(followingQuestions)
+        if answerDict['crosslink']:
+            crosslinkAnswerDict = getAnswerDict(
+                getTopicById(tId=answerDict['crosslink'][7:], soup=self.soup,
+                             doc=answerDict['subTopic']._owner_workbook))
+            crossinkQuestions = self.getQuestionListForAnswer(
+                crosslinkAnswerDict)
+            questionList.extend(crossinkQuestions)
+
         return questionList
 
     # sets the deck, fields and tag of an xmind note and adds it to the
@@ -340,18 +343,8 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     def findAnswerDicts(self, question: TopicElement):
         answerDicts = list()
         for subTopic in question.getSubTopics():
-            # Check whether subtopic is not empty
-            isAnswer = True
-            if isEmptyNode(subTopic):
-                isAnswer = False
-            # Check whether subtopic contains a crosslink
-            hasCrosslink = False
-            href = subTopic.getHyperlink()
-            if href and href.startswith('xmind:#'):
-                hasCrosslink = True
-            answerDicts.append(
-                dict(subTopic=subTopic, isAnswer=isAnswer, aId=str(0),
-                     hasCrosslink=hasCrosslink))
+            answerDict = getAnswerDict(subTopic)
+            answerDicts.append(answerDict)
         actualAnswers = list(filter(
             lambda answerDict: answerDict['isAnswer'], answerDicts))
         if len(actualAnswers) > X_MAX_ANSWERS:

@@ -130,3 +130,17 @@ def getParentTopicId(topic: TopicElement):
 def getSiblingTopics(topic: TopicElement):
     print('')
     # TODO: Implement this
+
+
+def getAnswerDict(subTopic: TopicElement):
+    # Check whether subtopic is not empty
+    isAnswer = True
+    if isEmptyNode(subTopic):
+        isAnswer = False
+    # Check whether subtopic contains a crosslink
+    crosslink = None
+    href = subTopic.getHyperlink()
+    if href and href.startswith('xmind:#'):
+        crosslink = href
+    return dict(subTopic=subTopic, isAnswer=isAnswer, aId=str(0),
+                crosslink=crosslink)
