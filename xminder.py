@@ -168,12 +168,12 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
     # receives a question, sheet and list of notes possibly following each
     # answer to this question and returns a json file
-    def getXMindMeta(self, question: TopicElement, nextQuestions: list,
+    def getXMindMeta(self, qId: TopicElement, nextQuestions: list,
                      answerDicts):
         xMindMeta = dict()
         xMindMeta['path'] = self.file
         xMindMeta['sheetId'] = self.currentSheetImport['sheet'].getID()
-        xMindMeta['questionId'] = question.getID()
+        xMindMeta['questionId'] = qId.getID()
         xMindMeta['answers'] = []
         globalQuestions = []
         nAnswers = 0
@@ -184,17 +184,17 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                 xMindMeta['answers'][nAnswers]['answerId'] = answerDict[
                     'subTopic'].getID()
                 xMindMeta['answers'][nAnswers]['children'] = []
-                for question in nextQuestions[aId]:
+                for qId in nextQuestions[aId]:
                     xMindMeta['answers'][nAnswers]['children'].append(
-                        question.getID())
+                        qId)
                 nAnswers += 1
             # add questions following bridges to globalQuestions
             else:
                 globalQuestions.extend(nextQuestions[aId])
         # add globalQuestions to children of all answers
-        for question in globalQuestions:
+        for qId in globalQuestions:
             for answer in xMindMeta['answers']:
-                answer['children'].append(question.getID())
+                answer['children'].append(qId)
         xMindMeta['nAnswers'] = nAnswers
         return json.dumps(xMindMeta)
 
@@ -262,13 +262,12 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     # receives a list of answerDicts and returns a list of anki notes for each
     # subtopic
     def getNextQuestions(self, answerDicts: list):
-        nextNotes = []
+        nextQuestions = []
         for answerDict in answerDicts:
             # Add one new note for each question following this subTopic
-            noteListForQuestions = self.getQuestionListForAnswer(
-                answerDict)
-            nextNotes.append(noteListForQuestions)
-        return nextNotes
+            questionListForAnswer = self.getQuestionListForAnswer(answerDict)
+            nextQuestions.append(questionListForAnswer)
+        return nextQuestions
 
     # TODO: Use getTopicById() and getContent() in getContent to get the content
     #  of a crosslinked topic
@@ -289,7 +288,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         questionList = []
         for potentialQuestion in potentialQuestions:
             if not (isEmptyNode(potentialQuestion)):
-                questionList.append(potentialQuestion)
+                questionList.append(potentialQuestion.getID())
             else:
                 nextAnswerDicts = self.findAnswerDicts(potentialQuestion)
                 # code in brackets is for unlisting:
@@ -326,7 +325,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         noteDict['rf'] = '<ul>%s</ul>' % ref
 
         # set field Meta
-        meta = self.getXMindMeta(question=question, nextQuestions=nextQuestions,
+        meta = self.getXMindMeta(qId=question, nextQuestions=nextQuestions,
                                  answerDicts=answerDicts)
         noteDict['mt'] = meta
 
