@@ -174,15 +174,28 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         xMindMeta['path'] = self.file
         xMindMeta['sheetId'] = self.currentSheetImport['sheet'].getID()
         xMindMeta['questionId'] = question.getID()
-        xMindMeta['answers'] = list()
+        xMindMeta['answers'] = []
+        globalQuestions = []
+        nAnswers = 0
         for aId, answerDict in enumerate(answerDicts, start=0):
-            xMindMeta['answers'].append(dict())
-            xMindMeta['answers'][aId]['answerId'] = answerDict[
-                'subTopic'].getID()
-            xMindMeta['answers'][aId]['children'] = list()
-            for question in nextQuestions[aId]:
-                xMindMeta['answers'][aId]['children'].append(question.getID())
-        xMindMeta['nAnswers'] = len(answerDicts)
+            # write each answer and its following questions into meta
+            if answerDict['isAnswer']:
+                xMindMeta['answers'].append(dict())
+                xMindMeta['answers'][nAnswers]['answerId'] = answerDict[
+                    'subTopic'].getID()
+                xMindMeta['answers'][nAnswers]['children'] = []
+                for question in nextQuestions[aId]:
+                    xMindMeta['answers'][nAnswers]['children'].append(
+                        question.getID())
+                nAnswers += 1
+            # add questions following bridges to globalQuestions
+            else:
+                globalQuestions.extend(nextQuestions[aId])
+        # add globalQuestions to children of all answers
+        for question in globalQuestions:
+            for answer in xMindMeta['answers']:
+                answer['children'].append(question.getID())
+        xMindMeta['nAnswers'] = nAnswers
         return json.dumps(xMindMeta)
 
     def addImage(self, attachment):
