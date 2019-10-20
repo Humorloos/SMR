@@ -24,25 +24,6 @@ def updateId(previousId, idToAppend):
     return previousId + chr(idToAppend + 122)
 
 
-# receives an answer node and returns all questions following this answer
-# including questions following multiple topics as dictionaries of a question
-# node and its corresponding reference
-def findQuestionDicts(answer: TopicElement, ref=''):
-    followRels = answer.getSubTopics()
-    questionDicts = []
-    for followRel in followRels:
-        if isEmptyNode(followRel):
-            nextAs = followRel.getSubTopics()
-            for nextA in nextAs:
-                if nextA.getSubTopics():
-                    newRef = ref + '<li>' + nextA.getTitle()
-                    nextQPairs = findQuestionDicts(answer=nextA, ref=newRef)
-                    questionDicts.extend(nextQPairs)
-        else:
-            questionDicts.append(dict(question=followRel, ref=ref))
-    return questionDicts
-
-
 # replace the anki sound html code with (sound) to avoid anki playing sounds
 # when they are mentioned in the reference
 def replaceSound(content: str):
@@ -125,7 +106,7 @@ def getParentTopic(topic: TopicElement):
 # Receives an xmind TopicElement and returns the id attribute of its parent
 # topic
 def getParentTopicId(topic: TopicElement):
-    parentTopic = getParentTopic(topic)
+    parentTopic = getParentTopic(topic._node)
     return parentTopic.getAttribute('id')
 
 
@@ -140,9 +121,14 @@ def getAnswerDict(subTopic: TopicElement):
     if isEmptyNode(subTopic):
         isAnswer = False
     # Check whether subtopic contains a crosslink
-    crosslink = None
-    href = subTopic.getHyperlink()
-    if href and href.startswith('xmind:#'):
-        crosslink = href
+    crosslink = getCrosslink(subTopic)
     return dict(subTopic=subTopic, isAnswer=isAnswer, aId=str(0),
                 crosslink=crosslink)
+
+
+def getCrosslink(topic):
+    href = topic.getHyperlink()
+    if href and href.startswith('xmind:#'):
+        return href
+    else:
+        return None

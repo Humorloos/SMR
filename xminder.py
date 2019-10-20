@@ -111,7 +111,7 @@ class XmindImporter(NoteImporter):
                 ref = ref + '</li>'
             else:
                 ref = ref + ': ' + answerContent + '</li>'
-        questionDicts = findQuestionDicts(answer=answerDict['subTopic'],
+        questionDicts = self.findQuestionDicts(answer=answerDict['subTopic'],
                                           ref=ref)
 
         for qId, questionDict in enumerate(questionDicts, start=1):
@@ -366,3 +366,23 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
                     self.addAttachment(files['media'])
                 else:
                     self.col.media.addFile(files['media'])
+
+    # receives an answer node and returns all questions following this answer
+    # including questions following multiple topics as dictionaries of a question
+    # node and its corresponding reference
+    def findQuestionDicts(self, answer: TopicElement, ref=''):
+        followRels = answer.getSubTopics()
+        questionDicts = []
+        for followRel in followRels:
+            if isEmptyNode(followRel):
+                nextAs = followRel.getSubTopics()
+                for nextA in nextAs:
+                    if nextA.getSubTopics():
+                        newRef = ref + '<li>' + nextA.getTitle()
+                        nextQPairs = self.findQuestionDicts(answer=nextA, ref=newRef)
+                        questionDicts.extend(nextQPairs)
+            elif getCrosslink(followRel):
+                pass
+            else:
+                questionDicts.append(dict(question=followRel, ref=ref))
+        return questionDicts
