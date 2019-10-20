@@ -144,9 +144,10 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             nextQuestions = self.getNextQuestions(answerDicts)
 
             # get content of fields for the note to add for this question
-            noteDict = self.getNoteDict(sortId=sortId, question=question,
+            noteDict, media = self.getNoteDict(sortId=sortId, question=question,
                                         answerDicts=answerDicts, ref=ref,
                                         nextQuestions=nextQuestions)
+            self.addMedia(media)
             # add to list of notes to add
             self.notesToAdd.append(noteDict)
 
@@ -189,38 +190,18 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         xMindMeta['nAnswers'] = len(answers)
         return json.dumps(xMindMeta)
 
-    def addImage(self, attachment):
-        # extract image to anki media directory
+    def addAttachment(self, attachment):
+        # extract attachment to anki media directory
         self.xZip.extract(attachment, self.srcDir)
         # get image from subdirectory attachments in mediaDir
         srcPath = os.path.join(self.srcDir, attachment)
         self.col.media.addFile(srcPath)
 
-    # gets an link attribute from an xmind file checks whether it relates to an
-    # audio file with ending .mp3 or .wav, adds the file to the anki collection
-    # and returns the audio's basename
-    def addAudio(self, audioAttr):
-        inMap = False
-        if audioAttr.startswith('file'):
-            audioPath = urllib.parse.unquote(audioAttr[7:])
-        elif audioAttr.startswith('xap'):
-            inMap = True
-            audioPath = audioAttr[4:]
-        else:
-            audioPath = urllib.parse.unquote(audioAttr[7:])
-        audioExt = os.path.splitext(audioPath)[1]
-        if audioExt in ['.mp3', '.wav']:
-            if inMap:
-                # extract file and add it to temporary source directory
-                self.xZip.extract(audioPath, self.srcDir)
-                audioPath = os.path.join(self.srcDir, audioPath)
-            self.col.media.addFile(audioPath)
-        return os.path.basename(audioPath)
-
     # get the content of a node as string and add files to the collection if
     # necessary
     def getContent(self, node: TopicElement):
         content = ''
+        media = dict(image=None, media=None)
         href = node.getHyperlink()
         if node.getTitle():
             content += node.getTitle()
@@ -236,19 +217,26 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         try:
             attachment = node.getFirstChildNodeByTagName('xhtml:img'). \
                              getAttribute('xhtml:src')[4:]
-            self.addImage(attachment)
             if content != '':
                 content += '<br>'
             fileName = re.search('/.*', attachment).group()[1:]
             content += '<img src="%s">' % fileName
+            media['image'] = attachment
         except:
             pass
         # if necessary add audio file
-        if href and href.endswith(('.mp3', '.wav')):
+        if href and href.endswith(('.mp3', '.wav', 'mp4')):
             if content != '':
                 content += '<br>'
-            content += '[sound:%s]' % self.addAudio(href)
-        return content
+            if href.startswith('file'):
+                mediaPath = urllib.parse.unquote(href[7:])
+                media['media'] = mediaPath
+            else:
+                mediaPath = href[4:]
+                media['media'] = mediaPath
+                mediaPath = os.path.join(self.srcDir, mediaPath)
+            content += '[sound:%s]' % os.path.basename(mediaPath)
+        return content, media
 
     # receives a list of answerDicts and returns a list of anki notes for each
     # subtopic
@@ -305,24 +293,26 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     # sets the deck, fields and tag of an xmind note and adds it to the
     # collection
     def getNoteDict(self, sortId, question, answerDicts, ref, nextQuestions):
-        # Set deck
-        # note.model()['did'] = self.currentSheetImport['deckId']
+
         noteDict = dict(rf='', qt='', an=dict(), id='', mt='', tag='')
+        media = []
 
         # set field ID
         noteDict['id'] = sortId
 
         # Set field Question
-        noteDict['qt'] = self.getContent(question)
+        noteDict['qt'], qtMedia = self.getContent(question)
+        media.append(qtMedia)
 
         # Set Answer fields
         aId = 0
         for answerDict in answerDicts:
             if answerDict['isAnswer']:
                 aId += 1
-                noteDict['an']['a' + str(aId)] = self.getContent(
+                noteDict['an']['a' + str(aId)], anMedia = self.getContent(
                     answerDict['subTopic'])
                 answerDict['aId'] = str(aId)
+                media.append(anMedia)
 
         # Set field Reference
         noteDict['rf'] = '<ul>%s</ul>' % ref
@@ -335,7 +325,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         # Set tag
         noteDict['tag'] = self.currentSheetImport['tag']
 
-        return noteDict
+        return noteDict, media
 
     # receives a question node and returns a list of dictionaries containing the
     # subtopics, whether the subtopics contain an answer or not and whether they
@@ -366,3 +356,13 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
         note.tags.append(noteDict['tag'])
 
         return note
+
+    def addMedia(self, media):
+        for files in media:
+            if files['image']:
+                self.addAttachment(files['image'])
+            if files['media']:
+                if files['media'].startswith('attachments'):
+                    self.addAttachment(files['media'])
+                else:
+                    self.col.media.addFile(files['media'])
