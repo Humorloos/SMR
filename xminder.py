@@ -236,7 +236,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
     # receives a list of answerDicts and returns a list of anki notes for each
     # subtopic
-    def getNextQuestions(self, answerDicts: list):
+    def getNextQuestions(self, answerDicts: list, addCrosslinks=True):
         nextQuestions = []
         globalQuestions = []
         bridges = list(filter(lambda answerDict: not answerDict['isAnswer'],
@@ -248,7 +248,8 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         for answer in answers:
             # Add one new note for each question following this subTopic
             questionListForAnswer = self.getQuestionListForAnswer(
-                answerDict=answer, globalQuestions=globalQuestions)
+                answerDict=answer, globalQuestions=globalQuestions,
+                addCrosslinks=addCrosslinks)
             nextQuestions.append(questionListForAnswer)
         return nextQuestions
 
@@ -256,8 +257,10 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     #  of a crosslinked topic
     # receives an answerDict and returns a list of anki notes containing
     # one note for each question following this answerDict
-    def getQuestionListForAnswer(self, answerDict: dict, globalQuestions=None):
-
+    def getQuestionListForAnswer(self, answerDict: dict, globalQuestions=None,
+                                 addCrosslinks=True):
+        if self.getContent(answerDict['subTopic'])[0] == '什么·':
+            print('hier')
         # get all nodes following the answer in answerDict, including those
         # following a potential crosslink
         potentialQuestions = answerDict['subTopic'].getSubTopics()
@@ -275,17 +278,20 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                 # code in brackets is for unlisting:
                 # https://stackoverflow.com/a/952952
                 followingQuestions = [item for sublist in
-                                      self.getNextQuestions(nextAnswerDicts) for
+                                      self.getNextQuestions(
+                                          answerDicts=nextAnswerDicts,
+                                          addCrosslinks=addCrosslinks) for
                                       item in sublist]
                 questionList.extend(followingQuestions)
         if globalQuestions:
             questionList.extend(globalQuestions)
-        if answerDict['crosslink']:
+        if answerDict['crosslink'] and addCrosslinks:
             crosslinkAnswerDict = getAnswerDict(
                 getTopicById(tId=answerDict['crosslink'], soup=self.soup,
                              doc=answerDict['subTopic']._owner_workbook))
+            # Do not add crosslinks following crosslinks to avoid endless loops
             crossinkQuestions = self.getQuestionListForAnswer(
-                crosslinkAnswerDict)
+                answerDict=crosslinkAnswerDict, addCrosslinks=False)
             questionList.extend(crossinkQuestions)
 
         return questionList
