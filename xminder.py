@@ -22,7 +22,6 @@ from XmindImport.consts import *
 # TODO: Implement hints as part of the meta json instead of javascript and use
 #  sound=False to mute answers in hint
 # TODO: Implement warning if an audio file can't be found
-# TODO: Use highest symbol in anki sorting mechanism for separator in ID codes
 
 class XmindImporter(NoteImporter):
     needMapper = False
@@ -266,7 +265,11 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         questionList = []
         for potentialQuestion in potentialQuestions:
             if not (isEmptyNode(potentialQuestion)):
-                questionList.append(potentialQuestion.getID())
+                crosslink = getCrosslink(potentialQuestion)
+                if crosslink:
+                    questionList.append(crosslink)
+                else:
+                    questionList.append(potentialQuestion.getID())
             else:
                 nextAnswerDicts = self.findAnswerDicts(potentialQuestion)
                 # code in brackets is for unlisting:
@@ -279,7 +282,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             questionList.extend(globalQuestions)
         if answerDict['crosslink']:
             crosslinkAnswerDict = getAnswerDict(
-                getTopicById(tId=answerDict['crosslink'][7:], soup=self.soup,
+                getTopicById(tId=answerDict['crosslink'], soup=self.soup,
                              doc=answerDict['subTopic']._owner_workbook))
             crossinkQuestions = self.getQuestionListForAnswer(
                 crosslinkAnswerDict)
@@ -380,7 +383,7 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
                         nextQPairs = self.findQuestionDicts(answer=nextA,
                                                             ref=newRef)
                         questionDicts.extend(nextQPairs)
-            elif getCrosslink(followRel):
+            elif getCrosslink(followRel) and not followRel.getSubTopics():
                 pass
             else:
                 questionDicts.append(dict(question=followRel, ref=ref))

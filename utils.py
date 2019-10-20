@@ -141,6 +141,6 @@ def isConcept(topic):
 def getCrosslink(topic):
     href = topic.getHyperlink()
     if href and href.startswith('xmind:#'):
-        return href
+        return href[7:]
     else:
         return None
