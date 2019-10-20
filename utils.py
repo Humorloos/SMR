@@ -97,10 +97,10 @@ def getNoteFromAnswer(aId, col: _Collection):
     return getNoteFromMeta(query=query, col=col)
 
 
-# receives an xmind TopicElement and returns its parent Element as a minidom
-# Element
-def getParentTopic(topic: TopicElement):
-    return topic.getParentNode().parentNode.parentNode
+# receives a minidom Element representing an xmind Topic (retrieved with
+# topic._node) and returns its parent Element as a minidom Element
+def getParentTopic(element):
+    return element.parentNode.parentNode.parentNode
 
 
 # Receives an xmind TopicElement and returns the id attribute of its parent
@@ -124,6 +124,18 @@ def getAnswerDict(subTopic: TopicElement):
     crosslink = getCrosslink(subTopic)
     return dict(subTopic=subTopic, isAnswer=isAnswer, aId=str(0),
                 crosslink=crosslink)
+
+
+def isConcept(topic):
+    element = topic._node
+    nParentTopics = 0
+    while type(element).__name__ == 'Element':
+        nParentTopics += 1
+        element = getParentTopic(element)
+    if nParentTopics % 2 == 0:
+        return False
+    else:
+        return True
 
 
 def getCrosslink(topic):
