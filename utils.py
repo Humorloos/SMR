@@ -32,10 +32,12 @@ def findQuestionDicts(answer: TopicElement, ref=''):
     questionDicts = []
     for followRel in followRels:
         if isEmptyNode(followRel):
-            for nextA in followRel.getSubTopics():
-                nextQPairs = findQuestionDicts(
-                    answer=nextA, ref=ref + '<li>' + nextA.getTitle())
-                questionDicts.extend(nextQPairs)
+            nextAs = followRel.getSubTopics()
+            for nextA in nextAs:
+                if nextA.getSubTopics():
+                    newRef = ref + '<li>' + nextA.getTitle()
+                    nextQPairs = findQuestionDicts(answer=nextA, ref=newRef)
+                    questionDicts.extend(nextQPairs)
         else:
             questionDicts.append(dict(question=followRel, ref=ref))
     return questionDicts
