@@ -22,7 +22,9 @@ from XmindImport.consts import *
 # TODO: Implement hints as part of the meta json instead of javascript and use
 #  sound=False to mute answers in hint
 # TODO: Implement warning if an audio file can't be found
-
+# TODO: Check for performance issues:
+#  https://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
+#  https://docs.python.org/3.6/library/profile.html
 class XmindImporter(NoteImporter):
     needMapper = False
 
@@ -87,7 +89,7 @@ class XmindImporter(NoteImporter):
         xModel = self.col.models.byName(X_MODEL_NAME)
         self.col.decks.select(self.currentSheetImport['deckId'])
         self.col.decks.current()['mid'] = xModel['id']
-        rootDict = dict(subTopic=rootTopic, isAnswer=True, aId=str(1))
+        rootDict = getAnswerDict(rootTopic)
         self.getQuestions(answerDict=rootDict, ref=rootTopic.getTitle())
 
     # calls createNotes for each answer.
@@ -98,51 +100,77 @@ class XmindImporter(NoteImporter):
     # ref: current text for reference field
     # aId: current id for id field
     def getQuestions(self, answerDict: dict, sortId='',
-                     answerContent='', ref=""):
+                     answerContent='', ref="", followsBridge=False):
         # The reference doesn't have to be edited at the roottopic
         if not answerDict['subTopic'].getParentNode().tagName == 'sheet':
             # if the answerdict contains nothing (i.e. questions
             # following multiple answers), just close the reference
-            if isEmptyNode(answerDict['subTopic']):
+            if isEmptyNode(answerDict['subTopic']) or followsBridge:
                 ref = ref + '</li>'
             else:
                 ref = ref + ': ' + answerContent + '</li>'
         questionDicts = self.findQuestionDicts(answer=answerDict['subTopic'],
-                                               ref=ref)
-
+                                               ref=ref, sortId=sortId)
+        siblingQuestions = self.getQuestionListForAnswer(answerDict)
         for qId, questionDict in enumerate(questionDicts, start=1):
             # Update the sorting ID
             nextSortId = updateId(previousId=sortId, idToAppend=qId)
-            # stop and warn if no nodes follow the question
-            if not (len(questionDict['question'].getSubTopics()) > 0):
-                self.running = False
-                self.log = ["""Warning:
-A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept Map and try again.""" %
-                            (questionDict['question'].getTitle(),
-                             getCoordsFromId(sortId))]
             if self.running:
-                self.addNote(question=questionDict['question'],
-                             ref=questionDict['ref'], sortId=nextSortId)
+                if questionDict['isBridge']:
+                    answerDicts = self.findAnswerDicts(questionDict['subTopic'])
+                    for aId, answerDict in enumerate(answerDicts, start=1):
+                        if answerDict['subTopic'].getSubTopics():
+                            if answerDict['isAnswer']:
+                                answerContent = replaceSound(
+                                    self.getContent(answerDict['subTopic'])[0])
+                                newRef = ref + '<li>' + answerContent
+                            else:
+                                answerContent = ''
+                                newRef = ref
+                            self.getQuestions(answerDict=answerDict,
+                                              answerContent=answerContent,
+                                              ref=newRef,
+                                              sortId=updateId(
+                                                  previousId=nextSortId,
+                                                  idToAppend=aId),
+                                              followsBridge=True)
+                else:
+                    siblings = list(
+                        filter(lambda q: q != questionDict['subTopic'].getID(),
+                               siblingQuestions))
+                    self.addXNote(question=questionDict['subTopic'],
+                                  ref=questionDict['ref'], sortId=nextSortId,
+                                  siblings=siblings)
 
-    # Inputs:
-    # question: xmind question node
-    # ref: current reference text
-    # qId: position of the question node relative to its siblings
-    # note: note to be added for the question node
-    # creates notes for the children of this note, configures this note and
-    # recursively calls getQuestions() to add notes following this note
-    def addNote(self, question: TopicElement, ref, sortId):
+                    # Inputs:
+                    # question: xmind question node
+                    # ref: current reference text
+                    # qId: position of the question node relative to its siblings
+                    # note: note to be added for the question node
+                    # creates notes for the children of this note, configures this note and
+                    # recursively calls getQuestions() to add notes following this note
+
+    def addXNote(self, question: TopicElement, ref, sortId, siblings=None):
 
         answerDicts = self.findAnswerDicts(question)
-
+        actualAnswers = list(filter(
+            lambda a: a['isAnswer'], answerDicts))
+        if len(actualAnswers) > X_MAX_ANSWERS:
+            self.running = False
+            self.log = ["""Warning:
+A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
+                        (question.getTitle(), X_MAX_ANSWERS, X_MAX_ANSWERS)]
         if self.running:
             # Create Notes for next questions for Question nids in Meta field
             nextQuestions = self.getNextQuestions(answerDicts)
 
             # get content of fields for the note to add for this question
-            noteDict, media = self.getNoteDict(sortId=sortId, question=question,
-                                               answerDicts=answerDicts, ref=ref,
-                                               nextQuestions=nextQuestions)
+            noteDict, media = self.getNoteDict(sortId=sortId,
+                                               question=question,
+                                               answerDicts=answerDicts,
+                                               ref=ref,
+                                               nextQuestions=nextQuestions,
+                                               siblings=siblings)
             self.addMedia(media)
             # add to list of notes to add
             self.notesToAdd.append(noteDict)
@@ -151,26 +179,27 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             questionContent = replaceSound(noteDict['qt'])
             ref = ref + '<li>' + questionContent
             for aId, answerDict in enumerate(answerDicts, start=1):
-                if answerDicts[aId - 1]['isAnswer']:
-                    answerContent = replaceSound(
-                        noteDict['an']['a' + answerDict['aId']])
-                else:
-                    answerContent = ''
-                self.getQuestions(answerDict=answerDict,
-                                  answerContent=answerContent, ref=ref,
-                                  sortId=updateId(previousId=sortId,
-                                                  idToAppend=aId))
+                if answerDict['subTopic'].getSubTopics():
+                    if answerDict['isAnswer']:
+                        answerContent = replaceSound(
+                            noteDict['an']['a' + answerDict['aId']])
+                    else:
+                        answerContent = ''
+                    self.getQuestions(answerDict=answerDict,
+                                      answerContent=answerContent, ref=ref,
+                                      sortId=updateId(previousId=sortId,
+                                                      idToAppend=aId))
 
     # TODO: check out hierarchical tags, may be useful
 
     # receives a question, sheet and list of notes possibly following each
     # answer to this question and returns a json file
-    def getXMindMeta(self, qId: TopicElement, nextQuestions: list,
-                     answerDicts):
+    def getXMindMeta(self, question: TopicElement, nextQuestions: list,
+                     answerDicts, siblings):
         xMindMeta = dict()
         xMindMeta['path'] = self.file
         xMindMeta['sheetId'] = self.currentSheetImport['sheet'].getID()
-        xMindMeta['questionId'] = qId.getID()
+        xMindMeta['questionId'] = question.getID()
         xMindMeta['answers'] = []
         answers = list(filter(lambda answerDict: answerDict['isAnswer'],
                               answerDicts))
@@ -184,6 +213,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                 xMindMeta['answers'][aId]['children'].append(
                     qId)
         xMindMeta['nAnswers'] = len(answers)
+        xMindMeta['siblings'] = siblings
         return json.dumps(xMindMeta)
 
     def addAttachment(self, attachment):
@@ -236,7 +266,8 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
     # receives a list of answerDicts and returns a list of anki notes for each
     # subtopic
-    def getNextQuestions(self, answerDicts: list, addCrosslinks=True):
+    def getNextQuestions(self, answerDicts: list, addCrosslinks=True,
+                         goDeeper=True):
         nextQuestions = []
         globalQuestions = []
         bridges = list(filter(lambda answerDict: not answerDict['isAnswer'],
@@ -249,18 +280,13 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             # Add one new note for each question following this subTopic
             questionListForAnswer = self.getQuestionListForAnswer(
                 answerDict=answer, globalQuestions=globalQuestions,
-                addCrosslinks=addCrosslinks)
+                addCrosslinks=addCrosslinks, goDeeper=goDeeper)
             nextQuestions.append(questionListForAnswer)
         return nextQuestions
 
-    # TODO: Use getTopicById() and getContent() in getContent to get the content
-    #  of a crosslinked topic
-    # receives an answerDict and returns a list of anki notes containing
-    # one note for each question following this answerDict
+    # receives an answerDict and returns a list of xmind topic ids
     def getQuestionListForAnswer(self, answerDict: dict, globalQuestions=None,
-                                 addCrosslinks=True):
-        if self.getContent(answerDict['subTopic'])[0] == '什么·':
-            print('hier')
+                                 addCrosslinks=True, goDeeper=True):
         # get all nodes following the answer in answerDict, including those
         # following a potential crosslink
         potentialQuestions = answerDict['subTopic'].getSubTopics()
@@ -274,31 +300,33 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                 else:
                     questionList.append(potentialQuestion.getID())
             else:
-                nextAnswerDicts = self.findAnswerDicts(potentialQuestion)
-                # code in brackets is for unlisting:
-                # https://stackoverflow.com/a/952952
-                followingQuestions = [item for sublist in
-                                      self.getNextQuestions(
-                                          answerDicts=nextAnswerDicts,
-                                          addCrosslinks=addCrosslinks) for
-                                      item in sublist]
-                questionList.extend(followingQuestions)
+                if goDeeper:
+                    nextAnswerDicts = self.findAnswerDicts(potentialQuestion)
+                    # code in brackets is for unlisting:
+                    # https://stackoverflow.com/a/952952
+                    followingQuestions = [item for sublist in
+                                          self.getNextQuestions(
+                                              answerDicts=nextAnswerDicts,
+                                              addCrosslinks=addCrosslinks,
+                                              goDeeper=False) for
+                                          item in sublist]
+                    questionList.extend(followingQuestions)
         if globalQuestions:
             questionList.extend(globalQuestions)
         if answerDict['crosslink'] and addCrosslinks:
             crosslinkAnswerDict = getAnswerDict(
-                getTopicById(tId=answerDict['crosslink'], soup=self.soup,
-                             doc=answerDict['subTopic']._owner_workbook))
+                getTopicById(tId=answerDict['crosslink'], importer=self))
             # Do not add crosslinks following crosslinks to avoid endless loops
-            crossinkQuestions = self.getQuestionListForAnswer(
+            crosslinkQuestions = self.getQuestionListForAnswer(
                 answerDict=crosslinkAnswerDict, addCrosslinks=False)
-            questionList.extend(crossinkQuestions)
+            questionList.extend(crosslinkQuestions)
 
         return questionList
 
     # sets the deck, fields and tag of an xmind note and adds it to the
     # collection
-    def getNoteDict(self, sortId, question, answerDicts, ref, nextQuestions):
+    def getNoteDict(self, sortId, question, answerDicts, ref, nextQuestions,
+                    siblings):
 
         noteDict = dict(rf='', qt='', an=dict(), id='', mt='', tag='')
         media = []
@@ -325,8 +353,8 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         noteDict['rf'] = '<ul>%s</ul>' % ref
 
         # set field Meta
-        meta = self.getXMindMeta(qId=question, nextQuestions=nextQuestions,
-                                 answerDicts=answerDicts)
+        meta = self.getXMindMeta(question=question, nextQuestions=nextQuestions,
+                                 answerDicts=answerDicts, siblings=siblings)
         noteDict['mt'] = meta
 
         # Set tag
@@ -342,13 +370,6 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         for subTopic in question.getSubTopics():
             answerDict = getAnswerDict(subTopic)
             answerDicts.append(answerDict)
-        actualAnswers = list(filter(
-            lambda a: a['isAnswer'], answerDicts))
-        if len(actualAnswers) > X_MAX_ANSWERS:
-            self.running = False
-            self.log = ["""Warning:
-A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
-                        (question.getTitle(), X_MAX_ANSWERS, X_MAX_ANSWERS)]
         return answerDicts
 
     def noteFromNoteDict(self, noteDict):
@@ -377,20 +398,29 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
     # receives an answer node and returns all questions following this answer
     # including questions following multiple topics as dictionaries of a question
     # node and its corresponding reference
-    def findQuestionDicts(self, answer: TopicElement, ref=''):
+    def findQuestionDicts(self, answer: TopicElement, sortId, ref=''):
         followRels = answer.getSubTopics()
         questionDicts = []
         for followRel in followRels:
-            if isEmptyNode(followRel):
-                nextAs = followRel.getSubTopics()
-                for nextA in nextAs:
-                    if nextA.getSubTopics():
-                        newRef = ref + '<li>' + nextA.getTitle()
-                        nextQPairs = self.findQuestionDicts(answer=nextA,
-                                                            ref=newRef)
-                        questionDicts.extend(nextQPairs)
-            elif getCrosslink(followRel) and not followRel.getSubTopics():
-                pass
+            crosslink = getCrosslink(followRel)
+            if len(followRel.getSubTopics()) == 0:
+                # stop and warn if no nodes follow the question
+                if not crosslink:
+                    self.running = False
+                    self.log = ["""Warning:
+A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept Map and try again.""" %
+                                (self.getContent(followRel)[0],
+                                 getCoordsFromId(sortId))]
             else:
-                questionDicts.append(dict(question=followRel, ref=ref))
+                questionDict = self.getQuestionDict(subTopic=followRel, ref=ref,
+                                                    isBridge=False,
+                                                    crosslink=crosslink)
+                if isEmptyNode(followRel):
+                    questionDict['isBridge'] = True
+
+                questionDicts.append(questionDict)
         return questionDicts
+
+    def getQuestionDict(self, subTopic, ref, isBridge, crosslink):
+        return dict(subTopic=subTopic, ref=ref, isBridge=isBridge,
+                    crosslink=crosslink)

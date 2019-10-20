@@ -43,8 +43,9 @@ def getCoordsFromId(sortId):
 # receives a topic's id attribute, a BeautifulSoup object representing an
 # xmind content xml file and a WorkbookDocument for the same map and returns
 # the corresponding topic as a WorkbookElement
-def getTopicById(tId: str, soup: BeautifulSoup, doc):
-    tag = soup.find('topic', {'id': tId})
+def getTopicById(tId, importer):
+    # TODO: implement warning if topic not found
+    tag = importer.soup.find('topic', {'id': tId})
     # get tags that make up the path to the desired topic
     parents = list(tag.parents)
     topicPath = [tag]
@@ -55,7 +56,9 @@ def getTopicById(tId: str, soup: BeautifulSoup, doc):
     # get the sheet that contains the topic
     sheetTag = list(reversed(parents))[2]
     sheetNr = len(list(sheetTag.previous_siblings))
-    sheet = doc.getSheets()[sheetNr]
+    # noinspection PyProtectedMember
+    sheet = importer.currentSheetImport['sheet']._owner_workbook.getSheets()[
+        sheetNr]
     # starting at the root topic follow the path described by the tags to
     # get the desired topic
     topic = sheet.getRootTopic()
@@ -99,20 +102,20 @@ def getNoteFromAnswer(aId, col: _Collection):
 
 # receives a minidom Element representing an xmind Topic (retrieved with
 # topic._node) and returns its parent Element as a minidom Element
-def getParentTopic(element):
+def getParentTopicElement(element):
     return element.parentNode.parentNode.parentNode
 
 
 # Receives an xmind TopicElement and returns the id attribute of its parent
 # topic
 def getParentTopicId(topic: TopicElement):
-    parentTopic = getParentTopic(topic._node)
+    parentTopic = getParentTopicElement(topic._node)
     return parentTopic.getAttribute('id')
 
 
-def getSiblingTopics(topic: TopicElement):
-    print('')
-    # TODO: Implement this
+def getParentTopic(topic: TopicElement, importer):
+    parentId = getParentTopicId(topic)
+    return getTopicById(tId=parentId, importer=importer)
 
 
 def getAnswerDict(subTopic: TopicElement):
@@ -131,7 +134,7 @@ def isConcept(topic):
     nParentTopics = 0
     while type(element).__name__ == 'Element':
         nParentTopics += 1
-        element = getParentTopic(element)
+        element = getParentTopicElement(element)
     if nParentTopics % 2 == 0:
         return False
     else:
