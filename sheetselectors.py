@@ -107,7 +107,7 @@ class SingleSheetSelector(SheetSelector):
 
     def on_ok(self):
         self.sheets[0]['tag'] = self.getTag(self.user_input.text())
-        self.sheets[0]['deckId'] = self.deck.selectedId
+        self.sheets[0]['deckId'] = self.deck.selectedId()
         self.accept()
 
 
