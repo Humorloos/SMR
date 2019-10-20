@@ -3,15 +3,12 @@ import zipfile
 import tempfile
 import shutil
 import urllib.parse
-import re
 
-from bs4 import BeautifulSoup
 from time import sleep
 
 from anki.importing.noteimp import NoteImporter
 
 from XmindImport.xmind.xxmind import load
-from XmindImport.xmind.xsheet import SheetElement
 
 from XmindImport.sheetselectors import *
 from XmindImport.utils import *
@@ -112,7 +109,7 @@ class XmindImporter(NoteImporter):
             else:
                 ref = ref + ': ' + answerContent + '</li>'
         questionDicts = self.findQuestionDicts(answer=answerDict['subTopic'],
-                                          ref=ref)
+                                               ref=ref)
 
         for qId, questionDict in enumerate(questionDicts, start=1):
             # Update the sorting ID
@@ -145,8 +142,8 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
             # get content of fields for the note to add for this question
             noteDict, media = self.getNoteDict(sortId=sortId, question=question,
-                                        answerDicts=answerDicts, ref=ref,
-                                        nextQuestions=nextQuestions)
+                                               answerDicts=answerDicts, ref=ref,
+                                               nextQuestions=nextQuestions)
             self.addMedia(media)
             # add to list of notes to add
             self.notesToAdd.append(noteDict)
@@ -309,6 +306,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         for answerDict in answerDicts:
             if answerDict['isAnswer']:
                 aId += 1
+                # noinspection PyTypeChecker
                 noteDict['an']['a' + str(aId)], anMedia = self.getContent(
                     answerDict['subTopic'])
                 answerDict['aId'] = str(aId)
@@ -336,7 +334,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             answerDict = getAnswerDict(subTopic)
             answerDicts.append(answerDict)
         actualAnswers = list(filter(
-            lambda answerDict: answerDict['isAnswer'], answerDicts))
+            lambda a: a['isAnswer'], answerDicts))
         if len(actualAnswers) > X_MAX_ANSWERS:
             self.running = False
             self.log = ["""Warning:
@@ -379,7 +377,8 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
                 for nextA in nextAs:
                     if nextA.getSubTopics():
                         newRef = ref + '<li>' + nextA.getTitle()
-                        nextQPairs = self.findQuestionDicts(answer=nextA, ref=newRef)
+                        nextQPairs = self.findQuestionDicts(answer=nextA,
+                                                            ref=newRef)
                         questionDicts.extend(nextQPairs)
             elif getCrosslink(followRel):
                 pass
