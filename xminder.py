@@ -175,28 +175,18 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         xMindMeta['sheetId'] = self.currentSheetImport['sheet'].getID()
         xMindMeta['questionId'] = qId.getID()
         xMindMeta['answers'] = []
-        globalQuestions = []
-        nAnswers = 0
-        # TODO: Frage auf zweitem level aus M2Test muss vor crosslinkquestions kommen, muss also schon in getQuestionListforanswer hinzugefügt werden
-        for aId, answerDict in enumerate(answerDicts, start=0):
+        answers = list(filter(lambda answerDict: answerDict['isAnswer'],
+                              answerDicts))
+        for aId, answer in enumerate(answers, start=0):
             # write each answer and its following questions into meta
-            if answerDict['isAnswer']:
-                xMindMeta['answers'].append(dict())
-                xMindMeta['answers'][nAnswers]['answerId'] = answerDict[
-                    'subTopic'].getID()
-                xMindMeta['answers'][nAnswers]['children'] = []
-                for qId in nextQuestions[aId]:
-                    xMindMeta['answers'][nAnswers]['children'].append(
-                        qId)
-                nAnswers += 1
-            # add questions following bridges to globalQuestions
-            else:
-                globalQuestions.extend(nextQuestions[aId])
-        # add globalQuestions to children of all answers
-        for qId in globalQuestions:
-            for answer in xMindMeta['answers']:
-                answer['children'].append(qId)
-        xMindMeta['nAnswers'] = nAnswers
+            xMindMeta['answers'].append(dict())
+            xMindMeta['answers'][aId]['answerId'] = answer[
+                'subTopic'].getID()
+            xMindMeta['answers'][aId]['children'] = []
+            for qId in nextQuestions[aId]:
+                xMindMeta['answers'][aId]['children'].append(
+                    qId)
+        xMindMeta['nAnswers'] = len(answers)
         return json.dumps(xMindMeta)
 
     def addImage(self, attachment):
@@ -264,9 +254,17 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     # subtopic
     def getNextQuestions(self, answerDicts: list):
         nextQuestions = []
-        for answerDict in answerDicts:
+        globalQuestions = []
+        bridges = list(filter(lambda answerDict: not answerDict['isAnswer'],
+                              answerDicts))
+        answers = list(filter(lambda answerDict: answerDict['isAnswer'],
+                              answerDicts))
+        for bridge in bridges:
+            globalQuestions.extend(self.getQuestionListForAnswer(bridge))
+        for answer in answers:
             # Add one new note for each question following this subTopic
-            questionListForAnswer = self.getQuestionListForAnswer(answerDict)
+            questionListForAnswer = self.getQuestionListForAnswer(
+                answerDict=answer, globalQuestions=globalQuestions)
             nextQuestions.append(questionListForAnswer)
         return nextQuestions
 
@@ -274,7 +272,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     #  of a crosslinked topic
     # receives an answerDict and returns a list of anki notes containing
     # one note for each question following this answerDict
-    def getQuestionListForAnswer(self, answerDict: dict):
+    def getQuestionListForAnswer(self, answerDict: dict, globalQuestions=None):
 
         # get all nodes following the answer in answerDict, including those
         # following a potential crosslink
@@ -292,6 +290,8 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                                       self.getNextQuestions(nextAnswerDicts) for
                                       item in sublist]
                 questionList.extend(followingQuestions)
+        if globalQuestions:
+            questionList.extend(globalQuestions)
         if answerDict['crosslink']:
             crosslinkAnswerDict = getAnswerDict(
                 getTopicById(tId=answerDict['crosslink'][7:], soup=self.soup,
