@@ -1,6 +1,7 @@
 from anki.hooks import addHook
 from anki.lang import _
 import anki.importing as importing
+import aqt.deckbrowser as deckbrowser
 
 from XmindImport.config import *
 from XmindImport.xminder import XmindImporter
@@ -17,3 +18,6 @@ addHook("profileLoaded", on_profile_loaded)
 # Add xmind importer to importers
 importing.Importers = importing.Importers + \
                       ((_("Xmind map (*.xmind)"), XmindImporter),)
+
+# Add SMR Sync Button to Deckbrowser
+deckbrowser.DeckBrowser.drawLinks.append(["", "sync", "SMR Sync"])
