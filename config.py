@@ -1,4 +1,4 @@
-from distutils.version import LooseVersion
+from XmindImport.ximports.xversion import LooseVersion
 
 from aqt import mw
 
