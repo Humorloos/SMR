@@ -20,4 +20,4 @@ importing.Importers = importing.Importers + \
                       ((_("Xmind map (*.xmind)"), XmindImporter),)
 
 # Add SMR Sync Button to Deckbrowser
-deckbrowser.DeckBrowser.drawLinks.append(["", "sync", "SMR Sync"])
+# deckbrowser.DeckBrowser.drawLinks.append(["", "sync", "SMR Sync"])

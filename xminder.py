@@ -19,6 +19,7 @@ from XmindImport.consts import *
 # TODO: add synchronization feature
 # TODO: change absolute to relative paths
 # TODO: add new prestentation order
+# In reviewer line 87 give getCard() the _note attribute and change getCard
 # TODO: Implement hints as part of the meta json instead of javascript and use
 #  sound=False to mute answers in hint
 # TODO: Implement warning if an audio file can't be found
@@ -250,7 +251,7 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
             media['image'] = attachment
         except:
             pass
-        # if necessary add audio file
+        # if necessary add media file
         if href and href.endswith(('.mp3', '.wav', 'mp4')):
             if content != '':
                 content += '<br>'
@@ -390,7 +391,7 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
             if files['image']:
                 self.addAttachment(files['image'])
             if files['media']:
-                if files['media'].startswith('attachments'):
+                if files['media'].startswith(('attachments', 'resources')):
                     self.addAttachment(files['media'])
                 else:
                     self.col.media.addFile(files['media'])
