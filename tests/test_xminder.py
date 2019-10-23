@@ -4,7 +4,7 @@ from xxmind import load
 
 from tests.shared import getEmptyCol
 from xminder import XmindImporter, SheetImport
-from XmindImport.consts import ADDON_PATH
+from .consts import ADDON_PATH
 
 def test_get_x_sheet():
     col = getEmptyCol()

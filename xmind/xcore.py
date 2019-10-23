@@ -15,7 +15,7 @@ __author__ = "aiqi@xmind.net <Woody Ai>"
 
 from xml.dom import minidom as DOM
 
-from XmindImport.xmind import xutils
+from . import xutils
 
 
 def create_document():

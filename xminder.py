@@ -8,16 +8,15 @@ from time import sleep
 
 from anki.importing.noteimp import NoteImporter
 
-from XmindImport.xmind.xxmind import load
+from .xmind.xxmind import load
 
-from XmindImport.sheetselectors import *
-from XmindImport.utils import *
-from XmindImport.consts import *
+from .sheetselectors import *
+from .utils import *
+from .consts import *
 
 
 # TODO: add warning when something is wrong with the map
 # TODO: add synchronization feature
-# TODO: change absolute to relative paths
 # TODO: add new prestentation order
 # In reviewer line 87 give getCard() the _note attribute and change getCard
 # TODO: Implement hints as part of the meta json instead of javascript and use

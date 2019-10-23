@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 from anki.collection import _Collection
 from anki.utils import ids2str, splitFields
 
-from XmindImport.xmind.xtopic import TopicElement
-from XmindImport.consts import X_MODEL_NAME, X_FLDS
+from .xmind.xtopic import TopicElement
+from .consts import X_MODEL_NAME, X_FLDS
 
 
 # checks whether a node contains any text, images or link

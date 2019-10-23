@@ -3,8 +3,8 @@ from anki.lang import _
 import anki.importing as importing
 import aqt.deckbrowser as deckbrowser
 
-from XmindImport.config import *
-from XmindImport.xminder import XmindImporter
+from .config import *
+from .xminder import XmindImporter
 
 
 # creates smr model when loading profile if necessary

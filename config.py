@@ -1,8 +1,8 @@
-from XmindImport.ximports.xversion import LooseVersion
+from .ximports.xversion import LooseVersion
 
 from aqt import mw
 
-from XmindImport.template import *
+from .template import *
 
 
 def get_or_create_model():

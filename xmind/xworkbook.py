@@ -15,12 +15,12 @@
 __author__ = "aiqi@xmind.net <Woody Ai>"
 
 
-from XmindImport.xmind.xcore import Document
-from XmindImport.xmind import xconst
-from XmindImport.xmind.xmixin import WorkbookMixinElement
-from XmindImport.xmind.xsheet import SheetElement
-from XmindImport.xmind.xtopic import TopicElement
-from XmindImport.xmind import xutils
+from .xcore import Document
+from . import xconst
+from .xmixin import WorkbookMixinElement
+from .xsheet import SheetElement
+from .xtopic import TopicElement
+from . import xutils
 
 
 class WorkbookElement(WorkbookMixinElement):
