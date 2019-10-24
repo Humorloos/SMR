@@ -7,6 +7,7 @@ import urllib.parse
 from time import sleep
 
 from anki.importing.noteimp import NoteImporter
+from anki.utils import splitFields, joinFields, intTime, guid64, timestampID
 
 from .xmind.xxmind import load
 
@@ -169,7 +170,7 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
             nextQuestions = self.getNextQuestions(answerDicts)
 
             # get content of fields for the note to add for this question
-            noteDict, media = self.getNoteDict(sortId=sortId,
+            noteDict, media = self.getNoteData(sortId=sortId,
                                                question=question,
                                                answerDicts=answerDicts,
                                                ref=ref,
@@ -325,19 +326,20 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
             questionList.extend(crosslinkQuestions)
         return questionList
 
-    # sets the deck, fields and tag of an xmind note and adds it to the
-    # collection
-    def getNoteDict(self, sortId, question, answerDicts, ref, nextQuestions,
+    def getNoteData(self, sortId, question, answerDicts, ref, nextQuestions,
                     siblings):
+        """returns a list of all content needed to create the a new note and
+        the media contained in that note in a list"""
 
-        noteDict = dict(rf='', qt='', an=dict(), id='', mt='', tag='')
+        noteList = []
         media = []
 
-        # set field ID
-        noteDict['id'] = sortId
+        # Set field Reference
+        noteList.append('<ul>%s</ul>' % ref)
 
         # Set field Question
-        noteDict['qt'], qtMedia = self.getContent(question)
+        qtContent, qtMedia = self.getContent(question)
+        noteList.append(qtContent)
         media.append(qtMedia)
 
         # Set Answer fields
@@ -346,23 +348,25 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
             if answerDict['isAnswer']:
                 aId += 1
                 # noinspection PyTypeChecker
-                noteDict['an']['a' + str(aId)], anMedia = self.getContent(
-                    answerDict['subTopic'])
-                answerDict['aId'] = str(aId)
+                anContent, anMedia = self.getContent(answerDict['subTopic'])
+                noteList.append(anContent)
                 media.append(anMedia)
+                answerDict['aId'] = str(aId)
 
-        # Set field Reference
-        noteDict['rf'] = '<ul>%s</ul>' % ref
+        # set field ID
+        noteList.append(sortId)
 
         # set field Meta
         meta = self.getXMindMeta(question=question, nextQuestions=nextQuestions,
                                  answerDicts=answerDicts, siblings=siblings)
-        noteDict['mt'] = meta
+        noteList.append(meta)
 
-        # Set tag
-        noteDict['tag'] = self.currentSheetImport['tag']
+        nId = timestampID(self.col.db, "notes")
+        noteData = [nId, guid64(), self.model['id'], intTime(), self.col.usn(),
+                    self.currentSheetImport['tag'], joinFields(noteList), "",
+                    "", 0, ""]
 
-        return noteDict, media
+        return noteData, media
 
     # receives a question node and returns a list of dictionaries containing the
     # subtopics, whether the subtopics contain an answer or not and whether they
