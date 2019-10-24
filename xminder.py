@@ -14,11 +14,12 @@ from .sheetselectors import *
 from .utils import *
 from .consts import *
 
-
+# TODO: check out hierarchical tags, may be useful
 # TODO: add warning when something is wrong with the map
 # TODO: add synchronization feature
 # TODO: add new prestentation order
 # In reviewer line 87 give getCard() the _note attribute and change getCard
+# Furthermore, track the history of reviewed cards or add coordinates to cards
 # TODO: Implement hints as part of the meta json instead of javascript and use
 #  sound=False to mute answers in hint
 # TODO: Implement warning if an audio file can't be found
@@ -142,16 +143,14 @@ class XmindImporter(NoteImporter):
                                   ref=questionDict['ref'], sortId=nextSortId,
                                   siblings=siblings)
 
-                    # Inputs:
-                    # question: xmind question node
-                    # ref: current reference text
-                    # qId: position of the question node relative to its siblings
-                    # note: note to be added for the question node
-                    # creates notes for the children of this note, configures this note and
-                    # recursively calls getQuestions() to add notes following this note
-
+    # creates a noteDict for this question, and
+    # recursively calls getQuestions() to add notes following this question
+    # Inputs:
+    # question: xmind question node
+    # ref: current reference text
+    # qId: position of the question node relative to its siblings
+    # note: note to be added for the question node
     def addXNote(self, question: TopicElement, ref, sortId, siblings=None):
-
         answerDicts = self.findAnswerDicts(question)
         actualAnswers = list(filter(
             lambda a: a['isAnswer'], answerDicts))
@@ -189,8 +188,6 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
                                       answerContent=answerContent, ref=ref,
                                       sortId=updateId(previousId=sortId,
                                                       idToAppend=aId))
-
-    # TODO: check out hierarchical tags, may be useful
 
     # receives a question, sheet and list of notes possibly following each
     # answer to this question and returns a json file
@@ -320,7 +317,6 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
             crosslinkQuestions = self.getQuestionListForAnswer(
                 answerDict=crosslinkAnswerDict, addCrosslinks=False)
             questionList.extend(crosslinkQuestions)
-
         return questionList
 
     # sets the deck, fields and tag of an xmind note and adds it to the
