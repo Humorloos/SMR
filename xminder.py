@@ -14,6 +14,7 @@ from .sheetselectors import *
 from .utils import *
 from .consts import *
 
+
 # TODO: check out hierarchical tags, may be useful
 # TODO: add warning when something is wrong with the map
 # TODO: add synchronization feature
@@ -41,7 +42,7 @@ class XmindImporter(NoteImporter):
         self.xZip = zipfile.ZipFile(file, 'r')
         self.warnings = []
         self.deckId = ''
-        self.notesToAdd = list()
+        self.notesToAdd = dict()
         self.running = True
         self.soup = None
 
@@ -52,13 +53,18 @@ class XmindImporter(NoteImporter):
         self.mw.checkpoint("Import")
         for sheetImport in selectedSheets:
             if self.running:
+                self.currentSheetImport = sheetImport
+                self.currentSheetImport['ID'] = self.currentSheetImport[
+                    'sheet'].getID()
+                self.notesToAdd[self.currentSheetImport['ID']] = list()
                 self.importMap(sheetImport)
-
-        # add all notes to collection
+        # add all notes to the collection
         if self.running:
-            for noteDict in self.notesToAdd:
-                self.col.addNote(self.noteFromNoteDict(noteDict))
-                sleep(0.001)
+            for sheetID, noteList in self.notesToAdd.items():
+                for noteDict in noteList:
+                    self.col.addNote(self.noteFromNoteDict(noteDict))
+                    sleep(0.001)
+            # TODO: Adjust message
             self.log = ['Imported %s notes' % len(self.notesToAdd)]
         self.mw.progress.finish()
         # Remove temp dir and its files
@@ -85,7 +91,6 @@ class XmindImporter(NoteImporter):
 
     def importMap(self, sheetImport: dict):
         rootTopic = sheetImport['sheet'].getRootTopic()
-        self.currentSheetImport = sheetImport
         # Set model to Stepwise map retrieval model
         xModel = self.col.models.byName(X_MODEL_NAME)
         self.col.decks.select(self.currentSheetImport['deckId'])
@@ -172,7 +177,7 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
                                                siblings=siblings)
             self.addMedia(media)
             # add to list of notes to add
-            self.notesToAdd.append(noteDict)
+            self.notesToAdd[self.currentSheetImport['ID']].append(noteDict)
 
             # add notes for questions following this note
             questionContent = replaceSound(noteDict['qt'])
@@ -189,8 +194,9 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
                                       sortId=updateId(previousId=sortId,
                                                       idToAppend=aId))
 
-    # receives a question, sheet and list of notes possibly following each
-    # answer to this question and returns a json file
+            # receives a question, sheet and list of notes possibly following each
+            # answer to this question and returns a json file
+
     def getXMindMeta(self, question: TopicElement, nextQuestions: list,
                      answerDicts, siblings):
         xMindMeta = dict()
