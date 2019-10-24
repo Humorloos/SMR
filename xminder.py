@@ -61,10 +61,9 @@ class XmindImporter(NoteImporter):
                 self.importMap(sheetImport)
         # add all notes to the collection
         if self.running:
-            for sheetID, noteList in self.notesToAdd.items():
-                for noteDict in noteList:
-                    self.col.addNote(self.noteFromNoteDict(noteDict))
-                    sleep(0.001)
+            for sheetId, noteList in self.notesToAdd.items():
+                self.maybeSync(sheetId=sheetId, noteList=noteList)
+                self.addNew(noteList)
             # TODO: Adjust message
             self.log = ['Imported %s notes' % len(self.notesToAdd)]
         self.mw.progress.finish()
@@ -170,24 +169,27 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
             nextQuestions = self.getNextQuestions(answerDicts)
 
             # get content of fields for the note to add for this question
-            noteDict, media = self.getNoteData(sortId=sortId,
+            noteData, media = self.getNoteData(sortId=sortId,
                                                question=question,
                                                answerDicts=answerDicts,
                                                ref=ref,
                                                nextQuestions=nextQuestions,
                                                siblings=siblings)
             self.addMedia(media)
+
             # add to list of notes to add
-            self.notesToAdd[self.currentSheetImport['ID']].append(noteDict)
+            self.notesToAdd[self.currentSheetImport['ID']].append(noteData)
 
             # add notes for questions following this note
-            questionContent = replaceSound(noteDict['qt'])
+            questionContent = replaceSound(
+                splitFields(noteData[6])[list(X_FLDS.keys()).index('qt')])
             ref = ref + '<li>' + questionContent
             for aId, answerDict in enumerate(answerDicts, start=1):
                 if answerDict['subTopic'].getSubTopics():
                     if answerDict['isAnswer']:
-                        answerContent = replaceSound(
-                            noteDict['an']['a' + answerDict['aId']])
+                        ac = splitFields(noteData[6])[
+                            list(X_FLDS.keys()).index('a' + answerDict['aId'])]
+                        answerContent = replaceSound(ac)
                     else:
                         answerContent = ''
                     self.getQuestions(answerDict=answerDict,
@@ -352,6 +354,10 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
                 noteList.append(anContent)
                 media.append(anMedia)
                 answerDict['aId'] = str(aId)
+
+        # noinspection PyShadowingNames
+        for i in range(aId, X_MAX_ANSWERS):
+            noteList.append('')
 
         # set field ID
         noteList.append(sortId)
