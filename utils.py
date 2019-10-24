@@ -147,3 +147,13 @@ def getCrosslink(topic):
         return href[7:]
     else:
         return None
+
+
+def getNotesFromSheet(sheetId, col):
+    notes = list(col.db.execute(
+        "select id, flds from notes where flds like '%\"sheetId\": \"" +
+        sheetId + "\"%'"))
+    if len(notes) > 0:
+        return notes
+    else:
+        return None
