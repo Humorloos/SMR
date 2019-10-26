@@ -55,11 +55,11 @@ class XmindImporter(NoteImporter):
             self.mw.progress.start(immediate=True)
             self.mw.checkpoint("Import")
             for sheetImport in selectedSheets:
-                    self.currentSheetImport = sheetImport
-                    self.currentSheetImport['ID'] = self.currentSheetImport[
-                        'sheet'].getID()
-                    self.notesToAdd[self.currentSheetImport['ID']] = list()
-                    self.importMap(sheetImport)
+                self.currentSheetImport = sheetImport
+                self.currentSheetImport['ID'] = self.currentSheetImport[
+                    'sheet'].getID()
+                self.notesToAdd[self.currentSheetImport['ID']] = list()
+                self.importMap(sheetImport)
             # add all notes to the collection
             if self.running:
                 self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
@@ -71,7 +71,8 @@ class XmindImporter(NoteImporter):
                         self.log[logId][2] = 'note'
                     self.log[logId][1] = str(self.log[logId][1])
 
-                self.log = [", ".join(list(map(lambda l: " ".join(l), self.log)))]
+                self.log = [
+                    ", ".join(list(map(lambda l: " ".join(l), self.log)))]
             self.mw.progress.finish()
             # Remove temp dir and its files
             shutil.rmtree(self.srcDir)
@@ -133,8 +134,10 @@ class XmindImporter(NoteImporter):
                     for aId, answerDict in enumerate(answerDicts, start=1):
                         if answerDict['subTopic'].getSubTopics():
                             if answerDict['isAnswer']:
-                                answerContent = replaceSound(
-                                    self.getContent(answerDict['subTopic'])[0])
+                                answerContent, media = self.getContent(
+                                    answerDict['subTopic'])
+                                self.addMedia([media])
+                                answerContent = replaceSound(answerContent)
                                 newRef = ref + '<li>' + answerContent
                             else:
                                 answerContent = ''
