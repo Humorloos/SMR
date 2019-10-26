@@ -33,7 +33,8 @@ class SheetSelector(QDialog):
         return
 
     def getTag(self, userInput):
-        return (self.deck.deckName() + '_' + userInput).replace(" ", "_")
+        return " " + (self.deck.deckName() + '_' + userInput).replace(" ",
+                                                                      "_") + " "
 
     def reject(self):
         self.running = False
@@ -56,7 +57,8 @@ class SingleSheetSelector(SheetSelector):
         self.resize(self.width, self.height)
 
         layout = QtWidgets.QWidget(self)
-        layout.setGeometry(QtCore.QRect(10, 10, self.width - 20, self.height - 20))
+        layout.setGeometry(
+            QtCore.QRect(10, 10, self.width - 20, self.height - 20))
 
         v_layout_1 = QtWidgets.QVBoxLayout(layout)
         v_layout_1.setContentsMargins(0, 0, 0, 0)
@@ -205,4 +207,3 @@ class MultiSheetSelector(SheetSelector):
                 new_sheets.append(new_sheet)
         self.sheets = new_sheets
         self.accept()
-

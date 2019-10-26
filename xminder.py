@@ -61,11 +61,16 @@ class XmindImporter(NoteImporter):
                 self.importMap(sheetImport)
         # add all notes to the collection
         if self.running:
+            self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
+                        ['removed', 0, 'notes']]
             for sheetId, noteList in self.notesToAdd.items():
                 self.maybeSync(sheetId=sheetId, noteList=noteList)
-                self.addNew(noteList)
-            # TODO: Adjust message
-            self.log = ['Imported %s notes' % len(self.notesToAdd)]
+            for logId, log in enumerate(self.log, start=0):
+                if log[1] == 1:
+                    self.log[logId][2] = 'note'
+                self.log[logId][1] = str(self.log[logId][1])
+
+            self.log = [", ".join(list(map(lambda l: " ".join(l), self.log)))]
         self.mw.progress.finish()
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
@@ -384,17 +389,12 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
             answerDicts.append(answerDict)
         return answerDicts
 
-    def noteFromNoteDict(self, noteDict):
+    def noteFromNoteData(self, noteData):
         note = self.col.newNote()
         note.model()['did'] = self.deckId
-        note.fields[list(X_FLDS.keys()).index('id')] = noteDict['id']
-        note.fields[list(X_FLDS.keys()).index('qt')] = noteDict['qt']
-        for key in noteDict['an']:
-            note.fields[list(X_FLDS.keys()).index(key)] = noteDict['an'][key]
-        note.fields[list(X_FLDS.keys()).index('rf')] = noteDict['rf']
-        note.fields[list(X_FLDS.keys()).index('mt')] = noteDict['mt']
-        note.tags.append(noteDict['tag'])
-
+        fields = splitFields(noteData[6])
+        note.fields = fields
+        note.tags.append(noteData[5])
         return note
 
     def addMedia(self, media):
@@ -408,8 +408,8 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
                     self.col.media.addFile(files['media'])
 
     # receives an answer node and returns all questions following this answer
-    # including questions following multiple topics as dictionaries of a question
-    # node and its corresponding reference
+    # including questions following multiple topics as dictionaries of a
+    # question node and its corresponding reference
     def findQuestionDicts(self, answer: TopicElement, sortId, ref=''):
         followRels = answer.getSubTopics()
         questionDicts = []
@@ -436,3 +436,100 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
     def getQuestionDict(self, subTopic, ref, isBridge, crosslink):
         return dict(subTopic=subTopic, ref=ref, isBridge=isBridge,
                     crosslink=crosslink)
+
+    def maybeSync(self, sheetId, noteList):
+        existingNotes = getNotesFromSheet(sheetId=sheetId, col=self.col)
+        if existingNotes:
+            notesToAdd = []
+            notesToUpdate = []
+            oldQIdList = list(map(lambda n: json.loads(
+                splitFields(n[1])[list(X_FLDS.keys()).index('mt')])[
+                'questionId'], existingNotes))
+            for newNote in noteList:
+                newFields = splitFields(newNote[6])
+                newMeta = json.loads(newFields[list(X_FLDS.keys()).index('mt')])
+                newQId = newMeta['questionId']
+                try:
+                    noteId = oldQIdList.index(newQId)
+                    # if the fields are different, add it to notes to be updated
+                    if not existingNotes[noteId][1] == newNote[6]:
+                        notesToUpdate.append([existingNotes[noteId], newNote])
+                    del existingNotes[noteId]
+                    del oldQIdList[noteId]
+                except ValueError:
+                    notesToAdd.append(newNote)
+            self.addNew(notesToAdd)
+            self.log[0][1] += len(notesToAdd)
+            self.addUpdates(notesToUpdate)
+            self.log[1][1] += len(notesToUpdate)
+            self.removeOld(existingNotes)
+            self.log[2][1] += len(existingNotes)
+            self.col.save()
+        else:
+            notesToAdd = noteList
+            self.addNew(notesToAdd)
+            self.log[0][1] += len(notesToAdd)
+
+    def removeOld(self, existingNotes):
+        oldIds = list(map(lambda nt: nt[0], existingNotes))
+        self.col.remNotes(oldIds)
+
+    def addUpdates(self, rows):
+        for noteTpl in rows:
+            fields = []
+            # get List of aIds to check whether the cards for this note have
+            # changed
+            fields.append(splitFields(noteTpl[0][1]))
+            fields.append(splitFields(noteTpl[1][6]))
+            metas = list(
+                map(lambda f: json.loads(f[list(X_FLDS.keys()).index('mt')]),
+                    fields))
+            aIds = list(
+                map(lambda m: list(map(lambda a: a['answerId'], m['answers'])),
+                    metas))
+            cardUpdates = []
+            # if answers have changed get data for updating their status
+            if not aIds[0] == aIds[1]:
+                cardUpdates = self.getCardUpdates(aIds, noteTpl)
+            # change contents of this note
+            updateData = [noteTpl[1][3:7] + [noteTpl[0][0]]]
+            self.col.db.executemany("""
+            update notes set mod = ?, usn = ?, tags = ?,  flds = ?
+            where id = ?""", updateData)
+            # change card values where necessary
+            for CUId, cardUpdate in enumerate(cardUpdates, start=0):
+                if cardUpdate != '':
+                    self.col.db.executemany("""
+update cards set type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?, lapses = ?, left = ?, odue = ?, flags = ? where nid = ? and ord = ?""",
+                                            [list(cardUpdate) + [str(noteTpl[0][0]),
+                                                           str(CUId)]])
+            self.col.tags.register([noteTpl[1][5]])
+
+    def getCardUpdates(self, aIds, noteTpl):
+        cardUpdates = []
+        # Get relevant values of the prior answers
+        relevantVals = ['type', 'queue', 'due', 'ivl', 'factor', 'reps',
+                        'lapses', 'left', 'odue', 'flags']
+        # remember prior values of cards that have moved
+        oldVals = list(self.col.db.execute(
+            "select " + ", ".join(relevantVals) + " from cards where nid = " +
+            str(noteTpl[0][0])))
+        for i, aId in enumerate(aIds[1], start=0):
+            # if this answer was a different answer before, remember the
+            # stats
+            if aId != aIds[0][i]:
+                try:
+                    cardUpdates.append(oldVals[aIds[0].index(aId)])
+                except ValueError:
+                    # if this answer was not in the old answers at all
+                    # get Values for a completely new card
+                    cardUpdates.append([str(0)] * 10)
+            else:
+                # if this answer was the same answer before, ignore it
+                cardUpdates.append('')
+        return cardUpdates
+
+    def addNew(self, rows):
+        for noteData in rows:
+            self.col.addNote(self.noteFromNoteData(noteData))
+            sleep(0.001)
