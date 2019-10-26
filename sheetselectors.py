@@ -23,8 +23,12 @@ class SheetSelector(QDialog):
         self.height = 100
         self.deck_text = 'Choose Deck:'
         self.deck = None
-        self.build()
+        self.repairCheckbox = None
         self.running = True
+
+        self.build()
+
+
 
     def build(self):
         return
@@ -40,6 +44,11 @@ class SheetSelector(QDialog):
         self.running = False
         super().reject()
 
+    def addRepairCheck(self, layout, sheetLayout):
+        repairCheckbox = QtWidgets.QCheckBox(layout)
+        repairCheckbox.setText('Repair')
+        self.repairCheckbox = repairCheckbox
+        sheetLayout.addWidget(repairCheckbox)
 
 class SingleSheetSelector(SheetSelector):
     def __init__(self, sheets, topic):
@@ -89,10 +98,14 @@ class SingleSheetSelector(SheetSelector):
         h_layout_1.addLayout(v_layout_3)
 
         h_layout_3 = QtWidgets.QHBoxLayout()
+        self.addRepairCheck(layout, h_layout_3)
+
         buttons = QtWidgets.QDialogButtonBox(layout)
         buttons.setStandardButtons(
             QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         h_layout_3.addWidget(buttons)
+
+
 
         v_layout_1.addLayout(h_layout_1)
         v_layout_1.addLayout(h_layout_3)
@@ -110,6 +123,7 @@ class SingleSheetSelector(SheetSelector):
     def on_ok(self):
         self.sheets[0]['tag'] = self.getTag(self.user_input.text())
         self.sheets[0]['deckId'] = self.deck.selectedId()
+        self.sheets[0]['repair'] = self.repairCheckbox.isChecked()
         self.accept()
 
 
@@ -175,6 +189,8 @@ class MultiSheetSelector(SheetSelector):
         h_layout_sheets.addLayout(sheet_v_layout_2)
 
         h_layout_3 = QtWidgets.QHBoxLayout()
+        self.addRepairCheck(layout, h_layout_3)
+
         buttons = QtWidgets.QDialogButtonBox(layout)
         buttons.setStandardButtons(
             QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
@@ -204,6 +220,7 @@ class MultiSheetSelector(SheetSelector):
                 new_sheet['tag'] = self.getTag(
                     self.sheet_user_inputs[box_id].text())
                 new_sheet['deckId'] = self.deck.selectedId()
+                new_sheet['repair'] = self.repairCheckbox.isChecked()
                 new_sheets.append(new_sheet)
         self.sheets = new_sheets
         self.accept()

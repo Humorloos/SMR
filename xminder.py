@@ -45,35 +45,37 @@ class XmindImporter(NoteImporter):
         self.notesToAdd = dict()
         self.running = True
         self.soup = None
+        self.repair = False
 
     def run(self):
         selectedSheets = self.get_x_sheets()
-        self.deckId = selectedSheets[0]['deckId']
-        self.mw.progress.start(immediate=True)
-        self.mw.checkpoint("Import")
-        for sheetImport in selectedSheets:
-            if self.running:
-                self.currentSheetImport = sheetImport
-                self.currentSheetImport['ID'] = self.currentSheetImport[
-                    'sheet'].getID()
-                self.notesToAdd[self.currentSheetImport['ID']] = list()
-                self.importMap(sheetImport)
-        # add all notes to the collection
         if self.running:
-            self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
-                        ['removed', 0, 'notes']]
-            for sheetId, noteList in self.notesToAdd.items():
-                self.maybeSync(sheetId=sheetId, noteList=noteList)
-            for logId, log in enumerate(self.log, start=0):
-                if log[1] == 1:
-                    self.log[logId][2] = 'note'
-                self.log[logId][1] = str(self.log[logId][1])
+            self.deckId = selectedSheets[0]['deckId']
+            self.repair = selectedSheets[0]['repair']
+            self.mw.progress.start(immediate=True)
+            self.mw.checkpoint("Import")
+            for sheetImport in selectedSheets:
+                    self.currentSheetImport = sheetImport
+                    self.currentSheetImport['ID'] = self.currentSheetImport[
+                        'sheet'].getID()
+                    self.notesToAdd[self.currentSheetImport['ID']] = list()
+                    self.importMap(sheetImport)
+            # add all notes to the collection
+            if self.running:
+                self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
+                            ['removed', 0, 'notes']]
+                for sheetId, noteList in self.notesToAdd.items():
+                    self.maybeSync(sheetId=sheetId, noteList=noteList)
+                for logId, log in enumerate(self.log, start=0):
+                    if log[1] == 1:
+                        self.log[logId][2] = 'note'
+                    self.log[logId][1] = str(self.log[logId][1])
 
-            self.log = [", ".join(list(map(lambda l: " ".join(l), self.log)))]
-        self.mw.progress.finish()
-        # Remove temp dir and its files
-        shutil.rmtree(self.srcDir)
-        print("fertig")
+                self.log = [", ".join(list(map(lambda l: " ".join(l), self.log)))]
+            self.mw.progress.finish()
+            # Remove temp dir and its files
+            shutil.rmtree(self.srcDir)
+            print("fertig")
 
     # returns list of
     def get_x_sheets(self):
