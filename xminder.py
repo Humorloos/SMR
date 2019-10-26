@@ -15,6 +15,7 @@ from .sheetselectors import *
 from .utils import *
 from .consts import *
 
+
 # TODO: check out hierarchical tags, may be useful
 # TODO: add warning when something is wrong with the map
 # TODO: add synchronization feature
@@ -442,7 +443,12 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                     crosslink=crosslink)
 
     def maybeSync(self, sheetId, noteList):
-        existingNotes = getNotesFromSheet(sheetId=sheetId, col=self.col)
+        if self.repair:
+            existingNotes = list(self.col.db.execute(
+                "select id, flds from notes where tags like '%" +
+                self.currentSheetImport['tag'].replace(" ", "") + "%'"))
+        else:
+            existingNotes = getNotesFromSheet(sheetId=sheetId, col=self.col)
         if existingNotes:
             notesToAdd = []
             notesToUpdate = []
@@ -454,13 +460,22 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                 newMeta = json.loads(newFields[list(X_FLDS.keys()).index('mt')])
                 newQId = newMeta['questionId']
                 try:
-                    noteId = oldQIdList.index(newQId)
-                    # if the fields are different, add it to notes to be updated
+                    if self.repair:
+                        print('')
+                        newQtxAw = joinFields(newFields[1:22])
+                        oldTpl = tuple(
+                            filter(lambda n: newQtxAw in n[1], existingNotes))[
+                            0]
+                        noteId = existingNotes.index(oldTpl)
+                    else:
+                        noteId = oldQIdList.index(newQId)
+                        # if the fields are different, add it to notes to be updated
                     if not existingNotes[noteId][1] == newNote[6]:
-                        notesToUpdate.append([existingNotes[noteId], newNote])
+                        notesToUpdate.append(
+                            [existingNotes[noteId], newNote])
                     del existingNotes[noteId]
                     del oldQIdList[noteId]
-                except ValueError:
+                except (ValueError, IndexError):
                     notesToAdd.append(newNote)
             self.addNew(notesToAdd)
             self.log[0][1] += len(notesToAdd)
@@ -491,24 +506,28 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             aIds = list(
                 map(lambda m: list(map(lambda a: a['answerId'], m['answers'])),
                     metas))
+
             cardUpdates = []
-            # if answers have changed get data for updating their status
-            if not aIds[0] == aIds[1]:
-                cardUpdates = self.getCardUpdates(aIds, noteTpl)
+            if not self.repair:
+                # if answers have changed get data for updating their status
+                if not aIds[0] == aIds[1]:
+                    cardUpdates = self.getCardUpdates(aIds, noteTpl)
+
             # change contents of this note
             updateData = [noteTpl[1][3:7] + [noteTpl[0][0]]]
             self.col.db.executemany("""
             update notes set mod = ?, usn = ?, tags = ?,  flds = ?
             where id = ?""", updateData)
-            # change card values where necessary
-            for CUId, cardUpdate in enumerate(cardUpdates, start=0):
-                if cardUpdate != '':
-                    self.col.db.executemany("""
-update cards set type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?, lapses = ?, left = ?, odue = ?, flags = ? where nid = ? and ord = ?""",
-                                            [list(cardUpdate) + [
-                                                str(noteTpl[0][0]),
-                                                str(CUId)]])
-            self.col.tags.register([noteTpl[1][5]])
+
+            if not self.repair:
+                # change card values where necessary
+                for CUId, cardUpdate in enumerate(cardUpdates, start=0):
+                    if cardUpdate != '':
+                        self.col.db.executemany("""
+    update cards set type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?, lapses = ?, left = ?, odue = ?, flags = ? where nid = ? and ord = ?""",
+                                                [list(cardUpdate) + [
+                                                    str(noteTpl[0][0]),
+                                                    str(CUId)]])
 
     def getCardUpdates(self, aIds, noteTpl):
         cardUpdates = []
