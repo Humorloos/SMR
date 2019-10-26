@@ -15,7 +15,6 @@ from .sheetselectors import *
 from .utils import *
 from .consts import *
 
-
 # TODO: check out hierarchical tags, may be useful
 # TODO: add warning when something is wrong with the map
 # TODO: add synchronization feature
@@ -394,7 +393,7 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
         note.model()['did'] = self.deckId
         fields = splitFields(noteData[6])
         note.fields = fields
-        note.tags.append(noteData[5])
+        note.tags.append(noteData[5].replace(" ", ""))
         return note
 
     def addMedia(self, media):
@@ -501,8 +500,9 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                 if cardUpdate != '':
                     self.col.db.executemany("""
 update cards set type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?, lapses = ?, left = ?, odue = ?, flags = ? where nid = ? and ord = ?""",
-                                            [list(cardUpdate) + [str(noteTpl[0][0]),
-                                                           str(CUId)]])
+                                            [list(cardUpdate) + [
+                                                str(noteTpl[0][0]),
+                                                str(CUId)]])
             self.col.tags.register([noteTpl[1][5]])
 
     def getCardUpdates(self, aIds, noteTpl):
