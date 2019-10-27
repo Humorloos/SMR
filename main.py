@@ -6,6 +6,7 @@ import anki.importing as importing
 
 from .config import *
 from .xminder import XmindImporter
+# noinspection PyUnresolvedReferences
 from . import monkeypatches
 
 

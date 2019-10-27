@@ -1,9 +1,12 @@
 """monkey patches"""
+import random
+
 import aqt.reviewer as reviewer
 
 import anki.sched as scheduler
 
 from .utils import *
+
 
 # TODO: in xminder add crosslink topics to meta so that they can be
 #  distinguished from normal siblings
@@ -25,18 +28,20 @@ from .utils import *
 # reviewer.Reviewer.__init__ = initReviewer
 
 def showReviewer(self):
-    """override for aqt.reviewer.Reviewer.show() method"""
     self.mw.col.reset()
     self.web.resetHandlers()
     self.mw.setStateShortcuts(self._shortcutKeys())
     self.web.onBridgeCmd = self._linkHandler
     self.bottom.web.onBridgeCmd = self._linkHandler
     self._reps = None
+    ############################################################################
     self.SMRMode = False
     if isSMRDeck(self.mw.col.decks.active()[0], self.mw.col):
         self.SMRMode = True
         self.learnHistory = list()
+    ############################################################################
     self.nextCard()
+
 
 reviewer.Reviewer.show = showReviewer
 
@@ -66,9 +71,11 @@ def reviewerNextCard(self):
             # need to reset
             self.mw.col.reset()
             self.hadCardQueue = False
+        ########################################################################
         if self.SMRMode:
             c = self.mw.col.sched.getCard(self.learnHistory)
         else:
+            ####################################################################
             c = self.mw.col.sched.getCard()
     self.card = c
     clearAudioQueue()
@@ -80,16 +87,20 @@ def reviewerNextCard(self):
         self._initWeb()
     self._showQuestion()
 
+
 reviewer.Reviewer.nextCard = reviewerNextCard
+
 
 def schedGetCard(self, learnHistory=None):
     "Pop the next card from the queue. None if finished."
     self._checkDay()
     if not self._haveQueues:
         self.reset()
+    ############################################################################
     if isinstance(learnHistory, list):
         card = self._getCard(learnHistory)
     else:
+        ########################################################################
         card = self._getCard()
     if card:
         self.col.log(card)
@@ -99,14 +110,18 @@ def schedGetCard(self, learnHistory=None):
         card.startTimer()
         return card
 
+
 scheduler.Scheduler.getCard = schedGetCard
+
 
 def sched_getCard(self, learnHistory=None):
     "Return the next due card id, or None."
-    # learning card due?
+    ############################################################################
     if isinstance(learnHistory, list):
         return self.getNextSMRCard(learnHistory)
     else:
+        ########################################################################
+        # learning card due?
         c = self._getLrnCard()
         if c:
             return c
@@ -130,9 +145,57 @@ def sched_getCard(self, learnHistory=None):
         # collapse or finish
         return self._getLrnCard(collapse=True)
 
+
 scheduler.Scheduler._getCard = sched_getCard
 
+
 def getNextSMRCard(self, learnHistory):
-    print('hi')
+    self._lrnQueue = self.col.db.all("""
+    select id from cards where did in %s and queue = 1 and due < :lim""" %
+                                     self._deckLimit(), lim=self.dayCutoff)
+
+    self._revQueue = self.col.db.list("""
+        select id from cards where did = ? and queue = 2 and due <= ?""",
+                                      self._revDids[0], self.today)
+
+    self._newQueue = self.col.db.list("""
+        select id from cards where did = ? and queue = 0 order by due, ord""",
+                                      self._revDids[0])
+
+    lrnNids = list(set(self.col.db.list(
+        """select nid from cards where id in """ + ids2str(self._lrnQueue))))
+    revNids = list(set(self.col.db.list(
+        """select nid from cards where id in """ + ids2str(self._revQueue))))
+    newNids = list(set(self.col.db.list(
+        """select nid from cards where id in """ + ids2str(self._newQueue))))
+    allNids = lrnNids + revNids + newNids
+
+    if len(learnHistory) == 0:
+        # get shortest sortID among available notes
+        minIDLength = self.col.db.list("""
+            select min(length(sfld)) from notes where id in """ + ids2str(
+            allNids))
+
+        startingNotes = self.col.db.list(
+            "select id from notes where LENGTH(sfld) = ? and id in " + ids2str(
+                lrnNids), minIDLength[0])
+        if len(startingNotes) == 0:
+            startingNotes = self.col.db.list(
+                "select id from notes where LENGTH(sfld) = ? and id in " +
+                ids2str(revNids), minIDLength[0])
+        if len(startingNotes) == 0:
+            startingNotes = self.col.db.list(
+                "select id from notes where LENGTH(sfld) = ? and id in " +
+                ids2str(newNids), minIDLength[0])
+
+        startingNote = random.choice(startingNotes)
+
+        return self.getNextAnswer(startingNote, 1)
+
 
 scheduler.Scheduler.getNextSMRCard = getNextSMRCard
+
+def getNextAnswer(self, nid, aId):
+    print('hi')
+
+scheduler.Scheduler.getNextAnswer = getNextAnswer
