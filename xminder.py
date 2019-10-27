@@ -15,10 +15,9 @@ from .sheetselectors import *
 from .utils import *
 from .consts import *
 
-
+# TODO: adjust sheet selection windows to adjust to the window size
 # TODO: check out hierarchical tags, may be useful
 # TODO: add warning when something is wrong with the map
-# TODO: add synchronization feature
 # TODO: add new prestentation order
 # In reviewer line 87 give getCard() the _note attribute and change getCard
 # Furthermore, track the history of reviewed cards or add coordinates to cards
