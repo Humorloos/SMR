@@ -1,8 +1,14 @@
 """monkey patches"""
 import random
+import time
 
+from aqt.qt import *
+from aqt.utils import askUserDialog
 import aqt.reviewer as reviewer
 
+# noinspection PyProtectedMember
+from anki.lang import _, ngettext
+from anki.sound import clearAudioQueue
 import anki.sched as scheduler
 
 from .utils import *
@@ -74,6 +80,10 @@ def reviewerNextCard(self):
         ########################################################################
         if self.SMRMode:
             c = self.mw.col.sched.getCard(self.learnHistory)
+            if len(self.learnHistory) > 0 and self.learnHistory[-1][0] == c.nid:
+                self.learnHistory[-1][1].append(c.id)
+            else:
+                self.learnHistory.append([c.nid, [c.id]])
         else:
             ####################################################################
             c = self.mw.col.sched.getCard()
@@ -150,9 +160,10 @@ scheduler.Scheduler._getCard = sched_getCard
 
 
 def getNextSMRCard(self, learnHistory):
-    self._lrnQueue = self.col.db.all("""
+
+    self._lrnQueue = self.col.db.list("""
     select id from cards where did in %s and queue = 1 and due < :lim""" %
-                                     self._deckLimit(), lim=self.dayCutoff)
+                                      self._deckLimit(), lim=self.dayCutoff)
 
     self._revQueue = self.col.db.list("""
         select id from cards where did = ? and queue = 2 and due <= ?""",
@@ -190,12 +201,102 @@ def getNextSMRCard(self, learnHistory):
 
         startingNote = random.choice(startingNotes)
 
-        return self.getNextAnswer(startingNote, 1)
+        return self.getNextAnswer(startingNote, 0)
+
+    lastNoteLst = learnHistory[-1]
+    dueAnswers = self._lrnQueue + self._revQueue + self._newQueue
+    dueAw2Note = list(self.col.db.execute(
+        """select id, ord from cards where nid = ? and id in """ + ids2str(
+            dueAnswers), lastNoteLst[0]))
+    awOrds = list(map(lambda t: t[1], dueAw2Note))
+
+    lastCard = self.col.getCard(lastNoteLst[1][-1])
+    lastOrd = lastCard.ord
+
+    if len(dueAw2Note) > 0 and max(awOrds) > lastOrd:
+        return self.getNextAnswer(lastNoteLst[0], lastOrd + 1)
 
 
 scheduler.Scheduler.getNextSMRCard = getNextSMRCard
 
+
 def getNextAnswer(self, nid, aId):
-    print('hi')
+    dueAnswers = self._lrnQueue + self._revQueue + self._newQueue
+    dueAw2Note = list(self.col.db.execute(
+        """select id, ord from cards where nid = ? and id in """ + ids2str(
+            dueAnswers), nid))
+    awOrds = list(map(lambda t: t[1], dueAw2Note))
+    nextOrd = min(filter(lambda o: o >= aId, awOrds))
+    answerId = dueAw2Note[awOrds.index(nextOrd)][0]
+
+    return self.col.getCard(answerId)
+
 
 scheduler.Scheduler.getNextAnswer = getNextAnswer
+
+
+def schedAnswerLrnCard(self, card, ease):
+    # ease 1=no, 2=yes, 3=remove
+    conf = self._lrnConf(card)
+    if card.odid and not card.wasNew:
+        type = 3
+    elif card.type == 2:
+        type = 2
+    else:
+        type = 0
+    leaving = False
+    # lrnCount was decremented once when card was fetched
+    lastLeft = card.left
+    # immediate graduate?
+    if ease == 3:
+        self._rescheduleAsRev(card, conf, True)
+        leaving = True
+    # graduation time?
+    elif ease == 2 and (card.left % 1000) - 1 <= 0:
+        self._rescheduleAsRev(card, conf, False)
+        leaving = True
+    else:
+        # one step towards graduation
+        if ease == 2:
+            # decrement real left count and recalculate left today
+            left = (card.left % 1000) - 1
+            card.left = self._leftToday(conf['delays'], left) * 1000 + left
+        # failed
+        else:
+            card.left = self._startingLeft(card)
+            resched = self._resched(card)
+            if 'mult' in conf and resched:
+                # review that's lapsed
+                card.ivl = max(1, conf['minInt'], card.ivl * conf['mult'])
+            else:
+                # new card; no ivl adjustment
+                pass
+            if resched and card.odid:
+                card.odue = self.today + 1
+        delay = self._delayForGrade(conf, card.left)
+        if card.due < time.time():
+            # not collapsed; add some randomness
+            delay *= random.uniform(1, 1.25)
+        card.due = int(time.time() + delay)
+        # due today?
+        if card.due < self.dayCutoff:
+            self.lrnCount += card.left // 1000
+            # if the queue is not empty and there's nothing else to do, make
+            # sure we don't put it at the head of the queue and end up showing
+            # it twice in a row
+            card.queue = 1
+            if self._lrnQueue and not self.revCount and not self.newCount:
+                smallestDue = self._lrnQueue[0][0]
+                card.due = max(card.due, smallestDue + 1)
+                ################################################################
+            # heappush(self._lrnQueue, (card.due, card.id))
+            ####################################################################
+        else:
+            # the card is due in one or more days, so we need to use the
+            # day learn queue
+            ahead = ((card.due - self.dayCutoff) // 86400) + 1
+            card.due = self.today + ahead
+            card.queue = 3
+    self._logLrn(card, ease, conf, leaving, type, lastLeft)
+
+scheduler.Scheduler._answerLrnCard = schedAnswerLrnCard
