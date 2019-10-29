@@ -68,38 +68,6 @@ def getTopicById(tId, importer):
     return topic
 
 
-# receives a string to search for in meta fields of SMR Notes and returns the
-# first note to contain the delivered String
-def getNoteFromMeta(query, col: _Collection):
-    SMRNids = getSMRNids(col)
-    nIdString = ids2str(SMRNids)
-    for nid, flds in col.db.execute(
-            "select id, flds from notes where id in " + nIdString):
-        splitFlds = splitFields(flds)
-        if query in splitFlds[list(X_FLDS.keys()).index('mt')]:
-            return nid
-    return None
-
-
-# Receives the id of a Question node from the concept map and returns the
-# corresponding Note from the collection. Returns None if no note was found
-def getNoteFromQuestion(qId, col: _Collection):
-    query = "\"questionId\": \"%s\"" % qId
-    return getNoteFromMeta(query=query, col=col)
-
-
-# receives a collection and returns a list of nIds for all notes of type SMR
-def getSMRNids(col: _Collection):
-    return col.findNotes('"note:%s"' % X_MODEL_NAME)
-
-
-# Receives the id of an Answer node from the concept map and returns the
-# corresponding Note from the collection. Returns None if no note was found
-def getNoteFromAnswer(aId, col: _Collection):
-    query = "\"answerId\": \"%s\"" % aId
-    return getNoteFromMeta(query=query, col=col)
-
-
 # receives a minidom Element representing an xmind Topic (retrieved with
 # topic._node) and returns its parent Element as a minidom Element
 def getParentTopicElement(element):
@@ -170,4 +138,20 @@ def isSMRDeck(did, col):
 
 def xModelId(col):
     return int(list(filter(lambda v: v['name'] == X_MODEL_NAME,
-                       list(col.models.models.values())))[0]['id'])
+                           list(col.models.models.values())))[0]['id'])
+
+
+def getNotesFromQIds(qIds, col):
+    return sum(map(lambda qId: col.db.list(
+        "select id from notes where flds like '%\"questionId\": \"" +
+        qId + "\"%'"), qIds), [])
+
+
+def getDueAnswersToNote(nId, dueAnswers, col):
+    cardTpls = list(col.db.execute(
+        """select id, ord from cards where nid = ? and id in """ + ids2str(
+            dueAnswers), nId))
+    cards = []
+    for cardTpl in cardTpls:
+        cards.append(dict(cId=cardTpl[0], ord=cardTpl[1]))
+    return cards
