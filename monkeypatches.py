@@ -1,6 +1,8 @@
 """monkey patches"""
 import random
 import time
+import json
+from operator import itemgetter
 
 from aqt.qt import *
 from aqt.utils import askUserDialog
@@ -159,82 +161,6 @@ def sched_getCard(self, learnHistory=None):
 scheduler.Scheduler._getCard = sched_getCard
 
 
-def getNextSMRCard(self, learnHistory):
-
-    self._lrnQueue = self.col.db.list("""
-    select id from cards where did in %s and queue = 1 and due < :lim""" %
-                                      self._deckLimit(), lim=self.dayCutoff)
-
-    self._revQueue = self.col.db.list("""
-        select id from cards where did = ? and queue = 2 and due <= ?""",
-                                      self._revDids[0], self.today)
-
-    self._newQueue = self.col.db.list("""
-        select id from cards where did = ? and queue = 0 order by due, ord""",
-                                      self._revDids[0])
-
-    lrnNids = list(set(self.col.db.list(
-        """select nid from cards where id in """ + ids2str(self._lrnQueue))))
-    revNids = list(set(self.col.db.list(
-        """select nid from cards where id in """ + ids2str(self._revQueue))))
-    newNids = list(set(self.col.db.list(
-        """select nid from cards where id in """ + ids2str(self._newQueue))))
-    allNids = lrnNids + revNids + newNids
-
-    if len(learnHistory) == 0:
-        # get shortest sortID among available notes
-        minIDLength = self.col.db.list("""
-            select min(length(sfld)) from notes where id in """ + ids2str(
-            allNids))
-
-        startingNotes = self.col.db.list(
-            "select id from notes where LENGTH(sfld) = ? and id in " + ids2str(
-                lrnNids), minIDLength[0])
-        if len(startingNotes) == 0:
-            startingNotes = self.col.db.list(
-                "select id from notes where LENGTH(sfld) = ? and id in " +
-                ids2str(revNids), minIDLength[0])
-        if len(startingNotes) == 0:
-            startingNotes = self.col.db.list(
-                "select id from notes where LENGTH(sfld) = ? and id in " +
-                ids2str(newNids), minIDLength[0])
-
-        startingNote = random.choice(startingNotes)
-
-        return self.getNextAnswer(startingNote, 0)
-
-    lastNoteLst = learnHistory[-1]
-    dueAnswers = self._lrnQueue + self._revQueue + self._newQueue
-    dueAw2Note = list(self.col.db.execute(
-        """select id, ord from cards where nid = ? and id in """ + ids2str(
-            dueAnswers), lastNoteLst[0]))
-    awOrds = list(map(lambda t: t[1], dueAw2Note))
-
-    lastCard = self.col.getCard(lastNoteLst[1][-1])
-    lastOrd = lastCard.ord
-
-    if len(dueAw2Note) > 0 and max(awOrds) > lastOrd:
-        return self.getNextAnswer(lastNoteLst[0], lastOrd + 1)
-
-
-scheduler.Scheduler.getNextSMRCard = getNextSMRCard
-
-
-def getNextAnswer(self, nid, aId):
-    dueAnswers = self._lrnQueue + self._revQueue + self._newQueue
-    dueAw2Note = list(self.col.db.execute(
-        """select id, ord from cards where nid = ? and id in """ + ids2str(
-            dueAnswers), nid))
-    awOrds = list(map(lambda t: t[1], dueAw2Note))
-    nextOrd = min(filter(lambda o: o >= aId, awOrds))
-    answerId = dueAw2Note[awOrds.index(nextOrd)][0]
-
-    return self.col.getCard(answerId)
-
-
-scheduler.Scheduler.getNextAnswer = getNextAnswer
-
-
 def schedAnswerLrnCard(self, card, ease):
     # ease 1=no, 2=yes, 3=remove
     conf = self._lrnConf(card)
@@ -299,4 +225,134 @@ def schedAnswerLrnCard(self, card, ease):
             card.queue = 3
     self._logLrn(card, ease, conf, leaving, type, lastLeft)
 
+
 scheduler.Scheduler._answerLrnCard = schedAnswerLrnCard
+
+
+def getNextSMRCard(self, learnHistory):
+    self._lrnQueue = self.col.db.list("""
+    select id from cards where did in %s and queue = 1 and due < :lim""" %
+                                      self._deckLimit(), lim=self.dayCutoff)
+
+    self._revQueue = self.col.db.list("""
+        select id from cards where did = ? and queue = 2 and due <= ?""",
+                                      self._revDids[0], self.today)
+
+    self._newQueue = self.col.db.list("""
+        select id from cards where did = ? and queue = 0 order by due, ord""",
+                                      self._revDids[0])
+
+    nidList = dict()
+    nidList['lrn'] = list(set(self.col.db.list(
+        """select nid from cards where id in """ + ids2str(self._lrnQueue))))
+    nidList['rev'] = list(set(self.col.db.list(
+        """select nid from cards where id in """ + ids2str(self._revQueue))))
+    nidList['new'] = list(set(self.col.db.list(
+        """select nid from cards where id in """ + ids2str(self._newQueue))))
+    nidList['all'] = nidList['lrn'] + nidList['rev'] + nidList['new']
+
+    # if the user starts studying or a branch was completely studied
+    if len(learnHistory) == 0:
+        # get shortest sortID among available notes
+        minIDLength = self.col.db.list("""
+            select min(length(sfld)) from notes where id in """ + ids2str(
+            nidList['all']))
+
+        startingNotes = self.col.db.list(
+            "select id from notes where LENGTH(sfld) = ? and id in " + ids2str(
+                nidList['lrn']), minIDLength[0])
+        if len(startingNotes) == 0:
+            startingNotes = self.col.db.list(
+                "select id from notes where LENGTH(sfld) = ? and id in " +
+                ids2str(nidList['rev']), minIDLength[0])
+        if len(startingNotes) == 0:
+            startingNotes = self.col.db.list(
+                "select id from notes where LENGTH(sfld) = ? and id in " +
+                ids2str(nidList['new']), minIDLength[0])
+
+        startingNote = random.choice(startingNotes)
+
+        return self.getNextAnswer(startingNote, 0)
+
+    # get last from last note that was studied
+    lastNoteLst = learnHistory[-1]
+    dueAnswers = self._lrnQueue + self._revQueue + self._newQueue
+    dueAw2Note = getDueAnswersToNote(nId=lastNoteLst[0], dueAnswers=dueAnswers,
+                                     col=self.col)
+    awOrds = list(map(lambda t: t['ord'], dueAw2Note))
+
+    lstCrd = self.col.getCard(lastNoteLst[1][-1])
+
+    # if that note has further due answers that follow it, return the next
+    # Answer
+    if len(dueAw2Note) > 0 and max(awOrds) > lstCrd.ord:
+        return self.getNextAnswer(lastNoteLst[0], lstCrd.ord + 1)
+
+    # get Children of the answers that were answered for the last note
+    lastNote = self.col.getNote(lastNoteLst[0])
+    lstNtMt = json.loads(lastNote.fields[list(X_FLDS.keys()).index('mt')])
+    lstCrds = list(map(lambda o: dict(ord=o), self.col.db.list(
+        "select ord from cards where id in " + ids2str(lastNoteLst[1]))))
+    nextNotes = self.getCardData(dueAnswers=dueAnswers, lstCrds=lstCrds,
+                                 lstNtMt=lstNtMt)
+
+    # if any of these children have due answers, return their first due answer
+    if len(nextNotes) > 0:
+        # study notes in lrnQueue frist
+        noteCandidates = self.col.db.list(
+            "select id from notes where id in %s and id in %s" % (ids2str(
+                nidList['lrn']), ids2str(map(lambda n: n['nId'], nextNotes))))
+        if len(noteCandidates) == 0:
+            noteCandidates = self.col.db.list(
+                "select id from notes where id in %s and id in %s" % (ids2str(
+                    nidList['rev']), ids2str(
+                    map(lambda n: n['nId'], nextNotes))))
+        if len(noteCandidates) == 0:
+            noteCandidates = self.col.db.list(
+                "select id from notes where id in %s and id in %s" % (ids2str(
+                    nidList['new']), ids2str(
+                    map(lambda n: n['nId'], nextNotes))))
+        nextNote = random.choice(noteCandidates)
+        return self.getNextAnswer(nextNote, 0)
+
+    # get Children of answers that were not answered in the last note
+    skippedCards = list(map(lambda o: dict(ord=o), self.col.db.list(
+        "select ord from cards where id in " + ids2str(lastNoteLst[1]))))
+
+    nextNotes = self.getCardData(dueAnswers=dueAnswers, lstCrds=skippedCards,
+                                 lstNtMt=lstNtMt)
+
+
+scheduler.Scheduler.getNextSMRCard = getNextSMRCard
+
+
+def getCardData(self, dueAnswers, lstCrds, lstNtMt):
+    nextNotes = []
+    for crd in lstCrds:
+        crd['Children'] = []
+        for qId in lstNtMt['answers'][crd['ord']]['children']:
+            nId = getNotesFromQIds(qIds=[qId], col=self.col)[0]
+            dueCards = getDueAnswersToNote(nId=nId, dueAnswers=dueAnswers,
+                                           col=self.col)
+            if len(dueCards) > 0:
+                nextNotes.append(dict(dueCards=dueCards, nId=nId))
+            crd['Children'].append(dict(qId=qId, nId=nId, dueCards=dueCards))
+    return nextNotes
+
+
+scheduler.Scheduler.getCardData = getCardData
+
+
+def getNextAnswer(self, nid, aId):
+    dueAnswers = self._lrnQueue + self._revQueue + self._newQueue
+    dueAw2Note = list(self.col.db.execute(
+        """select id, ord from cards where nid = ? and id in """ + ids2str(
+            dueAnswers), nid))
+    awOrds = list(map(lambda t: t[1], dueAw2Note))
+    nextOrd = min(filter(lambda o: o >= aId, awOrds))
+    answerId = dueAw2Note[awOrds.index(nextOrd)][0]
+
+    return self.col.getCard(answerId)
+
+
+scheduler.Scheduler.getNextAnswer = getNextAnswer
