@@ -16,25 +16,6 @@ import anki.sched as scheduler
 from .utils import *
 
 
-# TODO: in xminder add crosslink topics to meta so that they can be
-#  distinguished from normal siblings
-# def initReviewer(self, mw):
-#     from .utils import isSMRDeck
-#     self.isSMRDeck = isSMRDeck
-#     self.mw = mw
-#     self.web = mw.web
-#     self.card = None
-#     self.cardQueue = []
-#     self.hadCardQueue = False
-#     self._answeredIds = []
-#     self._recordedAudio = None
-#     self.typeCorrect = None # web init happens before this is set
-#     self.state = None
-#     self.bottom = aqt.toolbar.BottomBar(mw, mw.bottomWeb)
-#     addHook("leech", self.onLeech)
-#
-# reviewer.Reviewer.__init__ = initReviewer
-
 def showReviewer(self):
     self.mw.col.reset()
     self.web.resetHandlers()

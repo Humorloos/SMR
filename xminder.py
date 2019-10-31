@@ -15,6 +15,7 @@ from .sheetselectors import *
 from .utils import *
 from .consts import *
 
+
 # TODO: adjust sheet selection windows to adjust to the window size
 # TODO: check out hierarchical tags, may be useful
 # TODO: add warning when something is wrong with the map
@@ -129,6 +130,9 @@ class XmindImporter(NoteImporter):
             # Update the sorting ID
             nextSortId = updateId(previousId=sortId, idToAppend=qId)
             if self.running:
+                # if the current question serves as a bridge to serve as
+                # reference, do not get any notes for this bridge but for
+                # questions following its answers
                 if questionDict['isBridge']:
                     answerDicts = self.findAnswerDicts(questionDict['subTopic'])
                     for aId, answerDict in enumerate(answerDicts, start=1):
@@ -149,13 +153,19 @@ class XmindImporter(NoteImporter):
                                                   previousId=nextSortId,
                                                   idToAppend=aId),
                                               followsBridge=True)
+                # if this is a regular question
                 else:
-                    siblings = list(
-                        filter(lambda q: q != questionDict['subTopic'].getID(),
-                               siblingQuestions))
+                    siblings = list(map(lambda s: s['qId'], filter(
+                            lambda q: (q['qId'] != questionDict[
+                                'subTopic'].getID()) and not q['isConnection'],
+                            siblingQuestions)))
+                    connections = list(map(lambda s: s['qId'], filter(
+                        lambda q: (q['qId'] != questionDict[
+                            'subTopic'].getID()) and q['isConnection'],
+                        siblingQuestions)))
                     self.addXNote(question=questionDict['subTopic'],
                                   ref=questionDict['ref'], sortId=nextSortId,
-                                  siblings=siblings)
+                                  siblings=siblings, connections=connections)
 
     # creates a noteDict for this question, and
     # recursively calls getQuestions() to add notes following this question
@@ -164,7 +174,8 @@ class XmindImporter(NoteImporter):
     # ref: current reference text
     # qId: position of the question node relative to its siblings
     # note: note to be added for the question node
-    def addXNote(self, question: TopicElement, ref, sortId, siblings=None):
+    def addXNote(self, question: TopicElement, ref, sortId, siblings=None,
+                 connections=None):
         answerDicts = self.findAnswerDicts(question)
         actualAnswers = list(filter(
             lambda a: a['isAnswer'], answerDicts))
@@ -183,7 +194,8 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
                                                answerDicts=answerDicts,
                                                ref=ref,
                                                nextQuestions=nextQuestions,
-                                               siblings=siblings)
+                                               siblings=siblings,
+                                               connections=connections)
             self.addMedia(media)
 
             # add to list of notes to add
@@ -210,7 +222,7 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
             # answer to this question and returns a json file
 
     def getXMindMeta(self, question: TopicElement, nextQuestions: list,
-                     answerDicts, siblings):
+                     answerDicts, siblings, connections):
         xMindMeta = dict()
         xMindMeta['path'] = self.file
         xMindMeta['sheetId'] = self.currentSheetImport['sheet'].getID()
@@ -224,11 +236,12 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
             xMindMeta['answers'][aId]['answerId'] = answer[
                 'subTopic'].getID()
             xMindMeta['answers'][aId]['children'] = []
-            for qId in nextQuestions[aId]:
+            for question in nextQuestions[aId]:
                 xMindMeta['answers'][aId]['children'].append(
-                    qId)
+                    question['qId'])
         xMindMeta['nAnswers'] = len(answers)
         xMindMeta['siblings'] = siblings
+        xMindMeta['connections'] = connections
         return json.dumps(xMindMeta)
 
     def addAttachment(self, attachment):
@@ -309,11 +322,14 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
         questionList = []
         for potentialQuestion in potentialQuestions:
             if not (isEmptyNode(potentialQuestion)):
+                # If this question contains a crosslink to another question
                 crosslink = getCrosslink(potentialQuestion)
                 if crosslink:
-                    questionList.append(crosslink)
+                    questionList.append(
+                        dict(qId=crosslink, isConnection=not addCrosslinks))
                 else:
-                    questionList.append(potentialQuestion.getID())
+                    questionList.append(dict(qId=potentialQuestion.getID(),
+                                             isConnection=not addCrosslinks))
             else:
                 if goDeeper:
                     nextAnswerDicts = self.findAnswerDicts(potentialQuestion)
@@ -338,7 +354,7 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
         return questionList
 
     def getNoteData(self, sortId, question, answerDicts, ref, nextQuestions,
-                    siblings):
+                    siblings, connections):
         """returns a list of all content needed to create the a new note and
         the media contained in that note in a list"""
 
@@ -373,7 +389,8 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
 
         # set field Meta
         meta = self.getXMindMeta(question=question, nextQuestions=nextQuestions,
-                                 answerDicts=answerDicts, siblings=siblings)
+                                 answerDicts=answerDicts, siblings=siblings,
+                                 connections=connections)
         noteList.append(meta)
 
         nId = timestampID(self.col.db, "notes")
