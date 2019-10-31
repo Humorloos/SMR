@@ -2,7 +2,6 @@
 import random
 import time
 import json
-from operator import itemgetter
 
 from aqt.qt import *
 from aqt.utils import askUserDialog
@@ -219,7 +218,7 @@ def schedRescheduleLapse(self, card):
     if self._resched(card):
         card.lapses += 1
         card.ivl = self._nextLapseIvl(card, conf)
-        card.factor = max(1300, card.factor-200)
+        card.factor = max(1300, card.factor - 200)
         card.due = self.today + card.ivl
         # if it's a filtered deck, update odue as well
         if card.odid:
@@ -360,7 +359,7 @@ def getNextSMRCard(self, learnHistory):
     if answerFurtherDown:
         return answerFurtherDown
 
-    # if no children nore children of children are due, check whether a sibling
+    # if no children nor children of children are due, check whether a sibling
     # question is due and return it if necessary
     dueSiblingNotes = []
     siblings = []
@@ -376,6 +375,26 @@ def getNextSMRCard(self, learnHistory):
     if len(dueSiblingNotes) > 0:
         nextNote = self.getUrgentNote(dueSiblingNotes, nidList)
         return self.getNextAnswer(nid=nextNote, aId=0)
+
+    # if no siblings are due, check whether connections are due and return them
+    # if necessary
+    dueConnectionNotes = []
+    connections = []
+    for nId in getNotesFromQIds(qIds=lstNtMt['connections'], col=self.col):
+        connections.append(dict(nid=nId))
+        connections[-1]['dueCards'] = getDueAnswersToNote(nId=nId,
+                                                          dueAnswers=dueAnswers,
+                                                          col=self.col)
+        if len(connections[-1]['dueCards']) > 0:
+            dueConnectionNotes.append(
+                dict(dueCards=connections[-1]['dueCards'], nId=nId))
+
+    if len(dueConnectionNotes) > 0:
+        nextNote = self.getUrgentNote(dueConnectionNotes, nidList)
+        return self.getNextAnswer(nid=nextNote, aId=0)
+
+    # If the last note did not have any further questions, remove the last Item
+    # from the history and search again
     del learnHistory[-1]
     return self.getNextSMRCard(learnHistory)
 
