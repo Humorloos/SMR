@@ -293,50 +293,78 @@ def getNextSMRCard(self, learnHistory):
     lstNtMt = json.loads(lastNote.fields[list(X_FLDS.keys()).index('mt')])
     lstCrds = list(map(lambda o: dict(ord=o), self.col.db.list(
         "select ord from cards where id in " + ids2str(lastNoteLst[1]))))
-    nextNotes = self.getCardData(dueAnswers=dueAnswers, lstCrds=lstCrds,
-                                 lstNtMt=lstNtMt)
+    nextNotes = self.getCardData(dueAnswers=dueAnswers, cards=lstCrds,
+                                 ntMt=lstNtMt)
 
     # if any of these children have due answers, return their first due answer
     if len(nextNotes) > 0:
-        # study notes in lrnQueue frist
-        noteCandidates = self.col.db.list(
-            "select id from notes where id in %s and id in %s" % (ids2str(
-                nidList['lrn']), ids2str(map(lambda n: n['nId'], nextNotes))))
-        if len(noteCandidates) == 0:
-            noteCandidates = self.col.db.list(
-                "select id from notes where id in %s and id in %s" % (ids2str(
-                    nidList['rev']), ids2str(
-                    map(lambda n: n['nId'], nextNotes))))
-        if len(noteCandidates) == 0:
-            noteCandidates = self.col.db.list(
-                "select id from notes where id in %s and id in %s" % (ids2str(
-                    nidList['new']), ids2str(
-                    map(lambda n: n['nId'], nextNotes))))
-        nextNote = random.choice(noteCandidates)
+        nextNote = self.getUrgentNote(nextNotes, nidList)
         return self.getNextAnswer(nextNote, 0)
+
+    # check whether children of these children have due answers
+    answerFurtherDown = self.getAnswerFurtherDown(notes=nextNotes,
+                                                  dueAnswers=dueAnswers,
+                                                  nidList=nidList)
+    if answerFurtherDown:
+        return answerFurtherDown
 
     # get Children of answers that were not answered in the last note
     skippedCards = list(map(lambda o: dict(ord=o), self.col.db.list(
-        "select ord from cards where id in " + ids2str(lastNoteLst[1]))))
+        "select ord from cards where nid = ? and id not in " + ids2str(
+            lastNoteLst[1]), lastNoteLst[0])))
+    nextNotes = self.getCardData(dueAnswers=dueAnswers, cards=skippedCards,
+                                 ntMt=lstNtMt)
+    # if any of these children have due answers, return their first due answer
+    if len(nextNotes) > 0:
+        nextNote = self.getUrgentNote(nextNotes, nidList)
+        return self.getNextAnswer(nextNote, 0)
 
-    nextNotes = self.getCardData(dueAnswers=dueAnswers, lstCrds=skippedCards,
-                                 lstNtMt=lstNtMt)
+    # check whether children of these children have due answers
+    answerFurtherDown = self.getAnswerFurtherDown(notes=nextNotes,
+                                                  dueAnswers=dueAnswers,
+                                                  nidList=nidList)
+    if answerFurtherDown:
+        return answerFurtherDown
+
+
 
 
 scheduler.Scheduler.getNextSMRCard = getNextSMRCard
 
 
-def getCardData(self, dueAnswers, lstCrds, lstNtMt):
+def getUrgentNote(self, nextNotes, nidList):
+    # study notes in lrnQueue frist
+    noteCandidates = self.col.db.list(
+        "select id from notes where id in %s and id in %s" % (ids2str(
+            nidList['lrn']), ids2str(map(lambda n: n['nId'], nextNotes))))
+    if len(noteCandidates) == 0:
+        noteCandidates = self.col.db.list(
+            "select id from notes where id in %s and id in %s" % (ids2str(
+                nidList['rev']), ids2str(
+                map(lambda n: n['nId'], nextNotes))))
+    if len(noteCandidates) == 0:
+        noteCandidates = self.col.db.list(
+            "select id from notes where id in %s and id in %s" % (ids2str(
+                nidList['new']), ids2str(
+                map(lambda n: n['nId'], nextNotes))))
+    nextNote = random.choice(noteCandidates)
+    return nextNote
+
+
+scheduler.Scheduler.getUrgentNote = getUrgentNote
+
+
+def getCardData(self, dueAnswers, cards, ntMt):
     nextNotes = []
-    for crd in lstCrds:
-        crd['Children'] = []
-        for qId in lstNtMt['answers'][crd['ord']]['children']:
+    for crd in cards:
+        crd['children'] = []
+        for qId in ntMt['answers'][crd['ord']]['children']:
             nId = getNotesFromQIds(qIds=[qId], col=self.col)[0]
             dueCards = getDueAnswersToNote(nId=nId, dueAnswers=dueAnswers,
                                            col=self.col)
             if len(dueCards) > 0:
                 nextNotes.append(dict(dueCards=dueCards, nId=nId))
-            crd['Children'].append(dict(qId=qId, nId=nId, dueCards=dueCards))
+            crd['children'].append(dict(qId=qId, nId=nId, dueCards=dueCards))
     return nextNotes
 
 
@@ -356,3 +384,30 @@ def getNextAnswer(self, nid, aId):
 
 
 scheduler.Scheduler.getNextAnswer = getNextAnswer
+
+
+def getAnswerFurtherDown(self, notes, dueAnswers, nidList):
+    urgntNxtLvlNotes = []
+    allNxtLvlNids = []
+    for nxtNote in notes:
+        nxtNote['note'] = self.col.getNote(nxtNote['nId'])
+        nxtNote['meta'] = json.loads(
+            nxtNote['note'].fields[list(X_FLDS.keys()).index('mt')])
+        nxtNote['cards'] = list(map(lambda o: dict(ord=o), self.col.db.list(
+            "select ord from cards where nid = ?", nxtNote['nId'])))
+        urgntNxtLvlNotes.extend(
+            self.getCardData(dueAnswers=dueAnswers, cards=nxtNote['cards'],
+                             ntMt=nxtNote['meta']))
+        for card in nxtNote['cards']:
+            for child in card['children']:
+                allNxtLvlNids.append(dict(nId=child['nId']))
+    if len(urgntNxtLvlNotes) > 0:
+        nextNote = self.getUrgentNote(urgntNxtLvlNotes, nidList)
+        return self.getNextAnswer(nextNote, 0)
+    if len(allNxtLvlNids) > 0:
+        return self.getAnswerFurtherDown(notes=allNxtLvlNids,
+                                         dueAnswers=dueAnswers, nidList=nidList)
+    return None
+
+
+scheduler.Scheduler.getAnswerFurtherDown = getAnswerFurtherDown
