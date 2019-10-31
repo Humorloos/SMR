@@ -82,6 +82,9 @@ def reviewerNextCard(self):
         ########################################################################
         if self.SMRMode:
             c = self.mw.col.sched.getCard(self.learnHistory)
+            if not c:
+                self.mw.moveToState("overview")
+                return
             if len(self.learnHistory) > 0 and self.learnHistory[-1][0] == c.nid:
                 self.learnHistory[-1][1].append(c.id)
             else:
@@ -112,8 +115,8 @@ def schedGetCard(self, learnHistory=None):
     if isinstance(learnHistory, list):
         card = self._getCard(learnHistory)
     else:
-        ########################################################################
         card = self._getCard()
+        ########################################################################
     if card:
         self.col.log(card)
         if not self._burySiblingsOnAnswer:
@@ -233,14 +236,17 @@ def getNextSMRCard(self, learnHistory):
     self._lrnQueue = self.col.db.list("""
     select id from cards where did in %s and queue = 1 and due < :lim""" %
                                       self._deckLimit(), lim=self.dayCutoff)
+    self.lrnCount = len(self._lrnQueue)
 
     self._revQueue = self.col.db.list("""
         select id from cards where did = ? and queue = 2 and due <= ?""",
                                       self._revDids[0], self.today)
+    self.revCount = len(self._revQueue)
 
     self._newQueue = self.col.db.list("""
-        select id from cards where did = ? and queue = 0 order by due, ord""",
+        select id from cards where did = ? and queue = 0 order by due, ord limit ?""",
                                       self._revDids[0])
+    self.newCount = len(self._newQueue)
 
     nidList = dict()
     nidList['lrn'] = list(set(self.col.db.list(
@@ -269,6 +275,8 @@ def getNextSMRCard(self, learnHistory):
             startingNotes = self.col.db.list(
                 "select id from notes where LENGTH(sfld) = ? and id in " +
                 ids2str(nidList['new']), minIDLength[0])
+        if len(startingNotes) == 0:
+            return None
 
         startingNote = random.choice(startingNotes)
 
@@ -342,6 +350,9 @@ def getNextSMRCard(self, learnHistory):
     if len(dueSiblingNotes) > 0:
         nextNote = self.getUrgentNote(dueSiblingNotes, nidList)
         return self.getNextAnswer(nid=nextNote, aId=0)
+    del learnHistory[-1]
+    return self.getNextSMRCard(learnHistory)
+
 
 scheduler.Scheduler.getNextSMRCard = getNextSMRCard
 
