@@ -326,8 +326,22 @@ def getNextSMRCard(self, learnHistory):
     if answerFurtherDown:
         return answerFurtherDown
 
+    # if no children nore children of children are due, check whether a sibling
+    # question is due and return it if necessary
+    dueSiblingNotes = []
+    siblings = []
+    for nId in getNotesFromQIds(qIds=lstNtMt['siblings'], col=self.col):
+        siblings.append(dict(nid=nId))
+        siblings[-1]['dueCards'] = getDueAnswersToNote(nId=nId,
+                                                       dueAnswers=dueAnswers,
+                                                       col=self.col)
+        if len(siblings[-1]['dueCards']) > 0:
+            dueSiblingNotes.append(
+                dict(dueCards=siblings[-1]['dueCards'], nId=nId))
 
-
+    if len(dueSiblingNotes) > 0:
+        nextNote = self.getUrgentNote(dueSiblingNotes, nidList)
+        return self.getNextAnswer(nid=nextNote, aId=0)
 
 scheduler.Scheduler.getNextSMRCard = getNextSMRCard
 
