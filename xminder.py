@@ -557,16 +557,21 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         for i, aId in enumerate(aIds[1], start=0):
             # if this answer was a different answer before, remember the
             # stats
-            if aId != aIds[0][i]:
-                try:
-                    cardUpdates.append(oldVals[aIds[0].index(aId)])
-                except ValueError:
-                    # if this answer was not in the old answers at all
-                    # get Values for a completely new card
-                    cardUpdates.append([str(0)] * 10)
-            else:
-                # if this answer was the same answer before, ignore it
-                cardUpdates.append('')
+            try:
+                if aId != aIds[0][i]:
+                    try:
+                        cardUpdates.append(oldVals[aIds[0].index(aId)])
+                    except ValueError:
+                        # if this answer was not in the old answers at all
+                        # get Values for a completely new card
+                        cardUpdates.append([str(0)] * 10)
+                else:
+                    # if this answer was the same answer before, ignore it
+                    cardUpdates.append('')
+            except IndexError:
+                # if this answer was not in the old answers at all
+                # get Values for a completely new card
+                cardUpdates.append([str(0)] * 10)
         return cardUpdates
 
     def addNew(self, rows):
