@@ -378,19 +378,26 @@ def getNextSMRCard(self, learnHistory):
 
     # if no siblings are due, check whether connections are due and return them
     # if necessary
-    dueConnectionNotes = []
-    connections = []
-    for nId in getNotesFromQIds(qIds=lstNtMt['connections'], col=self.col):
-        connections.append(dict(nid=nId))
-        connections[-1]['dueCards'] = getDueAnswersToNote(nId=nId,
-                                                          dueAnswers=dueAnswers,
-                                                          col=self.col)
-        if len(connections[-1]['dueCards']) > 0:
-            dueConnectionNotes.append(
-                dict(dueCards=connections[-1]['dueCards'], nId=nId))
+    connections, dueConnectionNotes = self.getDueConnectionNotes(
+        dueAnswers=dueAnswers, meta=lstNtMt)
 
     if len(dueConnectionNotes) > 0:
         nextNote = self.getUrgentNote(dueConnectionNotes, nidList)
+        return self.getNextAnswer(nid=nextNote, aId=0)
+
+    nxtLvlConnections = []
+    dueNxtLvlConnectionNotes = []
+    # Also check whether connections of connections have due questions
+    for connection in connections:
+        connection['note'] = self.col.getNote(connection['nid'])
+        connection['meta'] = json.loads(
+            connection['note'].fields[list(X_FLDS.keys()).index('mt')])
+        nLCons, dNLConNts = self.getDueConnectionNotes(
+            dueAnswers=dueAnswers, meta=connection['meta'])
+        nxtLvlConnections.extend(nLCons)
+        dueNxtLvlConnectionNotes.extend(dNLConNts)
+    if len(dueNxtLvlConnectionNotes) > 0:
+        nextNote = self.getUrgentNote(dueNxtLvlConnectionNotes, nidList)
         return self.getNextAnswer(nid=nextNote, aId=0)
 
     # If the last note did not have any further questions, remove the last Item
@@ -400,6 +407,23 @@ def getNextSMRCard(self, learnHistory):
 
 
 scheduler.Scheduler.getNextSMRCard = getNextSMRCard
+
+
+def getDueConnectionNotes(self, dueAnswers, meta):
+    dueConnectionNotes = []
+    connections = []
+    for nId in getNotesFromQIds(qIds=meta['connections'], col=self.col):
+        connections.append(dict(nid=nId))
+        connections[-1]['dueCards'] = getDueAnswersToNote(nId=nId,
+                                                          dueAnswers=dueAnswers,
+                                                          col=self.col)
+        if len(connections[-1]['dueCards']) > 0:
+            dueConnectionNotes.append(
+                dict(dueCards=connections[-1]['dueCards'], nId=nId))
+    return connections, dueConnectionNotes
+
+
+scheduler.Scheduler.getDueConnectionNotes = getDueConnectionNotes
 
 
 def getUrgentNote(self, nextNotes, nidList):
