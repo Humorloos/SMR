@@ -12,6 +12,9 @@
 </sub>
 **[2. Importing your concept maps](https://github.com/Humorloos/SMR#2-importing-your-concept-maps)**<br>
 **[3. Synchronizing your concept maps](https://github.com/Humorloos/SMR#3-synchronizing-your-concept-maps)**<br>
+<sub>
+[Repair Checkbox](https://github.com/Humorloos/SMR#repair-checkbox)<br>
+</sub>
 **[4. Reviewing your cards](https://github.com/Humorloos/SMR#4-reviewing-your-cards)**
 
 #### 1. Creating a Concept Map
