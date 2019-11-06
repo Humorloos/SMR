@@ -35,12 +35,12 @@ If you don't want certain concepts to be connected in card review without creati
     <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/connection.png" alt="connection" width=64%/>
 </p>
 During card review, questions following the concept "general psychology" (which is a concept form another sheet in the same Xmind document) are treated with the same priority as questions following linked notes.
-
+<br><br>
 If you want to add a crosslink to a specific question to a concept, you can do so by adding a relationship with a hyperlink to the respective question:
 <p align="center">
     <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/linkquestion.png" alt="linkquestion" width=64%/>
 </p>
-These questions are treated the same was as siblings during code review.
+During card review, these questions are treated the same way as sibling questions.
 
 ##### Questions following multiple Answers
 To include questions following multiple answers, you can place an empty concept next to the answers the relationship is supposed to refer to and add the question to that concept:
@@ -50,6 +50,13 @@ To include questions following multiple answers, you can place an empty concept 
     <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/mult_card.png" alt="mult card" width=64%/>
 </p>
 
+##### Multimedia
+This add on supports import of images, sound files (mp3, wav) and videos (mp4). When importing sounds or videos, make sure you add the files as an attachment to your map instead of just adding a link to the file:
+<p align="center">
+    <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/audio.png" alt="audio" width=64%/>
+    <br>
+    <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/video.png" alt="video" width=64%/>
+</p>
 
 Example: This concept map leads to the creation of the following cards:
 <img src="https://imgur.com/vEdMltN.png">
