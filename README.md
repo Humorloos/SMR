@@ -1,16 +1,10 @@
-This addon creates notes based on concept maps that are written in Xmind 8. (see <a href="https://en.wikipedia.org/wiki/Concept_map" rel="nofollow">https://en.wikipedia.org/wiki/Concept_map</a> for an explanation of concept maps) It uses the relationships in the concept maps as questions, concepts following relationships are considered Answers to these questions. Prior relationships and concepts are displayed in a reference at the beginning of each card.
-
-It also modifies the reviewer so that concept maps are retrieved in a logical order that matches the concept map's structure
-
-You can synchronize your anki notes with the concept map by importing the concept map again.
-
 ### How to:
 #### 1. Creating a Concept Map
-This addon imports and synchronizes concept maps written in Xmind 8, so the first thing you want to do is write a concept map from the content you want to learn.
+Stepwise Map Retrieval (SMR) imports and synchronizes concept maps written in [Xmind8](https://www.xmind.net/download/xmind8), so the first thing you want to do is write a concept map from the content you want to learn.
 
-[Concept maps](https://en.wikipedia.org/wiki/Concept_map) consist of concepts and relationships. However, since Xmind 8 originally is a mind mapping software, you will write both concepts and relationships into nodes. The Addon recognizes concepts and relationships by their position in the map. It considers nodes at even levels concepts (e.g. "biological psychology" or "perception" in the example sheet "biological psychology") and nodes at odd levels relationships (e.g. "investigates" in the same sheet).
+[Concept maps](https://en.wikipedia.org/wiki/Concept_map) consist of concepts and relationships. However, since Xmind 8 originally is a mind mapping software, you will write both concepts and relationships into nodes. SMR recognizes concepts and relationships by their position in the map. It considers nodes at even levels concepts (e.g. "biological psychology" or "perception" in the example sheet "biological psychology") and nodes at odd levels relationships (e.g. "investigates" in the same sheet).
 
-To be able to distinguish relationships and concepts, i recommend you style relationship nodes with a straight line and set up a custom key (preferences -> Keys -> Paste Style) for pasting node styles (I use ctrl + G).
+To be able to distinguish relationships and concepts, i recommend you style relationship nodes with a straight line and set up a custom key (preferences -> Keys -> Paste Style) for pasting node styles (I use ctrl + G). I usually use logic chart structure for my concept maps, but for SMR to work, any structure should be fine.
 
 ##### Bridges
 If you want to structure your concept map without creating any cards, you can place an empty relationship between two concepts:
@@ -30,11 +24,11 @@ You can use hyperlinks to include crosslinks in your concept map. Including a Hy
 During card review, questions following linked nodes are treated with a priority one level below sibling questions.
 
 ##### Connections
-If you don't want certain concepts to be connected in card review without creating any new cards, you can add hyperlinks in combination with bridges:
+If you want certain concepts to be connected in card review without creating any new cards, you can add hyperlinks in combination with bridges:
 <p align="center">
     <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/connection.png" alt="connection" width=64%/>
 </p>
-During card review, questions following the concept "general psychology" (which is a concept form another sheet in the same Xmind document) are treated with the same priority as questions following linked notes.
+During card review, questions following the concept "general psychology" (which is a concept form another sheet in the same Xmind document) will be treated with the same priority as questions following linked notes.
 <br><br>
 If you want to add a crosslink to a specific question to a concept, you can do so by adding a relationship with a hyperlink to the respective question:
 <p align="center">
@@ -51,21 +45,37 @@ To include questions following multiple answers, you can place an empty concept 
 </p>
 
 ##### Multimedia
-This add on supports import of images, sound files (mp3, wav) and videos (mp4). When importing sounds or videos, make sure you add the files as an attachment to your map instead of just adding a link to the file:
+SMR supports import of images, sound files (mp3, wav) and videos (mp4). When importing sounds or videos, make sure you add the files as an attachment to your map instead of just adding a link to the file:
 <p align="center">
     <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/audio.png" alt="audio" width=64%/>
     <br>
     <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/video.png" alt="video" width=64%/>
 </p>
 
-Example: This concept map leads to the creation of the following cards:
-<img src="https://imgur.com/vEdMltN.png">
+##### Answer Limit
+If a concept map contains questions with more than 20 answers, the import will not work. However, there is no limit to the amount of questions following an answer.
 
-<img src="https://imgur.com/JUvKq7b.png"> 
-<img src="https://imgur.com/Wlifi8v.png">
-<img src="https://imgur.com/GOAayVp.png">
-<img src="https://imgur.com/nOIc6nW.png">
-<img src="https://imgur.com/j64DZC7.png">
-<img src="https://imgur.com/bSFDllD.png">
-<img src="https://imgur.com/D73Ma6o.png">
+#### 2. Importing your concept maps
+To import a concept map all you have to do is click the "Import File" button at the bottom of the main window and choose the Xmind file that contains the map you want to import. The dialogue that pops up will let you choose the deck you want to import the notes to, choose the sheets that you want to import and assign a name to each of the sheets. Notes that you create for a certain sheet will contain a tag with the name of the deck the sheet was imported into and the name that was assigned to it in this dialogue.
+<p align="center">
+    <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/sheetselector_1.png" alt="sheetselector 1" width=64%/>
+    <br>
+    <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/sheetselector_mult.png" alt="sheetselector mult" width=64%/>
+</p>
 
+#### 3. Synchronizing your concept maps
+To import changes made to your concept maps into your anki notes, all you have to do is import the corresponding sheets again.
+
+##### Repair checkbox
+Sometimes Xmind 8 experiences some serious bugs with the program crashing every time you try to edit a concept map. The only solution to this problem that I have found until now is to open the map with [Xmind Zen](https://www.xmind.net/download/), make the necessary changes, save it from there and open it again in Xmind 8. However, after doing this, SMR will no more recognize the concept map and won't synchronize an existing map but import it again. To be able to synchronize again, you need to import the map once with the repair checkbox checked. However, make sure that the map is the same as before you saved it in Xmind Zen because any notes affected by changes will be removed and imported again and your progress would be lost.
+
+#### 4. Reviewing your cards
+SMR comes with a custom reviewing algorithm that roughly follows these preferences:
+1. The first note you study will always be the note at the highest hierarchy level
+2. If a note contains multiple answers, the first due answer will always be asked first, followed by subsequent answers
+3. If a note has children (questions following answers), they will be asked next. If none are due, children of children will be asked etc.
+4. If a note has Siblings (questions following the same parent node), they will be asked next.
+5. If a note has connections, they will be asked last.
+6. If no more subsequent notes are left, Anki will present you another note at the highest hierarchy level.
+
+If there are multiple notes with the same priority, "learning" cards will be chosen first, then "review" cards and then "new" cards.
