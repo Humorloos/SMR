@@ -1,4 +1,15 @@
 ### How to:
+
+##### Table of Contents  
+**[1. Creating a Concept Map](https://github.com/Humorloos/SMR#1-creating-a-concept-map)
+[2. Importing your concept maps](https://github.com/Humorloos/SMR#2-importing-your-concept-maps)
+[3. Synchronizing your concept maps](https://github.com/Humorloos/SMR#3-synchronizing-your-concept-maps)
+[4. Reviewing your cards](https://github.com/Humorloos/SMR#4-reviewing-your-cards)  
+**
+...snip...    
+<a name="headers"/>
+## Headers
+
 #### 1. Creating a Concept Map
 Stepwise Map Retrieval (SMR) imports and synchronizes concept maps written in [Xmind8](https://www.xmind.net/download/xmind8), so the first thing you want to do is write a concept map from the content you want to learn.
 
