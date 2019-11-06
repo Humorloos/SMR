@@ -17,7 +17,7 @@
 </sup>
 **[4. Reviewing your cards](https://github.com/Humorloos/SMR#4-reviewing-your-cards)**
 
-### 1. Creating a Concept Map
+### 1. Creating a concept map
 Stepwise Map Retrieval (SMR) imports and synchronizes concept maps written in [Xmind8](https://www.xmind.net/download/xmind8), so the first thing you want to do is write a concept map from the content you want to learn.
 
 [Concept maps](https://en.wikipedia.org/wiki/Concept_map) consist of concepts and relationships. However, since Xmind 8 originally is a mind mapping software, you will write both concepts and relationships into nodes. SMR recognizes concepts and relationships by their position in the map. It considers nodes at even levels (e.g. "biological psychology" or "perception" in the example sheet "biological psychology") concepts and nodes at odd levels (e.g. "investigates" in the same sheet) relationships.
