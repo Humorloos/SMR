@@ -20,7 +20,10 @@
 ### 1. Creating a Concept Map
 Stepwise Map Retrieval (SMR) imports and synchronizes concept maps written in [Xmind8](https://www.xmind.net/download/xmind8), so the first thing you want to do is write a concept map from the content you want to learn.
 
-[Concept maps](https://en.wikipedia.org/wiki/Concept_map) consist of concepts and relationships. However, since Xmind 8 originally is a mind mapping software, you will write both concepts and relationships into nodes. SMR recognizes concepts and relationships by their position in the map. It considers nodes at even levels concepts (e.g. "biological psychology" or "perception" in the example sheet "biological psychology") and nodes at odd levels relationships (e.g. "investigates" in the same sheet).
+[Concept maps](https://en.wikipedia.org/wiki/Concept_map) consist of concepts and relationships. However, since Xmind 8 originally is a mind mapping software, you will write both concepts and relationships into nodes. SMR recognizes concepts and relationships by their position in the map. It considers nodes at even levels (e.g. "biological psychology" or "perception" in the example sheet "biological psychology") concepts and nodes at odd levels (e.g. "investigates" in the same sheet) relationships.
+<p align="center">
+    <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/connection.png" alt="connection" width=64%/>
+</p>
 
 To be able to distinguish relationships and concepts, i recommend you style relationship nodes with a straight line and set up a custom key (preferences -> Keys -> Paste Style) for pasting node styles (I use ctrl + G). I usually use logic chart structure for my concept maps, but for SMR to work, any structure should be fine.
 
