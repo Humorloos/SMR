@@ -2,19 +2,19 @@
 
 ##### Table of Contents  
 **[1. Creating a Concept Map](https://github.com/Humorloos/SMR#1-creating-a-concept-map)** <br>
-<sub>
+<sup>
 [Bridges](https://github.com/Humorloos/SMR#bridges)<br>
 [Crosslinks](https://github.com/Humorloos/SMR#crosslinks)<br>
 [Connections](https://github.com/Humorloos/SMR#connections)<br>
 [Questions following multiple Answers](https://github.com/Humorloos/SMR#questions-following-multiple-answers)<br>
 [Multimedia](https://github.com/Humorloos/SMR#multimedia)<br>
 [Answer Limit](https://github.com/Humorloos/SMR#answer-limit)<br>
-</sub>
+</sup>
 **[2. Importing your concept maps](https://github.com/Humorloos/SMR#2-importing-your-concept-maps)**<br>
 **[3. Synchronizing your concept maps](https://github.com/Humorloos/SMR#3-synchronizing-your-concept-maps)**<br>
-<sub>
+<sup>
 [Repair Checkbox](https://github.com/Humorloos/SMR#repair-checkbox)<br>
-</sub>
+</sup>
 **[4. Reviewing your cards](https://github.com/Humorloos/SMR#4-reviewing-your-cards)**
 
 #### 1. Creating a Concept Map
