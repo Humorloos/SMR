@@ -186,8 +186,6 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
                         (question.getTitle(), X_MAX_ANSWERS, X_MAX_ANSWERS)]
             return None
 
-        # Create Notes for next questions for Question nids in Meta field
-        nextQuestions = self.getNextQuestions(answerDicts)
         if not self.running:
             self.log = ["""Warning:
 An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node. Please adjust your Concept Map and try again.""" %
@@ -199,7 +197,6 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                                            question=question,
                                            answerDicts=answerDicts,
                                            ref=ref,
-                                           nextQuestions=nextQuestions,
                                            siblings=siblings,
                                            connections=connections)
         self.addMedia(media)
@@ -227,8 +224,8 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
             # receives a question, sheet and list of notes possibly following each
             # answer to this question and returns a json file
 
-    def getXMindMeta(self, question: TopicElement, nextQuestions: list,
-                     answerDicts, siblings, connections):
+    def getXMindMeta(self, question: TopicElement, answerDicts, siblings,
+                     connections):
         xMindMeta = dict()
         xMindMeta['path'] = self.file
         xMindMeta['sheetId'] = self.currentSheetImport['sheet'].getID()
@@ -236,6 +233,9 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         xMindMeta['answers'] = []
         answers = list(filter(lambda answerDict: answerDict['isAnswer'],
                               answerDicts))
+
+        # get questions following each answer
+        nextQuestions = self.getNextQuestions(answerDicts)
         for aId, answer in enumerate(answers, start=0):
             # write each answer and its following questions into meta
             xMindMeta['answers'].append(dict())
@@ -308,6 +308,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                               answerDicts))
         answers = list(filter(lambda answerDict: answerDict['isAnswer'],
                               answerDicts))
+        # TODO: globalQUestions add connections as global questions check whtether thats true
         for bridge in bridges:
             globalQuestions.extend(self.getQuestionListForAnswer(bridge))
         for answer in answers:
@@ -363,8 +364,8 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
             questionList.extend(crosslinkQuestions)
         return questionList
 
-    def getNoteData(self, sortId, question, answerDicts, ref, nextQuestions,
-                    siblings, connections):
+    def getNoteData(self, sortId, question, answerDicts, ref, siblings,
+                    connections):
         """returns a list of all content needed to create the a new note and
         the media contained in that note in a list"""
 
@@ -398,9 +399,8 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         noteList.append(sortId)
 
         # set field Meta
-        meta = self.getXMindMeta(question=question, nextQuestions=nextQuestions,
-                                 answerDicts=answerDicts, siblings=siblings,
-                                 connections=connections)
+        meta = self.getXMindMeta(question=question, answerDicts=answerDicts,
+                                 siblings=siblings, connections=connections)
         noteList.append(meta)
 
         nId = timestampID(self.col.db, "notes")
