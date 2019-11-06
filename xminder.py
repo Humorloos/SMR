@@ -156,9 +156,9 @@ class XmindImporter(NoteImporter):
                 # if this is a regular question
                 else:
                     siblings = list(map(lambda s: s['qId'], filter(
-                            lambda q: (q['qId'] != questionDict[
-                                'subTopic'].getID()) and not q['isConnection'],
-                            siblingQuestions)))
+                        lambda q: (q['qId'] != questionDict[
+                            'subTopic'].getID()) and not q['isConnection'],
+                        siblingQuestions)))
                     connections = list(map(lambda s: s['qId'], filter(
                         lambda q: (q['qId'] != questionDict[
                             'subTopic'].getID()) and q['isConnection'],
@@ -184,39 +184,45 @@ class XmindImporter(NoteImporter):
             self.log = ["""Warning:
 A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
                         (question.getTitle(), X_MAX_ANSWERS, X_MAX_ANSWERS)]
-        if self.running:
-            # Create Notes for next questions for Question nids in Meta field
-            nextQuestions = self.getNextQuestions(answerDicts)
+            return None
 
-            # get content of fields for the note to add for this question
-            noteData, media = self.getNoteData(sortId=sortId,
-                                               question=question,
-                                               answerDicts=answerDicts,
-                                               ref=ref,
-                                               nextQuestions=nextQuestions,
-                                               siblings=siblings,
-                                               connections=connections)
-            self.addMedia(media)
+        # Create Notes for next questions for Question nids in Meta field
+        nextQuestions = self.getNextQuestions(answerDicts)
+        if not self.running:
+            self.log = ["""Warning:
+An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node. Please adjust your Concept Map and try again.""" %
+                        (self.getContent(question)[0], getCoordsFromId(sortId))]
+            return None
 
-            # add to list of notes to add
-            self.notesToAdd[self.currentSheetImport['ID']].append(noteData)
+        # get content of fields for the note to add for this question
+        noteData, media = self.getNoteData(sortId=sortId,
+                                           question=question,
+                                           answerDicts=answerDicts,
+                                           ref=ref,
+                                           nextQuestions=nextQuestions,
+                                           siblings=siblings,
+                                           connections=connections)
+        self.addMedia(media)
 
-            # add notes for questions following this note
-            questionContent = replaceSound(
-                splitFields(noteData[6])[list(X_FLDS.keys()).index('qt')])
-            ref = ref + '<li>' + questionContent
-            for aId, answerDict in enumerate(answerDicts, start=1):
-                if answerDict['subTopic'].getSubTopics():
-                    if answerDict['isAnswer']:
-                        ac = splitFields(noteData[6])[
-                            list(X_FLDS.keys()).index('a' + answerDict['aId'])]
-                        answerContent = replaceSound(ac)
-                    else:
-                        answerContent = ''
-                    self.getQuestions(answerDict=answerDict,
-                                      answerContent=answerContent, ref=ref,
-                                      sortId=updateId(previousId=sortId,
-                                                      idToAppend=aId))
+        # add to list of notes to add
+        self.notesToAdd[self.currentSheetImport['ID']].append(noteData)
+
+        # add notes for questions following this note
+        questionContent = replaceSound(
+            splitFields(noteData[6])[list(X_FLDS.keys()).index('qt')])
+        ref = ref + '<li>' + questionContent
+        for aId, answerDict in enumerate(answerDicts, start=1):
+            if answerDict['subTopic'].getSubTopics():
+                if answerDict['isAnswer']:
+                    ac = splitFields(noteData[6])[
+                        list(X_FLDS.keys()).index('a' + answerDict['aId'])]
+                    answerContent = replaceSound(ac)
+                else:
+                    answerContent = ''
+                self.getQuestions(answerDict=answerDict,
+                                  answerContent=answerContent, ref=ref,
+                                  sortId=updateId(previousId=sortId,
+                                                  idToAppend=aId))
 
             # receives a question, sheet and list of notes possibly following each
             # answer to this question and returns a json file
@@ -345,8 +351,12 @@ A Question titled "%s" has more than %s answers. Make sure every Question in you
         if globalQuestions:
             questionList.extend(globalQuestions)
         if answerDict['crosslink'] and addCrosslinks:
-            crosslinkAnswerDict = getAnswerDict(
-                getTopicById(tId=answerDict['crosslink'], importer=self))
+            crosslinkTopic = getTopicById(tId=answerDict['crosslink'],
+                                          importer=self)
+            if not crosslinkTopic:
+                self.running = False
+                return None
+            crosslinkAnswerDict = getAnswerDict(crosslinkTopic)
             # Do not add crosslinks following crosslinks to avoid endless loops
             crosslinkQuestions = self.getQuestionListForAnswer(
                 answerDict=crosslinkAnswerDict, addCrosslinks=False)

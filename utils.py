@@ -44,8 +44,9 @@ def getCoordsFromId(sortId):
 # xmind content xml file and a WorkbookDocument for the same map and returns
 # the corresponding topic as a WorkbookElement
 def getTopicById(tId, importer):
-    # TODO: implement warning if topic not found
     tag = importer.soup.find('topic', {'id': tId})
+    if not tag:
+        return None
     # get tags that make up the path to the desired topic
     parents = list(tag.parents)
     topicPath = [tag]
