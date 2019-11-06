@@ -15,10 +15,7 @@ To be able to distinguish relationships and concepts, i recommend you style rela
 #####Bridges
 If you want to structure your concept map without creating any cards, you can place an empty relationship between two concepts.
 
-<img src="https://raw.githubusercontent.com/Humorloos/SMR/master" alt="drawing" width="200"/>
-
-![bridge](screenshots/bridge.png)
-![bridge_card](screenshots/bridge_card.png)
+<img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/bridge.png" alt="bridge" width=64%/> <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/bridge_card.png" alt="bridge" width=30%/>
 
 Example: This concept map leads to the creation of the following cards:
 <img src="https://imgur.com/vEdMltN.png">
