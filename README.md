@@ -74,7 +74,7 @@ SMR supports import of images, sound files (mp3, wav) and videos (mp4). When imp
 </p>
 
 #### Answer Limit
-If a concept map contains questions with more than 20 answers, the import will not work. However, there is no limit to the amount of questions following an answer.
+If a concept map contains questions with more than 20 answers, the import will not work. However, there is no limit to the number of questions following an answer.
 
 ### 2. Importing your concept maps
 To import a concept map all you have to do is click the "Import File" button at the bottom of the main window and choose the Xmind file that contains the map you want to import. The dialogue that pops up will let you choose the deck you want to import the notes to, choose the sheets that you want to import and assign a name to each of the sheets. Notes that you create for a certain sheet will contain a tag with the name of the deck the sheet was imported into and the name that was assigned to it in this dialogue.
