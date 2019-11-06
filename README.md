@@ -1,3 +1,5 @@
+## Stepwise Map Retrieval
+
 #### Table of Contents  
 **[1. Creating a Concept Map](https://github.com/Humorloos/SMR#1-creating-a-concept-map)** <br>
 <sup>
