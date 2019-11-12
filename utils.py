@@ -127,6 +127,7 @@ def getNodeContent(tagList, tag):
     media = dict(image=None, media=None)
     href = getNodeHyperlink(tag)
     title = getNodeTitle(tag)
+
     if title:
         content += '<span class = "title">' + title
 
@@ -151,6 +152,8 @@ def getNodeContent(tagList, tag):
         fileName = re.search('/.*', attachment).group()[1:]
         content += '<img src="%s">' % fileName
         media['image'] = attachment[4:]
+
+    # if necessary add sound
     if href and href.endswith(('.mp3', '.wav', 'mp4')):
         if content:
             content += '<br>'
@@ -181,8 +184,8 @@ def setNodeTitle(tag, title):
 
 def getNodeImg(tag):
     try:
-        return tag['xhtml:src']
-    except KeyError:
+        return tag.find('xhtml:img', recursive=False)['xhtml:src']
+    except TypeError:
         return None
 
 
@@ -191,8 +194,6 @@ def getNodeHyperlink(tag):
         return tag['xlink:href']
     except KeyError:
         return None
-    except TypeError:
-        print('')
 
 
 def getNodeCrosslink(tag):
@@ -212,7 +213,10 @@ def getChildnodes(tag):
 
 
 def titleFromContent(content):
-    return BeautifulSoup(content, features="html.parser").select('.title')[0].text
+    try:
+        return BeautifulSoup(content, features="html.parser").select('.title')[0].text
+    except IndexError:
+        return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", content)
 
 
 def maybeReplaceTitle(noteContent, tag):
