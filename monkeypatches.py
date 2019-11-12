@@ -13,6 +13,7 @@ from anki.sound import clearAudioQueue
 import anki.sched as scheduler
 
 from .utils import *
+from .consts import *
 
 
 def showReviewer(self):
