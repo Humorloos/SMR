@@ -1,20 +1,22 @@
 import re
+import urllib.parse
+import os
+import zipfile
+import tempfile
 from bs4 import BeautifulSoup
 
-from anki.collection import _Collection
-from anki.utils import ids2str, splitFields
+from anki.utils import ids2str
 
-from .xmind.xtopic import TopicElement
-from .consts import X_MODEL_NAME, X_FLDS
+from .consts import X_MODEL_NAME
 
 
 # checks whether a node contains any text, images or link
-def isEmptyNode(node: TopicElement):
-    if node.getTitle():
+def isEmptyNode(tag):
+    if getNodeTitle(tag):
         return False
-    if node.getFirstChildNodeByTagName('xhtml:img'):
+    if getNodeImg(tag):
         return False
-    if node.getAttribute('xlink:href'):
+    if getNodeHyperlink(tag):
         return False
     return True
 
@@ -69,53 +71,15 @@ def getTopicById(tId, importer):
     return topic
 
 
-# receives a minidom Element representing an xmind Topic (retrieved with
-# topic._node) and returns its parent Element as a minidom Element
-def getParentTopicElement(element):
-    return element.parentNode.parentNode.parentNode
-
-
-# Receives an xmind TopicElement and returns the id attribute of its parent
-# topic
-def getParentTopicId(topic: TopicElement):
-    parentTopic = getParentTopicElement(topic._node)
-    return parentTopic.getAttribute('id')
-
-
-def getParentTopic(topic: TopicElement, importer):
-    parentId = getParentTopicId(topic)
-    return getTopicById(tId=parentId, importer=importer)
-
-
-def getAnswerDict(subTopic: TopicElement):
+def getAnswerDict(nodeTag):
     # Check whether subtopic is not empty
     isAnswer = True
-    if isEmptyNode(subTopic):
+    if isEmptyNode(nodeTag):
         isAnswer = False
     # Check whether subtopic contains a crosslink
-    crosslink = getCrosslink(subTopic)
-    return dict(subTopic=subTopic, isAnswer=isAnswer, aId=str(0),
+    crosslink = getNodeCrosslink(nodeTag)
+    return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
                 crosslink=crosslink)
-
-
-def isConcept(topic):
-    element = topic._node
-    nParentTopics = 0
-    while type(element).__name__ == 'Element':
-        nParentTopics += 1
-        element = getParentTopicElement(element)
-    if nParentTopics % 2 == 0:
-        return False
-    else:
-        return True
-
-
-def getCrosslink(topic):
-    href = topic.getHyperlink()
-    if href and href.startswith('xmind:#'):
-        return href[7:]
-    else:
-        return None
 
 
 def getNotesFromSheet(sheetId, col):
@@ -156,3 +120,126 @@ def getDueAnswersToNote(nId, dueAnswers, col):
     for cardTpl in cardTpls:
         cards.append(dict(cId=cardTpl[0], ord=cardTpl[1]))
     return cards
+
+
+def getNodeContent(tagList, tag):
+    content = ''
+    media = dict(image=None, media=None)
+    href = getNodeHyperlink(tag)
+    title = getNodeTitle(tag)
+    if title:
+        content += '<span class = "title">' + title
+
+    # If the node contains a link to another node, add the text of that
+    # node. Use Beautifulsoup because minidom can't find nodes by attributes
+    if href and href.startswith('xmind:#'):
+        crosslinkTag = getTagById(tagList=tagList, tagId=href[7:])
+        crosslinkTitle = getNodeTitle(crosslinkTag)
+        if content:
+            content += ' '
+            content += crosslinkTitle
+        else:
+            content += '<span class = "title">' + crosslinkTitle
+    if content:
+        content += '</span>'
+
+    # if necessary add image
+    attachment = getNodeImg(tag=tag)
+    if attachment:
+        if content != '':
+            content += '<br>'
+        fileName = re.search('/.*', attachment).group()[1:]
+        content += '<img src="%s">' % fileName
+        media['image'] = attachment[4:]
+    if href and href.endswith(('.mp3', '.wav', 'mp4')):
+        if content:
+            content += '<br>'
+        if href.startswith('file'):
+            mediaPath = urllib.parse.unquote(href[7:])
+            media['media'] = mediaPath
+        else:
+            mediaPath = href[4:]
+            media['media'] = mediaPath
+        content += '[sound:%s]' % os.path.basename(mediaPath)
+    return content, media
+
+
+def getTagById(tagList, tagId):
+    return tuple(filter(lambda t: t['id'] == tagId, tagList))[0]
+
+
+def getNodeTitle(tag):
+    try:
+        return tag.find('title', recursive=False).text
+    except AttributeError:
+        return ''
+
+
+def setNodeTitle(tag, title):
+    tag.find('title', recursive=False).string = title
+
+
+def getNodeImg(tag):
+    try:
+        return tag['xhtml:src']
+    except KeyError:
+        return None
+
+
+def getNodeHyperlink(tag):
+    try:
+        return tag['xlink:href']
+    except KeyError:
+        return None
+    except TypeError:
+        print('')
+
+
+def getNodeCrosslink(tag):
+    href = getNodeHyperlink(tag)
+    if href and href.startswith('xmind:#'):
+        return href[7:]
+    else:
+        return None
+
+
+def getChildnodes(tag):
+    try:
+        return tag.find('children', recursive=False).find(
+            'topics', recursive=False)('topic', recursive=False)
+    except AttributeError:
+        return []
+
+
+def titleFromContent(content):
+    return BeautifulSoup(content, features="html.parser").select('.title')[0].text
+
+
+def maybeReplaceTitle(noteContent, tag):
+    questionTitle = titleFromContent(noteContent)
+    questionNodeTitle = getNodeTitle(tag)
+    if questionTitle != questionNodeTitle:
+        setNodeTitle(tag=tag, title=questionTitle)
+
+
+def updateZip(zipname, filename, data):
+    """ taken from https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file-using-python, replaces one file in a zipfile"""
+    # generate a temp file
+    tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(zipname))
+    os.close(tmpfd)
+
+    # create a temp copy of the archive without filename
+    with zipfile.ZipFile(zipname, 'r') as zin:
+        with zipfile.ZipFile(tmpname, 'w') as zout:
+            zout.comment = zin.comment # preserve the comment
+            for item in zin.infolist():
+                if item.filename != filename:
+                    zout.writestr(item, zin.read(item.filename))
+
+    # replace with the temp archive
+    os.remove(zipname)
+    os.rename(tmpname, zipname)
+
+    # now add filename with its new data
+    with zipfile.ZipFile(zipname, mode='a', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(filename, data)

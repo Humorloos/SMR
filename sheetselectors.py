@@ -174,7 +174,7 @@ class MultiSheetSelector(SheetSelector):
         sheet_v_layout_2 = QtWidgets.QVBoxLayout()
 
         for sheet in self.sheets:
-            title = sheet['sheet'].getTitle()
+            title = sheet['sheet'].title.text
 
             sheet_checkbox = QtWidgets.QCheckBox(layout)
             sheet_checkbox.setText(title)

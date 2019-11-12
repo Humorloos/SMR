@@ -8,6 +8,8 @@ from .config import *
 from .xminder import XmindImporter
 # noinspection PyUnresolvedReferences
 from . import monkeypatches
+# noinspection PyUnresolvedReferences
+from . import exportsync
 
 
 # creates smr model when loading profile if necessary

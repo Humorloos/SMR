@@ -1,15 +1,10 @@
 import json
-import zipfile
-import tempfile
 import shutil
-import urllib.parse
 
 from time import sleep
 
 from anki.importing.noteimp import NoteImporter
 from anki.utils import splitFields, joinFields, intTime, guid64, timestampID
-
-from .xmind.xxmind import load
 
 from .sheetselectors import *
 from .utils import *
@@ -19,9 +14,6 @@ from .consts import *
 # TODO: adjust sheet selection windows to adjust to the window size
 # TODO: check out hierarchical tags, may be useful
 # TODO: add warning when something is wrong with the map
-# TODO: add new prestentation order
-# In reviewer line 87 give getCard() the _note attribute and change getCard
-# Furthermore, track the history of reviewed cards or add coordinates to cards
 # TODO: Implement hints as part of the meta json instead of javascript and use
 #  sound=False to mute answers in hint
 # TODO: Implement warning if an audio file can't be found
@@ -35,7 +27,7 @@ class XmindImporter(NoteImporter):
         NoteImporter.__init__(self, col, file)
         self.model = col.models.byName(X_MODEL_NAME)
         self.sheets = None
-        self.mw = aqt.mw.app.activeWindow() or aqt.mw
+        self.mw = aqt.mw
         self.currentSheetImport = dict()
         self.mediaDir = os.path.join(os.path.dirname(col.path),
                                      'collection.media')
@@ -45,46 +37,55 @@ class XmindImporter(NoteImporter):
         self.deckId = ''
         self.notesToAdd = dict()
         self.running = True
-        self.soup = None
+        self.soup = BeautifulSoup(self.xZip.read('content.xml'),
+                                  features='html.parser')
+        self.tagList = self.soup('topic')
         self.repair = False
 
     def run(self):
         selectedSheets = self.get_x_sheets()
-        if self.running:
-            self.deckId = selectedSheets[0]['deckId']
-            self.repair = selectedSheets[0]['repair']
-            self.mw.progress.start(immediate=True)
-            self.mw.checkpoint("Import")
-            for sheetImport in selectedSheets:
-                self.currentSheetImport = sheetImport
-                self.currentSheetImport['ID'] = self.currentSheetImport[
-                    'sheet'].getID()
-                self.notesToAdd[self.currentSheetImport['ID']] = list()
-                self.importMap(sheetImport)
-            # add all notes to the collection
-            if self.running:
-                self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
-                            ['removed', 0, 'notes']]
-                for sheetId, noteList in self.notesToAdd.items():
-                    self.maybeSync(sheetId=sheetId, noteList=noteList)
-                for logId, log in enumerate(self.log, start=0):
-                    if log[1] == 1:
-                        self.log[logId][2] = 'note'
-                    self.log[logId][1] = str(self.log[logId][1])
+        if not self.running:
+            return
+        self.importSheets(selectedSheets)
 
-                self.log = [
-                    ", ".join(list(map(lambda l: " ".join(l), self.log)))]
-            self.mw.progress.finish()
-            # Remove temp dir and its files
-            shutil.rmtree(self.srcDir)
-            print("fertig")
+    def importSheets(self, selectedSheets):
+        self.deckId = selectedSheets[0]['deckId']
+        self.repair = selectedSheets[0]['repair']
+        self.mw.progress.start(immediate=True, label='importing...')
+        self.mw.app.processEvents()
+        self.mw.checkpoint("Import")
+        for sheetImport in selectedSheets:
+            self.currentSheetImport = sheetImport
+            self.currentSheetImport['ID'] = \
+                self.currentSheetImport['sheet']['id']
+            self.notesToAdd[self.currentSheetImport['ID']] = list()
+            self.mw.progress.update(label='importing %s' % sheetImport['tag'],
+                                    maybeShow=False)
+            self.mw.app.processEvents()
+            self.importMap(sheetImport)
+        # add all notes to the collection
+        if not self.running:
+            return
+        self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
+                    ['removed', 0, 'notes']]
+        for sheetId, noteList in self.notesToAdd.items():
+            self.maybeSync(sheetId=sheetId, noteList=noteList)
+        for logId, log in enumerate(self.log, start=0):
+            if log[1] == 1:
+                self.log[logId][2] = 'note'
+            self.log[logId][1] = str(self.log[logId][1])
+
+        self.log = [
+                ", ".join(list(map(lambda l: " ".join(l), self.log)))]
+        self.mw.progress.finish()
+        # Remove temp dir and its files
+        shutil.rmtree(self.srcDir)
+        print("fertig")
 
     # returns list of
     def get_x_sheets(self):
-        doc = load(self.file)
-        self.soup = BeautifulSoup(doc.getOwnerDocument().toxml(),
-                                  features='html.parser')
-        imp_sheets = doc.getSheets()
+        # doc = load(self.file)
+        imp_sheets = self.soup('sheet')
         doc_title = os.path.basename(self.file)[:-6]
         if len(imp_sheets) > 1:
             selector = MultiSheetSelector(imp_sheets, doc_title)
@@ -98,13 +99,13 @@ class XmindImporter(NoteImporter):
         return selector.sheets
 
     def importMap(self, sheetImport: dict):
-        rootTopic = sheetImport['sheet'].getRootTopic()
+        rootTopic = sheetImport['sheet'].topic
         # Set model to Stepwise map retrieval model
         xModel = self.col.models.byName(X_MODEL_NAME)
         self.col.decks.select(self.currentSheetImport['deckId'])
         self.col.decks.current()['mid'] = xModel['id']
         rootDict = getAnswerDict(rootTopic)
-        self.getQuestions(answerDict=rootDict, ref=rootTopic.getTitle())
+        self.getQuestions(answerDict=rootDict, ref=getNodeTitle(rootTopic))
 
     # calls createNotes for each answer.
     # Inputs:
@@ -116,14 +117,14 @@ class XmindImporter(NoteImporter):
     def getQuestions(self, answerDict: dict, sortId='',
                      answerContent='', ref="", followsBridge=False):
         # The reference doesn't have to be edited at the roottopic
-        if not answerDict['subTopic'].getParentNode().tagName == 'sheet':
+        if not answerDict['nodeTag'].previous_element.name == 'sheet':
             # if the answerdict contains nothing (i.e. questions
             # following multiple answers), just close the reference
-            if isEmptyNode(answerDict['subTopic']) or followsBridge:
+            if isEmptyNode(answerDict['nodeTag']) or followsBridge:
                 ref = ref + '</li>'
             else:
                 ref = ref + ': ' + answerContent + '</li>'
-        questionDicts = self.findQuestionDicts(answer=answerDict['subTopic'],
+        questionDicts = self.findQuestionDicts(answer=answerDict['nodeTag'],
                                                ref=ref, sortId=sortId)
         siblingQuestions = self.getQuestionListForAnswer(answerDict)
         for qId, questionDict in enumerate(questionDicts, start=1):
@@ -134,12 +135,12 @@ class XmindImporter(NoteImporter):
                 # reference, do not get any notes for this bridge but for
                 # questions following its answers
                 if questionDict['isBridge']:
-                    answerDicts = self.findAnswerDicts(questionDict['subTopic'])
+                    answerDicts = self.findAnswerDicts(questionDict['nodeTag'])
                     for aId, answerDict in enumerate(answerDicts, start=1):
-                        if answerDict['subTopic'].getSubTopics():
+                        if getChildnodes(answerDict['nodeTag']):
                             if answerDict['isAnswer']:
-                                answerContent, media = self.getContent(
-                                    answerDict['subTopic'])
+                                answerContent, media = getNodeContent(tagList=self.tagList,
+                                    tag=answerDict['nodeTag'])
                                 self.addMedia([media])
                                 answerContent = replaceSound(answerContent)
                                 newRef = ref + '<li>' + answerContent
@@ -157,13 +158,13 @@ class XmindImporter(NoteImporter):
                 else:
                     siblings = list(map(lambda s: s['qId'], filter(
                         lambda q: (q['qId'] != questionDict[
-                            'subTopic'].getID()) and not q['isConnection'],
+                            'nodeTag']['id']) and not q['isConnection'],
                         siblingQuestions)))
                     connections = list(map(lambda s: s['qId'], filter(
                         lambda q: (q['qId'] != questionDict[
-                            'subTopic'].getID()) and q['isConnection'],
+                            'nodeTag']['id']) and q['isConnection'],
                         siblingQuestions)))
-                    self.addXNote(question=questionDict['subTopic'],
+                    self.addXNote(question=questionDict['nodeTag'],
                                   ref=questionDict['ref'], sortId=nextSortId,
                                   siblings=siblings, connections=connections)
 
@@ -174,7 +175,7 @@ class XmindImporter(NoteImporter):
     # ref: current reference text
     # qId: position of the question node relative to its siblings
     # note: note to be added for the question node
-    def addXNote(self, question: TopicElement, ref, sortId, siblings=None,
+    def addXNote(self, question, ref, sortId, siblings=None,
                  connections=None):
         answerDicts = self.findAnswerDicts(question)
         actualAnswers = list(filter(
@@ -183,13 +184,15 @@ class XmindImporter(NoteImporter):
             self.running = False
             self.log = ["""Warning:
 A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
-                        (question.getTitle(), X_MAX_ANSWERS, X_MAX_ANSWERS)]
+                        (getNodeTitle(question),
+                         X_MAX_ANSWERS, X_MAX_ANSWERS)]
             return None
 
         if not self.running:
             self.log = ["""Warning:
 An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node. Please adjust your Concept Map and try again.""" %
-                        (self.getContent(question)[0], getCoordsFromId(sortId))]
+                        (getNodeContent(tagList=self.tagList, tag=question)[
+                             0], getCoordsFromId(sortId))]
             return None
 
         # get content of fields for the note to add for this question
@@ -209,7 +212,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
             splitFields(noteData[6])[list(X_FLDS.keys()).index('qt')])
         ref = ref + '<li>' + questionContent
         for aId, answerDict in enumerate(answerDicts, start=1):
-            if answerDict['subTopic'].getSubTopics():
+            if getChildnodes(answerDict['nodeTag']):
                 if answerDict['isAnswer']:
                     ac = splitFields(noteData[6])[
                         list(X_FLDS.keys()).index('a' + answerDict['aId'])]
@@ -224,12 +227,12 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
             # receives a question, sheet and list of notes possibly following each
             # answer to this question and returns a json file
 
-    def getXMindMeta(self, question: TopicElement, answerDicts, siblings,
+    def getXMindMeta(self, question, answerDicts, siblings,
                      connections):
         xMindMeta = dict()
         xMindMeta['path'] = self.file
-        xMindMeta['sheetId'] = self.currentSheetImport['sheet'].getID()
-        xMindMeta['questionId'] = question.getID()
+        xMindMeta['sheetId'] = self.currentSheetImport['sheet']['id']
+        xMindMeta['questionId'] = question['id']
         xMindMeta['answers'] = []
         answers = list(filter(lambda answerDict: answerDict['isAnswer'],
                               answerDicts))
@@ -240,7 +243,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
             # write each answer and its following questions into meta
             xMindMeta['answers'].append(dict())
             xMindMeta['answers'][aId]['answerId'] = answer[
-                'subTopic'].getID()
+                'nodeTag']['id']
             xMindMeta['answers'][aId]['children'] = []
             for question in nextQuestions[aId]:
                 xMindMeta['answers'][aId]['children'].append(
@@ -248,6 +251,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         xMindMeta['nAnswers'] = len(answers)
         xMindMeta['siblings'] = siblings
         xMindMeta['connections'] = connections
+        xMindMeta['lastSync'] = intTime()
         return json.dumps(xMindMeta)
 
     def addAttachment(self, attachment):
@@ -257,51 +261,10 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         srcPath = os.path.join(self.srcDir, attachment)
         self.col.media.addFile(srcPath)
 
-    # get the content of a node as string and add files to the collection if
-    # necessary
-    def getContent(self, node: TopicElement):
-        content = ''
-        media = dict(image=None, media=None)
-        href = node.getHyperlink()
-        if node.getTitle():
-            content += node.getTitle()
-
-        # If the node contains a link to another node, add the text of that
-        # node. Use Beautifulsoup because minidom can't find nodes by attributes
-        if href and href.startswith('xmind:#'):
-            if content != '':
-                content += ' '
-            content += self.soup.find('topic', {'id': href[7:]}).next.text
-
-        # if necessary add image
-        try:
-            attachment = node.getFirstChildNodeByTagName('xhtml:img'). \
-                             getAttribute('xhtml:src')[4:]
-            if content != '':
-                content += '<br>'
-            fileName = re.search('/.*', attachment).group()[1:]
-            content += '<img src="%s">' % fileName
-            media['image'] = attachment
-        except:
-            pass
-        # if necessary add media file
-        if href and href.endswith(('.mp3', '.wav', 'mp4')):
-            if content != '':
-                content += '<br>'
-            if href.startswith('file'):
-                mediaPath = urllib.parse.unquote(href[7:])
-                media['media'] = mediaPath
-            else:
-                mediaPath = href[4:]
-                media['media'] = mediaPath
-                mediaPath = os.path.join(self.srcDir, mediaPath)
-            content += '[sound:%s]' % os.path.basename(mediaPath)
-        return content, media
-
-    # receives a list of answerDicts and returns a list of anki notes for each
-    # subtopic
     def getNextQuestions(self, answerDicts: list, addCrosslinks=True,
                          goDeeper=True):
+        """receives a list of answerDicts and returns a list of anki notes for each subtopic"""
+
         nextQuestions = []
         globalQuestions = []
         bridges = list(filter(lambda answerDict: not answerDict['isAnswer'],
@@ -324,18 +287,18 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                                  addCrosslinks=True, goDeeper=True):
         # get all nodes following the answer in answerDict, including those
         # following a potential crosslink
-        potentialQuestions = answerDict['subTopic'].getSubTopics()
+        potentialQuestions = getChildnodes(answerDict['nodeTag'])
         # iterate through all questions
         questionList = []
         for potentialQuestion in potentialQuestions:
             if not (isEmptyNode(potentialQuestion)):
                 # If this question contains a crosslink to another question
-                crosslink = getCrosslink(potentialQuestion)
+                crosslink = getNodeCrosslink(potentialQuestion)
                 if crosslink:
                     questionList.append(
                         dict(qId=crosslink, isConnection=not addCrosslinks))
                 else:
-                    questionList.append(dict(qId=potentialQuestion.getID(),
+                    questionList.append(dict(qId=potentialQuestion['id'],
                                              isConnection=not addCrosslinks))
             else:
                 if goDeeper:
@@ -352,12 +315,11 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         if globalQuestions:
             questionList.extend(globalQuestions)
         if answerDict['crosslink'] and addCrosslinks:
-            crosslinkTopic = getTopicById(tId=answerDict['crosslink'],
-                                          importer=self)
-            if not crosslinkTopic:
+            crosslinkNode = getTagById(tagList=self.tagList, tagId=answerDict['crosslink'])
+            if not crosslinkNode:
                 self.running = False
                 return None
-            crosslinkAnswerDict = getAnswerDict(crosslinkTopic)
+            crosslinkAnswerDict = getAnswerDict(crosslinkNode)
             # Do not add crosslinks following crosslinks to avoid endless loops
             crosslinkQuestions = self.getQuestionListForAnswer(
                 answerDict=crosslinkAnswerDict, addCrosslinks=False)
@@ -376,7 +338,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         noteList.append('<ul>%s</ul>' % ref)
 
         # Set field Question
-        qtContent, qtMedia = self.getContent(question)
+        qtContent, qtMedia = getNodeContent(tagList=self.tagList, tag=question)
         noteList.append(qtContent)
         media.append(qtMedia)
 
@@ -386,7 +348,8 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
             if answerDict['isAnswer']:
                 aId += 1
                 # noinspection PyTypeChecker
-                anContent, anMedia = self.getContent(answerDict['subTopic'])
+                anContent, anMedia = getNodeContent(tagList=self.tagList,
+                                                    tag=answerDict['nodeTag'])
                 noteList.append(anContent)
                 media.append(anMedia)
                 answerDict['aId'] = str(aId)
@@ -413,10 +376,10 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
     # receives a question node and returns a list of dictionaries containing the
     # subtopics, whether the subtopics contain an answer or not and whether they
     # contain a crosslink or not
-    def findAnswerDicts(self, question: TopicElement):
+    def findAnswerDicts(self, question):
         answerDicts = list()
-        for subTopic in question.getSubTopics():
-            answerDict = getAnswerDict(subTopic)
+        for childNode in getChildnodes(question):
+            answerDict = getAnswerDict(childNode)
             answerDicts.append(answerDict)
         return answerDicts
 
@@ -441,18 +404,19 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
     # receives an answer node and returns all questions following this answer
     # including questions following multiple topics as dictionaries of a
     # question node and its corresponding reference
-    def findQuestionDicts(self, answer: TopicElement, sortId, ref=''):
-        followRels = answer.getSubTopics()
+    def findQuestionDicts(self, answer, sortId, ref=''):
+        followRels = getChildnodes(answer)
         questionDicts = []
         for followRel in followRels:
-            crosslink = getCrosslink(followRel)
-            if len(followRel.getSubTopics()) == 0:
+            crosslink = getNodeCrosslink(followRel)
+            if len(getChildnodes(followRel)) == 0:
                 # stop and warn if no nodes follow the question
                 if not crosslink:
                     self.running = False
                     self.log = ["""Warning:
 A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept Map and try again.""" %
-                                (self.getContent(followRel)[0],
+                                (getNodeContent(tagList=self.tagList,
+                                                tag=followRel)[0],
                                  getCoordsFromId(sortId))]
             else:
                 questionDict = self.getQuestionDict(subTopic=followRel, ref=ref,
@@ -465,7 +429,7 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         return questionDicts
 
     def getQuestionDict(self, subTopic, ref, isBridge, crosslink):
-        return dict(subTopic=subTopic, ref=ref, isBridge=isBridge,
+        return dict(nodeTag=subTopic, ref=ref, isBridge=isBridge,
                     crosslink=crosslink)
 
     def maybeSync(self, sheetId, noteList):
