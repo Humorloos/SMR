@@ -21,6 +21,14 @@ def isEmptyNode(tag):
     return True
 
 
+def isQuestionNode(tag, level=0):
+    #If the Tag is the root topic, return true if the length of the path is odd
+    if tag.parent.name == 'sheet':
+        return level % 2 == 1
+    # Else add one to the path length and test again
+    return isQuestionNode(tag.parent.parent.parent, level + 1)
+
+
 # receives a dictionary with an id for sorting the cards and an id for finding the card's position
 def updateId(previousId, idToAppend):
     return previousId + chr(idToAppend + 122)

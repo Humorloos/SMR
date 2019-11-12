@@ -76,7 +76,7 @@ class XmindImporter(NoteImporter):
             self.log[logId][1] = str(self.log[logId][1])
 
         self.log = [
-                ", ".join(list(map(lambda l: " ".join(l), self.log)))]
+            ", ".join(list(map(lambda l: " ".join(l), self.log)))]
         self.mw.progress.finish()
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
@@ -139,7 +139,8 @@ class XmindImporter(NoteImporter):
                     for aId, answerDict in enumerate(answerDicts, start=1):
                         if getChildnodes(answerDict['nodeTag']):
                             if answerDict['isAnswer']:
-                                answerContent, media = getNodeContent(tagList=self.tagList,
+                                answerContent, media = getNodeContent(
+                                    tagList=self.tagList,
                                     tag=answerDict['nodeTag'])
                                 self.addMedia([media])
                                 answerContent = replaceSound(answerContent)
@@ -294,7 +295,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
             if not (isEmptyNode(potentialQuestion)):
                 # If this question contains a crosslink to another question
                 crosslink = getNodeCrosslink(potentialQuestion)
-                if crosslink:
+                if crosslink and isQuestionNode(getTagById(self.tagList, crosslink)):
                     questionList.append(
                         dict(qId=crosslink, isConnection=not addCrosslinks))
                 else:
@@ -315,7 +316,8 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         if globalQuestions:
             questionList.extend(globalQuestions)
         if answerDict['crosslink'] and addCrosslinks:
-            crosslinkNode = getTagById(tagList=self.tagList, tagId=answerDict['crosslink'])
+            crosslinkNode = getTagById(tagList=self.tagList,
+                                       tagId=answerDict['crosslink'])
             if not crosslinkNode:
                 self.running = False
                 return None
