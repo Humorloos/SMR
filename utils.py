@@ -227,10 +227,10 @@ def titleFromContent(content):
         return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", content)
 
 
-def maybeReplaceTitle(noteContent, tag):
+def maybeReplaceTitle(noteContent, tag, tagList):
     questionTitle = titleFromContent(noteContent)
-    questionNodeTitle = getNodeTitle(tag)
-    if questionTitle != questionNodeTitle:
+    tagContent = getNodeContent(tagList=tagList, tag=tag)[0]
+    if noteContent != tagContent:
         setNodeTitle(tag=tag, title=questionTitle)
 
 

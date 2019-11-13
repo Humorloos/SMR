@@ -74,14 +74,14 @@ class MapSyncer:
         print('synchronizing note')
         questionTag = getTagById(tagList=self.tagList,
                                  tagId=note['meta']['questionId'])
-        maybeReplaceTitle(noteContent=note['fields'][1], tag=questionTag)
+        maybeReplaceTitle(noteContent=note['fields'][1], tag=questionTag, tagList=self.tagList)
 
         for aId, answer in enumerate(note['meta']['answers'], start=0):
             answerTag = getTagById(tagList=self.tagList,
                                    tagId=note['meta']['answers'][aId][
                                        'answerId'])
             maybeReplaceTitle(noteContent=note['fields'][aId + 2],
-                              tag=answerTag)
+                              tag=answerTag, tagList=self.tagList)
 
 
 # monkey patches
