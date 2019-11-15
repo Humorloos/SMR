@@ -17,6 +17,7 @@ class MapSyncer:
         self.tagList = None
         self.mediaDir = re.sub(r"(?i)\.(anki2)$", ".media", self.mw.col.path)
         self.manifest = None
+        self.fileBin = None
 
     def syncMaps(self):
         self.mw.progress.start(immediate=True,
@@ -48,6 +49,7 @@ class MapSyncer:
         self.mw.app.processEvents()
         # create temp dir
         self.srcDir = tempfile.mkdtemp()
+        self.fileBin = []
         notes4Doc = list(filter(lambda n: n['meta']['path'] == docPath,
                                 self.notes2Sync))
         xZip = zipfile.ZipFile(docPath, 'r')
@@ -107,12 +109,22 @@ class MapSyncer:
             setNodeTitle(tag=tag, title=noteTitle)
         noteImg = imgFromContent(noteContent)
         nodeImg = getNodeImg(tag)
-        if noteImg and not nodeImg or noteImg and noteImg not in nodeImg:
+        if (noteImg and not nodeImg or noteImg and noteImg not in nodeImg) or \
+                nodeImg and not noteImg:
             self.setNodeImg(tag=tag, noteImg=noteImg, nodeImg=nodeImg)
 
         print('')
 
     def setNodeImg(self, tag, noteImg, nodeImg):
+        if not noteImg:
+            # remove image node from Map, i do not know why decompose() has to be called twice but it only works this way
+            tag.find('xhtml:img').decompose()
+            tag.find('xhtml:img').decompose()
+            fullPath = nodeImg[4:]
+            self.fileBin.append(fullPath)
+            self.manifest.find('file-entry',
+                               attrs={"full-path": fullPath}).decompose()
+            return
         # move image from note to the directory of images to add
         imgPath = os.path.join(self.mediaDir, noteImg)
         shutil.copy(src=imgPath, dst=self.srcDir)
@@ -143,7 +155,9 @@ class MapSyncer:
             with zipfile.ZipFile(tmpname, 'w') as zout:
                 zout.comment = zin.comment  # preserve the comment
                 for item in zin.infolist():
-                    if item.filename not in (filename, 'META-INF/manifest.xml'):
+                    if item.filename not in [filename,
+                                             'META-INF/manifest.xml'] + \
+                            self.fileBin:
                         zout.writestr(item, zin.read(item.filename))
 
         # replace with the temp archive
