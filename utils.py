@@ -3,6 +3,7 @@ import urllib.parse
 import os
 import zipfile
 import tempfile
+import shutil
 from bs4 import BeautifulSoup
 
 from anki.utils import ids2str
@@ -22,7 +23,7 @@ def isEmptyNode(tag):
 
 
 def isQuestionNode(tag, level=0):
-    #If the Tag is the root topic, return true if the length of the path is odd
+    # If the Tag is the root topic, return true if the length of the path is odd
     if tag.parent.name == 'sheet':
         return level % 2 == 1
     # Else add one to the path length and test again
@@ -222,36 +223,15 @@ def getChildnodes(tag):
 
 def titleFromContent(content):
     try:
-        return BeautifulSoup(content, features="html.parser").select('.title')[0].text
+        return BeautifulSoup(content, features="html.parser").select('.title')[
+            0].text
     except IndexError:
         return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", content)
 
 
-def maybeReplaceTitle(noteContent, tag, tagList):
-    questionTitle = titleFromContent(noteContent)
-    tagContent = getNodeContent(tagList=tagList, tag=tag)[0]
-    if noteContent != tagContent:
-        setNodeTitle(tag=tag, title=questionTitle)
+def imgFromContent(content):
+    try:
+        return re.search('<img src=\"(.*\.(jpg|png))\">', content).group(1)
+    except AttributeError:
+        return None
 
-
-def updateZip(zipname, filename, data):
-    """ taken from https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file-using-python, replaces one file in a zipfile"""
-    # generate a temp file
-    tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(zipname))
-    os.close(tmpfd)
-
-    # create a temp copy of the archive without filename
-    with zipfile.ZipFile(zipname, 'r') as zin:
-        with zipfile.ZipFile(tmpname, 'w') as zout:
-            zout.comment = zin.comment # preserve the comment
-            for item in zin.infolist():
-                if item.filename != filename:
-                    zout.writestr(item, zin.read(item.filename))
-
-    # replace with the temp archive
-    os.remove(zipname)
-    os.rename(tmpname, zipname)
-
-    # now add filename with its new data
-    with zipfile.ZipFile(zipname, mode='a', compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr(filename, data)

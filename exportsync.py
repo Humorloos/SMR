@@ -13,10 +13,14 @@ class MapSyncer:
     def __init__(self, mw):
         self.mw = mw
         self.notes2Sync = []
+        self.srcDir = None
         self.tagList = None
+        self.mediaDir = re.sub(r"(?i)\.(anki2)$", ".media", self.mw.col.path)
+        self.manifest = None
 
     def syncMaps(self):
-        self.mw.progress.start(immediate=True, label='processing SMR changes...')
+        self.mw.progress.start(immediate=True,
+                               label='processing SMR changes...')
         self.mw.app.processEvents()
         self.getNotes2Sync()
         docs2Sync = set(map(lambda n: n['meta']['path'], self.notes2Sync))
@@ -38,21 +42,30 @@ class MapSyncer:
                     dict(meta=meta, fields=fields, nid=xNote[0]))
 
     def syncDoc(self, docPath):
-        self.mw.progress.update(label="synchronizing %s" % os.path.basename(docPath), maybeShow=False)
+        self.mw.progress.update(
+            label="synchronizing %s" % os.path.basename(docPath),
+            maybeShow=False)
         self.mw.app.processEvents()
+        # create temp dir
+        self.srcDir = tempfile.mkdtemp()
         notes4Doc = list(filter(lambda n: n['meta']['path'] == docPath,
                                 self.notes2Sync))
         xZip = zipfile.ZipFile(docPath, 'r')
         content = xZip.read('content.xml')
+        manifestContent = xZip.read("META-INF/manifest.xml")
         xZip.close()
         soup = BeautifulSoup(content, features='html.parser')
+        self.manifest = BeautifulSoup(manifestContent, features='html.parser')
         self.tagList = soup('topic')
         sheets2Sync = set(map(lambda n: n['meta']['sheetId'], notes4Doc))
         sheets2Sync = list(
             map(lambda s: soup.find('sheet', {'id': s}), sheets2Sync))
         for note in notes4Doc:
             self.syncNote(note)
-        updateZip(docPath, 'content.xml', str(soup))
+        self.updateZip(docPath, 'content.xml', str(soup))
+        # Remove temp dir and its files
+        shutil.rmtree(self.srcDir)
+        # import sheets again
         importer = XmindImporter(col=self.mw.col, file=docPath)
         sheetImports = []
         for sheet in sheets2Sync:
@@ -65,23 +78,87 @@ class MapSyncer:
                 sheet['id'] + "\"%'")), ())[0]
             did4Sheet = sum(set(self.mw.col.db.execute(
                 "select did from cards where nid = %s" % sheetNid)), ())[0]
-            sheetImport = dict(sheet=sheet, tag=tag4Sheet, deckId=did4Sheet, repair=False)
+            sheetImport = dict(sheet=sheet, tag=tag4Sheet, deckId=did4Sheet,
+                               repair=False)
             sheetImports.append(sheetImport)
         importer.importSheets(sheetImports)
-
 
     def syncNote(self, note):
         print('synchronizing note')
         questionTag = getTagById(tagList=self.tagList,
                                  tagId=note['meta']['questionId'])
-        maybeReplaceTitle(noteContent=note['fields'][1], tag=questionTag, tagList=self.tagList)
+        self.maybeReplaceTitle(noteContent=note['fields'][1], tag=questionTag)
 
         for aId, answer in enumerate(note['meta']['answers'], start=0):
             answerTag = getTagById(tagList=self.tagList,
                                    tagId=note['meta']['answers'][aId][
                                        'answerId'])
-            maybeReplaceTitle(noteContent=note['fields'][aId + 2],
-                              tag=answerTag, tagList=self.tagList)
+            self.maybeReplaceTitle(noteContent=note['fields'][aId + 2],
+                                   tag=answerTag)
+
+    def maybeReplaceTitle(self, noteContent, tag):
+        tagContent = getNodeContent(tagList=self.tagList, tag=tag)[0]
+        if noteContent != tagContent:
+            self.setNodeContent(tag=tag, noteContent=noteContent)
+
+    def setNodeContent(self, tag, noteContent):
+        noteTitle = titleFromContent(noteContent)
+        if noteTitle != getNodeTitle(tag):
+            setNodeTitle(tag=tag, title=noteTitle)
+        noteImg = imgFromContent(noteContent)
+        nodeImg = getNodeImg(tag)
+        if noteImg and not nodeImg or noteImg and noteImg not in nodeImg:
+            self.setNodeImg(tag=tag, noteImg=noteImg, nodeImg=nodeImg)
+
+        print('')
+
+    def setNodeImg(self, tag, noteImg, nodeImg):
+        # move image from note to the directory of images to add
+        imgPath = os.path.join(self.mediaDir, noteImg)
+        shutil.copy(src=imgPath, dst=self.srcDir)
+        if not nodeImg:
+            # create a new image tag and add it to the node Tag
+            imgTag = self.manifest.new_tag(name='xhtml:img', align='bottom')
+            fileEntry = self.manifest.new_tag(name='file-entry')
+            fullPath = 'attachments/' + noteImg
+            imgTag['xhtml:src'] = 'xap:' + fullPath
+            fileEntry['full-path'] = fullPath
+            fileEntry['media-type'] = "image/" + os.path.splitext(noteImg)[1][
+                                                 1:]
+            self.manifest.find('manifest').append(fileEntry)
+            tag.append(imgTag)
+
+            print('added new image to map')
+            return
+        # TODO: add code for changing images
+
+    def updateZip(self, zipname, filename, data):
+        """ taken from https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file-using-python, replaces one file in a zipfile"""
+        # generate a temp file
+        tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(zipname))
+        os.close(tmpfd)
+
+        # create a temp copy of the archive without filename
+        with zipfile.ZipFile(zipname, 'r') as zin:
+            with zipfile.ZipFile(tmpname, 'w') as zout:
+                zout.comment = zin.comment  # preserve the comment
+                for item in zin.infolist():
+                    if item.filename not in (filename, 'META-INF/manifest.xml'):
+                        zout.writestr(item, zin.read(item.filename))
+
+        # replace with the temp archive
+        os.remove(zipname)
+        os.rename(tmpname, zipname)
+
+        # now add filename with its new data
+        with zipfile.ZipFile(zipname, mode='a',
+                             compression=zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr(filename, data)
+            for file in os.listdir(self.srcDir):
+                zf.write(filename=os.path.join(self.srcDir, file),
+                         arcname=os.path.join('attachments', file))
+            zf.writestr(zinfo_or_arcname='META-INF/manifest.xml',
+                        data=str(self.manifest))
 
 
 # monkey patches
