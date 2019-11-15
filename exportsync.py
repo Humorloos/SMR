@@ -118,8 +118,8 @@ class MapSyncer:
     def setNodeImg(self, tag, noteImg, nodeImg):
         if not noteImg:
             # remove image node from Map, i do not know why decompose() has to be called twice but it only works this way
-            tag.find('xhtml:img').decompose()
-            tag.find('xhtml:img').decompose()
+            imgTag = tag.find('xhtml:img')
+            imgTag.decompose()
             fullPath = nodeImg[4:]
             self.fileBin.append(fullPath)
             self.manifest.find('file-entry',
@@ -128,20 +128,30 @@ class MapSyncer:
         # move image from note to the directory of images to add
         imgPath = os.path.join(self.mediaDir, noteImg)
         shutil.copy(src=imgPath, dst=self.srcDir)
+        newFullPath = 'attachments/' + noteImg
+        newMediaType = "image/" + os.path.splitext(noteImg)[1][1:]
         if not nodeImg:
             # create a new image tag and add it to the node Tag
             imgTag = self.manifest.new_tag(name='xhtml:img', align='bottom')
             fileEntry = self.manifest.new_tag(name='file-entry')
-            fullPath = 'attachments/' + noteImg
-            imgTag['xhtml:src'] = 'xap:' + fullPath
-            fileEntry['full-path'] = fullPath
-            fileEntry['media-type'] = "image/" + os.path.splitext(noteImg)[1][
-                                                 1:]
+            imgTag['xhtml:src'] = 'xap:' + newFullPath
+            fileEntry['full-path'] = newFullPath
+            fileEntry['media-type'] = newMediaType
             self.manifest.find('manifest').append(fileEntry)
             tag.append(imgTag)
 
             print('added new image to map')
             return
+        # change image
+        fullPath = nodeImg[4:]
+        self.fileBin.append(fullPath)
+        fileEntry = self.manifest.find('file-entry',
+                                       attrs={"full-path": fullPath})
+        fileEntry['full-path'] = newFullPath
+        fileEntry['media-type'] = newMediaType
+        imgTag = tag.find('xhtml:img')
+        imgTag['xhtml:src'] = 'xap:' + newFullPath
+
         # TODO: add code for changing images
 
     def updateZip(self, zipname, filename, data):
