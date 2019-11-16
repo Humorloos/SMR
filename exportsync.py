@@ -89,6 +89,8 @@ class MapSyncer:
         print('synchronizing note')
         questionTag = getTagById(tagList=self.tagList,
                                  tagId=note['meta']['questionId'])
+        if not questionTag:
+            return
         self.maybeReplaceTitle(noteContent=note['fields'][1], tag=questionTag)
 
         for aId, answer in enumerate(note['meta']['answers'], start=0):

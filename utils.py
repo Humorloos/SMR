@@ -177,7 +177,10 @@ def getNodeContent(tagList, tag):
 
 
 def getTagById(tagList, tagId):
-    return tuple(filter(lambda t: t['id'] == tagId, tagList))[0]
+    try:
+        return tuple(filter(lambda t: t['id'] == tagId, tagList))[0]
+    except IndexError:
+        return None
 
 
 def getNodeTitle(tag):
