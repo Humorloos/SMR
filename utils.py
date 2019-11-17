@@ -197,14 +197,14 @@ def setNodeTitle(tag, title):
 def getNodeImg(tag):
     try:
         return tag.find('xhtml:img', recursive=False)['xhtml:src']
-    except TypeError:
+    except (TypeError, AttributeError):
         return None
 
 
 def getNodeHyperlink(tag):
     try:
         return tag['xlink:href']
-    except KeyError:
+    except (KeyError, TypeError):
         return None
 
 
