@@ -85,7 +85,12 @@ To import a concept map all you have to do is click the "Import File" button at 
 </p>
 
 ### 3. Synchronizing your concept maps
+
+#### Importing changes in your concept map
 To import changes made to your concept maps into your anki notes, all you have to do is import the corresponding sheets again.
+
+#### Exporting changes to your cards
+Changes made to questions or answers in your SMR Cards will be exported to your concepts map when you click the "sync"-button. This feature currently only works with images and text changes. Audios, Videos or any other contents can not yet be exported this way. 
 
 #### Repair checkbox
 Sometimes Xmind 8 experiences some serious bugs with the program crashing every time you try to edit a concept map. The only solution to this problem that I have found until now is to open the map with [Xmind Zen](https://www.xmind.net/download/), make the necessary changes, save it from there and open it again in Xmind 8. However, after doing this, SMR will no more recognize the concept map and won't synchronize an existing map but import it again. To be able to synchronize again, you need to import the map once with the repair checkbox checked. However, make sure that the map is the same as before you saved it in Xmind Zen because any notes affected by changes will be removed and imported again and your progress would be lost.
