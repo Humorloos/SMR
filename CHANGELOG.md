@@ -1,4 +1,7 @@
 ## Changelog
+### 0.2.3 - 2019-12-06
+#### Fixed
+- Error on import when question directly following root topic is missing answers
 ### 0.2.2 - 2019-11-17
 #### Fixed
 - Error on export when nodes were deleted in Xmind File

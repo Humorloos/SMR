@@ -44,6 +44,8 @@ def replaceSound(content: str):
 # Receives a sortId of an anki note and returns the path that leads to the
 # corresponding node in the xmind document
 def getCoordsFromId(sortId):
+    if sortId == '':
+        return '0'
     indices = list(map(lambda index: str(ord(index) - 122), sortId))
     coords = indices[0]
     for index in indices[1:]:
