@@ -2,6 +2,7 @@
 ### 0.2.4 - 2019-12-07
 #### Fixed
 - Error on import when map only contains one sheet
+- Error during review when only red cards are left
 ### 0.2.3 - 2019-12-06
 #### Fixed
 - Error on import when question directly following root topic is missing answers

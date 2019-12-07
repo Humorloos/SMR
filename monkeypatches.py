@@ -195,10 +195,10 @@ def schedAnswerLrnCard(self, card, ease):
             # sure we don't put it at the head of the queue and end up showing
             # it twice in a row
             card.queue = 1
-            if self._lrnQueue and not self.revCount and not self.newCount:
-                smallestDue = self._lrnQueue[0][0]
-                card.due = max(card.due, smallestDue + 1)
-                ################################################################
+            ####################################################################
+            # if self._lrnQueue and not self.revCount and not self.newCount:
+            #     smallestDue = self._lrnQueue[0][0]
+            #     card.due = max(card.due, smallestDue + 1)
             # heappush(self._lrnQueue, (card.due, card.id))
             ####################################################################
         else:
