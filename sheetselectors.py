@@ -59,7 +59,7 @@ class SingleSheetSelector(SheetSelector):
         if not self.parent:
             self.width *= 2
             self.height *= 2
-        title = self.sheets[0]['sheet'].getTitle()
+        title = self.sheets[0]['sheet'].title.text
         tag_text = 'Enter name for sheet "' + title + '":'
         self.setWindowTitle('Xmind Import')
         self.setWindowIcon(QIcon(os.path.join(ICONS_PATH, "icon.ico")))
