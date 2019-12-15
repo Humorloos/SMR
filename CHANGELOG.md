@@ -1,4 +1,7 @@
 ## Changelog
+### 0.2.5 - 2019-12-15
+#### Fixed
+- Error on synchronization when xmind file is not found
 ### 0.2.4 - 2019-12-07
 #### Fixed
 - Error on import when map only contains one sheet

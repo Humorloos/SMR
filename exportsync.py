@@ -1,6 +1,7 @@
 import json
 
 import aqt.main as sync
+from aqt.utils import tooltip
 
 from anki.utils import splitFields
 
@@ -52,7 +53,13 @@ class MapSyncer:
         self.fileBin = []
         notes4Doc = list(filter(lambda n: n['meta']['path'] == docPath,
                                 self.notes2Sync))
-        xZip = zipfile.ZipFile(docPath, 'r')
+        try:
+            xZip = zipfile.ZipFile(docPath, 'r')
+        except FileNotFoundError:
+            log = 'File "%s" not found, changes in "%s" not exported.' % (
+                docPath, os.path.basename(docPath))
+            tooltip(msg=log, period=6000, parent=self.mw)
+            return
         content = xZip.read('content.xml')
         manifestContent = xZip.read("META-INF/manifest.xml")
         xZip.close()
