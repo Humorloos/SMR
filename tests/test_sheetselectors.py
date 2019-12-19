@@ -1,9 +1,7 @@
 import os
 import sys
 
-from XmindImport.xmind.xxmind import load
-
-from XmindImport.sheetselectors import SingleSheetSelector, MultiSheetSelector
+from ..sheetselectors import SingleSheetSelector, MultiSheetSelector
 from XmindImport.consts import ADDON_PATH
 
 from PyQt5 import QtWidgets

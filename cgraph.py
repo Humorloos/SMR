@@ -3,13 +3,14 @@
 from collections import defaultdict
 
 
-class Graph(object):
+class CGraph(object):
     """ Graph data structure, undirected by default. """
 
-    def __init__(self, connections, directed=False):
+    def __init__(self, col, directed=False):
         self._graph = defaultdict(set)
         self._directed = directed
-        self.add_connections(connections)
+        self.col = col
+        # self.add_connections()
 
     def add_connections(self, connections):
         """ Add connections (list of tuple pairs) to graph """
