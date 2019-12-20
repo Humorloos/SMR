@@ -82,9 +82,8 @@ class XmindImporter(NoteImporter):
         shutil.rmtree(self.srcDir)
         print("fertig")
 
-    # returns list of
     def get_x_sheets(self):
-        # doc = load(self.file)
+        # load sheets from soup
         imp_sheets = self.soup('sheet')
         doc_title = os.path.basename(self.file)[:-6]
         if len(imp_sheets) > 1:
