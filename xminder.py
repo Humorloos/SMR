@@ -56,7 +56,17 @@ class XmindImporter(NoteImporter):
                 pass
 
     def run(self):
-        selectedSheets = self.get_x_sheets()
+        imp_sheets, doc_title = self.get_x_sheets(self.soup)
+        if len(imp_sheets) > 1:
+            selector = MultiSheetSelector(imp_sheets, doc_title)
+        else:
+            selector = SingleSheetSelector(imp_sheets, doc_title)
+        self.mw.progress.finish()
+        selector.exec_()
+        if not selector.running:
+            self.running = False
+            self.log = ['Import canceled']
+        selectedSheets = selector.sheets
         if not self.running:
             return
         self.importSheets(selectedSheets)
@@ -95,20 +105,31 @@ class XmindImporter(NoteImporter):
         shutil.rmtree(self.srcDir)
         print("fertig")
 
-    def get_x_sheets(self):
+    def get_x_sheets(self, soup):
+        imp_sheets = soup('sheet')
         # load sheets from soup
-        imp_sheets = self.soup('sheet')
+        sheets = list()
+        for sheet in imp_sheets:
+            # get reference sheets
+            # TODO: add file path for each sheet
+            if sheet('title', recursive=False)[0].text == 'ref':
+                ref_tags = getChildnodes(sheet.topic)
+                ref_paths = map(getNodeHyperlink, ref_tags)
+                for path in filter(lambda ref_path: ref_path is not None,
+                                   ref_paths):
+                    clean_path = path.replace('file://', '')
+                    clean_path = clean_path.replace('%20', ' ')
+                    clean_path = clean_path.split('/')
+                    clean_path[0] = clean_path[0] + '\\'
+                    ref_zip = zipfile.ZipFile(os.path.join(*clean_path), 'r')
+                    ref_soup = BeautifulSoup(ref_zip.read('content.xml'),
+                                             features='html.parser')
+                    sheets.extend(self.get_x_sheets(ref_soup)[0])
+            else:
+                sheetImport = dict(sheet=sheet, tag="", deckId="")
+                sheets.append(sheetImport)
         doc_title = os.path.basename(self.file)[:-6]
-        if len(imp_sheets) > 1:
-            selector = MultiSheetSelector(imp_sheets, doc_title)
-        else:
-            selector = SingleSheetSelector(imp_sheets, doc_title)
-        self.mw.progress.finish()
-        selector.exec_()
-        if not selector.running:
-            self.running = False
-            self.log = ['Import canceled']
-        return selector.sheets
+        return sheets, doc_title
 
     def importMap(self, sheetImport: dict):
         rootTopic = sheetImport['sheet'].topic

@@ -14,10 +14,7 @@ class SheetSelector(QDialog):
         except:
             self.parent = None
         super().__init__(parent=self.parent)
-        self.sheets = list()
-        for sheet in sheets:
-            sheetImport = dict(sheet=sheet, tag="", deckId="")
-            self.sheets.append(sheetImport)
+        self.sheets = sheets
         self.topic = topic
         self.width = 600
         self.height = 100
