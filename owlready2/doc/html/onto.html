@@ -1,0 +1,323 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Managing ontologies &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Classes and Individuals (Instances)" href="class.html" />
+    <link rel="prev" title="Owlready2 Installation" href="install.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="class.html" title="Classes and Individuals (Instances)"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="install.html" title="Owlready2 Installation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="managing-ontologies">
+<h1>Managing ontologies<a class="headerlink" href="#managing-ontologies" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="creating-an-ontology">
+<h2>Creating an ontology<a class="headerlink" href="#creating-an-ontology" title="Permalink to this headline">¶</a></h2>
+<p>A new empty ontology can be obtained with the get_ontology() function; it takes a single parameter,
+the IRI of the ontology.
+The IRI is a sort of URL; IRIs are used as identifier for ontologies.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto.owl&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If an ontology has already been created for the same IRI, it will be returned.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some ontologies use a # character in IRI to separate the name of the ontology from the name of the
+entities, while some others uses a /. By default, Owlready2 uses a #, if you want to use a /, the IRI
+should ends with /.</p>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto.owl&quot;</span><span class="p">)</span> <span class="c1"># =&gt; http://test.org/onto.owl#entity</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto&quot;</span><span class="p">)</span> <span class="c1"># =&gt; http://test.org/onto#entity</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto/&quot;</span><span class="p">)</span> <span class="c1"># =&gt; http://test.org/onto/entity</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="loading-an-ontology-from-owl-files">
+<h2>Loading an ontology from OWL files<a class="headerlink" href="#loading-an-ontology-from-owl-files" title="Permalink to this headline">¶</a></h2>
+<p>Use the .load() method of an ontology for loading it.</p>
+<p>The easiest way to load the ontology is to load a local copy. In this case, the IRI is the
+local filename prefixed with “<a class="reference external" href="file://">file://</a>”, for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;file:///home/jiba/onto/pizza_onto.owl&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>If an URL is given, Owlready2 first searches for a local copy of the OWL file and,
+if not found, tries to download it from the Internet. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto_path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;/path/to/owlready/onto/&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://www.lesfleursdunormal.fr/static/_downloads/pizza_onto.owl&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The onto_path global variable contains a list of directories for searching local copies of ontologies.
+It behaves similarly to sys.path (for Python modules / packages).</p>
+<p>The get_ontology() function returns an ontology from its IRI, and creates a new empty ontology if needed.</p>
+<p>The .load() method loads the ontology from a local copy or from Internet.
+It is <strong>safe</strong> to call .load() several times on the same ontology.
+It will be loaded only once.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Owlready2 currently reads the following file format: RDF/XML, OWL/XML, NTriples.
+The file format is automatically detected.</p>
+<p>NTriples is a very simple format and is natively supported by Owlready2.</p>
+<p>RDF/XML is the most common format; it is also natively supported by Owlready2 (since version 0.2).</p>
+<p>OWL/XML is supported using a specific parser integrated to Owlready2.
+This parser supports a large subset of OWL, but is not complete.
+It has been tested mostly with OWL files created with the Protégé editor or with Owlready itself.
+Consequently, preferred formats are RDF/XML and NTriples.</p>
+</div>
+</div>
+<div class="section" id="accessing-the-content-of-an-ontology">
+<h2>Accessing the content of an ontology<a class="headerlink" href="#accessing-the-content-of-an-ontology" title="Permalink to this headline">¶</a></h2>
+<p>You can access to the content of an ontology using the ‘dot’ notation, as usual in Python or more generally
+in Object-Oriented Programming. In this way, you can access the Classes, Instances, Properties,
+Annotation Properties,… defined in the ontology.
+The [] syntax is also accepted.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">onto</span><span class="o">.</span><span class="n">Pizza</span><span class="p">)</span>
+<span class="go">onto.Pizza</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">onto</span><span class="p">[</span><span class="s2">&quot;Pizza&quot;</span><span class="p">])</span>
+<span class="go">onto.Pizza</span>
+</pre></div>
+</div>
+<p>An ontology has the following attributes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>.base_iri : base IRI for the ontology</p></li>
+<li><p>.imported_ontologies : the list of imported ontologies (see below)</p></li>
+</ul>
+</div></blockquote>
+<p>and the following methods:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>.classes() : returns a generator for the Classes defined in the ontology (see <a class="reference internal" href="class.html"><span class="doc">Classes and Individuals (Instances)</span></a>)</p></li>
+<li><p>.individuals() : returns a generator for the individuals (or instances) defined in the ontology (see <a class="reference internal" href="class.html"><span class="doc">Classes and Individuals (Instances)</span></a>)</p></li>
+<li><p>.object_properties() : returns a generator for ObjectProperties defined in the ontology (see <a class="reference internal" href="properties.html"><span class="doc">Properties</span></a>)</p></li>
+<li><p>.data_properties() : returns a generator for DataProperties defined in the ontology (see <a class="reference internal" href="properties.html"><span class="doc">Properties</span></a>)</p></li>
+<li><p>.annotation_properties() : returns a generator for AnnotationProperties defined in the ontology (see <a class="reference internal" href="annotations.html"><span class="doc">Annotations</span></a>)</p></li>
+<li><p>.properties() : returns a generator for all Properties (object-, data- and annotation-) defined in the ontology</p></li>
+<li><p>.disjoint_classes() : returns a generator for AllDisjoint constructs for Classes defined in the ontology (see <a class="reference internal" href="disjoint.html"><span class="doc">Disjointness, open and local closed world reasoning</span></a>)</p></li>
+<li><p>.disjoint_properties() : returns a generator for AllDisjoint constructs for Properties defined in the ontology (see <a class="reference internal" href="disjoint.html"><span class="doc">Disjointness, open and local closed world reasoning</span></a>)</p></li>
+<li><p>.disjoints() : returns a generator for AllDisjoint constructs (for Classes and Properties) defined in the ontology</p></li>
+<li><p>.different_individuals() : returns a generator for AllDifferent constructs for individuals defined in the ontology (see <a class="reference internal" href="disjoint.html"><span class="doc">Disjointness, open and local closed world reasoning</span></a>)</p></li>
+<li><p>.get_namepace(base_iri) : returns a namespace for the ontology and the given base IRI (see namespaces below, in the next section)</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Many methods returns a generator. Generators allows iterating over the values without creating a list,
+which can improve performande. However, they are often not very convenient when exploring the ontology:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">classes</span><span class="p">()</span>
+<span class="go">&lt;generator object _GraphManager.classes at 0x7f854a677728&gt;</span>
+</pre></div>
+</div>
+<p>A generator can be trandformed into a list with the list() Python function:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">onto</span><span class="o">.</span><span class="n">classes</span><span class="p">())</span>
+<span class="go">[pizza_onto.CheeseTopping, pizza_onto.FishTopping, pizza_onto.MeatTopping,</span>
+<span class="go">pizza_onto.Pizza, pizza_onto.TomatoTopping, pizza_onto.Topping,</span>
+<span class="go">pizza_onto.NonVegetarianPizza]</span>
+</pre></div>
+</div>
+</div>
+<p>The IRIS pseudo-dictionary can be used for accessing an entity from its full IRI:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">IRIS</span><span class="p">[</span><span class="s2">&quot;http://www.lesfleursdunormal.fr/static/_downloads/pizza_onto.owl#Pizza&quot;</span><span class="p">]</span>
+<span class="go">pizza_onto.Pizza</span>
+</pre></div>
+</div>
+<p>Ontologies can also define entities located in other namespaces, for example
+Gene Ontology (GO) has the following IRI: ‘<a class="reference external" href="http://purl.obolibrary.org/obo/go.owl">http://purl.obolibrary.org/obo/go.owl</a>’,
+but the IRI of GO entities are of the form ‘<a class="reference external" href="http://purl.obolibrary.org/obo/GO_entity">http://purl.obolibrary.org/obo/GO_entity</a>’ (note the missing ‘go.owl#’).
+See <a class="reference internal" href="namespace.html"><span class="doc">Namespaces</span></a> to learn how to access such entities.</p>
+</div>
+<div class="section" id="simple-queries">
+<h2>Simple queries<a class="headerlink" href="#simple-queries" title="Permalink to this headline">¶</a></h2>
+<p>Simple queries can be performed with the .search() method of the ontology. It expects one or several keyword
+arguments. The supported keywords are:</p>
+<ul class="simple">
+<li><p><strong>iri</strong>, for searching entities by its full IRI</p></li>
+<li><p><strong>type</strong>, for searching Individuals of a given Class</p></li>
+<li><p><strong>subclass_of</strong>, for searching subclasses of a given Class</p></li>
+<li><p><strong>is_a</strong>, for searching both Individuals and subclasses of a given Class</p></li>
+<li><p>any object, data or annotation property name</p></li>
+</ul>
+<p>Special arguments are:</p>
+<ul class="simple">
+<li><p><strong>_use_str_as_loc_str</strong>: whether to treats plain Python strings as strings in any language (default is True)</p></li>
+<li><p><strong>_case_sensitive</strong>: whether to take lower/upper case into consideration (default is True)</p></li>
+</ul>
+<p>The value associated to each keyword can be a single value or a list of several values.
+A star * can be used as a jocker in string values.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>.search() does not perform any kind of reasoning, it just searches in asserted facts.
+In addition, it cannot find Classes through SOME or ONLY restrictions.</p>
+</div>
+<p>For example, for searching for all entities with an IRI ending with ‘Topping’:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">iri</span> <span class="o">=</span> <span class="s2">&quot;*Topping&quot;</span><span class="p">)</span>
+<span class="go">[pizza_onto.CheeseTopping, pizza_onto.FishTopping, pizza_onto.MeatTopping,</span>
+<span class="go">pizza_onto.TomatoTopping, pizza_onto.Topping]</span>
+</pre></div>
+</div>
+<p>In addition, the special value “*” can be used as a wildcard for any object.
+For example, the following line searches for all individuals that are related
+to another one with the ‘has_topping’ relation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">has_topping</span> <span class="o">=</span> <span class="s2">&quot;*&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When a single return value is expected, the .search_one() method can be used. It works similarly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">search_one</span><span class="p">(</span><span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;my label&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Owlready classes and individuals can be used as values within search(), as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">search_one</span><span class="p">(</span><span class="n">is_a</span> <span class="o">=</span> <span class="n">onto</span><span class="o">.</span><span class="n">Pizza</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, search() can be nested, as in the following example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">is_a</span> <span class="o">=</span> <span class="n">onto</span><span class="o">.</span><span class="n">Pizza</span><span class="p">,</span> <span class="n">has_topping</span> <span class="o">=</span> <span class="n">onto</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">is_a</span> <span class="o">=</span> <span class="n">onto</span><span class="o">.</span><span class="n">Tomato</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Owlready automatically combines nested searches in a single, optimized, search.</p>
+<p>For more complex queries, SQPARQL can be used with RDFlib (see <a class="reference internal" href="world.html"><span class="doc">Worlds</span></a>).</p>
+</div>
+<div class="section" id="ontology-metadata">
+<h2>Ontology metadata<a class="headerlink" href="#ontology-metadata" title="Permalink to this headline">¶</a></h2>
+<p>The metadata of the ontology can be accessed with .metadata, in read and write access:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">onto</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">comment</span><span class="p">)</span>
+<span class="go">[...]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">comment</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;my first comment&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Any annotation can be used with .metadata.</p>
+</div>
+<div class="section" id="importing-other-ontologies">
+<h2>Importing other ontologies<a class="headerlink" href="#importing-other-ontologies" title="Permalink to this headline">¶</a></h2>
+<p>An ontology can import other ontologies, like a Python module can import other modules.</p>
+<p>The imported_ontologies attribute of an ontology is a list of the ontology it imports. You can add
+or remove items in that list:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">imported_ontologies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">owlready_ontology</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="saving-an-ontology-to-an-owl-file">
+<h2>Saving an ontology to an OWL file<a class="headerlink" href="#saving-an-ontology-to-an-owl-file" title="Permalink to this headline">¶</a></h2>
+<p>The .save() method of an ontology can be used to save it.
+It will be saved in the first directory in onto_path.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">file</span> <span class="o">=</span> <span class="s2">&quot;filename or fileobj&quot;</span><span class="p">,</span> <span class="nb">format</span> <span class="o">=</span> <span class="s2">&quot;rdfxml&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>.save() accepts two optional parameters: ‘file’, a file object or a filename for saving the ontology,
+and ‘format’, the file format (default is RDF/XML).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Owlready2 currently writes the following file format: “rdf/xml”, “ntriples”.</p>
+<p>NTriples is a very simple format and is natively supported by Owlready2.</p>
+<p>RDF/XML is the most common format; it is also natively supported by Owlready2 (since version 0.2).</p>
+<p>OWL/XML is not yet supported for writing.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Managing ontologies</a><ul>
+<li><a class="reference internal" href="#creating-an-ontology">Creating an ontology</a></li>
+<li><a class="reference internal" href="#loading-an-ontology-from-owl-files">Loading an ontology from OWL files</a></li>
+<li><a class="reference internal" href="#accessing-the-content-of-an-ontology">Accessing the content of an ontology</a></li>
+<li><a class="reference internal" href="#simple-queries">Simple queries</a></li>
+<li><a class="reference internal" href="#ontology-metadata">Ontology metadata</a></li>
+<li><a class="reference internal" href="#importing-other-ontologies">Importing other ontologies</a></li>
+<li><a class="reference internal" href="#saving-an-ontology-to-an-owl-file">Saving an ontology to an OWL file</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="install.html"
+                        title="previous chapter">Owlready2 Installation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="class.html"
+                        title="next chapter">Classes and Individuals (Instances)</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/onto.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="class.html" title="Classes and Individuals (Instances)"
+             >next</a></li>
+        <li class="right" >
+          <a href="install.html" title="Owlready2 Installation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

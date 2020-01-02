@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Mixing Python and OWL &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Reasoning" href="reasoning.html" />
+    <link rel="prev" title="Disjointness, open and local closed world reasoning" href="disjoint.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="reasoning.html" title="Reasoning"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="disjoint.html" title="Disjointness, open and local closed world reasoning"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="mixing-python-and-owl">
+<h1>Mixing Python and OWL<a class="headerlink" href="#mixing-python-and-owl" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="adding-python-methods-to-an-owl-class">
+<h2>Adding Python methods to an OWL Class<a class="headerlink" href="#adding-python-methods-to-an-owl-class" title="Permalink to this headline">¶</a></h2>
+<p>Python methods can be defined in ontology Classes as usual in Python. In the example below, the Drug Class
+has a Python method for computing the per-tablet cost of a Drug, using two OWL Properties (which have been
+renamed in Python, see <a class="reference internal" href="properties.html#associating-python-alias-name-to-properties"><span class="std std-ref">Associating Python alias name to Properties</span></a>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto.owl&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">def</span> <span class="nf">get_per_tablet_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cost</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_tablets</span>
+
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">has_for_cost</span><span class="p">(</span><span class="n">Drug</span> <span class="o">&gt;&gt;</span> <span class="nb">float</span><span class="p">,</span> <span class="n">FunctionalProperty</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">python_name</span> <span class="o">=</span> <span class="s2">&quot;cost&quot;</span>
+
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">has_for_number_of_tablets</span><span class="p">(</span><span class="n">Drug</span> <span class="o">&gt;&gt;</span> <span class="nb">int</span><span class="p">,</span> <span class="n">FunctionalProperty</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">python_name</span> <span class="o">=</span> <span class="s2">&quot;number_of_tablets&quot;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_drug</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">(</span><span class="n">cost</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">number_of_tablets</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">my_drug</span><span class="o">.</span><span class="n">get_per_tablet_cost</span><span class="p">())</span>
+<span class="go">2.0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="forward-declarations">
+<h2>Forward declarations<a class="headerlink" href="#forward-declarations" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes, you may need to forward-declare a Class or a Property.
+If the same Class or Property (same name, same namespace) is redefined, the new definition <strong>extends</strong>
+the previous one (and do not replace it!).</p>
+<p>For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">has_for_active_principle</span><span class="p">(</span><span class="n">Property</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">has_for_active_principle</span><span class="p">(</span><span class="n">Drug</span> <span class="o">&gt;&gt;</span> <span class="n">ActivePrinciple</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span> <span class="c1"># Extends the previous definition of Drug</span>
+<span class="gp">... </span>        <span class="n">is_a</span> <span class="o">=</span> <span class="p">[</span><span class="n">has_for_active_principle</span><span class="o">.</span><span class="n">some</span><span class="p">(</span><span class="n">ActivePrinciple</span><span class="p">)]</span>
+</pre></div>
+</div>
+<p>(Notice that this definition of drug exclude Placebo).</p>
+</div>
+<div class="section" id="associating-a-python-module-to-an-owl-ontology">
+<h2>Associating a Python module to an OWL ontology<a class="headerlink" href="#associating-a-python-module-to-an-owl-ontology" title="Permalink to this headline">¶</a></h2>
+<p>It is possible to associate a Python module with an OWL ontology. When Owlready2 loads the ontology,
+it will automatically import the Python module.
+This is done with the ‘python_module’ annotation, which should be set on the ontology itself.
+The value should be the name of your Python module, <em>e.g.</em> ‘my_package.my_module’.
+This annotation can be set with editor like Protégé, after importing the ‘owlready_ontology.owl’ ontology
+(file ‘owlready2/owlready_ontology.owl’ in Owlready2 sources, URI <a class="reference external" href="http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl">http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl</a>):</p>
+<div class="figure align-default">
+<img alt="_images/protege_python_module_annotation.png" src="_images/protege_python_module_annotation.png" />
+</div>
+<p>The Python module can countain Class and Properties definitions, and methods.
+However, it does not need to include all the is-a relations, domain, range,…: any such relation
+defined in OWL does not need to be specified again in Python. Therefore, if your Class hierarchy is
+defined in OWL, you can create all Classes as child of Thing.</p>
+<p>For example, in file ‘my_python_module.py’:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto.owl&quot;</span><span class="p">)</span> <span class="c1"># Do not load the ontology here!</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">def</span> <span class="nf">get_per_tablet_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cost</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_tablets</span>
+</pre></div>
+</div>
+<p>And then, in OWL file ‘onto.owl’, you can define:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The ‘python_module’ annotation (value: ‘my_python_module’)</p></li>
+<li><p>The ‘Drug’ Class with superclasses if needed</p></li>
+<li><p>The ‘has_for_cost’ Property (ommitted in Python – not needed because it has no method)</p></li>
+<li><p>The ‘has_for_number_of_tablets’ Property (also ommitted)</p></li>
+</ul>
+</div></blockquote>
+<p>In this way, Owlready2 allows you to take the best of Python and OWL!</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Mixing Python and OWL</a><ul>
+<li><a class="reference internal" href="#adding-python-methods-to-an-owl-class">Adding Python methods to an OWL Class</a></li>
+<li><a class="reference internal" href="#forward-declarations">Forward declarations</a></li>
+<li><a class="reference internal" href="#associating-a-python-module-to-an-owl-ontology">Associating a Python module to an OWL ontology</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="disjoint.html"
+                        title="previous chapter">Disjointness, open and local closed world reasoning</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="reasoning.html"
+                        title="next chapter">Reasoning</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/mixing_python_owl.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="reasoning.html" title="Reasoning"
+             >next</a></li>
+        <li class="right" >
+          <a href="disjoint.html" title="Disjointness, open and local closed world reasoning"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,243 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Reasoning &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Annotations" href="annotations.html" />
+    <link rel="prev" title="Mixing Python and OWL" href="mixing_python_owl.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="annotations.html" title="Annotations"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="mixing_python_owl.html" title="Mixing Python and OWL"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="reasoning">
+<h1>Reasoning<a class="headerlink" href="#reasoning" title="Permalink to this headline">¶</a></h1>
+<p>OWL reasoners can be used to check the <em>consistency</em> of an ontology, and to deduce new fact in the ontology,
+typically be <em>reclassing</em> Individuals to new Classes, and Classes to new superclasses,
+depending on their relations.</p>
+<p>Several OWL reasoners exist; Owlready2 includes:</p>
+<ul class="simple">
+<li><p>a modified version of the <a class="reference external" href="http://hermit-reasoner.com/">HermiT reasoner</a>,
+developed by the department of Computer Science of the University of Oxford, and released under the LGPL licence.</p></li>
+<li><p>a modified version of the <a class="reference external" href="https://github.com/stardog-union/pellet">Pellet reasoner</a>,
+released under the AGPL licence.</p></li>
+</ul>
+<p>HermiT and Pellet are written in Java, and thus you need a Java Vitual Machine to perform reasoning in Owlready2.</p>
+<p>HermiT is used by default.</p>
+<div class="section" id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>Under Linux, Owlready should automatically find Java.</p>
+<p>Under windows, you may need to configure the location of the Java interpreter, as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">owlready2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">owlready2</span><span class="o">.</span><span class="n">JAVA_EXE</span> <span class="o">=</span> <span class="s2">&quot;C:</span><span class="se">\\</span><span class="s2">path</span><span class="se">\\</span><span class="s2">to</span><span class="se">\\</span><span class="s2">java.exe&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="setting-up-everything">
+<h2>Setting up everything<a class="headerlink" href="#setting-up-everything" title="Permalink to this headline">¶</a></h2>
+<p>Before performing reasoning, you need to create all Classes, Properties and Instances, and
+to ensure that restrictions and disjointnesses / differences have been defined too.</p>
+<p>Here is an example creating a ‘reasoning-ready’ ontology:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto.owl&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">def</span> <span class="nf">take</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;I took a drug&quot;</span><span class="p">)</span>
+
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">ActivePrinciple</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">has_for_active_principle</span><span class="p">(</span><span class="n">Drug</span> <span class="o">&gt;&gt;</span> <span class="n">ActivePrinciple</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">python_name</span> <span class="o">=</span> <span class="s2">&quot;active_principles&quot;</span>
+
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Placebo</span><span class="p">(</span><span class="n">Drug</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">equivalent_to</span> <span class="o">=</span> <span class="p">[</span><span class="n">Drug</span> <span class="o">&amp;</span> <span class="n">Not</span><span class="p">(</span><span class="n">has_for_active_principle</span><span class="o">.</span><span class="n">some</span><span class="p">(</span><span class="n">ActivePrinciple</span><span class="p">))]</span>
+<span class="gp">... </span>        <span class="k">def</span> <span class="nf">take</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;I took a placebo&quot;</span><span class="p">)</span>
+
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">SingleActivePrincipleDrug</span><span class="p">(</span><span class="n">Drug</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">equivalent_to</span> <span class="o">=</span> <span class="p">[</span><span class="n">Drug</span> <span class="o">&amp;</span> <span class="n">has_for_active_principle</span><span class="o">.</span><span class="n">exactly</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ActivePrinciple</span><span class="p">)]</span>
+<span class="gp">... </span>        <span class="k">def</span> <span class="nf">take</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;I took a drug with a single active principle&quot;</span><span class="p">)</span>
+
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">DrugAssociation</span><span class="p">(</span><span class="n">Drug</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">equivalent_to</span> <span class="o">=</span> <span class="p">[</span><span class="n">Drug</span> <span class="o">&amp;</span> <span class="n">has_for_active_principle</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">ActivePrinciple</span><span class="p">)]</span>
+<span class="gp">... </span>        <span class="k">def</span> <span class="nf">take</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;I took a drug with </span><span class="si">%s</span><span class="s2"> active principles&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_principles</span><span class="p">))</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acetaminophen</span>   <span class="o">=</span> <span class="n">ActivePrinciple</span><span class="p">(</span><span class="s2">&quot;acetaminophen&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">amoxicillin</span>     <span class="o">=</span> <span class="n">ActivePrinciple</span><span class="p">(</span><span class="s2">&quot;amoxicillin&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">clavulanic_acid</span> <span class="o">=</span> <span class="n">ActivePrinciple</span><span class="p">(</span><span class="s2">&quot;clavulanic_acid&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">AllDifferent</span><span class="p">([</span><span class="n">acetaminophen</span><span class="p">,</span> <span class="n">amoxicillin</span><span class="p">,</span> <span class="n">clavulanic_acid</span><span class="p">])</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">drug1</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">(</span><span class="n">active_principles</span> <span class="o">=</span> <span class="p">[</span><span class="n">acetaminophen</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">drug2</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">(</span><span class="n">active_principles</span> <span class="o">=</span> <span class="p">[</span><span class="n">amoxicillin</span><span class="p">,</span> <span class="n">clavulanic_acid</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">drug3</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">(</span><span class="n">active_principles</span> <span class="o">=</span> <span class="p">[])</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">close_world</span><span class="p">(</span><span class="n">Drug</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="running-the-reasoner">
+<h2>Running the reasoner<a class="headerlink" href="#running-the-reasoner" title="Permalink to this headline">¶</a></h2>
+<p>The reasoner (HermiT) is simply run by calling the sync_reasoner() global function:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sync_reasoner</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>By default, sync_reasoner() places all inferred facts in a special ontology, ‘<a class="reference external" href="http://inferrences/">http://inferrences/</a>’.
+You can control in which ontology the inferred facts are placed using the ‘with ontology’ statement
+(remember, all triples asserted inside a ‘with ontology’ statement go inside this ontology).
+For example, for placing all inferred facts in the ‘onto’ ontology:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">sync_reasoner</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This allows saving the ontology with the inferred facts (using onto.save() as usual).</p>
+<p>The reasoner can also be limited to some ontologies:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sync_reasoner</span><span class="p">([</span><span class="n">onto1</span><span class="p">,</span> <span class="n">onto2</span><span class="p">,</span><span class="o">...</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>If you also want to infer object property values, use the “infer_property_values” parameter:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sync_reasoner</span><span class="p">(</span><span class="n">infer_property_values</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To use Pellet instead of HermiT, just use the sync_reasoner_pellet() function instead.</p>
+<p>In addition, Pellet also supports the inference of data property values, using the “infer_data_property_values” parameter:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sync_reasoner</span><span class="p">(</span><span class="n">infer_property_values</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">infer_data_property_values</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="results-of-the-automatic-classification">
+<h2>Results of the automatic classification<a class="headerlink" href="#results-of-the-automatic-classification" title="Permalink to this headline">¶</a></h2>
+<p>Owlready automatically gets the results of the reasoning from HermiT and reclassifies Individuals and Classes,
+<em>i.e</em> Owlready changes the Classes of Individuals and the superclasses of Classes.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;drug2 new Classes:&quot;</span><span class="p">,</span> <span class="n">drug2</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
+<span class="go">drug2 new Classes: onto.DrugAssociation</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">drug1</span><span class="o">.</span><span class="n">take</span><span class="p">()</span>
+<span class="go">I took a drug with a single active principle</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">drug2</span><span class="o">.</span><span class="n">take</span><span class="p">()</span>
+<span class="go">I took a drug with 2 active principles</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">drug3</span><span class="o">.</span><span class="n">take</span><span class="p">()</span>
+<span class="go">I took a placebo</span>
+</pre></div>
+</div>
+<p>In this example, drug1, drug2 and drug3 Classes have changed!
+The reasoner <em>deduced</em> that drug2 is an Association Drug, and that drug3 is a Placebo.</p>
+<p>Also notice how the example combines automatic classification of OWL Classes with polymorphism on Python Classes.</p>
+</div>
+<div class="section" id="inconsistent-classes-and-ontologies">
+<h2>Inconsistent classes and ontologies<a class="headerlink" href="#inconsistent-classes-and-ontologies" title="Permalink to this headline">¶</a></h2>
+<p>In case of inconsistent ontology, an OwlReadyInconsistentOntologyError is raised.</p>
+<p>Inconcistent classes may occur without making the entire ontology inconsistent, as long as these classes have
+no individuals. Inconsistent classes are inferred as equivalent to Nothing. They can
+be obtained as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">default_world</span><span class="o">.</span><span class="n">inconsistent_classes</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>In addition, the consistency of a given class can be tested by checking for Nothing in its equivalent classes,
+as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="n">Nothing</span> <span class="ow">in</span> <span class="n">Drug</span><span class="o">.</span><span class="n">equivalent_to</span><span class="p">:</span>
+<span class="gp">... </span>      <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Drug is inconsistent!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Reasoning</a><ul>
+<li><a class="reference internal" href="#configuration">Configuration</a></li>
+<li><a class="reference internal" href="#setting-up-everything">Setting up everything</a></li>
+<li><a class="reference internal" href="#running-the-reasoner">Running the reasoner</a></li>
+<li><a class="reference internal" href="#results-of-the-automatic-classification">Results of the automatic classification</a></li>
+<li><a class="reference internal" href="#inconsistent-classes-and-ontologies">Inconsistent classes and ontologies</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mixing_python_owl.html"
+                        title="previous chapter">Mixing Python and OWL</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="annotations.html"
+                        title="next chapter">Annotations</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/reasoning.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="annotations.html" title="Annotations"
+             >next</a></li>
+        <li class="right" >
+          <a href="mixing_python_owl.html" title="Mixing Python and OWL"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

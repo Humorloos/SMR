@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Welcome to Owlready2’s documentation! &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Introduction" href="intro.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="intro.html" title="Introduction"
+             accesskey="N">next</a></li>
+        <li class="nav-item nav-item-0"><a href="#">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-owlready2-s-documentation">
+<h1>Welcome to Owlready2’s documentation!<a class="headerlink" href="#welcome-to-owlready2-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Owlready2 is a package for ontology-oriented programming in Python. It can load OWL 2.0 ontologies
+as Python objects, modify them, save them, and perform reasoning via HermiT
+(included). Owlready2 allows a transparent access to OWL ontologies (contrary
+to usual Java-based API).</p>
+<p>Owlready version 2 includes an optimized triplestore / quadstore, based on SQLite3.
+This quadstore is optimized both for performance and memory consumption. Contrary to version 1,
+Owlready2 can deal with big ontologies. Owlready2 can also access to UMLS and medical terminology
+(using the integrated PyMedTermino2 submodule).</p>
+<p>Owlready2 has been created at the LIMICS reseach lab,
+University Paris 13, Sorbonne Paris Cité, INSERM UMRS 1142, Paris 6 University, by
+Jean-Baptiste Lamy. It was initially developed during the VIIIP research project funded by ANSM,
+the French Drug Agency;
+this is why some examples in this documentation relate to drug ;).</p>
+<p>Owlready2 is available under the GNU LGPL licence v3.
+If you use Owlready2 in scientific works, <strong>please cite the following article</strong>:</p>
+<blockquote>
+<div><p><strong>Lamy JB</strong>.
+<a class="reference external" href="http://www.lesfleursdunormal.fr/_downloads/article_owlready_aim_2017.pdf">Owlready: Ontology-oriented programming in Python with automatic classification and high level constructs for biomedical ontologies.</a>
+<strong>Artificial Intelligence In Medicine 2017</strong>;80:11-28</p>
+</div></blockquote>
+<p>In case of troubles, questions or comments, please use this Forum/Mailing list: <a class="reference external" href="http://owlready.8326.n8.nabble.com">http://owlready.8326.n8.nabble.com</a></p>
+<div class="section" id="table-of-content">
+<h2>Table of content<a class="headerlink" href="#table-of-content" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#short-example-what-can-i-do-with-owlready">Short example: What can I do with Owlready?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#architecture">Architecture</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Owlready2 Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-from-terminal-bash-under-linux-or-dos-under-windows">Installation from terminal (Bash under Linux or DOS under Windows)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-in-spyder-idle-or-any-other-python-console">Installation in Spyder / IDLE (or any other Python console)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#manual-installation">Manual installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="onto.html">Managing ontologies</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="onto.html#creating-an-ontology">Creating an ontology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="onto.html#loading-an-ontology-from-owl-files">Loading an ontology from OWL files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="onto.html#accessing-the-content-of-an-ontology">Accessing the content of an ontology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="onto.html#simple-queries">Simple queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="onto.html#ontology-metadata">Ontology metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="onto.html#importing-other-ontologies">Importing other ontologies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="onto.html#saving-an-ontology-to-an-owl-file">Saving an ontology to an OWL file</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="class.html">Classes and Individuals (Instances)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="class.html#creating-a-class">Creating a Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class.html#creating-and-managing-subclasses">Creating and managing subclasses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class.html#creating-classes-dynamically">Creating classes dynamically</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class.html#creating-equivalent-classes">Creating equivalent classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class.html#creating-individuals">Creating Individuals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class.html#querying-individual-relations">Querying Individual relations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class.html#introspecting-individuals">Introspecting Individuals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class.html#mutli-class-individuals">Mutli-Class Individuals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class.html#equivalent-identical-sameas-individuals">Equivalent (identical, SameAs) individuals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="class.html#destroying-entities">Destroying entities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="properties.html">Properties</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="properties.html#creating-a-new-class-of-property">Creating a new class of property</a></li>
+<li class="toctree-l2"><a class="reference internal" href="properties.html#creating-a-relation">Creating a relation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="properties.html#data-property">Data Property</a></li>
+<li class="toctree-l2"><a class="reference internal" href="properties.html#inverse-properties">Inverse Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="properties.html#functional-and-inverse-functional-properties">Functional and Inverse Functional properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="properties.html#creating-a-subproperty">Creating a subproperty</a></li>
+<li class="toctree-l2"><a class="reference internal" href="properties.html#obtaining-indirect-relations-considering-subproperty-transitivity-etc">Obtaining indirect relations (considering subproperty, transitivity, etc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="properties.html#associating-python-alias-name-to-properties">Associating Python alias name to Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="properties.html#getting-relation-instances">Getting relation instances</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="restriction.html">Class constructs, restrictions and logical operators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="restriction.html#restrictions-on-a-property">Restrictions on a Property</a></li>
+<li class="toctree-l2"><a class="reference internal" href="restriction.html#restrictions-as-class-properties">Restrictions as class properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="restriction.html#restrictions-as-class-properties-in-defined-classes">Restrictions as class properties in defined classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="restriction.html#logical-operators-intersection-union-and-complement">Logical operators (intersection, union and complement)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="restriction.html#one-of-constructs">One-Of constructs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="restriction.html#inverse-of-constructs">Inverse-of constructs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="restriction.html#constraineddatatype">ConstrainedDatatype</a></li>
+<li class="toctree-l2"><a class="reference internal" href="restriction.html#property-chain">Property chain</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="disjoint.html">Disjointness, open and local closed world reasoning</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="disjoint.html#disjoint-classes">Disjoint Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="disjoint.html#disjoint-properties">Disjoint Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="disjoint.html#different-individuals">Different Individuals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="disjoint.html#querying-and-modifying-disjoints">Querying and modifying disjoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="disjoint.html#closing-individuals">Closing Individuals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="disjoint.html#closing-classes">Closing Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="disjoint.html#closing-an-ontology">Closing an ontology</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mixing_python_owl.html">Mixing Python and OWL</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mixing_python_owl.html#adding-python-methods-to-an-owl-class">Adding Python methods to an OWL Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixing_python_owl.html#forward-declarations">Forward declarations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mixing_python_owl.html#associating-a-python-module-to-an-owl-ontology">Associating a Python module to an OWL ontology</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reasoning.html">Reasoning</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reasoning.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reasoning.html#setting-up-everything">Setting up everything</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reasoning.html#running-the-reasoner">Running the reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reasoning.html#results-of-the-automatic-classification">Results of the automatic classification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reasoning.html#inconsistent-classes-and-ontologies">Inconsistent classes and ontologies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="annotations.html">Annotations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#adding-an-annotation">Adding an annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#querying-annotations">Querying annotations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#deleting-annotations">Deleting annotations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#custom-rendering-of-entities">Custom rendering of entities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#language-specific-annotations">Language-specific annotations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#creating-new-classes-of-annotation">Creating new classes of annotation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#full-text-search-fts">Full-text search (FTS)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="namespace.html">Namespaces</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html#accessing-entities-defined-in-another-namespace">Accessing entities defined in another namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html#creating-classes-in-a-specific-namespace">Creating classes in a specific namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html#modifying-a-class-defined-in-another-ontology">Modifying a class defined in another ontology</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="world.html">Worlds</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="world.html#persistent-world-storing-the-quadstore-in-an-sqlite3-file-database">Persistent world: storing the quadstore in an SQLite3 file database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="world.html#using-several-isolated-worlds">Using several isolated Worlds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="world.html#working-with-rdflib-for-performing-sparql-queries">Working with RDFlib for performing SPARQL queries</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rule.html">SWRL rules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rule.html#creating-swrl-rules">Creating SWRL rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rule.html#displaying-rules">Displaying rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rule.html#modifying-rules-manually">Modifying rules manually</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pymedtermino2.html">PyMedTermino2</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymedtermino2.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymedtermino2.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymedtermino2.html#snomed-ct">SNOMED CT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#loading">Loading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#concepts">Concepts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#full-text-search">Full-text search</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#is-a-relations-parent-and-child-concepts">Is-a relations: parent and child concepts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#part-of-relations">Part-of relations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#other-relations">Other relations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#relation-groups">Relation groups</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#iterating-over-snomed-ct">Iterating over SNOMED CT</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pymedtermino2.html#icd10">ICD10</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#loading-modules">Loading modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#id1">Concepts</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pymedtermino2.html#umls">UMLS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#id2">Loading modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#umls-concepts-cui">UMLS concepts (CUI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#relation-with-source-terminologies">Relation with source terminologies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pymedtermino2.html#mapping-between-terminologies">Mapping between terminologies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pymedtermino2.html#set-of-concepts">Set of concepts</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="porting1.html">Differences between Owlready version 1 and 2</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="porting1.html#creation-of-classes-properties-and-individuals">Creation of Classes, Properties and Individuals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="porting1.html#generated-individual-names">Generated Individual names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="porting1.html#functional-properties">Functional properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="porting1.html#creation-of-restrictions">Creation of restrictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="porting1.html#logical-operators-and-one-of-constructs">Logical operators and ‘One of’ constructs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="porting1.html#reasoning">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="porting1.html#annotations">Annotations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact and links</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to Owlready2’s documentation!</a><ul>
+<li><a class="reference internal" href="#table-of-content">Table of content</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="intro.html"
+                        title="next chapter">Introduction</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="intro.html" title="Introduction"
+             >next</a></li>
+        <li class="nav-item nav-item-0"><a href="#">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

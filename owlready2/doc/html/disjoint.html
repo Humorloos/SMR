@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Disjointness, open and local closed world reasoning &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Mixing Python and OWL" href="mixing_python_owl.html" />
+    <link rel="prev" title="Class constructs, restrictions and logical operators" href="restriction.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="mixing_python_owl.html" title="Mixing Python and OWL"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="restriction.html" title="Class constructs, restrictions and logical operators"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="disjointness-open-and-local-closed-world-reasoning">
+<h1>Disjointness, open and local closed world reasoning<a class="headerlink" href="#disjointness-open-and-local-closed-world-reasoning" title="Permalink to this headline">¶</a></h1>
+<p>By default, OWL considers the world as ‘open’, <em>i.e.</em> everything that is not stated in the ontology is
+not ‘false’ but ‘possible’ (this is known as <em>open world assumption</em>).
+Therfore, things and facts that are ‘false’ or ‘impossible’ must be clearly stated as so in the ontology.</p>
+<div class="section" id="disjoint-classes">
+<h2>Disjoint Classes<a class="headerlink" href="#disjoint-classes" title="Permalink to this headline">¶</a></h2>
+<p>Two (or more) Classes are disjoint if there is no Individual belonging to all these Classes (remember that,
+contrary to Python instances, an Individual can have several Classes, see <a class="reference internal" href="class.html"><span class="doc">Classes and Individuals (Instances)</span></a>).</p>
+<p>A Classes disjointness is created with the AllDisjoint() function, which takes a list of Classes
+as parameter. In the example below, we have two Classes, Drug and ActivePrinciple, and we assert that they
+are disjoint (yes, we need to specify that explicitely – sometimes ontologies seem a little dumb!).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto.owl&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">ActivePrinciple</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+<span class="gp">... </span>    <span class="n">AllDisjoint</span><span class="p">([</span><span class="n">Drug</span><span class="p">,</span> <span class="n">ActivePrinciple</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="disjoint-properties">
+<h2>Disjoint Properties<a class="headerlink" href="#disjoint-properties" title="Permalink to this headline">¶</a></h2>
+<p>OWL also introduces Disjoint Properties.
+Disjoint Properties can also be created using AllDisjoint().</p>
+</div>
+<div class="section" id="different-individuals">
+<h2>Different Individuals<a class="headerlink" href="#different-individuals" title="Permalink to this headline">¶</a></h2>
+<p>Two Individuals are different if they are distinct. In OWL, two Individuals might be considered as being actually
+the same, single, Individual, unless they are stated different.
+Difference is to Individuals what disjointness is to Classes.</p>
+<p>The following example creates two active principles and asserts that they are different (yes, we also need
+to state explicitely that acetaminophen and aspirin are not the same!)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">acetaminophen</span> <span class="o">=</span> <span class="n">ActivePrinciple</span><span class="p">(</span><span class="s2">&quot;acetaminophen&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">aspirin</span>       <span class="o">=</span> <span class="n">ActivePrinciple</span><span class="p">(</span><span class="s2">&quot;aspirin&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">AllDifferent</span><span class="p">([</span><span class="n">acetaminophen</span><span class="p">,</span> <span class="n">aspirin</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In Owlready2, AllDifferent is actually the same function as AllDisjoint – the exact meaning depends on the
+parameters (AllDisjoint if you provide Classes, AllDifferent if you provide Instances,
+and disjoint Properties if you provide Properties).</p>
+</div>
+</div>
+<div class="section" id="querying-and-modifying-disjoints">
+<h2>Querying and modifying disjoints<a class="headerlink" href="#querying-and-modifying-disjoints" title="Permalink to this headline">¶</a></h2>
+<p>The .disjoints() method returns a generator for iterating over AllDisjoint constructs involving the given Class
+or Property. For Individuals, .differents() behaves similarly.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">Drug</span><span class="o">.</span><span class="n">disjoints</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">entities</span><span class="p">)</span>
+<span class="go">[onto.Drug, onto.ActivePrinciple]</span>
+</pre></div>
+</div>
+<p>The ‘entities’ attribute of an AllDisjoint is writable, so you can modify the AllDisjoint construct by adding
+or removing entities.</p>
+<p>OWL also provides the ‘disjointWith’ and ‘propertyDisjointWith’ relations for pairwise disjoints (involving
+only two elements). Owlready2 exposes <strong>all</strong> disjoints as AllDisjoints, <em>including</em> those declared with
+the ‘disjointWith’ or ‘propertyDisjointWith’ relations. In the quad store (or when saving OWL files),
+disjoints involving 2 entities are defined using the ‘disjointWith’ or ‘propertyDisjointWith’ relations,
+while others are defined using AllDisjoint or AllDifferent.</p>
+</div>
+<div class="section" id="closing-individuals">
+<h2>Closing Individuals<a class="headerlink" href="#closing-individuals" title="Permalink to this headline">¶</a></h2>
+<p>The open world assumption also implies that the properties of a given Individual are not limited to the
+ones that are explicitely stated. For example, if you create a Drug Individual with a single Active
+Principle, it does not mean that it has <em>only</em> a single Active Principle.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">has_for_active_principle</span><span class="p">(</span><span class="n">Drug</span> <span class="o">&gt;&gt;</span> <span class="n">ActivePrinciple</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_acetaminophen_drug</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">(</span><span class="n">has_for_active_principle</span> <span class="o">=</span> <span class="p">[</span><span class="n">acetaminophen</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>In the example above, ‘my_acetaminophen_drug’ has an acetaminophen Active Principle (this fact is true) and it
+may have other Active Principle(s) (this fact is possible).</p>
+<p>If you want ‘my_acetaminophen_drug’ to be a Drug with acetaminophen and no other Active Principle, you have to
+state it explicitely using a restriction (see <a class="reference internal" href="restriction.html"><span class="doc">Class constructs, restrictions and logical operators</span></a>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">my_acetaminophen_drug</span><span class="o">.</span><span class="n">is_a</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">has_for_active_principle</span><span class="o">.</span><span class="n">only</span><span class="p">(</span><span class="n">OneOf</span><span class="p">([</span><span class="n">acetaminophen</span><span class="p">])))</span>
+</pre></div>
+</div>
+<p>Notice that we used OneOf() to ‘turn’ the acetaminophen Individual into a Class that we can use in the restriction.</p>
+<p>You’ll quickly find that the open world assumption often leads to tedious and long lists
+of AllDifference and Restrictions. Hopefully, Owlready2 provides the close_world() function for automatically
+‘closing’ an Individual. close_world() will automatically add ONLY restrictions as needed; it accepts an
+optional parameter: a list of the Properties to ‘close’ (defaults to all Properties whose domain is
+compatible with the Individual).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">close_world</span><span class="p">(</span><span class="n">my_acetaminophen_drug</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="closing-classes">
+<h2>Closing Classes<a class="headerlink" href="#closing-classes" title="Permalink to this headline">¶</a></h2>
+<p>close_world() also accepts a Class. In this case, it closes the Class, its subclasses, and all their Individuals.</p>
+<p>By default, when close_world() is not called, the ontology performs <strong>open world reasoning</strong>.
+By selecting the Classes and the Individuals you want to ‘close’,
+the close_world() function enables <strong>local closed world reasoning</strong> with OWL.</p>
+</div>
+<div class="section" id="closing-an-ontology">
+<h2>Closing an ontology<a class="headerlink" href="#closing-an-ontology" title="Permalink to this headline">¶</a></h2>
+<p>Finally, close_world() also accepts an ontology. In this case, it closes all the Classes defined in the ontology.
+This corresponds to fully <strong>closed world reasoning</strong>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Disjointness, open and local closed world reasoning</a><ul>
+<li><a class="reference internal" href="#disjoint-classes">Disjoint Classes</a></li>
+<li><a class="reference internal" href="#disjoint-properties">Disjoint Properties</a></li>
+<li><a class="reference internal" href="#different-individuals">Different Individuals</a></li>
+<li><a class="reference internal" href="#querying-and-modifying-disjoints">Querying and modifying disjoints</a></li>
+<li><a class="reference internal" href="#closing-individuals">Closing Individuals</a></li>
+<li><a class="reference internal" href="#closing-classes">Closing Classes</a></li>
+<li><a class="reference internal" href="#closing-an-ontology">Closing an ontology</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="restriction.html"
+                        title="previous chapter">Class constructs, restrictions and logical operators</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mixing_python_owl.html"
+                        title="next chapter">Mixing Python and OWL</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/disjoint.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="mixing_python_owl.html" title="Mixing Python and OWL"
+             >next</a></li>
+        <li class="right" >
+          <a href="restriction.html" title="Class constructs, restrictions and logical operators"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

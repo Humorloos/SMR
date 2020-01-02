@@ -1,0 +1,372 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Properties &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Class constructs, restrictions and logical operators" href="restriction.html" />
+    <link rel="prev" title="Classes and Individuals (Instances)" href="class.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="restriction.html" title="Class constructs, restrictions and logical operators"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="class.html" title="Classes and Individuals (Instances)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="properties">
+<h1>Properties<a class="headerlink" href="#properties" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="creating-a-new-class-of-property">
+<h2>Creating a new class of property<a class="headerlink" href="#creating-a-new-class-of-property" title="Permalink to this headline">¶</a></h2>
+<p>A new property can be created by sublcassing the ObjectProperty or DataProperty class.
+The ‘domain’ and ‘range’ properties can be used to specify the domain and the range of the property.
+Domain and range must be given in list, since OWL allows to specify several domains or ranges for a given
+property (if multiple domains or ranges are specified, the domain or range is the intersection of them,
+<em>i.e.</em> the items in the list are combined with an AND logical operator).</p>
+<p>The following example creates two Classes, Drug and Ingredient, and then an ObjectProperty that relates them.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto.owl&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Ingredient</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">has_for_ingredient</span><span class="p">(</span><span class="n">ObjectProperty</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">domain</span>    <span class="o">=</span> <span class="p">[</span><span class="n">Drug</span><span class="p">]</span>
+<span class="gp">... </span>        <span class="nb">range</span>     <span class="o">=</span> <span class="p">[</span><span class="n">Ingredient</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>In addition, the ‘domain &gt;&gt; range’ syntax can be used when creating property. It replaces the ObjectProperty
+or DataProperty parent Class, as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">has_for_ingredient</span><span class="p">(</span><span class="n">Drug</span> <span class="o">&gt;&gt;</span> <span class="n">Ingredient</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+</pre></div>
+</div>
+<p>In addition, the following subclasses of Property are available: FunctionalProperty, InverseFunctionalProperty,
+TransitiveProperty, SymmetricProperty, AsymmetricProperty, ReflexiveProperty, IrreflexiveProperty.
+They should be used in addition to ObjectProperty or DataProperty (or the ‘domain &gt;&gt; range’ syntax).</p>
+</div>
+<div class="section" id="creating-a-relation">
+<h2>Creating a relation<a class="headerlink" href="#creating-a-relation" title="Permalink to this headline">¶</a></h2>
+<p>A relation is a triple (subject, property, object) where property is a Property class, and subject and object
+are instances (or literal, such as string or numbers) which are subclasses of the domain and range
+defined for the property class.
+A relation can be get or set using Python attribute of the subject, the attribute name being the same as
+the Property class name:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">my_drug</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">(</span><span class="s2">&quot;my_drug&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acetaminophen</span> <span class="o">=</span> <span class="n">Ingredient</span><span class="p">(</span><span class="s2">&quot;acetaminophen&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_drug</span><span class="o">.</span><span class="n">has_for_ingredient</span> <span class="o">=</span> <span class="p">[</span><span class="n">acetaminophen</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The attribute contains a list of the subjects:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">my_drug</span><span class="o">.</span><span class="n">has_for_ingredient</span><span class="p">)</span>
+<span class="go">[onto.acetaminophen]</span>
+</pre></div>
+</div>
+<p>This list can be modifed <em>in place</em> or set to a new value;
+Owlready2 will automatically add or delete RDF triples in the quadstore as needed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">codeine</span> <span class="o">=</span> <span class="n">Ingredient</span><span class="p">(</span><span class="s2">&quot;codeine&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_drug</span><span class="o">.</span><span class="n">has_for_ingredient</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">codeine</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">my_drug</span><span class="o">.</span><span class="n">has_for_ingredient</span><span class="p">)</span>
+<span class="go">[onto.acetaminophen, onto.codeine]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="data-property">
+<h2>Data Property<a class="headerlink" href="#data-property" title="Permalink to this headline">¶</a></h2>
+<p>Data Properties are Properties with a data type in their range. The following data types
+are currently supported by Owlready2:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>int</p></li>
+<li><p>float</p></li>
+<li><p>bool</p></li>
+<li><p>str (string)</p></li>
+<li><p>owlready2.normstr (normalized string, a single-line string)</p></li>
+<li><p>owlready2.locstr  (localized string, a string with a language associated)</p></li>
+<li><p>datetime.date</p></li>
+<li><p>datetime.time</p></li>
+<li><p>datetime.datetime</p></li>
+</ul>
+</div></blockquote>
+<p>Here is an example of a string Data Property:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">has_for_synonym</span><span class="p">(</span><span class="n">DataProperty</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="nb">range</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acetaminophen</span><span class="o">.</span><span class="n">has_for_synonym</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;acetaminophen&quot;</span><span class="p">,</span> <span class="s2">&quot;paracétamol&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The ‘domain &gt;&gt; range’ syntax can also be used:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">has_for_synonym</span><span class="p">(</span><span class="n">Thing</span> <span class="o">&gt;&gt;</span> <span class="nb">str</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="inverse-properties">
+<h2>Inverse Properties<a class="headerlink" href="#inverse-properties" title="Permalink to this headline">¶</a></h2>
+<p>Two properties are inverse if they express the same meaning, but in a reversed way.
+For example the ‘is_ingredient_of’ Property is the inverse of the ‘has_for_ingredient’ Property created above:
+saying “a drug A has for ingredient B” is equivalent to “B is ingredient of drug A”.</p>
+<p>In Owlready2, inverse Properties are defined using the ‘inverse_property’ attribute.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">is_ingredient_of</span><span class="p">(</span><span class="n">ObjectProperty</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">domain</span>           <span class="o">=</span> <span class="p">[</span><span class="n">Ingredient</span><span class="p">]</span>
+<span class="gp">... </span>        <span class="nb">range</span>            <span class="o">=</span> <span class="p">[</span><span class="n">Drug</span><span class="p">]</span>
+<span class="gp">... </span>        <span class="n">inverse_property</span> <span class="o">=</span> <span class="n">has_for_ingredient</span>
+</pre></div>
+</div>
+<p>Owlready automatically handles Inverse Properties. It will automatically set has_for_ingredient.inverse_property,
+and automatically update relations when the inverse relation is modified.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">my_drug2</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">(</span><span class="s2">&quot;my_drug2&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">aspirin</span> <span class="o">=</span> <span class="n">Ingredient</span><span class="p">(</span><span class="s2">&quot;aspirin&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_drug2</span><span class="o">.</span><span class="n">has_for_ingredient</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aspirin</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">my_drug2</span><span class="o">.</span><span class="n">has_for_ingredient</span><span class="p">)</span>
+<span class="go">[onto.aspirin]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">aspirin</span><span class="o">.</span><span class="n">is_ingredient_of</span><span class="p">)</span>
+<span class="go">[onto.my_drug2]</span>
+
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">aspirin</span><span class="o">.</span><span class="n">is_ingredient_of</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">my_drug2</span><span class="o">.</span><span class="n">has_for_ingredient</span><span class="p">)</span>
+<span class="go">[]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This won’t work for the drug created previously, because we created the inverse property
+<strong>after</strong> we created the relation between my_drug and acetaminophen.</p>
+</div>
+</div>
+<div class="section" id="functional-and-inverse-functional-properties">
+<h2>Functional and Inverse Functional properties<a class="headerlink" href="#functional-and-inverse-functional-properties" title="Permalink to this headline">¶</a></h2>
+<p>A functional property is a property that has a single value for a given instance. Functional properties
+are created by inheriting the FunctionalProperty class.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">has_for_cost</span><span class="p">(</span><span class="n">DataProperty</span><span class="p">,</span> <span class="n">FunctionalProperty</span><span class="p">):</span> <span class="c1"># Each drug has a single cost</span>
+<span class="gp">... </span>        <span class="n">domain</span>    <span class="o">=</span> <span class="p">[</span><span class="n">Drug</span><span class="p">]</span>
+<span class="gp">... </span>        <span class="nb">range</span>     <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_drug</span><span class="o">.</span><span class="n">has_for_cost</span> <span class="o">=</span> <span class="mf">4.2</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">my_drug</span><span class="o">.</span><span class="n">has_for_cost</span><span class="p">)</span>
+<span class="go">4.2</span>
+</pre></div>
+</div>
+<p>Contrary to other properties, a functional property returns
+a single value instead of a list of values. If no value is defined, they returns None.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">my_drug2</span><span class="o">.</span><span class="n">has_for_cost</span><span class="p">)</span>
+<span class="go">None</span>
+</pre></div>
+</div>
+<p>Owlready2 is also able to guess when a Property is functional with respect to a given class.
+In the following example, the ‘prop’ Property is not functional, but Owlready2 guesses that, for Individuals
+of Class B, there can be only a single value. Consequently, Owlready2 considers prop as functional
+for Class B.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">prop</span><span class="p">(</span><span class="n">ObjectProperty</span><span class="p">):</span> <span class="k">pass</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">A</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span> <span class="k">pass</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">B</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">is_a</span> <span class="o">=</span> <span class="p">[</span> <span class="n">prop</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">()</span><span class="o">.</span><span class="n">prop</span>
+<span class="go">[]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">B</span><span class="p">()</span><span class="o">.</span><span class="n">prop</span>
+<span class="go">None</span>
+</pre></div>
+</div>
+<p>An Inverse Functional Property is a property whose inverse property is functional.
+They are created by inheriting the InverseFunctionalProperty class.</p>
+</div>
+<div class="section" id="creating-a-subproperty">
+<h2>Creating a subproperty<a class="headerlink" href="#creating-a-subproperty" title="Permalink to this headline">¶</a></h2>
+<p>A subproperty can be created by subclassing a Property class.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">ActivePrinciple</span><span class="p">(</span><span class="n">Ingredient</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">has_for_active_principle</span><span class="p">(</span><span class="n">has_for_ingredient</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">domain</span>    <span class="o">=</span> <span class="p">[</span><span class="n">Drug</span><span class="p">]</span>
+<span class="gp">... </span>        <span class="nb">range</span>     <span class="o">=</span> <span class="p">[</span><span class="n">ActivePrinciple</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Owlready2 currently does not automatically update parent properties when a child property is defined.
+This might be added in a future version, though.</p>
+</div>
+</div>
+<div class="section" id="obtaining-indirect-relations-considering-subproperty-transitivity-etc">
+<h2>Obtaining indirect relations (considering subproperty, transitivity, etc)<a class="headerlink" href="#obtaining-indirect-relations-considering-subproperty-transitivity-etc" title="Permalink to this headline">¶</a></h2>
+<p>Property name can be prefixed by “<a href="#id2"><span class="problematic" id="id3">INDIRECT_</span></a>” to obtain all indirectly
+related entities. It takes into account:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>transitive, symmetric and reflexive properties,</p></li>
+<li><p>property inheritance (i.e. subproperties),</p></li>
+<li><p>classes of an individual (i.e. values asserted at the class level),</p></li>
+<li><p>class inheritance (i.e. parent classes).</p></li>
+<li><p>equivalences (i.e. equivalent classes, identical “same-as” individuals,…)</p></li>
+</ul>
+</div></blockquote>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">BodyPart</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span> <span class="k">pass</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">part_of</span><span class="p">(</span><span class="n">BodyPart</span> <span class="o">&gt;&gt;</span> <span class="n">BodyPart</span><span class="p">,</span> <span class="n">TransitiveProperty</span><span class="p">):</span> <span class="k">pass</span>
+<span class="gp">... </span>    <span class="n">abdomen</span>          <span class="o">=</span> <span class="n">BodyPart</span><span class="p">(</span><span class="s2">&quot;abdomen&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">heart</span>            <span class="o">=</span> <span class="n">BodyPart</span><span class="p">(</span><span class="s2">&quot;heart&quot;</span>           <span class="p">,</span> <span class="n">part_of</span> <span class="o">=</span> <span class="p">[</span><span class="n">abdomen</span><span class="p">])</span>
+<span class="gp">... </span>    <span class="n">left_ventricular</span> <span class="o">=</span> <span class="n">BodyPart</span><span class="p">(</span><span class="s2">&quot;left_ventricular&quot;</span><span class="p">,</span> <span class="n">part_of</span> <span class="o">=</span> <span class="p">[</span><span class="n">heart</span><span class="p">])</span>
+<span class="gp">... </span>    <span class="n">kidney</span>           <span class="o">=</span> <span class="n">BodyPart</span><span class="p">(</span><span class="s2">&quot;kidney&quot;</span>          <span class="p">,</span> <span class="n">part_of</span> <span class="o">=</span> <span class="p">[</span><span class="n">abdomen</span><span class="p">])</span>
+
+<span class="gp">... </span><span class="nb">print</span><span class="p">(</span><span class="n">left_ventricular</span><span class="o">.</span><span class="n">part_of</span><span class="p">)</span>
+<span class="go">[heart]</span>
+
+<span class="gp">... </span><span class="nb">print</span><span class="p">(</span><span class="n">left_ventricular</span><span class="o">.</span><span class="n">INDIRECT_part_of</span><span class="p">)</span>
+<span class="go">[heart, abdomen]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="associating-python-alias-name-to-properties">
+<span id="id1"></span><h2>Associating Python alias name to Properties<a class="headerlink" href="#associating-python-alias-name-to-properties" title="Permalink to this headline">¶</a></h2>
+<p>In ontologies, properties are usually given long names, <em>e.g.</em> “has_for_ingredient”, while in programming
+languages like Python, shorter attribute names are more common, <em>e.g.</em> “ingredients” (notice also the use
+of a plural form, since it is actually a list of several ingredients).</p>
+<p>Owlready2 allows to rename Properties with more Pythonic name through the ‘python_name’ annotation (defined
+in the Owlready ontology, file ‘owlready2/owlready_ontology.owl’ in Owlready2 sources, URI <a class="reference external" href="http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl">http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl</a>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">has_for_ingredient</span><span class="o">.</span><span class="n">python_name</span> <span class="o">=</span> <span class="s2">&quot;ingredients&quot;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_drug3</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cetirizin</span> <span class="o">=</span> <span class="n">Ingredient</span><span class="p">(</span><span class="s2">&quot;cetirizin&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_drug3</span><span class="o">.</span><span class="n">ingredients</span> <span class="o">=</span> <span class="p">[</span><span class="n">cetirizin</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Property class is still considered to be called ‘has_for_ingredient’, for example it is still
+available as ‘onto.has_for_ingredient’, but not as ‘onto.ingredients’.</p>
+</div>
+<p>For more information about the use of annotations, see <a class="reference internal" href="annotations.html"><span class="doc">Annotations</span></a>.</p>
+<p>The ‘python_name’ annotations can also be defined in ontology editors like Protégé, by importing the Owlready
+ontology (file ‘owlready2/owlready_ontology.owl’ in Owlready2 sources, URI <a class="reference external" href="http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl">http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl</a>).</p>
+</div>
+<div class="section" id="getting-relation-instances">
+<h2>Getting relation instances<a class="headerlink" href="#getting-relation-instances" title="Permalink to this headline">¶</a></h2>
+<p>The list of relations that exist for a given property can be obtained by the .get_relations() method.
+It returns a generator that yields (subject, object) tuples.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">has_for_active_principle</span><span class="o">.</span><span class="n">get_relations</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The quadstore is not indexed for the .get_relations() method. Thus, it can be slow on huge ontologies.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Properties</a><ul>
+<li><a class="reference internal" href="#creating-a-new-class-of-property">Creating a new class of property</a></li>
+<li><a class="reference internal" href="#creating-a-relation">Creating a relation</a></li>
+<li><a class="reference internal" href="#data-property">Data Property</a></li>
+<li><a class="reference internal" href="#inverse-properties">Inverse Properties</a></li>
+<li><a class="reference internal" href="#functional-and-inverse-functional-properties">Functional and Inverse Functional properties</a></li>
+<li><a class="reference internal" href="#creating-a-subproperty">Creating a subproperty</a></li>
+<li><a class="reference internal" href="#obtaining-indirect-relations-considering-subproperty-transitivity-etc">Obtaining indirect relations (considering subproperty, transitivity, etc)</a></li>
+<li><a class="reference internal" href="#associating-python-alias-name-to-properties">Associating Python alias name to Properties</a></li>
+<li><a class="reference internal" href="#getting-relation-instances">Getting relation instances</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="class.html"
+                        title="previous chapter">Classes and Individuals (Instances)</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="restriction.html"
+                        title="next chapter">Class constructs, restrictions and logical operators</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/properties.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="restriction.html" title="Class constructs, restrictions and logical operators"
+             >next</a></li>
+        <li class="right" >
+          <a href="class.html" title="Classes and Individuals (Instances)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

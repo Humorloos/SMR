@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Classes and Individuals (Instances) &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Properties" href="properties.html" />
+    <link rel="prev" title="Managing ontologies" href="onto.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="properties.html" title="Properties"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="onto.html" title="Managing ontologies"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="classes-and-individuals-instances">
+<h1>Classes and Individuals (Instances)<a class="headerlink" href="#classes-and-individuals-instances" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="creating-a-class">
+<h2>Creating a Class<a class="headerlink" href="#creating-a-class" title="Permalink to this headline">¶</a></h2>
+<p>A new Class can be created in an ontology by inheriting the owlready2.Thing class.</p>
+<p>The ontology class attribute can be used to associate your class to the given ontology. If not specified,
+this attribute is inherited from the parent class (in the example below, the parent class is Thing,
+which is defined in the ‘owl’ ontology).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto.owl&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">namespace</span> <span class="o">=</span> <span class="n">onto</span>
+</pre></div>
+</div>
+<p>The namespace Class attribute is used to build the full IRI of the Class,
+and can be an ontology or a namespace (see <a class="reference internal" href="namespace.html"><span class="doc">Namespaces</span></a>).
+The ‘with’ statement can also be used to provide the ontology (or namespace):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto.owl&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+</pre></div>
+</div>
+<p>The .iri attribute of the Class can be used to obtain the full IRI of the class.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">Drug</span><span class="o">.</span><span class="n">iri</span><span class="p">)</span>
+<span class="go">http://test.org/onto.owl#Drug</span>
+</pre></div>
+</div>
+<p>.name and .iri attributes are writable and can be modified (this allows to change the IRI of an entity,
+which is sometimes called “refactoring”).</p>
+</div>
+<div class="section" id="creating-and-managing-subclasses">
+<h2>Creating and managing subclasses<a class="headerlink" href="#creating-and-managing-subclasses" title="Permalink to this headline">¶</a></h2>
+<p>Subclasses can be created by inheriting an ontology class. Multiple inheritance is supported.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">DrugAssociation</span><span class="p">(</span><span class="n">Drug</span><span class="p">):</span> <span class="c1"># A drug associating several active principles</span>
+<span class="gp">... </span>    <span class="k">pass</span>
+</pre></div>
+</div>
+<p>Owlready2 provides the .is_a attribute for getting the list of superclasses (__bases__ can be used, but
+with some limits described in <a class="reference internal" href="restriction.html"><span class="doc">Class constructs, restrictions and logical operators</span></a>). It can also be modified for adding or removing superclasses.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">DrugAssociation</span><span class="o">.</span><span class="n">is_a</span><span class="p">)</span>
+<span class="go">[onto.Drug]</span>
+</pre></div>
+</div>
+<p>The .subclasses() method returns the list of direct subclasses of a class.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">Drug</span><span class="o">.</span><span class="n">subclasses</span><span class="p">())</span>
+<span class="go">[onto.DrugAssociation]</span>
+</pre></div>
+</div>
+<p>The .descendants() and .ancestors() Class methods return a set of the descendant and ancestor Classes
+(including self, but excluding non-entity classes such as restrictions).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">DrugAssociation</span><span class="o">.</span><span class="n">ancestors</span><span class="p">()</span>
+<span class="go">{onto.DrugAssociation, owl.Thing, onto.Drug}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-classes-dynamically">
+<h2>Creating classes dynamically<a class="headerlink" href="#creating-classes-dynamically" title="Permalink to this headline">¶</a></h2>
+<p>The ‘types’ Python module can be used to create classes and subclasses dynamically:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">types</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">my_ontology</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">NewClass</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">new_class</span><span class="p">(</span><span class="s2">&quot;NewClassName&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">SuperClass</span><span class="p">,))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-equivalent-classes">
+<h2>Creating equivalent classes<a class="headerlink" href="#creating-equivalent-classes" title="Permalink to this headline">¶</a></h2>
+<p>The .equivalent_to Class attribute is a list of equivalent classes. It behaves like .is_a.</p>
+<p>To obtain all equivalent classes, including indirect ones (due to transitivity), use .INDIRECT_equivalent_to.</p>
+</div>
+<div class="section" id="creating-individuals">
+<h2>Creating Individuals<a class="headerlink" href="#creating-individuals" title="Permalink to this headline">¶</a></h2>
+<p>Individuals are instances in ontologies. They are created as any other Python instances.
+The first parameter is the name (or identifier) of the Individual;
+it corresponds to the .name attribute in Owlready2.
+If not given, the name if automatically generated from the Class name and a number.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">my_drug</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">(</span><span class="s2">&quot;my_drug&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">my_drug</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="go">my_drug</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">my_drug</span><span class="o">.</span><span class="n">iri</span><span class="p">)</span>
+<span class="go">http://test.org/onto.owl#my_drug</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">unamed_drug</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">unamed_drug</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="go">drug_1</span>
+</pre></div>
+</div>
+<p>Additional keyword parameters can be given when creating an Individual, and they will be associated to the
+corresponding Properties (for more information on Properties, see <a class="reference internal" href="properties.html"><span class="doc">Properties</span></a>).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">my_drug</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">(</span><span class="s2">&quot;my_drug2&quot;</span><span class="p">,</span> <span class="n">namespace</span> <span class="o">=</span> <span class="n">onto</span><span class="p">,</span> <span class="n">has_for_active_principle</span> <span class="o">=</span> <span class="p">[],</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The Instances are immediately available in the ontology:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">onto</span><span class="o">.</span><span class="n">drug_1</span><span class="p">)</span>
+<span class="go">onto.drug_1</span>
+</pre></div>
+</div>
+<p>The .instances() class method can be used to iterate through all Instances of a Class (including its
+subclasses). It returns a generator.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">Drug</span><span class="o">.</span><span class="n">instances</span><span class="p">():</span> <span class="nb">print</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Multiple calls with the individual name and namespace will returns the same individual
+(without creating a dupplicate), and update the individual if property values are given.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">Drug</span><span class="p">(</span><span class="s2">&quot;my_drug3&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Drug</span><span class="p">(</span><span class="s2">&quot;my_drug3&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, Individuals also have the .equivalent_to attribute (which correspond to the “same as” relation).</p>
+</div>
+<div class="section" id="querying-individual-relations">
+<h2>Querying Individual relations<a class="headerlink" href="#querying-individual-relations" title="Permalink to this headline">¶</a></h2>
+<p>For a given Individual, the values of a property can be obtained with the usual
+“object.property” dot notation. See <a class="reference internal" href="properties.html"><span class="doc">Properties</span></a> for more details.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">onto</span><span class="o">.</span><span class="n">my_drug</span><span class="o">.</span><span class="n">has_for_active_principle</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Property name can be prefixed with “<a href="#id1"><span class="problematic" id="id2">INDIRECT_</span></a>” to obtain all indirect relations
+(i.e. those asserted at the class level with restriction, implied by transistive properties, subproperties, equivalences, etc):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">onto</span><span class="o">.</span><span class="n">my_drug</span><span class="o">.</span><span class="n">INDIRECT_has_for_active_principle</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="introspecting-individuals">
+<h2>Introspecting Individuals<a class="headerlink" href="#introspecting-individuals" title="Permalink to this headline">¶</a></h2>
+<p>The list of properties that exist for a given individual can be obtained by the .get_properties() method.
+It returns a generator that yields the properties (without dupplicates).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">drug_1</span><span class="o">.</span><span class="n">get_properties</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The following example shows how to list the properties of a given individual, and the associated values:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">onto</span><span class="o">.</span><span class="n">drug_1</span><span class="o">.</span><span class="n">get_properties</span><span class="p">():</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">prop</span><span class="p">[</span><span class="n">onto</span><span class="o">.</span><span class="n">drug_1</span><span class="p">]:</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;.</span><span class="si">%s</span><span class="s2"> == </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prop</span><span class="o">.</span><span class="n">python_name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Notice the “Property[individual]” syntax. It allows to get the values as a list, even for functional properties
+(contrary to getattr(individual, Property.python_name).</p>
+<p>Inverse properties can be obtained by the .get_inverse_properties() method.
+It returns a generator that yields (subject, property) tuples.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">drug_1</span><span class="o">.</span><span class="n">get_inverse_properties</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="mutli-class-individuals">
+<h2>Mutli-Class Individuals<a class="headerlink" href="#mutli-class-individuals" title="Permalink to this headline">¶</a></h2>
+<p>In ontologies, an Individual can belong to more than one Class. This is supported in Owlready2.</p>
+<p>Individuals have a .is_a atribute that behaves similarly to Class .is_a,
+but with the Classes of the Individual. In order to create a mutli-Class Individual,
+you need to create the Individual as a single-Class Instance first,
+and then to add the other Class(ses) in its .is_a attribute:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">BloodBasedProduct</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">ontology</span> <span class="o">=</span> <span class="n">onto</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a_blood_based_drug</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a_blood_based_drug</span><span class="o">.</span><span class="n">is_a</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BloodBasedProduct</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Owlready2 will automatically create a hidden Class that inherits from both Drug and BloodBasedProduct. This
+hidden class is visible in a_blood_based_drug.__class__, but not in a_blood_based_drug.is_a.</p>
+</div>
+<div class="section" id="equivalent-identical-sameas-individuals">
+<h2>Equivalent (identical, SameAs) individuals<a class="headerlink" href="#equivalent-identical-sameas-individuals" title="Permalink to this headline">¶</a></h2>
+<p>The .equivalent_to Individual attribute is a list of equivalent individuals (corresponding to OWL SameAs relation).
+This list can be modified.</p>
+<p>To obtain all equivalent individuals, including indirect ones (due to transitivity), use .INDIRECT_equivalent_to.</p>
+</div>
+<div class="section" id="destroying-entities">
+<h2>Destroying entities<a class="headerlink" href="#destroying-entities" title="Permalink to this headline">¶</a></h2>
+<p>The destroy_entity() global function can be used to destroy an entity, i.e. to remove it from the ontology and
+the quad store.
+Owlready2 behaves similarly to Protege4 when destroying entities: all relations involving the destroyed entity
+are destroyed too, as well as all class constructs and blank nodes that refer it.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">destroy_entity</span><span class="p">(</span><span class="n">individual</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">destroy_entity</span><span class="p">(</span><span class="n">Klass</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">destroy_entity</span><span class="p">(</span><span class="n">Property</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Classes and Individuals (Instances)</a><ul>
+<li><a class="reference internal" href="#creating-a-class">Creating a Class</a></li>
+<li><a class="reference internal" href="#creating-and-managing-subclasses">Creating and managing subclasses</a></li>
+<li><a class="reference internal" href="#creating-classes-dynamically">Creating classes dynamically</a></li>
+<li><a class="reference internal" href="#creating-equivalent-classes">Creating equivalent classes</a></li>
+<li><a class="reference internal" href="#creating-individuals">Creating Individuals</a></li>
+<li><a class="reference internal" href="#querying-individual-relations">Querying Individual relations</a></li>
+<li><a class="reference internal" href="#introspecting-individuals">Introspecting Individuals</a></li>
+<li><a class="reference internal" href="#mutli-class-individuals">Mutli-Class Individuals</a></li>
+<li><a class="reference internal" href="#equivalent-identical-sameas-individuals">Equivalent (identical, SameAs) individuals</a></li>
+<li><a class="reference internal" href="#destroying-entities">Destroying entities</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="onto.html"
+                        title="previous chapter">Managing ontologies</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="properties.html"
+                        title="next chapter">Properties</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/class.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="properties.html" title="Properties"
+             >next</a></li>
+        <li class="right" >
+          <a href="onto.html" title="Managing ontologies"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

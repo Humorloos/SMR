@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Introduction &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Owlready2 Installation" href="install.html" />
+    <link rel="prev" title="Welcome to Owlready2’s documentation!" href="index.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="install.html" title="Owlready2 Installation"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Owlready2’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>Owlready2 is a package for manipulating OWL 2.0 ontologies in Python. It can load, modify, save ontologies, and
+it supports reasoning via HermiT (included). Owlready allows a transparent access to OWL ontologies.</p>
+<p>Owlready2 can:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Import ontologies in RDF/XML, OWL/XML or NTriples format.</p></li>
+<li><p>Manipulates ontology classes, instances and annotations as if they were Python objects.</p></li>
+<li><p>Add Python methods to ontology classes.</p></li>
+<li><p>Re-classify instances automatically, using the HermiT reasoner.</p></li>
+<li><p>Import medical terminologies from UMLS (see <a class="reference internal" href="pymedtermino2.html"><span class="doc">PyMedTermino2</span></a>).</p></li>
+</ul>
+</div></blockquote>
+<p>If you need to “convert” formulas between Protégé, Owlready2 and/or Description Logics, the following cheat sheet may be of interest:</p>
+<p><a class="reference external" href="http://www.lesfleursdunormal.fr/static/_downloads/great_ontology_table.pdf">The great table of Description Logics and formal ontology notations</a></p>
+<div class="section" id="short-example-what-can-i-do-with-owlready">
+<h2>Short example: What can I do with Owlready?<a class="headerlink" href="#short-example-what-can-i-do-with-owlready" title="Permalink to this headline">¶</a></h2>
+<p>Load an ontology from a local repository, or from Internet:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto_path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;/path/to/your/local/ontology/repository&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://www.lesfleursdunormal.fr/static/_downloads/pizza_onto.owl&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Create new classes in the ontology, possibly mixing OWL constructs and Python methods:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">NonVegetarianPizza</span><span class="p">(</span><span class="n">onto</span><span class="o">.</span><span class="n">Pizza</span><span class="p">):</span>
+<span class="gp">... </span>  <span class="n">equivalent_to</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>    <span class="n">onto</span><span class="o">.</span><span class="n">Pizza</span>
+<span class="gp">... </span>  <span class="o">&amp;</span> <span class="p">(</span> <span class="n">onto</span><span class="o">.</span><span class="n">has_topping</span><span class="o">.</span><span class="n">some</span><span class="p">(</span><span class="n">onto</span><span class="o">.</span><span class="n">MeatTopping</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="o">|</span> <span class="n">onto</span><span class="o">.</span><span class="n">has_topping</span><span class="o">.</span><span class="n">some</span><span class="p">(</span><span class="n">onto</span><span class="o">.</span><span class="n">FishTopping</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="p">)</span> <span class="p">]</span>
+
+<span class="gp">... </span>  <span class="k">def</span> <span class="nf">eat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Beurk! I&#39;m vegetarian!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Access the classes of the ontology, and create new instances / individuals:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">Pizza</span>
+<span class="go">pizza_onto.Pizza</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_pizza</span> <span class="o">=</span> <span class="n">onto</span><span class="o">.</span><span class="n">Pizza</span><span class="p">(</span><span class="s2">&quot;test_pizza_owl_identifier&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_pizza</span><span class="o">.</span><span class="n">has_topping</span> <span class="o">=</span> <span class="p">[</span> <span class="n">onto</span><span class="o">.</span><span class="n">CheeseTopping</span><span class="p">(),</span>
+<span class="gp">... </span>                           <span class="n">onto</span><span class="o">.</span><span class="n">TomatoTopping</span><span class="p">()</span> <span class="p">]</span>
+</pre></div>
+</div>
+<p>In Owlready2, almost any lists can be modified <em>in place</em>,
+for example by appending/removing items from lists.
+Owlready2 automatically updates the RDF quadstore.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">test_pizza</span><span class="o">.</span><span class="n">has_topping</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">onto</span><span class="o">.</span><span class="n">MeatTopping</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>Perform reasoning, and classify instances and classes:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">test_pizza</span><span class="o">.</span><span class="vm">__class__</span>
+<span class="go">onto.Pizza</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Execute HermiT and reparent instances and classes</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sync_reasoner</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_pizza</span><span class="o">.</span><span class="vm">__class__</span>
+<span class="go">onto.NonVegetarianPizza</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test_pizza</span><span class="o">.</span><span class="n">eat</span><span class="p">()</span>
+<span class="go">Beurk! I&#39;m vegetarian !</span>
+</pre></div>
+</div>
+<p>Export to OWL file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="architecture">
+<h2>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h2>
+<p>Owlready2 maintains a RDF quadstore in an optimized database (SQLite3),
+either in memory or on the disk (see <a class="reference internal" href="world.html"><span class="doc">Worlds</span></a>). It provides a high-level access to the Classes and the
+objects in the ontology (aka. ontology-oriented programming). Classes and Invididuals are loaded
+dynamically from the quadstore as needed, cached in memory and destroyed when no longer needed.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Introduction</a><ul>
+<li><a class="reference internal" href="#short-example-what-can-i-do-with-owlready">Short example: What can I do with Owlready?</a></li>
+<li><a class="reference internal" href="#architecture">Architecture</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Owlready2’s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="install.html"
+                        title="next chapter">Owlready2 Installation</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/intro.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="install.html" title="Owlready2 Installation"
+             >next</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Owlready2’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

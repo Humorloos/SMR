@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Namespaces &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Worlds" href="world.html" />
+    <link rel="prev" title="Annotations" href="annotations.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="world.html" title="Worlds"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="annotations.html" title="Annotations"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="namespaces">
+<h1>Namespaces<a class="headerlink" href="#namespaces" title="Permalink to this headline">¶</a></h1>
+<p>Ontologies can define entities located in other namespaces.
+An example is Gene Ontology (GO): the ontology IRI is ‘<a class="reference external" href="http://purl.obolibrary.org/obo/go.owl">http://purl.obolibrary.org/obo/go.owl</a>’,
+but the IRI of GO entities are not of the form ‘<a class="reference external" href="http://purl.obolibrary.org/obo/go.owl#GO_entity">http://purl.obolibrary.org/obo/go.owl#GO_entity</a>’ but
+‘<a class="reference external" href="http://purl.obolibrary.org/obo/GO_entity">http://purl.obolibrary.org/obo/GO_entity</a>’ (note the missing ‘go.owl#’).</p>
+<div class="section" id="accessing-entities-defined-in-another-namespace">
+<h2>Accessing entities defined in another namespace<a class="headerlink" href="#accessing-entities-defined-in-another-namespace" title="Permalink to this headline">¶</a></h2>
+<p>These entities can be accessed in Owlready2 using a namespace. The get_namepace(base_iri) global function
+returns a namespace for the given base IRI.</p>
+<p>The namespace can then be used with the dot notation, similarly to the ontology.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Loads Gene Ontology (~ 170 Mb), can take a moment!</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">go</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://purl.obolibrary.org/obo/go.owl&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">GO_0000001</span><span class="p">)</span> <span class="c1"># Not in the right namespace</span>
+<span class="go">None</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obo</span> <span class="o">=</span> <span class="n">get_namespace</span><span class="p">(</span><span class="s2">&quot;http://purl.obolibrary.org/obo/&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">obo</span><span class="o">.</span><span class="n">GO_0000001</span><span class="p">)</span>
+<span class="go">obo.GO_0000001</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">obo</span><span class="o">.</span><span class="n">GO_0000001</span><span class="o">.</span><span class="n">iri</span><span class="p">)</span>
+<span class="go">http://purl.obolibrary.org/obo/obo.GO_0000001</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">obo</span><span class="o">.</span><span class="n">GO_0000001</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+<span class="go">[&#39;mitochondrion inheritance&#39;]</span>
+</pre></div>
+</div>
+<p>.get_namepace(base_iri) can also be called on an Ontology, for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">obo</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">get_namespace</span><span class="p">(</span><span class="s2">&quot;http://purl.obolibrary.org/obo/&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Namespaces created on an Ontology can also be used for asserting facts and creating classes, instances,…:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">obo</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">class</span> <span class="nc">MyNewClass</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span> <span class="k">pass</span> <span class="c1"># Create http://purl.obolibrary.org/obo/MyNewClass</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-classes-in-a-specific-namespace">
+<h2>Creating classes in a specific namespace<a class="headerlink" href="#creating-classes-in-a-specific-namespace" title="Permalink to this headline">¶</a></h2>
+<p>When creating a Class or a Property,
+the namespace attribute is used to build the full IRI of the Class,
+and to define in which ontology the Class is defined
+(RDF triples are added to this ontology).
+The Class IRI is equals to the namespace’s base IRI (base_iri) + the Class name.</p>
+<p>An ontology can always be used as a namespace, as seen in <a class="reference internal" href="class.html"><span class="doc">Classes and Individuals (Instances)</span></a>.
+A namespace object can be used if you want to locate the Class at a different IRI.
+For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span>      <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto/&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">namespace</span> <span class="o">=</span> <span class="n">onto</span><span class="o">.</span><span class="n">get_namespace</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto/pharmaco&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">namespace</span> <span class="o">=</span> <span class="n">namespace</span>
+</pre></div>
+</div>
+<p>In the example above, the Drug Class IRI is “<a class="reference external" href="http://test.org/pharmaco/Drug">http://test.org/pharmaco/Drug</a>”, but the Drug Class
+belongs to the ‘<a class="reference external" href="http://test.org/onto">http://test.org/onto</a>’ ontology.</p>
+<p>Owlready2 proposes 3 methods for indicating the namespace:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>the ‘namespace’ Class attribute</p></li>
+<li><p>the ‘with namespace’ statement</p></li>
+<li><p>if not provided, the namespace is inherited from the first parent Class</p></li>
+</ul>
+</div></blockquote>
+<p>The following examples illustrate the 3 methods:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">namespace</span> <span class="o">=</span> <span class="n">namespace</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">namespace</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Drug2</span><span class="p">(</span><span class="n">Drug</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="c1"># namespace is implicitely Drug.namespace</span>
+<span class="gp">... </span>    <span class="k">pass</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="modifying-a-class-defined-in-another-ontology">
+<h2>Modifying a class defined in another ontology<a class="headerlink" href="#modifying-a-class-defined-in-another-ontology" title="Permalink to this headline">¶</a></h2>
+<p>In OWL, an ontology can also <em>modify</em> a Class already defined in another ontology.</p>
+<p>In Owlready2, this can be done using the ‘with namespace’ statement.
+Every RDF triples added (or deleted) inside a ‘with namespace’ statement
+goes in the ontology corresponding to the namespace of the ‘with namespace’ statement.</p>
+<p>The following example creates the Drug Class in a first ontology,
+and then asserts that Drug is a subclass of Substance in a second ontology.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto1</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/my_first_ontology.owl&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto2</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/my_second_ontology.owl&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto1</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto2</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Substance</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+
+<span class="gp">... </span>    <span class="n">Drug</span><span class="o">.</span><span class="n">is_a</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Substance</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Namespaces</a><ul>
+<li><a class="reference internal" href="#accessing-entities-defined-in-another-namespace">Accessing entities defined in another namespace</a></li>
+<li><a class="reference internal" href="#creating-classes-in-a-specific-namespace">Creating classes in a specific namespace</a></li>
+<li><a class="reference internal" href="#modifying-a-class-defined-in-another-ontology">Modifying a class defined in another ontology</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="annotations.html"
+                        title="previous chapter">Annotations</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="world.html"
+                        title="next chapter">Worlds</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/namespace.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="world.html" title="Worlds"
+             >next</a></li>
+        <li class="right" >
+          <a href="annotations.html" title="Annotations"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

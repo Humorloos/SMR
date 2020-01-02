@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>SWRL rules &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PyMedTermino2" href="pymedtermino2.html" />
+    <link rel="prev" title="Worlds" href="world.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="pymedtermino2.html" title="PyMedTermino2"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="world.html" title="Worlds"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="swrl-rules">
+<h1>SWRL rules<a class="headerlink" href="#swrl-rules" title="Permalink to this headline">¶</a></h1>
+<p>SWRL rules can be used to integrate ‘if… then…’ rules in ontologies.</p>
+<div class="section" id="creating-swrl-rules">
+<h2>Creating SWRL rules<a class="headerlink" href="#creating-swrl-rules" title="Permalink to this headline">¶</a></h2>
+<p>The Imp class (“Implies”) represent a rule. The easiest way to create a rule is to define it
+using a Protégé-like syntax, with the .set_as_rule() method.</p>
+<p>The following example use a rule to compute the per-tablet cost of a drug:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/drug.owl&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span> <span class="k">pass</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">number_of_tablets</span><span class="p">(</span><span class="n">Drug</span> <span class="o">&gt;&gt;</span> <span class="nb">int</span><span class="p">,</span> <span class="n">FunctionalProperty</span><span class="p">):</span> <span class="k">pass</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">price</span><span class="p">(</span><span class="n">Drug</span> <span class="o">&gt;&gt;</span> <span class="nb">float</span><span class="p">,</span> <span class="n">FunctionalProperty</span><span class="p">):</span> <span class="k">pass</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">price_per_tablet</span><span class="p">(</span><span class="n">Drug</span> <span class="o">&gt;&gt;</span> <span class="nb">float</span><span class="p">,</span> <span class="n">FunctionalProperty</span><span class="p">):</span> <span class="k">pass</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="n">rule</span> <span class="o">=</span> <span class="n">Imp</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="n">rule</span><span class="o">.</span><span class="n">set_as_rule</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;Drug(?d), price(?d, ?p), number_of_tablets(?d, ?n), divide(?r, ?p, ?n) -&gt; price_per_tablet(?d, ?r)&quot;&quot;&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can now create a drug, run the reasoner (only Pellet support inferrence on data property value)
+and print the result:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">drug</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">(</span><span class="n">number_of_tablets</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">price</span> <span class="o">=</span> <span class="mf">25.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sync_reasoner_pellet</span><span class="p">(</span><span class="n">infer_property_values</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">infer_data_property_values</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">drug</span><span class="o">.</span><span class="n">price_per_tablet</span>
+<span class="go">2.5</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="displaying-rules">
+<h2>Displaying rules<a class="headerlink" href="#displaying-rules" title="Permalink to this headline">¶</a></h2>
+<p>The str() Python function can be used to format rules, for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span>
+<span class="go">&#39;Drug(?d), price(?d, ?p), number_of_tablets(?d, ?n), divide(?r, ?p, ?n) -&gt; price_per_tablet(?d, ?r)&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="modifying-rules-manually">
+<h2>Modifying rules manually<a class="headerlink" href="#modifying-rules-manually" title="Permalink to this headline">¶</a></h2>
+<p>Owlready also allows to access to the inner content of rules. Each rules have a body (= conditions)
+and head (= consequences) :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rule</span><span class="o">.</span><span class="n">body</span>
+<span class="go">[Drug(?d), price(?d, ?p), number_of_tablets(?d, ?n), divide(?r, ?p, ?n)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rule</span><span class="o">.</span><span class="n">head</span>
+<span class="go">[price_per_tablet(?d, ?r)]</span>
+</pre></div>
+</div>
+<p>Body and head are list of SWRL atoms. The attributes of each atom can be read and modified:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rule</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="go">Drug(?d)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rule</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">class_predicate</span>
+<span class="go">drug.Drug</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rule</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">arguments</span>
+<span class="go">[?d]</span>
+</pre></div>
+</div>
+<p>Please refer to SWRL documentation for the list of atoms and their description. One notable difference is that
+Owlready always use the “arguments” attributes for accessing arguments, while SWRL uses sometimes “arguments”
+and sometimes “argument1” and “argument2”.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">SWRL rules</a><ul>
+<li><a class="reference internal" href="#creating-swrl-rules">Creating SWRL rules</a></li>
+<li><a class="reference internal" href="#displaying-rules">Displaying rules</a></li>
+<li><a class="reference internal" href="#modifying-rules-manually">Modifying rules manually</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="world.html"
+                        title="previous chapter">Worlds</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pymedtermino2.html"
+                        title="next chapter">PyMedTermino2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/rule.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="pymedtermino2.html" title="PyMedTermino2"
+             >next</a></li>
+        <li class="right" >
+          <a href="world.html" title="Worlds"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

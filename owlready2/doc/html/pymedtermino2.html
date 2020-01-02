@@ -1,0 +1,551 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>PyMedTermino2 &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Differences between Owlready version 1 and 2" href="porting1.html" />
+    <link rel="prev" title="SWRL rules" href="rule.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="porting1.html" title="Differences between Owlready version 1 and 2"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="rule.html" title="SWRL rules"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pymedtermino2">
+<h1>PyMedTermino2<a class="headerlink" href="#pymedtermino2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>PyMedTermino (Medical Terminologies for Python) is a Python module for easy access to the main medical
+terminologies in Python. The following terminologies are supported:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>All terminologies in UMLS, including:
+- SNOMED CT
+- ICD10
+- MedDRA</p></li>
+<li><p>ICD10 in French (CIM10)</p></li>
+</ul>
+</div></blockquote>
+<p>The main features of PyMedTermino are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>A single API for accessing all terminologies</p></li>
+<li><p>Optimized full-text search</p></li>
+<li><p>Access to terms, synonyms and translations</p></li>
+<li><p>Manage concepts and relations between concepts</p></li>
+<li><p>Mappings between terminologies (e.g. via UMLS or manual mapping)</p></li>
+</ul>
+</div></blockquote>
+<p>PyMedTermino has been designed for “batch” access to terminologies; it is <em>not</em> a terminology browser
+(althought it can be used to write a terminology browser in Python).</p>
+<p>The first version of PyMedTermino was an independent Python package.
+The second version (PyMedTermino2) is integrated with Owlready2, and store medical terminologies as OWL ontlogies.
+This allows relating medical terms from terminologies with user created concepts.</p>
+<p>UMLS data is not included, but can be downloaded for free (see Intallation below). Contrary to PyMedTermino1,
+PyMedTermino2 do not require a connection to an external UMLS database: it imports UMLS data in its own local
+database, automatically.</p>
+<p>If you use PyMedTermino in scientific works, <strong>please cite the following article</strong>:</p>
+<blockquote>
+<div><p><strong>Lamy JB</strong>, Venot A, Duclos C.
+<a class="reference external" href="http://ebooks.iospress.nl/volumearticle/39485">PyMedTermino: an open-source generic API for advanced terminology services.</a>
+<strong>Studies in health technology and informatics 2015</strong>;210:924-928</p>
+</div></blockquote>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p>Install Python 3.7 and Owlready2 (if not already done).
+<strong>PyMedTermino2 requires Python &gt;= 3.7 for importing UMLS</strong> (However, after importing the data in the quadstore, it can be used with Python 3.6 if you really need to).</p></li>
+<li><p>After registration with NLM, download UMLS data (Warning: some restriction may apply depending on country; see UMLS licence and its SNOMED CT appendix):</p>
+<ul>
+<li><p><a class="reference external" href="https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html">https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html</a></p>
+<p>PyMedTermino2 suports both the “Full UMLS Release Files” and the “UMLS Metathesaurus Files”, but the latter
+is recommended since it is faster to uncompress.
+E.g. download “umls-2019AA-metathesaurus.zip”. Do not unzip it!</p>
+</li>
+</ul>
+</li>
+<li><p>Import UMLS data in Python as follows:</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2.pymedtermino2</span> <span class="k">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2.pymedtermino2.umls</span> <span class="k">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">default_world</span><span class="o">.</span><span class="n">set_backend</span><span class="p">(</span><span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;pym.sqlite3&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">import_umls</span><span class="p">(</span><span class="s2">&quot;umls-2019AA-metathesaurus.zip&quot;</span><span class="p">,</span> <span class="n">terminologies</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ICD10&quot;</span><span class="p">,</span> <span class="s2">&quot;SNOMEDCT_US&quot;</span><span class="p">,</span> <span class="s2">&quot;CUI&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">default_world</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>were:</dt><dd><ul class="simple">
+<li><p>“pym.sqlite3” is the quadstore file in which the data are stored.</p></li>
+<li><p>[“ICD10”, “SNOMEDCT_US”, “CUI”] are the terminologies imported (valid codes are UMLS code, plus “CUI” for CUI).
+If the ‘terminologies’ parameter is missing, all terminologies are imported.</p></li>
+</ul>
+</dd>
+</dl>
+<p>To import also suppressed/deprecated concept, add the following parameter: remove_suppressed = “”.</p>
+<p>The importation can take several minutes or hours, depending on the number of terminologies imported.</p>
+<ol class="arabic simple" start="4">
+<li><p>Import French ICD10 (optional):</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2.pymedtermino2.icd10_french</span> <span class="k">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">import_icd10_french</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">default_world</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="snomed-ct">
+<h2>SNOMED CT<a class="headerlink" href="#snomed-ct" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="loading">
+<h3>Loading<a class="headerlink" href="#loading" title="Permalink to this headline">¶</a></h3>
+<p>To load SNOMED CT in Python:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">default_world</span><span class="o">.</span><span class="n">set_backend</span><span class="p">(</span><span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;pym.sqlite3&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">PYM</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://PYM/&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">SNOMEDCT_US</span> <span class="o">=</span> <span class="n">PYM</span><span class="p">[</span><span class="s2">&quot;SNOMEDCT_US&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Here, ‘PYM’ is the abbreviation for PyMedTermino. PYM can be indiced with a terminology code, to obtain
+the corresponding terminology object (here, SNOMEDCT_US).</p>
+</div>
+<div class="section" id="concepts">
+<h3>Concepts<a class="headerlink" href="#concepts" title="Permalink to this headline">¶</a></h3>
+<p>The SNOMEDCT_US object represents the SNOMED CT terminology. A SNOMED CT concept can be obtained from its
+code (in the following example, 302509004, which is the code for the heart concept) by indexing this
+object with curly brackets:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span> <span class="o">=</span> <span class="n">SNOMEDCT_US</span><span class="p">[</span><span class="mi">302509004</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span>
+<span class="go">SNOMEDCT_US[&quot;302509004&quot;] # Entire heart</span>
+</pre></div>
+</div>
+<p>The has_concept() method can be used to verify if a code corresponds to a concept or not:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">SNOMEDCT_US</span><span class="o">.</span><span class="n">has_concept</span><span class="p">(</span><span class="s2">&quot;invalid_code&quot;</span><span class="p">)</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<p>Each concept has a code, available as the name of the entity, and a preferred term, available as the label RDF annotation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">name</span>
+<span class="go">&#39;302509004&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">label</span>
+<span class="go">[&#39;Entire heart&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+<span class="go">&#39;Entire heart&#39;</span>
+</pre></div>
+</div>
+<p>SNOMED CT also proposes synonym terms, available via the ‘synonyms’ annotation :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">synonyms</span>
+<span class="go">[&#39;Entire heart (body structure)&#39;]</span>
+</pre></div>
+</div>
+<p>The ‘terminology’ attribute contains the terminology of the concept:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">terminology</span>
+<span class="go">PYM[&quot;SNOMEDCT_US&quot;] # US Edition of SNOMED CT</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="full-text-search">
+<h3>Full-text search<a class="headerlink" href="#full-text-search" title="Permalink to this headline">¶</a></h3>
+<p>The search() method allows full-text search in SNOMED CT terms (including synonyms):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">SNOMEDCT_US</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;Cardiac structure&quot;</span><span class="p">)</span>
+<span class="go">[SNOMEDCT_US[&quot;24964005&quot;] # Cardiac conducting system structure</span>
+<span class="go">, SNOMEDCT_US[&quot;10746000&quot;] # Cardiac septum structure</span>
+<span class="go">...]</span>
+</pre></div>
+</div>
+<p>Full-text search uses the FTS engine of SQLite, it is thus possible to use its functionalities.
+For example, for searching for all words beginning by a given prefix:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">SNOMEDCT_US</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;osteo*&quot;</span><span class="p">)</span>
+<span class="go">[SNOMEDCT_US[&quot;66467005&quot;] # Osteochondromatosis</span>
+<span class="go">, SNOMEDCT_US[&quot;40970001&quot;] # Chronic osteomyelitis</span>
+<span class="go">...]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="is-a-relations-parent-and-child-concepts">
+<h3>Is-a relations: parent and child concepts<a class="headerlink" href="#is-a-relations-parent-and-child-concepts" title="Permalink to this headline">¶</a></h3>
+<p>The “parents” and “children” attributes return the list of parent and child concepts (i.e. the concepts
+with is-a relations):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">parents</span>
+<span class="go">[SNOMEDCT_US[&quot;116004006&quot;] # Entire hollow viscus</span>
+<span class="go">, SNOMEDCT_US[&quot;187639008&quot;] # Entire thoracic viscus</span>
+<span class="go">, SNOMEDCT_US[&quot;80891009&quot;] # Heart structure</span>
+<span class="go">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">children</span>
+<span class="go">[SNOMEDCT_US[&quot;195591003&quot;] # Entire transplanted heart</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>The ancestor_concepts() and descendant_concepts() methods return all the ancestor concepts
+(parents, parents of parents, and so on) and the descendant concepts (children, children of children, and so on) :</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">ancestor_concepts</span><span class="p">()</span>
+<span class="go">[SNOMEDCT_US[&quot;302509004&quot;] # Entire heart</span>
+<span class="go">, SNOMEDCT_US[&quot;116004006&quot;] # Entire hollow viscus</span>
+<span class="go">, SNOMEDCT_US[&quot;118760003&quot;] # Entire viscus</span>
+<span class="go">...]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">descendant_concepts</span><span class="p">()</span>
+<span class="go">[SNOMEDCT_US[&quot;302509004&quot;] # Entire heart</span>
+<span class="go">, SNOMEDCT_US[&quot;195591003&quot;] # Entire transplanted heart</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>Both methods remove dupplicates automatically. They also include the starting concept in the results.
+If you do not want it, use the ‘include_self’ parameter:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">descendant_concepts</span><span class="p">(</span><span class="n">include_self</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+<span class="go">[SNOMEDCT_US[&quot;195591003&quot;] # Entire transplanted heart</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>PyMedTermino2 concepts are OWL and Python classes. As a consequence, you can use the Python issubclass() function
+to test whether a concept is a descendant of another:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">concept</span><span class="p">,</span> <span class="n">SNOMEDCT_US</span><span class="p">[</span><span class="s2">&quot;272625005&quot;</span><span class="p">])</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="part-of-relations">
+<h3>Part-of relations<a class="headerlink" href="#part-of-relations" title="Permalink to this headline">¶</a></h3>
+<p>“part_of” and “has_part” attributes provide access to subparts or superpart of the concept:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">part_of</span>
+<span class="go">[SNOMEDCT_US[&quot;362010009&quot;] # Entire heart AND pericardium</span>
+<span class="go">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">has_part</span>
+<span class="go">[SNOMEDCT_US[&quot;244258000&quot;] # Entire marginal branch of right coronary artery</span>
+<span class="go">, SNOMEDCT_US[&quot;261405004&quot;] # Entire atrium</span>
+<span class="go">, SNOMEDCT_US[&quot;244378006&quot;] # Lateral atrioventricular leaflet</span>
+<span class="go">...]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="other-relations">
+<h3>Other relations<a class="headerlink" href="#other-relations" title="Permalink to this headline">¶</a></h3>
+<p>The “get_class_properties” method returns the set of relations available for a given concept. Is-a relations
+are never included in this list, and are handled with the “parents” and “children” attributes previously
+seen, however part-of relations are included.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span> <span class="o">=</span> <span class="n">SNOMEDCT_US</span><span class="p">[</span><span class="s2">&quot;3424008&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span>
+<span class="go">SNOMEDCT_US[&quot;3424008&quot;] # Tachycardia</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">get_class_properties</span><span class="p">()</span>
+<span class="go">{PYM.mapped_to, PYM.case_significance_id, PYM.unifieds, PYM.terminology, rdf-schema.label, PYM.subset_member, PYM.definition_status_id, PYM.synonyms, PYM.has_interpretation, PYM.active, PYM.interprets, PYM.effective_time, PYM.ctv3id, PYM.groups, PYM.has_finding_site, PYM.type_id}</span>
+</pre></div>
+</div>
+<p>Each relation corresponds to an attribute in the concept. The name of the attribute is the part after the ‘.’,
+e.g. for ‘PYM.interprets’ the name is ‘interprets’.
+The attribute’s value is a list with the corresponding values:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">has_finding_site</span>
+<span class="go">[SNOMEDCT_US[&quot;24964005&quot;] # Cardiac conducting system structure</span>
+<span class="go">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">interprets</span>
+<span class="go">[SNOMEDCT_US[&quot;364075005&quot;] # Heart rate</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="relation-groups">
+<h3>Relation groups<a class="headerlink" href="#relation-groups" title="Permalink to this headline">¶</a></h3>
+<p>In SNOMED CT, relations can be grouped together. The “groups” attribute returns the list of groups. It is
+then possible to access to the group’s relation.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span> <span class="o">=</span> <span class="n">SNOMEDCT_US</span><span class="p">[</span><span class="s2">&quot;186675001&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span>
+<span class="go">SNOMEDCT_US[&quot;186675001&quot;] # Viral pharyngoconjunctivitis</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">groups</span>
+<span class="go">[&lt;Group 453170_0&gt; # mapped_to=Viral conjunctivitis, unspecified</span>
+<span class="go">, &lt;Group 453170_3&gt; # has_causative_agent=Virus ; has_associated_morphology=Inflammation ; has_finding_site=Pharyngeal structure ; has_pathological_process=Infectious process</span>
+<span class="go">, &lt;Group 453170_4&gt; # has_causative_agent=Virus ; has_associated_morphology=Inflammation ; has_finding_site=Conjunctival structure ; has_pathological_process=Infectious process</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">get_class_properties</span><span class="p">()</span>
+<span class="go">{PYM.has_causative_agent, PYM.has_associated_morphology, PYM.has_finding_site, PYM.has_pathological_process}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">has_finding_site</span>
+<span class="go">[SNOMEDCT_US[&quot;29445007&quot;] # Conjunctival structure</span>
+<span class="go">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">has_associated_morphology</span>
+<span class="go">[SNOMEDCT_US[&quot;23583003&quot;] # Inflammation</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="iterating-over-snomed-ct">
+<h3>Iterating over SNOMED CT<a class="headerlink" href="#iterating-over-snomed-ct" title="Permalink to this headline">¶</a></h3>
+<p>To obtain the terminology’s first level concepts (i.e. the root concepts), use the children attribute of the terminology:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">SNOMEDCT_US</span><span class="o">.</span><span class="n">children</span>
+<span class="go">[SNOMEDCT_US[&quot;138875005&quot;] # SNOMED CT Concept</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>The descendant_concepts() method returns all concepts in SNOMED CT.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">concept</span> <span class="ow">in</span> <span class="n">SNOMEDCT_US</span><span class="o">.</span><span class="n">descendant_concepts</span><span class="p">():</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="icd10">
+<h2>ICD10<a class="headerlink" href="#icd10" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="loading-modules">
+<h3>Loading modules<a class="headerlink" href="#loading-modules" title="Permalink to this headline">¶</a></h3>
+<p>To load SNOMED CT in Python:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">default_world</span><span class="o">.</span><span class="n">set_backend</span><span class="p">(</span><span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;pym.sqlite3&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">PYM</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://PYM/&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ICD10</span> <span class="o">=</span> <span class="n">PYM</span><span class="p">[</span><span class="s2">&quot;ICD10&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Or, for the French version (if you imported it during installation):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">CIM10</span> <span class="o">=</span> <span class="n">PYM</span><span class="p">[</span><span class="s2">&quot;CIM10&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>CIM10 can be used as ICD10.</p>
+</div>
+<div class="section" id="id1">
+<h3>Concepts<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>The ICD10 object allows to access to ICD10 concepts. This object behaves similarly to the SNOMED CT
+terminology previously described (see <a class="reference internal" href="#snomed-ct">SNOMED CT</a>).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ICD10</span><span class="p">[</span><span class="s2">&quot;E10&quot;</span><span class="p">]</span>
+<span class="go">ICD10[&quot;E10&quot;] # Insulin-dependent diabetes mellitus</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ICD10</span><span class="p">[</span><span class="s2">&quot;E10&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">parents</span>
+<span class="go">[ICD10[&quot;E10-E14.9&quot;] # Diabetes mellitus</span>
+<span class="go">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ICD10</span><span class="p">[</span><span class="s2">&quot;E10&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">ancestor_concepts</span><span class="p">()</span>
+<span class="go">[ICD10[&quot;E10&quot;] # Insulin-dependent diabetes mellitus</span>
+<span class="go">, ICD10[&quot;E10-E14.9&quot;] # Diabetes mellitus</span>
+<span class="go">, ICD10[&quot;E00-E90.9&quot;] # Endocrine, nutritional and metabolic diseases</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>ICD10 being monoaxial, the parents list always includes at most one parent.</p>
+</div>
+</div>
+<div class="section" id="umls">
+<h2>UMLS<a class="headerlink" href="#umls" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id2">
+<h3>Loading modules<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">default_world</span><span class="o">.</span><span class="n">set_backend</span><span class="p">(</span><span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;pym.sqlite3&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">PYM</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://PYM/&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">CUI</span> <span class="o">=</span> <span class="n">PYM</span><span class="p">[</span><span class="s2">&quot;CUI&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="umls-concepts-cui">
+<h3>UMLS concepts (CUI)<a class="headerlink" href="#umls-concepts-cui" title="Permalink to this headline">¶</a></h3>
+<p>In UMLS, CUI correspond to concepts: a given concept gathers equivalent terms or codes from various
+terminologies.</p>
+<p>CUI can be accessed with the UMLS_CUI terminology:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span> <span class="o">=</span> <span class="n">CUI</span><span class="p">[</span><span class="s2">&quot;C0085580&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span>
+<span class="go">CUI[&quot;C0085580&quot;] # Essential hypertension</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">name</span>
+<span class="go">&#39;C0085580&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">label</span>
+<span class="go">[&#39;Essential hypertension&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">synonyms</span>
+<span class="go">[&#39;Essential (primary) hypertension&#39;, &#39;Idiopathic hypertension&#39;, &#39;Primary hypertension&#39;, &#39;Systemic primary arterial hypertension&#39;, &#39;Essential hypertension (disorder)&#39;]</span>
+</pre></div>
+</div>
+<p>Relations of CUI are handled in the same way than for SNOMED CT (see above), for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">get_class_properties</span><span class="p">()</span>
+<span class="go">{PYM.originals, PYM.terminology, rdf-schema.label, PYM.synonyms}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="relation-with-source-terminologies">
+<h3>Relation with source terminologies<a class="headerlink" href="#relation-with-source-terminologies" title="Permalink to this headline">¶</a></h3>
+<p>The originals attribute of a CUI concept contains the corresponding concepts in UMLS sources terminologies:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concept</span><span class="o">.</span><span class="n">originals</span>
+<span class="go">[SNOMEDCT_US[&quot;59621000&quot;] # Essential hypertension</span>
+<span class="go">, CIM10[&quot;I10&quot;] # Hypertension essentielle (primitive)</span>
+<span class="go">, ICD10[&quot;I10&quot;] # Essential (primary) hypertension</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<p>The inverse attribute is unifieds. For concepts in the source terminologies, it contains the corresponding CUI
+(some concepts may be associated with several CUI):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ICD10</span><span class="p">[</span><span class="s2">&quot;I10&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unifieds</span>
+<span class="go">[CUI[&quot;C0085580&quot;] # Essential hypertension</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="mapping-between-terminologies">
+<h3>Mapping between terminologies<a class="headerlink" href="#mapping-between-terminologies" title="Permalink to this headline">¶</a></h3>
+<p>PyMedTermino uses the ‘&gt;&gt;’ operator for mapping from a terminology to another.
+For example, you can map a SNOMED CT concept to UMLS as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">SNOMEDCT_US</span><span class="p">[</span><span class="mi">186675001</span><span class="p">]</span>
+<span class="go">SNOMEDCT_US[&quot;186675001&quot;] # Viral pharyngoconjunctivitis</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">SNOMEDCT_US</span><span class="p">[</span><span class="mi">186675001</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="n">CUI</span>
+<span class="go">Concepts([</span>
+<span class="go">  CUI[&quot;C0542430&quot;] # Viral pharyngoconjunctivitis</span>
+<span class="go">])</span>
+</pre></div>
+</div>
+<p>Or you can map a UMLS concept to ICD10:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">CUI</span><span class="p">[</span><span class="s2">&quot;C0542430&quot;</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="n">ICD10</span>
+<span class="go">Concepts([</span>
+<span class="go">  ICD10[&quot;B30.2&quot;] # Viral pharyngoconjunctivitis</span>
+<span class="go">])</span>
+</pre></div>
+</div>
+<p>Finally, you can map directly from a terminology in UMLS to another terminology in UMLS,
+for example from SNOMED CT to ICD10:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">SNOMEDCT_US</span><span class="p">[</span><span class="mi">186675001</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="n">ICD10</span>
+<span class="go">Concepts([</span>
+<span class="go">  ICD10[&quot;B30.9&quot;] # Viral conjunctivitis, unspecified</span>
+<span class="go">])</span>
+</pre></div>
+</div>
+<p>The direct mapping considers ‘mapped_to’ relations available first, and default to mapping using CUI.</p>
+</div>
+</div>
+<div class="section" id="set-of-concepts">
+<h2>Set of concepts<a class="headerlink" href="#set-of-concepts" title="Permalink to this headline">¶</a></h2>
+<p>The Concepts class implements a set of concepts.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">concepts</span> <span class="o">=</span> <span class="n">PYM</span><span class="o">.</span><span class="n">Concepts</span><span class="p">([</span> <span class="n">ICD10</span><span class="p">[</span><span class="s2">&quot;E10&quot;</span><span class="p">],</span> <span class="n">ICD10</span><span class="p">[</span><span class="s2">&quot;E11&quot;</span><span class="p">],</span> <span class="n">ICD10</span><span class="p">[</span><span class="s2">&quot;E12&quot;</span><span class="p">]</span> <span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">concepts</span>
+<span class="go">Concepts([</span>
+<span class="go">  ICD10[&quot;E10&quot;] # Insulin-dependent diabetes mellitus</span>
+<span class="go">, ICD10[&quot;E12&quot;] # Malnutrition-related diabetes mellitus</span>
+<span class="go">, ICD10[&quot;E11&quot;] # Non-insulin-dependent diabetes mellitus</span>
+<span class="go">])</span>
+</pre></div>
+</div>
+<p>Concepts class inherits from Python’s set and supports all its methods (such as add(), remove(), etc).</p>
+<p>Concepts can be used to map several concepts simultaneously, using the ‘&gt;&gt;’ operator, for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">PYM</span><span class="o">.</span><span class="n">Concepts</span><span class="p">([</span> <span class="n">ICD10</span><span class="p">[</span><span class="s2">&quot;E10&quot;</span><span class="p">],</span> <span class="n">ICD10</span><span class="p">[</span><span class="s2">&quot;E11&quot;</span><span class="p">],</span> <span class="n">ICD10</span><span class="p">[</span><span class="s2">&quot;E12&quot;</span><span class="p">]</span> <span class="p">])</span> <span class="o">&gt;&gt;</span> <span class="n">SNOMEDCT_US</span>
+<span class="go">Concepts([</span>
+<span class="go">  SNOMEDCT_US[&quot;44054006&quot;] # Type 2 diabetes mellitus</span>
+<span class="go">, SNOMEDCT_US[&quot;46635009&quot;] # Type 1 diabetes mellitus</span>
+<span class="go">, SNOMEDCT_US[&quot;75524006&quot;] # Malnutrition related diabetes mellitus</span>
+<span class="go">])</span>
+</pre></div>
+</div>
+<p>In addition, the Concepts class also provides advanced terminology-oriented methods:</p>
+<ul class="simple">
+<li><p>keep_most_generic() keeps only the most generic concepts in the set (i.e. it removes all concepts that are a descendant of another concept in the set)</p></li>
+<li><p>keep_most_specific() keeps only the most specific concepts in the set (i.e. it removes all concepts that are an ancestor of another concept in the set)</p></li>
+<li><p>lowest_common_ancestors() computes the lower common ancestors</p></li>
+<li><p>find(c) search the set for a concept that is a descendant of c (including c itself)</p></li>
+<li><p>extract(c) search the set for all concepts that are descendant of c (including c itself)</p></li>
+<li><p>subtract(c) return a new set with all concepts in the set, except those that are descendant of c (including c itself)</p></li>
+<li><p>subtract_update(c) remove from the set for all concepts that are descendant of c (including c itself)</p></li>
+<li><p>all_subsets() computes all subsets included in the set.</p></li>
+<li><p>imply(other) returns True if all concepts in the ‘other’ set are descendants of (at least) one of the concepts in the set</p></li>
+<li><p>is_semantic_subset(other) returns True if all concepts in this set are descendants of (at least) one of the concept in the ‘other’ set</p></li>
+<li><p>is_semantic_superset(other) returns True if all concepts in this set are ancestors of (at least) one of the concept in the ‘other’ set</p></li>
+<li><p>is_semantic_disjoint(other) returns True if all concepts in this set are semantically disjoint from all concepts in the ‘other’ set</p></li>
+<li><p>semantic_intersection(other) returns the intersection of the set with ‘other’, considering is-a relations between the concepts in the sets</p></li>
+<li><p>remove_entire_families(only_family_with_more_than_one_child = True) replaces concepts in the set by their parents, whenever all the children of the parent are present</p></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">PyMedTermino2</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#snomed-ct">SNOMED CT</a><ul>
+<li><a class="reference internal" href="#loading">Loading</a></li>
+<li><a class="reference internal" href="#concepts">Concepts</a></li>
+<li><a class="reference internal" href="#full-text-search">Full-text search</a></li>
+<li><a class="reference internal" href="#is-a-relations-parent-and-child-concepts">Is-a relations: parent and child concepts</a></li>
+<li><a class="reference internal" href="#part-of-relations">Part-of relations</a></li>
+<li><a class="reference internal" href="#other-relations">Other relations</a></li>
+<li><a class="reference internal" href="#relation-groups">Relation groups</a></li>
+<li><a class="reference internal" href="#iterating-over-snomed-ct">Iterating over SNOMED CT</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#icd10">ICD10</a><ul>
+<li><a class="reference internal" href="#loading-modules">Loading modules</a></li>
+<li><a class="reference internal" href="#id1">Concepts</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#umls">UMLS</a><ul>
+<li><a class="reference internal" href="#id2">Loading modules</a></li>
+<li><a class="reference internal" href="#umls-concepts-cui">UMLS concepts (CUI)</a></li>
+<li><a class="reference internal" href="#relation-with-source-terminologies">Relation with source terminologies</a></li>
+<li><a class="reference internal" href="#mapping-between-terminologies">Mapping between terminologies</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#set-of-concepts">Set of concepts</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="rule.html"
+                        title="previous chapter">SWRL rules</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="porting1.html"
+                        title="next chapter">Differences between Owlready version 1 and 2</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pymedtermino2.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="porting1.html" title="Differences between Owlready version 1 and 2"
+             >next</a></li>
+        <li class="right" >
+          <a href="rule.html" title="SWRL rules"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

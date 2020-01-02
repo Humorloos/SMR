@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Owlready2 Installation &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Managing ontologies" href="onto.html" />
+    <link rel="prev" title="Introduction" href="intro.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="onto.html" title="Managing ontologies"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="intro.html" title="Introduction"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="owlready2-installation">
+<h1>Owlready2 Installation<a class="headerlink" href="#owlready2-installation" title="Permalink to this headline">¶</a></h1>
+<p>Owlready2 can be installed with ‘pip’, the Python Package Installer.</p>
+<p>Owlready2 include an optimized Cython module. This module speeds up by about 20% the loading of large ontologies,
+but its use is entirely optional.
+To build this module, you need a C compiler, and to install the ‘cython’ Python package.</p>
+<p>On the contrary, if you don’t have a C compiler, to <strong>not build</strong> the optimized module you need to uninstall
+Cython if it is already installed (or to use the manual installation described below).</p>
+<p>Owlready2 can be installed from terminal, from Python, or manually.</p>
+<div class="section" id="installation-from-terminal-bash-under-linux-or-dos-under-windows">
+<h2>Installation from terminal (Bash under Linux or DOS under Windows)<a class="headerlink" href="#installation-from-terminal-bash-under-linux-or-dos-under-windows" title="Permalink to this headline">¶</a></h2>
+<p>You can use the following Bash / DOS commands to install Owlready2 in a terminal:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">owlready2</span>
+</pre></div>
+</div>
+<div class="figure align-default">
+<img alt="_images/terminal_installation.png" src="_images/terminal_installation.png" />
+</div>
+<p>If you don’t have the permissions for writing in system files,
+you can install Owlready2 in your user directory with this command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span> <span class="n">owlready2</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="installation-in-spyder-idle-or-any-other-python-console">
+<h2>Installation in Spyder / IDLE (or any other Python console)<a class="headerlink" href="#installation-in-spyder-idle-or-any-other-python-console" title="Permalink to this headline">¶</a></h2>
+<p>You can use the following Python commands to install Owlready2 from a Python 3.7.x console
+(including those found in Spyder3 or IDLE):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pip.__main__</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pip</span><span class="o">.</span><span class="n">__main__</span><span class="o">.</span><span class="n">_main</span><span class="p">([</span><span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="s2">&quot;--user&quot;</span><span class="p">,</span> <span class="s2">&quot;owlready2&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="figure align-default">
+<img alt="_images/spyder_installation.png" src="_images/spyder_installation.png" />
+</div>
+</div>
+<div class="section" id="manual-installation">
+<h2>Manual installation<a class="headerlink" href="#manual-installation" title="Permalink to this headline">¶</a></h2>
+<p>Owlready2 can also be installed manually in 3 steps:</p>
+<p># Uncompress the Owlready2-0.21.tar.gz source release file (or any other version), for example in C:\ under Windows</p>
+<p># Rename the directory C:\Owlready2-0.21 as C:\owlready2</p>
+<p># Add the C:\ directory in your PYTHONPATH; this can be done in Python as follows:</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;C:</span><span class="se">\&quot;</span><span class="s2">)</span>
+<span class="kn">import</span> <span class="nn">owlready2</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>In the following screenshot, I used /home/jiba/src instead of C:\, under Linux:</p>
+<div class="figure align-default">
+<img alt="_images/manual_installation.png" src="_images/manual_installation.png" />
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Owlready2 Installation</a><ul>
+<li><a class="reference internal" href="#installation-from-terminal-bash-under-linux-or-dos-under-windows">Installation from terminal (Bash under Linux or DOS under Windows)</a></li>
+<li><a class="reference internal" href="#installation-in-spyder-idle-or-any-other-python-console">Installation in Spyder / IDLE (or any other Python console)</a></li>
+<li><a class="reference internal" href="#manual-installation">Manual installation</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="intro.html"
+                        title="previous chapter">Introduction</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="onto.html"
+                        title="next chapter">Managing ontologies</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/install.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="onto.html" title="Managing ontologies"
+             >next</a></li>
+        <li class="right" >
+          <a href="intro.html" title="Introduction"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

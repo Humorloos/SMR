@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Annotations &#8212; Owlready2 0.22 documentation</title>
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Namespaces" href="namespace.html" />
+    <link rel="prev" title="Reasoning" href="reasoning.html" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head><body>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="namespace.html" title="Namespaces"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="reasoning.html" title="Reasoning"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="annotations">
+<h1>Annotations<a class="headerlink" href="#annotations" title="Permalink to this headline">¶</a></h1>
+<p>In Owlready2, annotations are accessed as attributes.
+For Classes, notice that annotations are <strong>not</strong> inherited.</p>
+<div class="section" id="adding-an-annotation">
+<h2>Adding an annotation<a class="headerlink" href="#adding-an-annotation" title="Permalink to this headline">¶</a></h2>
+<p>For a given entity (a Class, a Property or an Individual), the following syntax can be used to add
+annotations:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">owlready2</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onto</span> <span class="o">=</span> <span class="n">get_ontology</span><span class="p">(</span><span class="s2">&quot;http://test.org/onto.owl&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">Drug</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;A first comment on the Drug class&quot;</span><span class="p">,</span> <span class="s2">&quot;A second comment&quot;</span><span class="p">]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;A third comment&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The following annotations are available by default: comment, isDefinedBy, label, seeAlso,
+backwardCompatibleWith, deprecated, incompatibleWith, priorVersion, versionInfo.</p>
+<p>Owlready2 also supports annotations on relation triples, using the AnnotationProperty (here comment)
+as a pseudo-dictionary:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">HealthProblem</span><span class="p">(</span><span class="n">Thing</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">is_prescribed_for</span><span class="p">(</span><span class="n">Drug</span> <span class="o">&gt;&gt;</span> <span class="n">HealthProblem</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acetaminophen</span> <span class="o">=</span> <span class="n">Drug</span><span class="p">(</span><span class="s2">&quot;acetaminophen&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pain</span> <span class="o">=</span> <span class="n">HealthProblem</span><span class="p">(</span><span class="s2">&quot;pain&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acetaminophen</span><span class="o">.</span><span class="n">is_prescribed_for</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pain</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">comment</span><span class="p">[</span><span class="n">acetaminophen</span><span class="p">,</span> <span class="n">is_prescribed_for</span><span class="p">,</span> <span class="n">pain</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;A comment on the acetaminophen-pain relation&quot;</span>
+</pre></div>
+</div>
+<p>Special pseudo-properties are provided for annotating is-a relations (rdfs_subclassof and rdf_type),
+domains (rdf_domain) and ranges (rdf_range).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">comment</span><span class="p">[</span><span class="n">Drug</span><span class="p">,</span> <span class="n">rdfs_subclassof</span><span class="p">,</span> <span class="n">Thing</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;A comment on an is-a relation&quot;</span>
+</pre></div>
+</div>
+<p>Annotation values are usually lists of values. However, in many cases, a single value is used.
+Owlready2 accepts to set an annotation property to a single value, for example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">acetaminophen</span><span class="o">.</span><span class="n">comment</span> <span class="o">=</span> <span class="s2">&quot;This comment replaces all existing comments on acetaminophen&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="querying-annotations">
+<h2>Querying annotations<a class="headerlink" href="#querying-annotations" title="Permalink to this headline">¶</a></h2>
+<p>Annotation values can be obtained using the dot notation, as if they were attributes of the entity:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span><span class="p">)</span>
+<span class="go">[&#39;A first comment on the Drug class&#39;, &#39;A second comment&#39;, &#39;A third comment&#39;]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">comment</span><span class="p">[</span><span class="n">acetaminophen</span><span class="p">,</span> <span class="n">is_prescribed_for</span><span class="p">,</span> <span class="n">pain</span><span class="p">])</span>
+<span class="go">[&#39;A comment on the acetaminophen-pain relation&#39;]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">comment</span><span class="p">[</span><span class="n">Drug</span><span class="p">,</span> <span class="n">rdfs_subclassof</span><span class="p">,</span> <span class="n">Thing</span><span class="p">])</span>
+<span class="go">[&#39;A comment on an is-a relation&#39;]</span>
+</pre></div>
+</div>
+<p>If you expect a single value, the .first() method of the list can be used. It returns the first value of
+the list, or None if the list is empty.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">acetaminophen</span><span class="o">.</span><span class="n">comment</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+<span class="go">&#39;This comment replaces all existing comments on acetaminophen&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="deleting-annotations">
+<h2>Deleting annotations<a class="headerlink" href="#deleting-annotations" title="Permalink to this headline">¶</a></h2>
+<p>To delete an annotation, simply remove it from the list.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;A second comment&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For removing <strong>all</strong> annotations of a given type:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span> <span class="o">=</span> <span class="p">[]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="custom-rendering-of-entities">
+<h2>Custom rendering of entities<a class="headerlink" href="#custom-rendering-of-entities" title="Permalink to this headline">¶</a></h2>
+<p>The set_render_func() global function can be used to specify how Owlready2 renders entities, i.e. how they are
+converted to text when printing them. set_render_func() accepts a single param, a function which takes
+one entity and return a string.</p>
+<p>The ‘label’ annotation is commonly used for rendering entities.
+The following example renders entities using their ‘label’ annotation, defaulting to their name:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">render_using_label</span><span class="p">(</span><span class="n">entity</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">entity</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">first</span><span class="p">()</span> <span class="ow">or</span> <span class="n">entity</span><span class="o">.</span><span class="n">name</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">set_render_func</span><span class="p">(</span><span class="n">render_using_label</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span>    <span class="c1"># No label defined yet =&gt; use entity.name</span>
+<span class="go">Drug</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;The drug class&quot;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span>
+<span class="go">The drug class</span>
+</pre></div>
+</div>
+<p>The following example renders entities using their IRI:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">render_using_iri</span><span class="p">(</span><span class="n">entity</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">entity</span><span class="o">.</span><span class="n">iri</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">set_render_func</span><span class="p">(</span><span class="n">render_using_iri</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span>
+<span class="go">http://test.org/onto.owl#Drug</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="language-specific-annotations">
+<h2>Language-specific annotations<a class="headerlink" href="#language-specific-annotations" title="Permalink to this headline">¶</a></h2>
+<p>To specify the language of textual annotations, the ‘locstr’ (localized string) type can be used:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span> <span class="o">=</span> <span class="p">[</span> <span class="n">locstr</span><span class="p">(</span><span class="s2">&quot;Un commentaire en Français&quot;</span><span class="p">,</span> <span class="n">lang</span> <span class="o">=</span> <span class="s2">&quot;fr&quot;</span><span class="p">),</span>
+<span class="gp">... </span>                 <span class="n">locstr</span><span class="p">(</span><span class="s2">&quot;A comment in English&quot;</span><span class="p">,</span> <span class="n">lang</span> <span class="o">=</span> <span class="s2">&quot;en&quot;</span><span class="p">)</span> <span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="go">&#39;Un commentaire en Français&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lang</span>
+<span class="go">&#39;fr&#39;</span>
+</pre></div>
+</div>
+<p>In addition, the list of values support language-specific sublists, available as ‘.&lt;language code&gt;’
+(e.g. .fr, .en, .es, .de,…).
+These sublists contain normal string (not locstr), and they can be modified.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span><span class="o">.</span><span class="n">fr</span>
+<span class="go">[&#39;Un commentaire en Français&#39;]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span><span class="o">.</span><span class="n">en</span>
+<span class="go">[&#39;A comment in English&#39;]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span><span class="o">.</span><span class="n">en</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+<span class="go">&#39;A comment in English&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Drug</span><span class="o">.</span><span class="n">comment</span><span class="o">.</span><span class="n">en</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;A second English comment&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Modifying the language-specific sublist will automatically update the list of values (and the quad store).
+However, the contrary is not true: modifying the list of values does <strong>not</strong> update language-specific sublists.</p>
+</div>
+</div>
+<div class="section" id="creating-new-classes-of-annotation">
+<h2>Creating new classes of annotation<a class="headerlink" href="#creating-new-classes-of-annotation" title="Permalink to this headline">¶</a></h2>
+<p>The AnnotationProperty class can be subclasses to create a new class of annotation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">my_annotation</span><span class="p">(</span><span class="n">AnnotationProperty</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+</pre></div>
+</div>
+<p>You can also create a subclass of an existing annotation class:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">onto</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">class</span> <span class="nc">pharmaceutical_comment</span><span class="p">(</span><span class="n">comment</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">pass</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acetaminophen</span><span class="o">.</span><span class="n">pharmaceutical_comment</span> <span class="o">=</span> <span class="s2">&quot;A comment related to pharmacology of acetaminophen&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="full-text-search-fts">
+<h2>Full-text search (FTS)<a class="headerlink" href="#full-text-search-fts" title="Permalink to this headline">¶</a></h2>
+<p>Full-text search (FTS) can optimize search in textual properties and annotations.
+FTS uses Sqlite3 FTS5 implementation.</p>
+<p>First, FTS needs to be enabled on the desired properties, by adding them to default_world.full_text_search_properties,
+for example for label:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">default_world</span><span class="o">.</span><span class="n">full_text_search_properties</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then, FTS can be used in search as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">default_world</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">label</span> <span class="o">=</span> <span class="n">FTS</span><span class="p">(</span><span class="s2">&quot;keyword1 keyword2*&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Stars can be used as joker, but only at the END of the keyword.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Annotations</a><ul>
+<li><a class="reference internal" href="#adding-an-annotation">Adding an annotation</a></li>
+<li><a class="reference internal" href="#querying-annotations">Querying annotations</a></li>
+<li><a class="reference internal" href="#deleting-annotations">Deleting annotations</a></li>
+<li><a class="reference internal" href="#custom-rendering-of-entities">Custom rendering of entities</a></li>
+<li><a class="reference internal" href="#language-specific-annotations">Language-specific annotations</a></li>
+<li><a class="reference internal" href="#creating-new-classes-of-annotation">Creating new classes of annotation</a></li>
+<li><a class="reference internal" href="#full-text-search-fts">Full-text search (FTS)</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="reasoning.html"
+                        title="previous chapter">Reasoning</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="namespace.html"
+                        title="next chapter">Namespaces</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/annotations.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="namespace.html" title="Namespaces"
+             >next</a></li>
+        <li class="right" >
+          <a href="reasoning.html" title="Reasoning"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Owlready2 0.22 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2014-2019, Jean-Baptiste LAMY.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>
