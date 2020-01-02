@@ -1,5 +1,6 @@
 import json
 import shutil
+import owlready2
 
 from time import sleep
 
@@ -41,6 +42,18 @@ class XmindImporter(NoteImporter):
                                   features='html.parser')
         self.tagList = self.soup('topic')
         self.repair = False
+        # set up ontology
+        self.onto = owlready2.get_ontology(
+            os.path.join(ADDON_PATH, 'resources', 'onto.owl'))
+        with self.onto:
+            class Concept(owlready2.Thing):
+                pass
+
+            class Parent(Concept >> Concept):
+                pass
+
+            class Child(Concept >> Concept):
+                pass
 
     def run(self):
         selectedSheets = self.get_x_sheets()
@@ -294,7 +307,8 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
             if not (isEmptyNode(potentialQuestion)):
                 # If this question contains a crosslink to another question
                 crosslink = getNodeCrosslink(potentialQuestion)
-                if crosslink and isQuestionNode(getTagById(self.tagList, crosslink)):
+                if crosslink and isQuestionNode(
+                        getTagById(self.tagList, crosslink)):
                     questionList.append(
                         dict(qId=crosslink, isConnection=not addCrosslinks))
                 else:
