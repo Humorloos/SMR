@@ -6,7 +6,8 @@ from unittest import TestCase
 from bs4 import BeautifulSoup
 
 from XmindImport.consts import ADDON_PATH
-from XmindImport.utils import getNodeContent, getNodeTitle, getNodeImg
+from XmindImport.utils import getNodeContent, getNodeTitle, getNodeImg, \
+    getNodeHyperlink
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 
@@ -36,9 +37,18 @@ class TestGetNodeTitle(TestCase):
 
 
 class TestGetNodeImg(TestCase):
-    def test_getNodeImage(self):
+    def test_no_image(self):
         with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
                                'sheet_biological_psychology.xml'), 'r') as file:
             tag = BeautifulSoup(file.read(), features='html.parser').topic
         act = getNodeImg(tag)
+        self.assertEqual(act, None)
+
+
+class TestGetNodeHyperlink(TestCase):
+    def test_no_hyperlink(self):
+        with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
+                               'sheet_biological_psychology.xml'), 'r') as file:
+            tag = BeautifulSoup(file.read(), features='html.parser').topic
+        act = getNodeHyperlink(tag)
         self.assertEqual(act, None)
