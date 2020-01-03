@@ -57,15 +57,15 @@ class SheetSelector(QDialog):
 
 
 class SingleSheetSelector(SheetSelector):
-    def __init__(self, sheetImports, topic):
+    def __init__(self, sheetImport):
         self.user_input = None
-        super().__init__(sheetImports, topic)
+        super().__init__(sheetImport)
 
     def build(self):
         if not self.parent:
             self.width *= 2
             self.height *= 2
-        title = self.sheetImports[0]['sheet'].title.text
+        title = list(self.sheetImports.keys())[0]
         tag_text = 'Enter name for sheet "' + title + '":'
         self.setWindowTitle('Xmind Import')
         self.setWindowIcon(QIcon(os.path.join(ICONS_PATH, "icon.ico")))
@@ -125,9 +125,10 @@ class SingleSheetSelector(SheetSelector):
             self.reject)
 
     def on_ok(self):
-        self.sheetImports[0]['tag'] = self.getTag(self.user_input.text())
-        self.sheetImports[0]['deckId'] = self.deck.selectedId()
-        self.sheetImports[0]['repair'] = self.repairCheckbox.isChecked()
+        title = list(self.sheetImports.keys())[0]
+        self.sheetImports[title]['tag'] = self.getTag(self.user_input.text())
+        self.sheetImports[title]['deckId'] = self.get_deck_id()
+        self.sheetImports[title]['repair'] = self.repairCheckbox.isChecked()
         self.accept()
 
 
