@@ -108,7 +108,7 @@ class XmindImporter(NoteImporter):
     def get_x_sheets(self, soup, path):
         imp_sheets = soup('sheet')
         # load sheets from soup
-        sheets = list()
+        sheets, sheetImports = dict(), dict()
         for sheet in imp_sheets:
             # get reference sheets
             if sheet('title', recursive=False)[0].text == 'ref':
@@ -124,12 +124,16 @@ class XmindImporter(NoteImporter):
                     ref_zip = zipfile.ZipFile(clean_path, 'r')
                     ref_soup = BeautifulSoup(ref_zip.read('content.xml'),
                                              features='html.parser')
-                    sheets.extend(self.get_x_sheets(ref_soup, clean_path)[0])
+                    ref_sheets, ref_sheetImports, _ = self.get_x_sheets(
+                        ref_soup, clean_path)
+                    sheets.update(ref_sheets)
+                    sheetImports.update(ref_sheetImports)
             else:
-                sheetImport = dict(sheet=sheet, tag="", deckId="", path=path)
-                sheets.append(sheetImport)
+                sheet_title = sheet.title.text
+                sheets[sheet_title] = sheet
+                sheetImports[sheet_title] = dict(tag="", deckId="", path=path)
         doc_title = os.path.basename(self.file)[:-6]
-        return sheets, doc_title
+        return sheets, sheetImports, doc_title
 
     def importMap(self, sheetImport: dict):
         rootTopic = sheetImport['sheet'].topic
