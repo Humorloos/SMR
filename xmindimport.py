@@ -10,6 +10,7 @@ from anki.utils import splitFields, joinFields, intTime, guid64, timestampID
 from .sheetselectors import *
 from .utils import *
 from .consts import *
+from .xmanager import XManager
 
 
 # TODO: adjust sheet selection windows to adjust to the window size
@@ -27,21 +28,19 @@ class XmindImporter(NoteImporter):
     def __init__(self, col, file):
         NoteImporter.__init__(self, col, file)
         self.model = col.models.byName(X_MODEL_NAME)
-        self.sheets = None
         self.mw = aqt.mw
+        self.sheets = None
+        self.sheetImports = None
         self.currentSheetImport = dict()
         self.mediaDir = os.path.join(os.path.dirname(col.path),
                                      'collection.media')
         self.srcDir = tempfile.mkdtemp()
-        self.xZip = zipfile.ZipFile(file, 'r')
         self.warnings = []
         self.deckId = ''
         self.notesToAdd = dict()
         self.running = True
-        self.soup = BeautifulSoup(self.xZip.read('content.xml'),
-                                  features='html.parser')
-        self.tagList = self.soup('topic')
         self.repair = False
+        self.managers = [XManager(file)]
         # set up ontology
         self.onto = owlready2.get_ontology(
             os.path.join(ADDON_PATH, 'resources', 'onto.owl'))
