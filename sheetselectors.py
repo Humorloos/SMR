@@ -59,7 +59,7 @@ class SheetSelector(QDialog):
 
     def getInputs(self):
         return {'sheetImports': self.sheetImports, 'repair': self.repair,
-                'deckId': self.deckId}
+                'deckId': self.deckId, 'running': self.running}
 
 
 class SingleSheetSelector(SheetSelector):
