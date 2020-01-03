@@ -26,7 +26,6 @@ class TestGetXSheets(TestXmindImporter):
         act = self.xmindImporter.get_x_sheets(self.xmindImporter.soup,
                                               self.xmindImporter.file)
         self.assertEqual(len(act[0]), 3)
-        self.assertEqual(act[2], 'example map')
 
 
 class TestImportSheets(TestXmindImporter):
