@@ -1,10 +1,13 @@
 import os
 import sys
+import pickle
 
-from ..sheetselectors import SingleSheetSelector, MultiSheetSelector
+from XmindImport.sheetselectors import SingleSheetSelector, MultiSheetSelector
 from XmindImport.consts import ADDON_PATH
 
 from PyQt5 import QtWidgets
+
+SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support', 'sheetselectors')
 
 # if __name__ == "__main__":
 #     app = QtWidgets.QApplication(sys.argv)
@@ -17,10 +20,9 @@ from PyQt5 import QtWidgets
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    file = os.path.join(ADDON_PATH, 'tests', 'support',
-                        'testmapmultsheet.xmind')
-    doc = load(file)
-    sheets = doc.getSheets()
-    Dialog = MultiSheetSelector(sheets, os.path.basename(file)[:-6])
+    sheetImports = pickle.load(open(os.path.join(SUPPORT_PATH, 'sheetImports.p'), "rb"))
+    Dialog = MultiSheetSelector(sheetImports)
     Dialog.show()
-    sys.exit(app.exec_())
+    app.exec_()
+    act = Dialog.sheetImports
+    print('done')
