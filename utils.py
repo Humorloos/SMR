@@ -140,7 +140,7 @@ def getNodeContent(tagList, tag):
     title = getNodeTitle(tag)
 
     if title:
-        content += '<span class = "title">' + title
+        content += title
 
     # If the node contains a link to another node, add the text of that
     # node. Use Beautifulsoup because minidom can't find nodes by attributes
@@ -151,9 +151,7 @@ def getNodeContent(tagList, tag):
             content += ' '
             content += crosslinkTitle
         else:
-            content += '<span class = "title">' + crosslinkTitle
-    if content:
-        content += '</span>'
+            content = crosslinkTitle
 
     # if necessary add image
     attachment = getNodeImg(tag=tag)

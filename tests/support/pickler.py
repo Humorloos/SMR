@@ -4,6 +4,7 @@ import os
 import pickle
 import sys
 
+from bs4 import BeautifulSoup
 from PyQt5 import QtWidgets
 
 from tests.shared import getEmptyCol
@@ -31,7 +32,8 @@ def getSheetImports():
 def getSelectedSheets():
     app = QtWidgets.QApplication(sys.argv)
     sheetImports = pickle.load(
-        open(os.path.join(SUPPORT_PATH, 'sheetselectors', 'sheetImports.p'), "rb"))
+        open(os.path.join(SUPPORT_PATH, 'sheetselectors', 'sheetImports.p'),
+             "rb"))
     Dialog = MultiSheetSelector(sheetImports)
     Dialog.show()
     app.exec_()
@@ -43,5 +45,20 @@ def getSelectedSheets():
              'rb'))
 
 
+def getSheetBiologicalPsychology():
+    col = getEmptyCol()
+    map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
+    xmindImporter = XmindImporter(col=col, file=map)
+    sheets = xmindImporter.get_x_sheets(
+        xmindImporter.soup, xmindImporter.file)[0]
+    with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
+                           'sheet_biological_psychology.xml'), 'w') as file:
+        file.write(str(sheets['biological psychology']))
+    with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
+                           'sheet_biological_psychology.xml'), 'r') as file:
+        return BeautifulSoup(file.read(), features='html.parser')
+
+
 sheetImports = getSheetImports()
 selectedSheets = getSelectedSheets()
+sheetBiologicalPsychology = getSheetBiologicalPsychology()
