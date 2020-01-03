@@ -56,17 +56,17 @@ class XmindImporter(NoteImporter):
                 pass
 
     def run(self):
-        imp_sheets, doc_title = self.get_x_sheets(self.soup, self.file)
+        sheets, imp_sheets = self.get_x_sheets(self.soup, self.file)
         if len(imp_sheets) > 1:
-            selector = MultiSheetSelector(imp_sheets, doc_title)
+            selector = MultiSheetSelector(imp_sheets)
         else:
-            selector = SingleSheetSelector(imp_sheets, doc_title)
+            selector = SingleSheetSelector(imp_sheets)
         self.mw.progress.finish()
         selector.exec_()
         if not selector.running:
             self.running = False
             self.log = ['Import canceled']
-        selectedSheets = selector.sheets
+        selectedSheets = selector.sheetImports
         if not self.running:
             return
         self.importSheets(selectedSheets)
@@ -124,7 +124,7 @@ class XmindImporter(NoteImporter):
                     ref_zip = zipfile.ZipFile(clean_path, 'r')
                     ref_soup = BeautifulSoup(ref_zip.read('content.xml'),
                                              features='html.parser')
-                    ref_sheets, ref_sheetImports, _ = self.get_x_sheets(
+                    ref_sheets, ref_sheetImports = self.get_x_sheets(
                         ref_soup, clean_path)
                     sheets.update(ref_sheets)
                     sheetImports.update(ref_sheetImports)
@@ -132,8 +132,7 @@ class XmindImporter(NoteImporter):
                 sheet_title = sheet.title.text
                 sheets[sheet_title] = sheet
                 sheetImports[sheet_title] = dict(tag="", deckId="", path=path)
-        doc_title = os.path.basename(self.file)[:-6]
-        return sheets, sheetImports, doc_title
+        return sheets, sheetImports
 
     def importMap(self, sheetImport: dict):
         rootTopic = sheetImport['sheet'].topic
