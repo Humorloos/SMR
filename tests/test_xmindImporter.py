@@ -7,6 +7,7 @@ from tests.shared import getEmptyCol
 from XmindImport.consts import ADDON_PATH
 from XmindImport.xminder import XmindImporter
 
+
 class TestXmindImporter(TestCase):
     def setUp(self):
         self.col = getEmptyCol()
@@ -22,7 +23,8 @@ class TestInit(TestXmindImporter):
 
 class TestGetXSheets(TestXmindImporter):
     def test_example_sheets(self):
-        act = self.xmindImporter.get_x_sheets(self.xmindImporter.soup)
+        act = self.xmindImporter.get_x_sheets(self.xmindImporter.soup,
+                                              self.xmindImporter.file)
         self.assertEqual(len(act[0]), 3)
         self.assertEqual(act[1], 'example map')
 

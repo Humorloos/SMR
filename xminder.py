@@ -56,7 +56,7 @@ class XmindImporter(NoteImporter):
                 pass
 
     def run(self):
-        imp_sheets, doc_title = self.get_x_sheets(self.soup)
+        imp_sheets, doc_title = self.get_x_sheets(self.soup, self.file)
         if len(imp_sheets) > 1:
             selector = MultiSheetSelector(imp_sheets, doc_title)
         else:
@@ -105,13 +105,12 @@ class XmindImporter(NoteImporter):
         shutil.rmtree(self.srcDir)
         print("fertig")
 
-    def get_x_sheets(self, soup):
+    def get_x_sheets(self, soup, path):
         imp_sheets = soup('sheet')
         # load sheets from soup
         sheets = list()
         for sheet in imp_sheets:
             # get reference sheets
-            # TODO: add file path for each sheet
             if sheet('title', recursive=False)[0].text == 'ref':
                 ref_tags = getChildnodes(sheet.topic)
                 ref_paths = map(getNodeHyperlink, ref_tags)
@@ -121,12 +120,13 @@ class XmindImporter(NoteImporter):
                     clean_path = clean_path.replace('%20', ' ')
                     clean_path = clean_path.split('/')
                     clean_path[0] = clean_path[0] + '\\'
-                    ref_zip = zipfile.ZipFile(os.path.join(*clean_path), 'r')
+                    clean_path = os.path.join(*clean_path)
+                    ref_zip = zipfile.ZipFile(clean_path, 'r')
                     ref_soup = BeautifulSoup(ref_zip.read('content.xml'),
                                              features='html.parser')
-                    sheets.extend(self.get_x_sheets(ref_soup)[0])
+                    sheets.extend(self.get_x_sheets(ref_soup, clean_path)[0])
             else:
-                sheetImport = dict(sheet=sheet, tag="", deckId="")
+                sheetImport = dict(sheet=sheet, tag="", deckId="", path=path)
                 sheets.append(sheetImport)
         doc_title = os.path.basename(self.file)[:-6]
         return sheets, doc_title
