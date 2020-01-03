@@ -219,7 +219,7 @@ class MultiSheetSelector(SheetSelector):
             self.reject)
 
     def on_ok(self):
-        new_sheets = list()
+        new_sheets = dict()
         deck_id = self.get_deck_id()
         repair = self.repairCheckbox.isChecked()
         for sheet_title in self.sheet_checkboxes:
@@ -229,6 +229,6 @@ class MultiSheetSelector(SheetSelector):
                     self.sheet_user_inputs[sheet_title].text())
                 new_sheet['deckId'] = deck_id
                 new_sheet['repair'] = repair
-                new_sheets.append(new_sheet)
+                new_sheets[sheet_title] = new_sheet
         self.sheetImports = new_sheets
         self.accept()
