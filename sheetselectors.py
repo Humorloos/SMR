@@ -22,6 +22,8 @@ class SheetSelector(QDialog):
         self.deck = None
         self.repairCheckbox = None
         self.running = True
+        self.deckId = None
+        self.repair = False
 
         self.build()
 
@@ -37,7 +39,7 @@ class SheetSelector(QDialog):
         else:
             deck_name = self.deck.deckName
         return " " + (deck_name + '_' + userInput).replace(
-                " ", "_") + " "
+            " ", "_") + " "
 
     def get_deck_id(self):
         if self.deck:
@@ -54,6 +56,10 @@ class SheetSelector(QDialog):
         repairCheckbox.setText('Repair')
         self.repairCheckbox = repairCheckbox
         sheetLayout.addWidget(repairCheckbox)
+
+    def getInputs(self):
+        return {'sheetImports': self.sheetImports, 'repair': self.repair,
+                'deckId': self.deckId}
 
 
 class SingleSheetSelector(SheetSelector):
@@ -127,8 +133,8 @@ class SingleSheetSelector(SheetSelector):
     def on_ok(self):
         title = list(self.sheetImports.keys())[0]
         self.sheetImports[title]['tag'] = self.getTag(self.user_input.text())
-        self.sheetImports[title]['deckId'] = self.get_deck_id()
-        self.sheetImports[title]['repair'] = self.repairCheckbox.isChecked()
+        self.deckId = self.get_deck_id()
+        self.repair = self.repairCheckbox.isChecked()
         self.accept()
 
 
@@ -220,15 +226,13 @@ class MultiSheetSelector(SheetSelector):
 
     def on_ok(self):
         new_sheets = dict()
-        deck_id = self.get_deck_id()
-        repair = self.repairCheckbox.isChecked()
+        self.deckId = self.get_deck_id()
+        self.repair = self.repairCheckbox.isChecked()
         for sheet_title in self.sheet_checkboxes:
             if self.sheet_checkboxes[sheet_title].isChecked():
                 new_sheet = self.sheetImports[sheet_title]
                 new_sheet['tag'] = self.getTag(
                     self.sheet_user_inputs[sheet_title].text())
-                new_sheet['deckId'] = deck_id
-                new_sheet['repair'] = repair
                 new_sheets[sheet_title] = new_sheet
         self.sheetImports = new_sheets
         self.accept()

@@ -17,7 +17,7 @@ if __name__ == "__main__":
     Dialog = SingleSheetSelector(sheetImport)
     Dialog.show()
     app.exec_()
-    act = Dialog.sheetImports
+    act = Dialog.getInputs()
     print('done')
 
 if __name__ == "__main__":
@@ -27,5 +27,5 @@ if __name__ == "__main__":
     Dialog = MultiSheetSelector(sheetImports)
     Dialog.show()
     app.exec_()
-    act = Dialog.sheetImports
+    act = Dialog.getInputs()
     print('done')
