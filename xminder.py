@@ -63,17 +63,17 @@ class XmindImporter(NoteImporter):
             selector = SingleSheetSelector(imp_sheets)
         self.mw.progress.finish()
         selector.exec_()
-        if not selector.running:
-            self.running = False
+        userInputs = selector.getInputs()
+        if not userInputs['running']:
             self.log = ['Import canceled']
-        selectedSheets = selector.sheetImports
-        if not self.running:
             return
+        selectedSheets = userInputs['sheetImports']
+        self.deckId = userInputs['deckId']
+        self.repair = userInputs['repair']
         self.importSheets(selectedSheets)
 
     def importSheets(self, selectedSheets):
-        self.deckId = selectedSheets[0]['deckId']
-        self.repair = selectedSheets[0]['repair']
+
         self.mw.progress.start(immediate=True, label='importing...')
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
@@ -131,7 +131,7 @@ class XmindImporter(NoteImporter):
             else:
                 sheet_title = sheet.title.text
                 sheets[sheet_title] = sheet
-                sheetImports[sheet_title] = dict(tag="", deckId="", path=path)
+                sheetImports[sheet_title] = dict(tag="", path=path)
         return sheets, sheetImports
 
     def importMap(self, sheetImport: dict):
