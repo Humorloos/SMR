@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 
 from XmindImport.consts import ADDON_PATH
 from XmindImport.utils import getNodeContent, getNodeTitle, getNodeImg, \
-    getNodeHyperlink
+    getNodeHyperlink, isEmptyNode
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 
@@ -52,3 +52,12 @@ class TestGetNodeHyperlink(TestCase):
             tag = BeautifulSoup(file.read(), features='html.parser').topic
         act = getNodeHyperlink(tag)
         self.assertEqual(act, None)
+
+
+class TestIsEmptyNode(TestCase):
+    def test_not_empty(self):
+        with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
+                               'sheet_biological_psychology.xml'), 'r') as file:
+            tag = BeautifulSoup(file.read(), features='html.parser').topic
+        act = isEmptyNode(tag)
+        self.assertEqual(act, False)
