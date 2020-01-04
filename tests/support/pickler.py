@@ -10,7 +10,7 @@ from PyQt5 import QtWidgets
 from tests.shared import getEmptyCol
 
 from XmindImport.consts import ADDON_PATH
-from XmindImport.xminder import XmindImporter
+from XmindImport.xmindimport import XmindImporter
 from XmindImport.sheetselectors import MultiSheetSelector
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')

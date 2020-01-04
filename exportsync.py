@@ -6,7 +6,7 @@ from aqt.utils import tooltip
 from anki.utils import splitFields
 
 from .utils import *
-from .xminder import XmindImporter
+from .xmindimport import XmindImporter
 
 
 class MapSyncer:

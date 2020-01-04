@@ -5,7 +5,7 @@ import anki.importing as importing
 # import aqt.deckbrowser as deckbrowser
 
 from .config import *
-from .xminder import XmindImporter
+from .xmindimport import XmindImporter
 # noinspection PyUnresolvedReferences
 from . import monkeypatches
 # noinspection PyUnresolvedReferences
