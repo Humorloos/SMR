@@ -14,6 +14,10 @@ class XManager:
         self.soup = BeautifulSoup(xZip.read('content.xml'),
                                   features='html.parser')
         self.tagList = self.soup('topic')
+        self.sheets = dict()
+        for sheet in self.soup('sheet'):
+            sheetTitle = sheet('title', recursive=False)[0].text
+            self.sheets[sheetTitle] = sheet
 
     def getNodeContent(self, tag):
         content = ''

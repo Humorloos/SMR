@@ -20,8 +20,7 @@ def getSheetImports():
     col = getEmptyCol()
     map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
     xmindImporter = XmindImporter(col=col, file=map)
-    sheetImports = xmindImporter.get_x_sheets(
-        xmindImporter.soup, xmindImporter.file)[1]
+    sheetImports = xmindImporter.getRefManagers(xmindImporter.xManagers['root'])[1]
     pickle.dump(sheetImports, open(
         os.path.join(SUPPORT_PATH, 'sheetSelectors', 'sheetImports.p'), 'wb'))
     return pickle.load(
@@ -49,8 +48,7 @@ def getSheetBiologicalPsychology():
     col = getEmptyCol()
     map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
     xmindImporter = XmindImporter(col=col, file=map)
-    sheets = xmindImporter.get_x_sheets(
-        xmindImporter.soup, xmindImporter.file)[0]
+    sheets = xmindImporter.getRefManagers(xmindImporter.xManagers['root'])[0]
     with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
                            'sheet_biological_psychology.xml'), 'w') as file:
         file.write(str(sheets['biological psychology']))

@@ -37,10 +37,11 @@ class XmindImporter(NoteImporter):
         self.srcDir = tempfile.mkdtemp()
         self.warnings = []
         self.deckId = ''
+        self.tags = None
         self.notesToAdd = dict()
         self.running = True
         self.repair = False
-        self.xManagers = {'root': XManager(file), 'ref': list()}
+        self.xManagers = [XManager(file)]
         # set up ontology
         self.onto = owlready2.get_ontology(
             os.path.join(ADDON_PATH, 'resources', 'onto.owl'))
@@ -54,22 +55,62 @@ class XmindImporter(NoteImporter):
             class Child(Concept >> Concept):
                 pass
 
-    def run(self):
-        self.sheets, self.sheetImports = self.get_x_sheets(
-            self.xManagers['root'])
-        if len(self.sheetImports) > 1:
-            selector = MultiSheetSelector(self.sheetImports)
+    def getAnswerDict(self, nodeTag):
+        # Check whether subtopic is not empty
+        isAnswer = True
+        if isEmptyNode(nodeTag):
+            isAnswer = False
         else:
-            selector = SingleSheetSelector(self.sheetImports)
+            nodeContent = getNodeContent(nodeTag)
+
+        # Check whether subtopic contains a crosslink
+        crosslink = getNodeCrosslink(nodeTag)
+        return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
+                    crosslink=crosslink)
+
+    def getValidSheets(self):
+        sheets = list()
+        for manager in self.xManagers:
+            validSheets = filter(lambda k: k != 'ref',
+                                 list(manager.sheets.keys()))
+            sheets.extend(validSheets)
+        return sheets
+
+    def getRefManagers(self, xManager):
+        for key in xManager.sheets:
+            sheet = xManager.sheets[key]
+            # get reference sheets
+            if sheet('title', recursive=False)[0].text == 'ref':
+                ref_tags = getChildnodes(sheet.topic)
+                ref_paths = map(xManager.getNodeHyperlink, ref_tags)
+                for path in filter(lambda ref_path: ref_path is not None,
+                                   ref_paths):
+                    clean_path = path.replace('file://', '')
+                    clean_path = clean_path.replace('%20', ' ')
+                    clean_path = clean_path.split('/')
+                    clean_path[0] = clean_path[0] + '\\'
+                    clean_path = os.path.join(*clean_path)
+                    ref_xManager = XManager(clean_path)
+                    self.xManagers.append(ref_xManager)
+                    self.getRefManagers(ref_xManager)
+
+    def run(self):
+        self.getRefManagers(self.xManagers[0])
+        sheets = self.getValidSheets()
+        if len(self.sheetImports) > 1:
+            selector = MultiSheetSelector(sheets)
+        else:
+            selector = SingleSheetSelector(sheets)
         self.mw.progress.finish()
         selector.exec_()
         userInputs = selector.getInputs()
         if not userInputs['running']:
             self.log = ['Import canceled']
             return
-        selectedSheets = userInputs['sheetImports']
+        selectedSheets = userInputs['selectedSheets']
         self.deckId = userInputs['deckId']
         self.repair = userInputs['repair']
+        self.tags = userInputs['tags']
         self.importSheets(selectedSheets)
 
     def importSheets(self, selectedSheets):

@@ -21,12 +21,16 @@ class TestXmindImporter(TestCase):
         self.xmindImporter = XmindImporter(col=self.col, file=self.map)
 
 
-class TestGetXSheets(TestXmindImporter):
+class TestGetRefManagers(TestXmindImporter):
     def test_example_sheets(self):
-        act = self.xmindImporter.get_x_sheets(
-            self.xmindImporter.xManagers['root'])
-        self.assertEqual(len(act[0]), 3)
+        self.xmindImporter.getRefManagers(self.xmindImporter.xManagers[0])
+        self.assertEqual(len(self.xmindImporter.xManagers), 2)
 
+
+class TestGetValidSheets(TestXmindImporter):
+    def test_example_sheets(self):
+        act = self.xmindImporter.getValidSheets()
+        self.assertEqual(act, ['biological psychology', 'clinical psychology'])
 
 class TestImportSheets(TestXmindImporter):
     def test_import_example(self):

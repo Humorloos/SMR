@@ -20,10 +20,8 @@ class TestSheetSelector(TestCase):
 class TestSingleSheetSelector(TestSheetSelector):
     def setUp(self):
         super().setUp()
-        self.sheetImport = {'biological psychology': pickle.load(
-            open(os.path.join(SUPPORT_PATH, 'sheetImports.p'), "rb"))[
-            'biological psychology']}
-        self.singleSheetSelector = SingleSheetSelector(self.sheetImport)
+        self.sheets = ['biological psychology']
+        self.singleSheetSelector = SingleSheetSelector(self.sheets)
 
 
 class TestInitSingle(TestSingleSheetSelector):
@@ -37,9 +35,9 @@ class TestInitSingle(TestSingleSheetSelector):
 class TestMultiSheetSelector(TestSheetSelector):
     def setUp(self):
         super().setUp()
-        self.sheetImports = pickle.load(
-            open(os.path.join(SUPPORT_PATH, 'sheetImports.p'), "rb"))
-        self.multiSheetSelector = MultiSheetSelector(self.sheetImports)
+        self.sheets = ['biological psychology', 'clinical psychology',
+                       'general psychology']
+        self.multiSheetSelector = MultiSheetSelector(self.sheets)
 
 
 class TestInitMulti(TestMultiSheetSelector):

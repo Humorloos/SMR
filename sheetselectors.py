@@ -9,13 +9,13 @@ from .consts import ICONS_PATH
 
 
 class SheetSelector(QDialog):
-    def __init__(self, sheetImports):
+    def __init__(self, sheets):
         try:
             self.parent = aqt.mw.app.activeWindow() or aqt.mw
         except:
             self.parent = None
         super().__init__(parent=self.parent)
-        self.sheetImports = sheetImports
+        self.sheets = sheets
         self.width = 600
         self.height = 100
         self.deck_text = 'Choose Deck:'
@@ -24,6 +24,7 @@ class SheetSelector(QDialog):
         self.running = True
         self.deckId = None
         self.repair = False
+        self.tags = dict()
 
         self.build()
 
@@ -58,8 +59,9 @@ class SheetSelector(QDialog):
         sheetLayout.addWidget(repairCheckbox)
 
     def getInputs(self):
-        return {'sheetImports': self.sheetImports, 'repair': self.repair,
-                'deckId': self.deckId, 'running': self.running}
+        return {'selectedSheets': self.sheets, 'repair': self.repair,
+                'deckId': self.deckId, 'running': self.running,
+                'tags': self.tags}
 
 
 class SingleSheetSelector(SheetSelector):
@@ -71,7 +73,7 @@ class SingleSheetSelector(SheetSelector):
         if not self.parent:
             self.width *= 2
             self.height *= 2
-        title = list(self.sheetImports.keys())[0]
+        title = self.sheets[0]
         tag_text = 'Enter name for sheet "' + title + '":'
         self.setWindowTitle('Xmind Import')
         self.setWindowIcon(QIcon(os.path.join(ICONS_PATH, "icon.ico")))
@@ -131,21 +133,21 @@ class SingleSheetSelector(SheetSelector):
             self.reject)
 
     def on_ok(self):
-        title = list(self.sheetImports.keys())[0]
-        self.sheetImports[title]['tag'] = self.getTag(self.user_input.text())
+        title = self.sheets[0]
+        self.tags[title] = self.getTag(self.user_input.text())
         self.deckId = self.get_deck_id()
         self.repair = self.repairCheckbox.isChecked()
         self.accept()
 
 
 class MultiSheetSelector(SheetSelector):
-    def __init__(self, sheetImports):
+    def __init__(self, sheets):
         self.sheet_checkboxes = dict()
         self.sheet_user_inputs = dict()
-        super().__init__(sheetImports)
+        super().__init__(sheets)
 
     def build(self):
-        self.height += ((len(self.sheetImports) + 2) * 20)
+        self.height += ((len(self.sheets) + 2) * 20)
         # For Debugging: set size to twice the original size
         if not self.parent:
             self.width *= 2
@@ -184,7 +186,7 @@ class MultiSheetSelector(SheetSelector):
         sheet_v_layout_1 = QtWidgets.QVBoxLayout()
         sheet_v_layout_2 = QtWidgets.QVBoxLayout()
 
-        for sheet_title in self.sheetImports:
+        for sheet_title in self.sheets:
             title = sheet_title
 
             sheet_checkbox = QtWidgets.QCheckBox(layout)
@@ -225,14 +227,12 @@ class MultiSheetSelector(SheetSelector):
             self.reject)
 
     def on_ok(self):
-        new_sheets = dict()
+        self.sheets = list()
         self.deckId = self.get_deck_id()
         self.repair = self.repairCheckbox.isChecked()
         for sheet_title in self.sheet_checkboxes:
             if self.sheet_checkboxes[sheet_title].isChecked():
-                new_sheet = self.sheetImports[sheet_title]
-                new_sheet['tag'] = self.getTag(
+                self.tags[sheet_title] = self.getTag(
                     self.sheet_user_inputs[sheet_title].text())
-                new_sheets[sheet_title] = new_sheet
-        self.sheetImports = new_sheets
+                self.sheets.append(sheet_title)
         self.accept()
