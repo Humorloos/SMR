@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 class XManager:
     def __init__(self, file):
         xZip = zipfile.ZipFile(file, 'r')
+        self.file = file
         self.soup = BeautifulSoup(xZip.read('content.xml'),
                                   features='html.parser')
         self.tagList = self.soup('topic')
