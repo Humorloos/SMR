@@ -1,30 +1,30 @@
 import os
+import pickle
 
 from unittest import TestCase
 
-from tests.shared import getEmptyCol
+from bs4 import BeautifulSoup
+
+from anki import Collection
 
 from XmindImport.consts import ADDON_PATH
-from XmindImport.xminder import XmindImporter
+from XmindImport.xmindimport import XmindImporter
+
+SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 
 
 class TestXmindImporter(TestCase):
     def setUp(self):
-        self.col = getEmptyCol()
+        colPath = os.path.join(SUPPORT_PATH, 'collection.anki2')
+        self.col = Collection(colPath)
         self.map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
         self.xmindImporter = XmindImporter(col=self.col, file=self.map)
 
 
-class TestInit(TestXmindImporter):
-    def test_model(self):
-        # self.assertEqual()
-        print('hi')
-
-
 class TestGetXSheets(TestXmindImporter):
     def test_example_sheets(self):
-        act = self.xmindImporter.get_x_sheets(self.xmindImporter.soup,
-                                              self.xmindImporter.file)
+        act = self.xmindImporter.get_x_sheets(
+            self.xmindImporter.xManagers['root'])
         self.assertEqual(len(act[0]), 3)
 
 

@@ -40,7 +40,7 @@ class XmindImporter(NoteImporter):
         self.notesToAdd = dict()
         self.running = True
         self.repair = False
-        self.managers = [XManager(file)]
+        self.xManagers = {'root': XManager(file), 'ref': list()}
         # set up ontology
         self.onto = owlready2.get_ontology(
             os.path.join(ADDON_PATH, 'resources', 'onto.owl'))
@@ -55,11 +55,12 @@ class XmindImporter(NoteImporter):
                 pass
 
     def run(self):
-        sheets, imp_sheets = self.get_x_sheets(self.soup, self.file)
-        if len(imp_sheets) > 1:
-            selector = MultiSheetSelector(imp_sheets)
+        self.sheets, self.sheetImports = self.get_x_sheets(
+            self.xManagers['root'])
+        if len(self.sheetImports) > 1:
+            selector = MultiSheetSelector(self.sheetImports)
         else:
-            selector = SingleSheetSelector(imp_sheets)
+            selector = SingleSheetSelector(self.sheetImports)
         self.mw.progress.finish()
         selector.exec_()
         userInputs = selector.getInputs()
@@ -72,7 +73,6 @@ class XmindImporter(NoteImporter):
         self.importSheets(selectedSheets)
 
     def importSheets(self, selectedSheets):
-
         self.mw.progress.start(immediate=True, label='importing...')
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
@@ -104,15 +104,15 @@ class XmindImporter(NoteImporter):
         shutil.rmtree(self.srcDir)
         print("fertig")
 
-    def get_x_sheets(self, soup, path):
-        imp_sheets = soup('sheet')
+    def get_x_sheets(self, xManager):
+        imp_sheets = xManager.soup('sheet')
         # load sheets from soup
         sheets, sheetImports = dict(), dict()
         for sheet in imp_sheets:
             # get reference sheets
             if sheet('title', recursive=False)[0].text == 'ref':
                 ref_tags = getChildnodes(sheet.topic)
-                ref_paths = map(getNodeHyperlink, ref_tags)
+                ref_paths = map(xManager.getNodeHyperlink, ref_tags)
                 for path in filter(lambda ref_path: ref_path is not None,
                                    ref_paths):
                     clean_path = path.replace('file://', '')
@@ -120,17 +120,16 @@ class XmindImporter(NoteImporter):
                     clean_path = clean_path.split('/')
                     clean_path[0] = clean_path[0] + '\\'
                     clean_path = os.path.join(*clean_path)
-                    ref_zip = zipfile.ZipFile(clean_path, 'r')
-                    ref_soup = BeautifulSoup(ref_zip.read('content.xml'),
-                                             features='html.parser')
+                    ref_xManager = XManager(clean_path)
                     ref_sheets, ref_sheetImports = self.get_x_sheets(
-                        ref_soup, clean_path)
+                        ref_xManager)
                     sheets.update(ref_sheets)
                     sheetImports.update(ref_sheetImports)
+                    self.xManagers['ref'].append(ref_xManager)
             else:
                 sheet_title = sheet.title.text
                 sheets[sheet_title] = sheet
-                sheetImports[sheet_title] = dict(tag="", path=path)
+                sheetImports[sheet_title] = dict(tag="", path=xManager.file)
         return sheets, sheetImports
 
     def importMap(self, sheetImport: dict):
