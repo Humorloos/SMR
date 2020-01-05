@@ -29,24 +29,25 @@ class XmindImporter(NoteImporter):
         NoteImporter.__init__(self, col, file)
         self.model = col.models.byName(X_MODEL_NAME)
         self.mw = aqt.mw
-        self.sheets = None
-        self.sheetImports = None
-        self.currentSheetImport = dict()
         self.mediaDir = os.path.join(os.path.dirname(col.path),
                                      'collection.media')
         self.srcDir = tempfile.mkdtemp()
         self.warnings = []
         self.deckId = ''
-        self.tags = None
-        self.notesToAdd = dict()
+        self.tags = dict()
         self.running = True
         self.repair = False
         self.xManagers = [XManager(file)]
+        self.activeManager = None
+        self.currentSheetImport = ''
         # set up ontology
         self.onto = owlready2.get_ontology(
             os.path.join(ADDON_PATH, 'resources', 'onto.owl'))
         with self.onto:
             class Concept(owlready2.Thing):
+                pass
+
+            class Root(Concept):
                 pass
 
             class Parent(Concept >> Concept):
@@ -157,6 +158,9 @@ class XmindImporter(NoteImporter):
                                   siblings=siblings, connections=connections)
 
     def getValidSheets(self):
+        """
+        :return: sheets of all xManagers with concept maps to import
+        """
         sheets = list()
         for manager in self.xManagers:
             validSheets = filter(lambda k: k != 'ref',
@@ -165,6 +169,10 @@ class XmindImporter(NoteImporter):
         return sheets
 
     def getRefManagers(self, xManager):
+        """
+        :param xManager: the xManager to get References from
+        :return: adds xManagers referenced by ref sheet to xManagers list
+        """
         for key in xManager.sheets:
             sheet = xManager.sheets[key]
             # get reference sheets
@@ -182,38 +190,36 @@ class XmindImporter(NoteImporter):
                     self.xManagers.append(ref_xManager)
                     self.getRefManagers(ref_xManager)
 
-    def run(self):
-        self.getRefManagers(self.xManagers[0])
-        sheets = self.getValidSheets()
-        if len(self.sheetImports) > 1:
-            selector = MultiSheetSelector(sheets)
-        else:
-            selector = SingleSheetSelector(sheets)
-        self.mw.progress.finish()
-        selector.exec_()
-        userInputs = selector.getInputs()
-        if not userInputs['running']:
-            self.log = ['Import canceled']
-            return
-        selectedSheets = userInputs['selectedSheets']
-        self.deckId = userInputs['deckId']
-        self.repair = userInputs['repair']
-        self.tags = userInputs['tags']
-        self.importSheets(selectedSheets)
+    def importMap(self):
+        """
+        :return: adds the roottopic of the active sheet to self.onto and starts
+            the map import by calling getQuestions
+        """
+        manager = self.activeManager
+        rootTopic = manager.sheets[self.currentSheetImport].topic
+        # Set model to Stepwise map retrieval model
+        xModel = self.col.models.byName(X_MODEL_NAME)
+        self.col.decks.select(self.deckId)
+        self.col.decks.current()['mid'] = xModel['id']
+        rootDict = self.getAnswerDict(nodeTag=rootTopic, root=True)
+        self.getQuestions(answerDict=rootDict,
+                          ref=manager.getNodeTitle(rootTopic))
 
     def importSheets(self, selectedSheets):
-        self.mw.progress.start(immediate=True, label='importing...')
-        self.mw.app.processEvents()
-        self.mw.checkpoint("Import")
-        for sheetImport in selectedSheets:
-            self.currentSheetImport = sheetImport
-            self.currentSheetImport['ID'] = \
-                self.currentSheetImport['sheet']['id']
-            self.notesToAdd[self.currentSheetImport['ID']] = list()
-            self.mw.progress.update(label='importing %s' % sheetImport['tag'],
-                                    maybeShow=False)
-            self.mw.app.processEvents()
-            self.importMap(sheetImport)
+        """
+        :param selectedSheets: sheets that were selected by the user in
+            Selector Dialog
+        :return: Imports maps in all sheets contained in selectedSheets
+        """
+        for manager in self.xManagers:
+            self.activeManager = manager
+            validSheets = filter(lambda s: s in selectedSheets, manager.sheets)
+            for sheet in validSheets:
+                self.currentSheetImport = sheet
+                self.mw.progress.update(label='importing %s' % sheet['tag'],
+                                        maybeShow=False)
+                self.mw.app.processEvents()
+                self.importMap()
         # add all notes to the collection
         if not self.running:
             return
@@ -233,104 +239,31 @@ class XmindImporter(NoteImporter):
         shutil.rmtree(self.srcDir)
         print("fertig")
 
-    def get_x_sheets(self, xManager):
-        imp_sheets = xManager.soup('sheet')
-        # load sheets from soup
-        sheets, sheetImports = dict(), dict()
-        for sheet in imp_sheets:
-            # get reference sheets
-            if sheet('title', recursive=False)[0].text == 'ref':
-                ref_tags = getChildnodes(sheet.topic)
-                ref_paths = map(xManager.getNodeHyperlink, ref_tags)
-                for path in filter(lambda ref_path: ref_path is not None,
-                                   ref_paths):
-                    clean_path = path.replace('file://', '')
-                    clean_path = clean_path.replace('%20', ' ')
-                    clean_path = clean_path.split('/')
-                    clean_path[0] = clean_path[0] + '\\'
-                    clean_path = os.path.join(*clean_path)
-                    ref_xManager = XManager(clean_path)
-                    ref_sheets, ref_sheetImports = self.get_x_sheets(
-                        ref_xManager)
-                    sheets.update(ref_sheets)
-                    sheetImports.update(ref_sheetImports)
-                    self.xManagers['ref'].append(ref_xManager)
-            else:
-                sheet_title = sheet.title.text
-                sheets[sheet_title] = sheet
-                sheetImports[sheet_title] = dict(tag="", path=xManager.file)
-        return sheets, sheetImports
-
-    def importMap(self, sheetImport: dict):
-        rootTopic = sheetImport['sheet'].topic
-        # Set model to Stepwise map retrieval model
-        xModel = self.col.models.byName(X_MODEL_NAME)
-        self.col.decks.select(self.currentSheetImport['deckId'])
-        self.col.decks.current()['mid'] = xModel['id']
-        rootDict = getAnswerDict(rootTopic)
-        self.getQuestions(answerDict=rootDict, ref=getNodeTitle(rootTopic))
-
-    # calls createNotes for each answer.
-    # Inputs:
-    # answer: parent answer node of the questions to get
-    # notes: list of notes for the notes to be created from the gotten questions
-    # AnswerContent: content of parent answer in parent anki note
-    # ref: current text for reference field
-    # aId: current id for id field
-    def getQuestions(self, answerDict: dict, sortId='',
-                     answerContent='', ref="", followsBridge=False):
-        # The reference doesn't have to be edited at the roottopic
-        if not answerDict['nodeTag'].previous_element.name == 'sheet':
-            # if the answerdict contains nothing (i.e. questions
-            # following multiple answers), just close the reference
-            if isEmptyNode(answerDict['nodeTag']) or followsBridge:
-                ref = ref + '</li>'
-            else:
-                ref = ref + ': ' + answerContent + '</li>'
-        questionDicts = self.findQuestionDicts(answer=answerDict['nodeTag'],
-                                               ref=ref, sortId=sortId)
-        siblingQuestions = self.getQuestionListForAnswer(answerDict)
-        for qId, questionDict in enumerate(questionDicts, start=1):
-            # Update the sorting ID
-            nextSortId = updateId(previousId=sortId, idToAppend=qId)
-            if self.running:
-                # if the current question serves as a bridge to serve as
-                # reference, do not get any notes for this bridge but for
-                # questions following its answers
-                if questionDict['isBridge']:
-                    answerDicts = self.findAnswerDicts(questionDict['nodeTag'])
-                    for aId, answerDict in enumerate(answerDicts, start=1):
-                        if getChildnodes(answerDict['nodeTag']):
-                            if answerDict['isAnswer']:
-                                answerContent, media = getNodeContent(
-                                    tagList=self.tagList,
-                                    tag=answerDict['nodeTag'])
-                                self.addMedia([media])
-                                answerContent = replaceSound(answerContent)
-                                newRef = ref + '<li>' + answerContent
-                            else:
-                                answerContent = ''
-                                newRef = ref
-                            self.getQuestions(answerDict=answerDict,
-                                              answerContent=answerContent,
-                                              ref=newRef,
-                                              sortId=updateId(
-                                                  previousId=nextSortId,
-                                                  idToAppend=aId),
-                                              followsBridge=True)
-                # if this is a regular question
-                else:
-                    siblings = list(map(lambda s: s['qId'], filter(
-                        lambda q: (q['qId'] != questionDict[
-                            'nodeTag']['id']) and not q['isConnection'],
-                        siblingQuestions)))
-                    connections = list(map(lambda s: s['qId'], filter(
-                        lambda q: (q['qId'] != questionDict[
-                            'nodeTag']['id']) and q['isConnection'],
-                        siblingQuestions)))
-                    self.addXNote(question=questionDict['nodeTag'],
-                                  ref=questionDict['ref'], sortId=nextSortId,
-                                  siblings=siblings, connections=connections)
+    def run(self):
+        """
+        :return: starts sheetselector dialog and runs import sheets with
+            selected sheets
+        """
+        self.getRefManagers(self.xManagers[0])
+        sheets = self.getValidSheets()
+        if len(sheets) > 1:
+            selector = MultiSheetSelector(sheets)
+        else:
+            selector = SingleSheetSelector(sheets)
+        self.mw.progress.finish()
+        selector.exec_()
+        userInputs = selector.getInputs()
+        if not userInputs['running']:
+            self.log = ['Import canceled']
+            return
+        selectedSheets = userInputs['selectedSheets']
+        self.deckId = userInputs['deckId']
+        self.repair = userInputs['repair']
+        self.tags = userInputs['tags']
+        self.mw.progress.start(immediate=True, label='importing...')
+        self.mw.app.processEvents()
+        self.mw.checkpoint("Import")
+        self.importSheets(selectedSheets)
 
     # creates a noteDict for this question, and
     # recursively calls getQuestions() to add notes following this question
@@ -485,7 +418,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
             if not crosslinkNode:
                 self.running = False
                 return None
-            crosslinkAnswerDict = getAnswerDict(crosslinkNode)
+            crosslinkAnswerDict = self.getAnswerDict(crosslinkNode)
             # Do not add crosslinks following crosslinks to avoid endless loops
             crosslinkQuestions = self.getQuestionListForAnswer(
                 answerDict=crosslinkAnswerDict, addCrosslinks=False)
@@ -545,7 +478,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
     def findAnswerDicts(self, question):
         answerDicts = list()
         for childNode in getChildnodes(question):
-            answerDict = getAnswerDict(childNode)
+            answerDict = self.getAnswerDict(childNode)
             answerDicts.append(answerDict)
         return answerDicts
 
