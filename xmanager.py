@@ -59,7 +59,7 @@ class XManager:
                 mediaPath = href[4:]
                 media['media'] = mediaPath
             content += '[sound:%s]' % os.path.basename(mediaPath)
-        return content, media
+        return {'content': content, 'media': media}
 
     def getNodeCrosslink(self, tag):
         href = self.getNodeHyperlink(tag)

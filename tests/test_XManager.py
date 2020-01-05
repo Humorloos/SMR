@@ -23,9 +23,9 @@ class TestGetNodeContent(TestXManager):
                                'sheet_biological_psychology.xml'), 'r') as file:
             tag = BeautifulSoup(file.read(), features='html.parser').topic
         act = self.xManager.getNodeContent(tag=tag)
-        self.assertEqual(act[0], 'biological psychology')
-        self.assertEqual(act[1]['image'], None)
-        self.assertEqual(act[1]['media'], None)
+        self.assertEqual(act['content'], 'biological psychology')
+        self.assertEqual(act['media']['image'], None)
+        self.assertEqual(act['media']['media'], None)
 
 
 class TestGetNodeTitle(TestXManager):

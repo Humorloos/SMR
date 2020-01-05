@@ -55,18 +55,106 @@ class XmindImporter(NoteImporter):
             class Child(Concept >> Concept):
                 pass
 
-    def getAnswerDict(self, nodeTag):
+            class Image(owlready2.AnnotationProperty):
+                pass
+
+            class Media(owlready2.AnnotationProperty):
+                pass
+
+            class Xid(owlready2.AnnotationProperty):
+                pass
+
+    def getAnswerDict(self, nodeTag, root=False):
+        """
+        :param nodeTag: The answer node to get the dict for
+        :param root: whether the node is the root or not
+        :return: dictionary containing information for creating a note from
+        this answer node, furthermore adds a Concept to onto for this node
+        """
         # Check whether subtopic is not empty
+        manager = self.activeManager
         isAnswer = True
-        if isEmptyNode(nodeTag):
+        concept = None
+        if manager.isEmptyNode(nodeTag):
             isAnswer = False
         else:
-            nodeContent = getNodeContent(nodeTag)
-
+            nodeContent = manager.getNodeContent(nodeTag)
+            if root:
+                concept = self.onto.Root(nodeContent['content'])
+            else:
+                concept = self.onto.Concept(nodeContent['content'])
+            concept.Image = nodeContent['media']['image']
+            concept.Media = nodeContent['media']['media']
+            concept.Xid = nodeTag['id']
         # Check whether subtopic contains a crosslink
-        crosslink = getNodeCrosslink(nodeTag)
+        crosslink = manager.getNodeCrosslink(nodeTag)
+        #Todo: check whether aID is really necessary
         return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
-                    crosslink=crosslink)
+                    crosslink=crosslink, concept=concept)
+
+    def getQuestions(self, answerDict: dict, sortId='',
+                     answerContent='', ref="", followsBridge=False):
+        """
+        :param answerDict: parent answer node of the questions to get
+        :param sortId: current id for sortId field
+        :param answerContent: content of parent answer in parent anki note
+        :param ref: current text for reference field
+        :param followsBridge: ???
+        :return: creates notes for each question following the answerDict
+        """
+        # The reference doesn't have to be edited at the roottopic
+        if not isinstance(answerDict['concept'], self.onto.Root):
+            # if the answerdict contains nothing (i.e. questions
+            # following multiple answers), just close the reference
+            if self.activeManager.isEmptyNode(
+                    answerDict['nodeTag']) or followsBridge:
+                ref = ref + '</li>'
+            else:
+                ref = ref + ': ' + answerContent + '</li>'
+        questionDicts = self.findQuestionDicts(answer=answerDict['nodeTag'],
+                                               ref=ref, sortId=sortId)
+        siblingQuestions = self.getQuestionListForAnswer(answerDict)
+        for qId, questionDict in enumerate(questionDicts, start=1):
+            # Update the sorting ID
+            nextSortId = updateId(previousId=sortId, idToAppend=qId)
+            if self.running:
+                # if the current question serves as a bridge to serve as
+                # reference, do not get any notes for this bridge but for
+                # questions following its answers
+                if questionDict['isBridge']:
+                    answerDicts = self.findAnswerDicts(questionDict['nodeTag'])
+                    for aId, answerDict in enumerate(answerDicts, start=1):
+                        if getChildnodes(answerDict['nodeTag']):
+                            if answerDict['isAnswer']:
+                                answerContent, media = getNodeContent(
+                                    tagList=self.tagList,
+                                    tag=answerDict['nodeTag'])
+                                self.addMedia([media])
+                                answerContent = replaceSound(answerContent)
+                                newRef = ref + '<li>' + answerContent
+                            else:
+                                answerContent = ''
+                                newRef = ref
+                            self.getQuestions(answerDict=answerDict,
+                                              answerContent=answerContent,
+                                              ref=newRef,
+                                              sortId=updateId(
+                                                  previousId=nextSortId,
+                                                  idToAppend=aId),
+                                              followsBridge=True)
+                # if this is a regular question
+                else:
+                    siblings = list(map(lambda s: s['qId'], filter(
+                        lambda q: (q['qId'] != questionDict[
+                            'nodeTag']['id']) and not q['isConnection'],
+                        siblingQuestions)))
+                    connections = list(map(lambda s: s['qId'], filter(
+                        lambda q: (q['qId'] != questionDict[
+                            'nodeTag']['id']) and q['isConnection'],
+                        siblingQuestions)))
+                    self.addXNote(question=questionDict['nodeTag'],
+                                  ref=questionDict['ref'], sortId=nextSortId,
+                                  siblings=siblings, connections=connections)
 
     def getValidSheets(self):
         sheets = list()
