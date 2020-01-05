@@ -42,3 +42,13 @@ class TestImportSheets(TestXmindImporter):
             selectedSheets.append(sheet_dict)
         self.xmindImporter.importSheets(selectedSheets)
         print('hi')
+
+
+class TestGetAnswerDict(TestImportMap):
+    def test_dict_for_root(self):
+        with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
+                               'sheet_biological_psychology.xml'), 'r') as file:
+            root = BeautifulSoup(file.read(), features='html.parser').topic
+        act = self.xmindImporter.getAnswerDict(root)
+        self.assertEqual('', '')
+
