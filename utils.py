@@ -115,14 +115,6 @@ def setNodeTitle(tag, title):
     tag.find('title', recursive=False).string = title
 
 
-def getChildnodes(tag):
-    try:
-        return tag.find('children', recursive=False).find(
-            'topics', recursive=False)('topic', recursive=False)
-    except AttributeError:
-        return []
-
-
 def titleFromContent(content):
     try:
         return BeautifulSoup(content, features="html.parser").select('.title')[

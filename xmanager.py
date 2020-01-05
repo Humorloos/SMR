@@ -19,6 +19,17 @@ class XManager:
             sheetTitle = sheet('title', recursive=False)[0].text
             self.sheets[sheetTitle] = sheet
 
+    def getChildnodes(self, tag):
+        """
+        :param tag: the tag to get the childnodes for
+        :return: childnodes as tags, empty list if it doesn't have any
+        """
+        try:
+            return tag.find('children', recursive=False).find(
+                'topics', recursive=False)('topic', recursive=False)
+        except AttributeError:
+            return []
+
     def getNodeContent(self, tag):
         """
         :param tag: the tag to get the content for
@@ -110,7 +121,7 @@ class XManager:
     def getTagById(self, tagId):
         """
         :param tagId: the id property of the tag
-        :return: ???
+        :return: the tag containing the Id
         """
         try:
             return tuple(filter(lambda t: t['id'] == tagId, self.tagList))[0]
