@@ -32,15 +32,17 @@ class TestGetValidSheets(TestXmindImporter):
         act = self.xmindImporter.getValidSheets()
         self.assertEqual(act, ['biological psychology', 'clinical psychology'])
 
-class TestImportSheets(TestXmindImporter):
+
+class TestImportMap(TestXmindImporter):
+    def setUp(self):
+        super().setUp()
+        self.xmindImporter.deckId = '1'
+        self.xmindImporter.currentSheetImport = 'biological psychology'
+        self.xmindImporter.activeManager = self.xmindImporter.xManagers[0]
+
+
     def test_import_example(self):
-        selectedSheets = list()
-        sheet_tags = self.xmindImporter.soup('sheet')
-        for sheet_tag in sheet_tags:
-            sheet_dict = dict(sheet=sheet_tag, tag="test", deckId="1",
-                              repair=False)
-            selectedSheets.append(sheet_dict)
-        self.xmindImporter.importSheets(selectedSheets)
+        self.xmindImporter.importMap()
         print('hi')
 
 
@@ -50,5 +52,19 @@ class TestGetAnswerDict(TestImportMap):
                                'sheet_biological_psychology.xml'), 'r') as file:
             root = BeautifulSoup(file.read(), features='html.parser').topic
         act = self.xmindImporter.getAnswerDict(root)
-        self.assertEqual('', '')
+        self.fail()
 
+
+class TestGetQuestions(TestImportMap):
+    def test_questions_for_root(self):
+        importer = self.xmindImporter
+        xid = '0pbme7b9sg9en8qqmmn9jj06od'
+        nodeTag = importer.activeManager.getTagById(xid)
+        concept = importer.onto.Root('biological psychology')
+        concept.Image = None
+        concept.Media = None
+        concept.Xid = xid
+        answerDict = {'nodeTag': nodeTag, 'isAnswer': True, 'aId': str(0),
+                    'crosslink': None, 'concept': concept}
+        act = self.xmindImporter.getQuestions(answerDict=answerDict, ref='biological psychology')
+        self.fail()
