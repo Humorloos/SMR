@@ -20,6 +20,11 @@ class XManager:
             self.sheets[sheetTitle] = sheet
 
     def getNodeContent(self, tag):
+        """
+        :param tag: the tag to get the content for
+        :return: dictionary containing the content of the node as a string,
+            an optional url to an image and a media file
+        """
         content = ''
         media = dict(image=None, media=None)
         href = self.getNodeHyperlink(tag)
@@ -62,6 +67,10 @@ class XManager:
         return {'content': content, 'media': media}
 
     def getNodeCrosslink(self, tag):
+        """
+        :param tag: tag to get the crosslink from
+        :return: node id of the node the crosslink refers to
+        """
         href = self.getNodeHyperlink(tag)
         if href and href.startswith('xmind:#'):
             return href[7:]
@@ -69,31 +78,50 @@ class XManager:
             return None
 
     def getNodeHyperlink(self, tag):
+        """
+        :param tag: tag to get the hyperlink from
+        :return: node's raw hyperlink string
+        """
         try:
             return tag['xlink:href']
         except (KeyError, TypeError):
             return None
 
     def getNodeImg(self, tag):
+        """
+        :param tag: Tag to get the image from
+        :return: node's raw image string
+        """
         try:
             return tag.find('xhtml:img', recursive=False)['xhtml:src']
         except (TypeError, AttributeError):
             return None
 
     def getNodeTitle(self, tag):
+        """
+        :param tag: Tag to get the title from
+        :return: node's title, empty string if it has none
+        """
         try:
             return tag.find('title', recursive=False).text
         except AttributeError:
             return ''
 
     def getTagById(self, tagId):
+        """
+        :param tagId: the id property of the tag
+        :return: ???
+        """
         try:
             return tuple(filter(lambda t: t['id'] == tagId, self.tagList))[0]
         except IndexError:
             return None
 
     def isEmptyNode(self, tag):
-        """checks whether a node contains any text, images or link"""
+        """
+        :param tag: tag to check for
+        :return: True if node does not contain any title, image or hyperlink
+        """
         if self.getNodeTitle(tag):
             return False
         if self.getNodeImg(tag):
