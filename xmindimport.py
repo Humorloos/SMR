@@ -65,6 +65,60 @@ class XmindImporter(NoteImporter):
             class Xid(owlready2.AnnotationProperty):
                 pass
 
+    def addXNote(self, question, ref, sortId):
+        """
+        :param question: xmind question node
+        :param ref: current reference text
+        :param sortId: current sorting Id
+        :return:
+        """
+        answerDicts = self.findAnswerDicts(question)
+        actualAnswers = list(filter(
+            lambda a: a['isAnswer'], answerDicts))
+        if len(actualAnswers) > X_MAX_ANSWERS:
+            self.running = False
+            self.log = ["""Warning:
+A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
+                        (getNodeTitle(question),
+                         X_MAX_ANSWERS, X_MAX_ANSWERS)]
+            return None
+
+        if not self.running:
+            self.log = ["""Warning:
+An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node. Please adjust your Concept Map and try again.""" %
+                        (getNodeContent(tagList=self.tagList, tag=question)[
+                             0], getCoordsFromId(sortId))]
+            return None
+
+        # get content of fields for the note to add for this question
+        noteData, media = self.getNoteData(sortId=sortId,
+                                           question=question,
+                                           answerDicts=answerDicts,
+                                           ref=ref,
+                                           siblings=siblings,
+                                           connections=connections)
+        self.addMedia(media)
+
+        # add to list of notes to add
+        self.notesToAdd[self.currentSheetImport['ID']].append(noteData)
+
+        # add notes for questions following this note
+        questionContent = replaceSound(
+            splitFields(noteData[6])[list(X_FLDS.keys()).index('qt')])
+        ref = ref + '<li>' + questionContent
+        for aId, answerDict in enumerate(answerDicts, start=1):
+            if getChildnodes(answerDict['nodeTag']):
+                if answerDict['isAnswer']:
+                    ac = splitFields(noteData[6])[
+                        list(X_FLDS.keys()).index('a' + answerDict['aId'])]
+                    answerContent = replaceSound(ac)
+                else:
+                    answerContent = ''
+                self.getQuestions(answerDict=answerDict,
+                                  answerContent=answerContent, ref=ref,
+                                  sortId=updateId(previousId=sortId,
+                                                  idToAppend=aId))
+
     def getAnswerDict(self, nodeTag, root=False):
         """
         :param nodeTag: The answer node to get the dict for
@@ -89,7 +143,7 @@ class XmindImporter(NoteImporter):
             concept.Xid = nodeTag['id']
         # Check whether subtopic contains a crosslink
         crosslink = manager.getNodeCrosslink(nodeTag)
-        #Todo: check whether aID is really necessary
+        # Todo: check whether aID is really necessary
         return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
                     crosslink=crosslink, concept=concept)
 
@@ -103,6 +157,7 @@ class XmindImporter(NoteImporter):
         :param followsBridge: ???
         :return: creates notes for each question following the answerDict
         """
+        manager = self.activeManager
         # The reference doesn't have to be edited at the roottopic
         if not isinstance(answerDict['concept'], self.onto.Root):
             # if the answerdict contains nothing (i.e. questions
@@ -112,50 +167,12 @@ class XmindImporter(NoteImporter):
                 ref = ref + '</li>'
             else:
                 ref = ref + ': ' + answerContent + '</li>'
-        questionDicts = self.findQuestionDicts(answer=answerDict['nodeTag'],
-                                               ref=ref, sortId=sortId)
-        siblingQuestions = self.getQuestionListForAnswer(answerDict)
-        for qId, questionDict in enumerate(questionDicts, start=1):
+        followRels = manager.getChildnodes(answerDict['nodeTag'])
+        for qId, followRel in enumerate(followRels, start=1):
             # Update the sorting ID
             nextSortId = updateId(previousId=sortId, idToAppend=qId)
-            if self.running:
-                # if the current question serves as a bridge to serve as
-                # reference, do not get any notes for this bridge but for
-                # questions following its answers
-                if questionDict['isBridge']:
-                    answerDicts = self.findAnswerDicts(questionDict['nodeTag'])
-                    for aId, answerDict in enumerate(answerDicts, start=1):
-                        if getChildnodes(answerDict['nodeTag']):
-                            if answerDict['isAnswer']:
-                                answerContent, media = getNodeContent(
-                                    tagList=self.tagList,
-                                    tag=answerDict['nodeTag'])
-                                self.addMedia([media])
-                                answerContent = replaceSound(answerContent)
-                                newRef = ref + '<li>' + answerContent
-                            else:
-                                answerContent = ''
-                                newRef = ref
-                            self.getQuestions(answerDict=answerDict,
-                                              answerContent=answerContent,
-                                              ref=newRef,
-                                              sortId=updateId(
-                                                  previousId=nextSortId,
-                                                  idToAppend=aId),
-                                              followsBridge=True)
-                # if this is a regular question
-                else:
-                    siblings = list(map(lambda s: s['qId'], filter(
-                        lambda q: (q['qId'] != questionDict[
-                            'nodeTag']['id']) and not q['isConnection'],
-                        siblingQuestions)))
-                    connections = list(map(lambda s: s['qId'], filter(
-                        lambda q: (q['qId'] != questionDict[
-                            'nodeTag']['id']) and q['isConnection'],
-                        siblingQuestions)))
-                    self.addXNote(question=questionDict['nodeTag'],
-                                  ref=questionDict['ref'], sortId=nextSortId,
-                                  siblings=siblings, connections=connections)
+            self.addXNote(question=followRel, ref=ref, sortId=nextSortId)
+
 
     def getValidSheets(self):
         """
@@ -264,62 +281,6 @@ class XmindImporter(NoteImporter):
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
         self.importSheets(selectedSheets)
-
-    # creates a noteDict for this question, and
-    # recursively calls getQuestions() to add notes following this question
-    # Inputs:
-    # question: xmind question node
-    # ref: current reference text
-    # qId: position of the question node relative to its siblings
-    # note: note to be added for the question node
-    def addXNote(self, question, ref, sortId, siblings=None,
-                 connections=None):
-        answerDicts = self.findAnswerDicts(question)
-        actualAnswers = list(filter(
-            lambda a: a['isAnswer'], answerDicts))
-        if len(actualAnswers) > X_MAX_ANSWERS:
-            self.running = False
-            self.log = ["""Warning:
-A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
-                        (getNodeTitle(question),
-                         X_MAX_ANSWERS, X_MAX_ANSWERS)]
-            return None
-
-        if not self.running:
-            self.log = ["""Warning:
-An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node. Please adjust your Concept Map and try again.""" %
-                        (getNodeContent(tagList=self.tagList, tag=question)[
-                             0], getCoordsFromId(sortId))]
-            return None
-
-        # get content of fields for the note to add for this question
-        noteData, media = self.getNoteData(sortId=sortId,
-                                           question=question,
-                                           answerDicts=answerDicts,
-                                           ref=ref,
-                                           siblings=siblings,
-                                           connections=connections)
-        self.addMedia(media)
-
-        # add to list of notes to add
-        self.notesToAdd[self.currentSheetImport['ID']].append(noteData)
-
-        # add notes for questions following this note
-        questionContent = replaceSound(
-            splitFields(noteData[6])[list(X_FLDS.keys()).index('qt')])
-        ref = ref + '<li>' + questionContent
-        for aId, answerDict in enumerate(answerDicts, start=1):
-            if getChildnodes(answerDict['nodeTag']):
-                if answerDict['isAnswer']:
-                    ac = splitFields(noteData[6])[
-                        list(X_FLDS.keys()).index('a' + answerDict['aId'])]
-                    answerContent = replaceSound(ac)
-                else:
-                    answerContent = ''
-                self.getQuestions(answerDict=answerDict,
-                                  answerContent=answerContent, ref=ref,
-                                  sortId=updateId(previousId=sortId,
-                                                  idToAppend=aId))
 
             # receives a question, sheet and list of notes possibly following each
             # answer to this question and returns a json file
@@ -499,37 +460,6 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                     self.addAttachment(files['media'])
                 else:
                     self.col.media.addFile(files['media'])
-
-    # receives an answer node and returns all questions following this answer
-    # including questions following multiple topics as dictionaries of a
-    # question node and its corresponding reference
-    def findQuestionDicts(self, answer, sortId, ref=''):
-        followRels = getChildnodes(answer)
-        questionDicts = []
-        for followRel in followRels:
-            crosslink = getNodeCrosslink(followRel)
-            if len(getChildnodes(followRel)) == 0:
-                # stop and warn if no nodes follow the question
-                if not crosslink:
-                    self.running = False
-                    self.log = ["""Warning:
-A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept Map and try again.""" %
-                                (getNodeContent(tagList=self.tagList,
-                                                tag=followRel)[0],
-                                 getCoordsFromId(sortId))]
-            else:
-                questionDict = self.getQuestionDict(subTopic=followRel, ref=ref,
-                                                    isBridge=False,
-                                                    crosslink=crosslink)
-                if isEmptyNode(followRel):
-                    questionDict['isBridge'] = True
-
-                questionDicts.append(questionDict)
-        return questionDicts
-
-    def getQuestionDict(self, subTopic, ref, isBridge, crosslink):
-        return dict(nodeTag=subTopic, ref=ref, isBridge=isBridge,
-                    crosslink=crosslink)
 
     def maybeSync(self, sheetId, noteList):
         if self.repair:
