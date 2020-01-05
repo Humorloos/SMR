@@ -126,6 +126,7 @@ class XManager:
         try:
             return tuple(filter(lambda t: t['id'] == tagId, self.tagList))[0]
         except IndexError:
+            #TODO: Warn if the node is not found
             return None
 
     def isEmptyNode(self, tag):
