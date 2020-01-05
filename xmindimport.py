@@ -54,6 +54,7 @@ class XmindImporter(NoteImporter):
                 pass
 
             class Child(Concept >> Concept):
+                inverse_property = Parent
                 pass
 
             class Image(owlready2.AnnotationProperty):
@@ -65,14 +66,14 @@ class XmindImporter(NoteImporter):
             class Xid(owlready2.AnnotationProperty):
                 pass
 
-    def addXNote(self, question, ref, sortId):
+    def addXNote(self, parent, question, ref, sortId):
         """
         :param question: xmind question node
         :param ref: current reference text
         :param sortId: current sorting Id
         :return:
         """
-        answerDicts = self.findAnswerDicts(question)
+        answerDicts = self.findAnswerDicts(parent, question, sortId)
         actualAnswers = list(filter(
             lambda a: a['isAnswer'], answerDicts))
         if len(actualAnswers) > X_MAX_ANSWERS:
@@ -118,6 +119,33 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                                   answerContent=answerContent, ref=ref,
                                   sortId=updateId(previousId=sortId,
                                                   idToAppend=aId))
+
+    def findAnswerDicts(self, parent, question, sortId):
+        """
+        :param question: question tag to get the answers for
+        :return: list of dictionaries created with getAnswerDict()
+        """
+        answerDicts = list()
+        manager = self.activeManager
+        # stop and warn if no nodes follow the question
+        crosslink = manager.getNodeCrosslink(question)
+        childNotes = manager.getChildnodes(question)
+        if len(childNotes) == 0 and not crosslink:
+            self.running = False
+            self.log = ["""Warning:
+                    A Question titled "%s" (Path %s) is missing answers. Please adjust your 
+                    Concept Map and try again.""" % (
+                manager.getNodeContent(tag=question)[0],
+                getCoordsFromId(sortId))]
+            return
+        else:
+            questionContent = manager.getNodeContent(question)
+            for childNode in childNotes:
+                answerDict = self.getAnswerDict(childNode)
+                if not questionContent['content']:
+                    parent.Child.append(answerDict['concept'])
+                answerDicts.append(answerDict)
+            return answerDicts
 
     def getAnswerDict(self, nodeTag, root=False):
         """
@@ -171,7 +199,8 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         for qId, followRel in enumerate(followRels, start=1):
             # Update the sorting ID
             nextSortId = updateId(previousId=sortId, idToAppend=qId)
-            self.addXNote(question=followRel, ref=ref, sortId=nextSortId)
+            self.addXNote(parent=answerDict['concept'], question=followRel,
+                          ref=ref, sortId=nextSortId)
 
 
     def getValidSheets(self):
@@ -432,16 +461,6 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                     "", 0, ""]
 
         return noteData, media
-
-    # receives a question node and returns a list of dictionaries containing the
-    # subtopics, whether the subtopics contain an answer or not and whether they
-    # contain a crosslink or not
-    def findAnswerDicts(self, question):
-        answerDicts = list()
-        for childNode in getChildnodes(question):
-            answerDict = self.getAnswerDict(childNode)
-            answerDicts.append(answerDict)
-        return answerDicts
 
     def noteFromNoteData(self, noteData):
         note = self.col.newNote()

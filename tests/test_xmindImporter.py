@@ -68,3 +68,32 @@ class TestGetQuestions(TestImportMap):
                     'crosslink': None, 'concept': concept}
         act = self.xmindImporter.getQuestions(answerDict=answerDict, ref='biological psychology')
         self.fail()
+
+
+class TestAddXNote(TestImportMap):
+    def test_bridge_and_crosslink(self):
+        importer = self.xmindImporter
+        xid = '32dt8d2dflh4lr5oqc2oqqad28'
+        question = importer.activeManager.getTagById(xid)
+        parent = importer.onto.Root('biological psychology')
+        parent.Image = None
+        parent.Media = None
+        parent.Xid = xid
+        importer.addXNote(parent=parent, question=question, ref='biological '
+                                                         'psychology',
+                          sortId='{')
+        self.fail()
+
+
+class TestFindAnswerDicts(TestImportMap):
+    def test_crosslink(self):
+        importer = self.xmindImporter
+        xid = '32dt8d2dflh4lr5oqc2oqqad28'
+        question = importer.activeManager.getTagById(xid)
+        parent = importer.onto.Root('biological psychology')
+        parent.Image = None
+        parent.Media = None
+        parent.Xid = xid
+        act = importer.findAnswerDicts(parent=parent, question=question,
+                                       sortId='{')
+        self.fail()
