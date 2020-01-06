@@ -109,15 +109,16 @@ class XmindImporter(NoteImporter):
             children = list()
             for childNode in childNotes:
                 answerDict = self.getAnswerDict(childNode)
-                child = answerDict['concept']
-                children.append(child)
-                self.onto.Reference[parent, objProp, child] = ref
-                self.onto.Xid[parent, objProp, child] = question['id']
-                if image:
-                    self.onto.Image[parent, objProp, child] = image
-                if media:
-                    self.onto.Media[parent, objProp, child] = media
                 answerDicts.append(answerDict)
+                if answerDict['isAnswer']:
+                    child = answerDict['concept']
+                    children.append(child)
+                    self.onto.Reference[parent, objProp, child] = ref
+                    self.onto.Xid[parent, objProp, child] = question['id']
+                    if image:
+                        self.onto.Image[parent, objProp, child] = image
+                    if media:
+                        self.onto.Media[parent, objProp, child] = media
             setattr(parent, title, children)
             return answerDicts
 

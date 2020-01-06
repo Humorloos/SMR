@@ -53,6 +53,13 @@ class TestGetAnswerDict(TestImportMap):
         act = self.xmindImporter.getAnswerDict(root)
         self.fail()
 
+    def test_empty_node(self):
+        importer = self.xmindImporter
+        xid = '6b0ho6vvcs4pcacchhsgju7513'
+        nodeTag = importer.activeManager.getTagById(xid)
+        act = self.xmindImporter.getAnswerDict(nodeTag)
+        self.fail()
+
 
 class TestGetQuestions(TestImportMap):
     def test_questions_for_root(self):
@@ -110,6 +117,23 @@ class TestFindAnswerDicts(TestImportMap):
         parent.Media = None
         parent.Xid = xid
         content = {'content': 'difference to MAO', 'media': {'image': None,
+                                                             'media': None}}
+        act = importer.findAnswerDicts(parent=parent, question=question,
+                                       sortId='{', ref=ref, content=content)
+        self.assertIn('difference_to_MAO', map(lambda p: p.name,
+                                               act[0]['concept'].Parent[
+                                                   0].get_properties()))
+
+    def test_containing_bridge_answer(self):
+        importer = self.xmindImporter
+        xid = '61irckf1nloq42brfmbu0ke92v'
+        question = importer.activeManager.getTagById(xid)
+        parent = importer.onto.Root('biological psychology')
+        ref = 'biological psychology'
+        parent.Image = None
+        parent.Media = None
+        parent.Xid = xid
+        content = {'content': 'splits up', 'media': {'image': None,
                                                              'media': None}}
         act = importer.findAnswerDicts(parent=parent, question=question,
                                        sortId='{', ref=ref, content=content)
