@@ -40,7 +40,6 @@ class TestImportMap(TestXmindImporter):
         self.xmindImporter.currentSheetImport = 'biological psychology'
         self.xmindImporter.activeManager = self.xmindImporter.xManagers[0]
 
-
     def test_import_example(self):
         self.xmindImporter.importMap()
         print('hi')
@@ -65,23 +64,9 @@ class TestGetQuestions(TestImportMap):
         concept.Media = None
         concept.Xid = xid
         answerDict = {'nodeTag': nodeTag, 'isAnswer': True, 'aId': str(0),
-                    'crosslink': None, 'concept': concept}
-        act = self.xmindImporter.getQuestions(answerDict=answerDict, ref='biological psychology')
-        self.fail()
-
-
-class TestAddXNote(TestImportMap):
-    def test_bridge_and_crosslink(self):
-        importer = self.xmindImporter
-        xid = '32dt8d2dflh4lr5oqc2oqqad28'
-        question = importer.activeManager.getTagById(xid)
-        parent = importer.onto.Root('biological psychology')
-        parent.Image = None
-        parent.Media = None
-        parent.Xid = xid
-        importer.addXNote(parent=parent, question=question, ref='biological '
-                                                         'psychology',
-                          sortId='{')
+                      'crosslink': None, 'concept': concept}
+        act = self.xmindImporter.getQuestions(answerDict=answerDict,
+                                              ref='biological psychology')
         self.fail()
 
 
@@ -91,9 +76,26 @@ class TestFindAnswerDicts(TestImportMap):
         xid = '32dt8d2dflh4lr5oqc2oqqad28'
         question = importer.activeManager.getTagById(xid)
         parent = importer.onto.Root('biological psychology')
+        ref = 'biological psychology'
         parent.Image = None
         parent.Media = None
         parent.Xid = xid
+        content = {'content': '', 'media': {'image': None, 'media': None}}
         act = importer.findAnswerDicts(parent=parent, question=question,
-                                       sortId='{')
+                                       sortId='{', ref=ref, content=content)
+        self.fail()
+
+    def test_two_answers_no_media(self):
+        importer = self.xmindImporter
+        xid = '4kdqkutdha46uns1j8jndi43ht'
+        question = importer.activeManager.getTagById(xid)
+        parent = importer.onto.Root('biological psychology')
+        ref = 'biological psychology'
+        parent.Image = None
+        parent.Media = None
+        parent.Xid = xid
+        content = {'content': 'investigates', 'media': {'image': None,
+                                                        'media': None}}
+        act = importer.findAnswerDicts(parent=parent, question=question,
+                                       sortId='{', ref=ref, content=content)
         self.fail()

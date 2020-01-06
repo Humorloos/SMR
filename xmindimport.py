@@ -1,6 +1,7 @@
 import json
 import shutil
 import owlready2
+import types
 
 from time import sleep
 
@@ -50,6 +51,7 @@ class XmindImporter(NoteImporter):
             class Root(Concept):
                 pass
 
+            # standard object properties
             class Parent(Concept >> Concept):
                 pass
 
@@ -57,6 +59,7 @@ class XmindImporter(NoteImporter):
                 inverse_property = Parent
                 pass
 
+            # Annotation properties for Concepts
             class Image(owlready2.AnnotationProperty):
                 pass
 
@@ -66,61 +69,11 @@ class XmindImporter(NoteImporter):
             class Xid(owlready2.AnnotationProperty):
                 pass
 
-    def addXNote(self, parent, question, ref, sortId):
-        """
-        :param question: xmind question node
-        :param ref: current reference text
-        :param sortId: current sorting Id
-        :return:
-        """
-        answerDicts = self.findAnswerDicts(parent, question, sortId)
-        actualAnswers = list(filter(
-            lambda a: a['isAnswer'], answerDicts))
-        if len(actualAnswers) > X_MAX_ANSWERS:
-            self.running = False
-            self.log = ["""Warning:
-A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
-                        (getNodeTitle(question),
-                         X_MAX_ANSWERS, X_MAX_ANSWERS)]
-            return None
+            # Annotation properties for relation triples
+            class Reference(owlready2.AnnotationProperty):
+                pass
 
-        if not self.running:
-            self.log = ["""Warning:
-An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node. Please adjust your Concept Map and try again.""" %
-                        (getNodeContent(tagList=self.tagList, tag=question)[
-                             0], getCoordsFromId(sortId))]
-            return None
-
-        # get content of fields for the note to add for this question
-        noteData, media = self.getNoteData(sortId=sortId,
-                                           question=question,
-                                           answerDicts=answerDicts,
-                                           ref=ref,
-                                           siblings=siblings,
-                                           connections=connections)
-        self.addMedia(media)
-
-        # add to list of notes to add
-        self.notesToAdd[self.currentSheetImport['ID']].append(noteData)
-
-        # add notes for questions following this note
-        questionContent = replaceSound(
-            splitFields(noteData[6])[list(X_FLDS.keys()).index('qt')])
-        ref = ref + '<li>' + questionContent
-        for aId, answerDict in enumerate(answerDicts, start=1):
-            if getChildnodes(answerDict['nodeTag']):
-                if answerDict['isAnswer']:
-                    ac = splitFields(noteData[6])[
-                        list(X_FLDS.keys()).index('a' + answerDict['aId'])]
-                    answerContent = replaceSound(ac)
-                else:
-                    answerContent = ''
-                self.getQuestions(answerDict=answerDict,
-                                  answerContent=answerContent, ref=ref,
-                                  sortId=updateId(previousId=sortId,
-                                                  idToAppend=aId))
-
-    def findAnswerDicts(self, parent, question, sortId):
+    def findAnswerDicts(self, parent, question, sortId, ref, content):
         """
         :param question: question tag to get the answers for
         :return: list of dictionaries created with getAnswerDict()
@@ -138,13 +91,33 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                 manager.getNodeContent(tag=question)[0],
                 getCoordsFromId(sortId))]
             return
+        # add relations to the ontology
         else:
-            questionContent = manager.getNodeContent(question)
+            title = content['content']
+            if not title:
+                objProp = self.onto.Child
+                title = 'Child'
+            else:
+                with self.onto:
+                    objProp = types.new_class(title,
+                                              (owlready2.ObjectProperty,))
+                    objProp.domain = [self.onto.Concept]
+                    objProp.range = [self.onto.Concept]
+                    objProp.inverse_property = self.onto.Parent
+            image = content['media']['image']
+            media = content['media']['media']
+            children = list()
             for childNode in childNotes:
                 answerDict = self.getAnswerDict(childNode)
-                if not questionContent['content']:
-                    parent.Child.append(answerDict['concept'])
+                child = answerDict['concept']
+                children.append(child)
+                self.onto.Reference[parent, objProp, child] = ref
+                if image:
+                    self.onto.Image[parent, objProp, child] = image
+                if media:
+                    self.onto.Media[parent, objProp, child] = media
                 answerDicts.append(answerDict)
+            setattr(parent, title, children)
             return answerDicts
 
     def getAnswerDict(self, nodeTag, root=False):
@@ -199,9 +172,39 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         for qId, followRel in enumerate(followRels, start=1):
             # Update the sorting ID
             nextSortId = updateId(previousId=sortId, idToAppend=qId)
-            self.addXNote(parent=answerDict['concept'], question=followRel,
-                          ref=ref, sortId=nextSortId)
-
+            # self.addXNote(parent=answerDict['concept'], question=followRel,
+            #               ref=ref, sortId=nextSortId)
+            content = manager.getNodeContent(followRel)
+            answerDicts = self.findAnswerDicts(parent=answerDict['concept'],
+                                               question=followRel,
+                                               sortId=nextSortId, ref=ref,
+                                               content=content)
+            # if the current relation is a question and has more then 20
+            # answers give a warning and stop running
+            actualAnswers = list(filter(lambda a: a['isAnswer'], answerDicts))
+            isQuestion = not manager.isEmptyNode(followRel)
+            if isQuestion and len(actualAnswers) > X_MAX_ANSWERS:
+                self.running = False
+                self.log = ["""Warning:
+            A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
+                            (manager.getNodeTitle(followRel),
+                             X_MAX_ANSWERS, X_MAX_ANSWERS)]
+                return
+            # update ref with content of this question but without sound
+            refContent = replaceSound(content['content'])
+            ref = ref + '<li>' + refContent
+            for aId, answerDict in enumerate(answerDicts, start=1):
+                if manager.getChildnodes(answerDict['nodeTag']):
+                    if answerDict['isAnswer']:
+                        ac = splitFields(noteData[6])[
+                            list(X_FLDS.keys()).index('a' + answerDict['aId'])]
+                        answerContent = replaceSound(ac)
+                    else:
+                        answerContent = ''
+                    self.getQuestions(answerDict=answerDict,
+                                      answerContent=answerContent, ref=ref,
+                                      sortId=updateId(previousId=sortId,
+                                                      idToAppend=aId))
 
     def getValidSheets(self):
         """
@@ -271,6 +274,16 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
             return
         self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
                     ['removed', 0, 'notes']]
+        # get content of fields for the note to add for this question
+        # code from addxnotes, probably necessary here
+        # self.addMedia(media)
+        # noteData, media = self.getNoteData(sortId=sortId,
+        #                                    question=question,
+        #                                    answerDicts=answerDicts,
+        #                                    ref=ref,
+        #                                    siblings=siblings,
+        #                                    connections=connections)
+        #
         for sheetId, noteList in self.notesToAdd.items():
             self.maybeSync(sheetId=sheetId, noteList=noteList)
         for logId, log in enumerate(self.log, start=0):
@@ -311,8 +324,8 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         self.mw.checkpoint("Import")
         self.importSheets(selectedSheets)
 
-            # receives a question, sheet and list of notes possibly following each
-            # answer to this question and returns a json file
+        # receives a question, sheet and list of notes possibly following each
+        # answer to this question and returns a json file
 
     def getXMindMeta(self, question, answerDicts, siblings,
                      connections):
