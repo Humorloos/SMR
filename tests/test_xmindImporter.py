@@ -99,3 +99,20 @@ class TestFindAnswerDicts(TestImportMap):
         act = importer.findAnswerDicts(parent=parent, question=question,
                                        sortId='{', ref=ref, content=content)
         self.fail()
+
+    def test_question_with_spaces(self):
+        importer = self.xmindImporter
+        xid = '077tf3ovn4gc1j1dqte7or33fl'
+        question = importer.activeManager.getTagById(xid)
+        parent = importer.onto.Root('biological psychology')
+        ref = 'biological psychology'
+        parent.Image = None
+        parent.Media = None
+        parent.Xid = xid
+        content = {'content': 'difference to MAO', 'media': {'image': None,
+                                                             'media': None}}
+        act = importer.findAnswerDicts(parent=parent, question=question,
+                                       sortId='{', ref=ref, content=content)
+        self.assertIn('difference_to_MAO', map(lambda p: p.name,
+                                               act[0]['concept'].Parent[
+                                                   0].get_properties()))

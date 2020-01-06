@@ -11,6 +11,14 @@ from anki.utils import ids2str
 from .consts import X_MODEL_NAME
 
 
+def classify(className):
+    return className.replace(" ", "_")
+
+
+def unclassify(className):
+    return className.replace("_", " ")
+
+
 def isQuestionNode(tag, level=0):
     # If the Tag is the root topic, return true if the length of the path is odd
     if tag.parent.name == 'sheet':

@@ -93,7 +93,7 @@ class XmindImporter(NoteImporter):
             return
         # add relations to the ontology
         else:
-            title = content['content']
+            title = classify(content['content'])
             if not title:
                 objProp = self.onto.Child
                 title = 'Child'
@@ -112,6 +112,7 @@ class XmindImporter(NoteImporter):
                 child = answerDict['concept']
                 children.append(child)
                 self.onto.Reference[parent, objProp, child] = ref
+                self.onto.Xid[parent, objProp, child] = question['id']
                 if image:
                     self.onto.Image[parent, objProp, child] = image
                 if media:
@@ -148,32 +149,30 @@ class XmindImporter(NoteImporter):
         return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
                     crosslink=crosslink, concept=concept)
 
-    def getQuestions(self, answerDict: dict, sortId='',
-                     answerContent='', ref="", followsBridge=False):
+    def getQuestions(self, answerDict: dict, sortId='', ref="",
+                     followsBridge=False):
         """
         :param answerDict: parent answer node of the questions to get
         :param sortId: current id for sortId field
-        :param answerContent: content of parent answer in parent anki note
         :param ref: current text for reference field
         :param followsBridge: ???
         :return: creates notes for each question following the answerDict
         """
         manager = self.activeManager
+        answerContent = manager.getNodeContent(answerDict['nodeTag'])['content']
         # The reference doesn't have to be edited at the roottopic
         if not isinstance(answerDict['concept'], self.onto.Root):
             # if the answerdict contains nothing (i.e. questions
             # following multiple answers), just close the reference
             if self.activeManager.isEmptyNode(
-                    answerDict['nodeTag']) or followsBridge:
+                    answerDict['nodeTag']) or not answerContent:
                 ref = ref + '</li>'
             else:
-                ref = ref + ': ' + answerContent + '</li>'
+                ref = ref + ': ' + replaceSound(answerContent) + '</li>'
         followRels = manager.getChildnodes(answerDict['nodeTag'])
         for qId, followRel in enumerate(followRels, start=1):
             # Update the sorting ID
             nextSortId = updateId(previousId=sortId, idToAppend=qId)
-            # self.addXNote(parent=answerDict['concept'], question=followRel,
-            #               ref=ref, sortId=nextSortId)
             content = manager.getNodeContent(followRel)
             answerDicts = self.findAnswerDicts(parent=answerDict['concept'],
                                                question=followRel,
@@ -192,18 +191,11 @@ class XmindImporter(NoteImporter):
                 return
             # update ref with content of this question but without sound
             refContent = replaceSound(content['content'])
-            ref = ref + '<li>' + refContent
+            nextRef = ref + '<li>' + refContent
             for aId, answerDict in enumerate(answerDicts, start=1):
                 if manager.getChildnodes(answerDict['nodeTag']):
-                    if answerDict['isAnswer']:
-                        ac = splitFields(noteData[6])[
-                            list(X_FLDS.keys()).index('a' + answerDict['aId'])]
-                        answerContent = replaceSound(ac)
-                    else:
-                        answerContent = ''
-                    self.getQuestions(answerDict=answerDict,
-                                      answerContent=answerContent, ref=ref,
-                                      sortId=updateId(previousId=sortId,
+                    self.getQuestions(answerDict=answerDict, ref=nextRef,
+                                      sortId=updateId(previousId=nextSortId,
                                                       idToAppend=aId))
 
     def getValidSheets(self):
