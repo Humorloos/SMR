@@ -48,7 +48,8 @@ def getSheetBiologicalPsychology():
     col = getEmptyCol()
     map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
     xmindImporter = XmindImporter(col=col, file=map)
-    sheets = xmindImporter.getRefManagers(xmindImporter.xManagers['root'])[0]
+    xmindImporter.getRefManagers(xmindImporter.xManagers[0])
+    sheets = xmindImporter.xManagers[0].sheets
     with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
                            'sheet_biological_psychology.xml'), 'w') as file:
         file.write(str(sheets['biological psychology']))
