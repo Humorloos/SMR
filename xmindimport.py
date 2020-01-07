@@ -80,30 +80,38 @@ class XmindImporter(NoteImporter):
         """
         answerDicts = list()
         manager = self.activeManager
-        # stop and warn if no nodes follow the question
         crosslink = manager.getNodeCrosslink(question)
         childNotes = manager.getChildnodes(question)
-        if len(childNotes) == 0 and not crosslink:
-            self.running = False
-            self.log = ["""Warning:
-                    A Question titled "%s" (Path %s) is missing answers. Please adjust your 
-                    Concept Map and try again.""" % (
-                manager.getNodeContent(tag=question)[0],
-                getCoordsFromId(sortId))]
-            return
+        if len(childNotes) == 0:
+            # stop and warn if no nodes follow the question
+            if not crosslink:
+                self.running = False
+                self.log = ["""Warning:
+                        A Question titled "%s" (Path %s) is missing answers. Please adjust your 
+                        Concept Map and try again.""" % (
+                    manager.getNodeContent(tag=question)[0],
+                    getCoordsFromId(sortId))]
+                return
+            else:
+                originalQuestion = manager.getTagById(crosslink)
+                self.findAnswerDicts(parents=parents,
+                                     question=originalQuestion,
+                                     sortId=sortId, ref=ref,
+                                     content=content)
+                return
         # add relations to the ontology
         else:
-            title = classify(content['content'])
-            if not title:
-                objProp = self.onto.Child
-                title = 'Child'
+            relTitle = classify(content['content'])
+            if not relTitle:
+                relProp = self.onto.Child
+                relTitle = 'Child'
             else:
                 with self.onto:
-                    objProp = types.new_class(title,
+                    relProp = types.new_class(relTitle,
                                               (owlready2.ObjectProperty,))
-                    objProp.domain = [self.onto.Concept]
-                    objProp.range = [self.onto.Concept]
-                    objProp.inverse_property = self.onto.Parent
+                    relProp.domain = [self.onto.Concept]
+                    relProp.range = [self.onto.Concept]
+                    relProp.inverse_property = self.onto.Parent
             image = content['media']['image']
             media = content['media']['media']
             children = list()
@@ -114,12 +122,12 @@ class XmindImporter(NoteImporter):
                     child = answerDict['concepts'][0]
                     children.append(child)
                     for parent in parents:
-                        self.onto.Reference[parent, objProp, child] = ref
-                        self.onto.Xid[parent, objProp, child] = question['id']
+                        self.onto.Reference[parent, relProp, child] = ref
+                        self.onto.Xid[parent, relProp, child] = question['id']
                         if image:
-                            self.onto.Image[parent, objProp, child] = image
+                            self.onto.Image[parent, relProp, child] = image
                         if media:
-                            self.onto.Media[parent, objProp, child] = media
+                            self.onto.Media[parent, relProp, child] = media
                 else:
                     bridges.append(answerDict)
                 answerDicts.append(answerDict)
@@ -127,7 +135,7 @@ class XmindImporter(NoteImporter):
                 for bridge in bridges:
                     bridge['concepts'] = children
                 for parent in parents:
-                    setattr(parent, title, children)
+                    setattr(parent, relTitle, children)
             return answerDicts
 
     def getAnswerDict(self, nodeTag, root=False):
@@ -156,7 +164,8 @@ class XmindImporter(NoteImporter):
 
             concept.Image = nodeContent['media']['image']
             concept.Media = nodeContent['media']['media']
-            concept.Xid = nodeTag['id']
+            if not manager.getNodeCrosslink(nodeTag):
+                concept.Xid.append(nodeTag['id'])
             concept = [concept]
         # Check whether subtopic contains a crosslink
         crosslink = manager.getNodeCrosslink(nodeTag)
@@ -174,7 +183,10 @@ class XmindImporter(NoteImporter):
         :return: creates notes for each question following the answerDict
         """
         manager = self.activeManager
-        answerContent = manager.getNodeContent(parentAnswerDict['nodeTag'])['content']
+        answerContent = manager.getNodeContent(parentAnswerDict['nodeTag'])[
+            'content']
+        if answerContent == 'MAO':
+            print()
         # The reference doesn't have to be edited at the roottopic
         if not isinstance(parentAnswerDict['concepts'][0], self.onto.Root):
             # if the answerdict contains nothing (i.e. questions
@@ -188,34 +200,32 @@ class XmindImporter(NoteImporter):
             # Update the sorting ID
             nextSortId = updateId(previousId=sortId, idToAppend=qId)
             content = manager.getNodeContent(followRel)
-            if parentAnswerDict['isAnswer']:
-                answerDicts = self.findAnswerDicts(
-                    parents=parentAnswerDict['concepts'], question=followRel,
-                    sortId=nextSortId, ref=ref, content=content)
-            else:
-                answerDicts = self.findAnswerDicts(
-                    parents=parentAnswerDict['concepts'], question=followRel,
-                    sortId=nextSortId, ref=ref, content=content)
-            # if the current relation is a question and has more then 20
-            # answers give a warning and stop running
-            actualAnswers = list(filter(lambda a: a['isAnswer'], answerDicts))
-            isQuestion = not manager.isEmptyNode(followRel)
-            if isQuestion and len(actualAnswers) > X_MAX_ANSWERS:
-                self.running = False
-                self.log = ["""Warning:
-            A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
-                            (manager.getNodeTitle(followRel),
-                             X_MAX_ANSWERS, X_MAX_ANSWERS)]
-                return
-            # update ref with content of this question but without sound
-            refContent = replaceSound(content['content'])
-            nextRef = ref + '<li>' + refContent
-            for aId, answerDict in enumerate(answerDicts, start=1):
-                if manager.getChildnodes(parentAnswerDict['nodeTag']):
-                    self.getQuestions(parentAnswerDict=answerDict,
-                                      ref=nextRef,
-                                      sortId=updateId(previousId=nextSortId,
-                                                      idToAppend=aId))
+            if content['content'] == 'difference to MAO':
+                print('')
+            answerDicts = self.findAnswerDicts(
+                parents=parentAnswerDict['concepts'], question=followRel,
+                sortId=nextSortId, ref=ref, content=content)
+            if answerDicts:
+                # if the current relation is a question and has more then 20
+                # answers give a warning and stop running
+                actualAnswers = [a for a in answerDicts if a['isAnswer']]
+                isQuestion = not manager.isEmptyNode(followRel)
+                if isQuestion and len(actualAnswers) > X_MAX_ANSWERS:
+                    self.running = False
+                    self.log = ["""Warning:
+                A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
+                                (manager.getNodeTitle(followRel),
+                                 X_MAX_ANSWERS, X_MAX_ANSWERS)]
+                    return
+                # update ref with content of this question but without sound
+                refContent = replaceSound(content['content'])
+                nextRef = ref + '<li>' + refContent
+                for aId, answerDict in enumerate(answerDicts, start=1):
+                    if manager.getChildnodes(parentAnswerDict['nodeTag']):
+                        self.getQuestions(parentAnswerDict=answerDict,
+                                          ref=nextRef,
+                                          sortId=updateId(previousId=nextSortId,
+                                                          idToAppend=aId))
 
     def getValidSheets(self):
         """
@@ -523,7 +533,6 @@ class XmindImporter(NoteImporter):
                 newQId = newMeta['questionId']
                 try:
                     if self.repair:
-                        print('')
                         newQtxAw = joinFields(newFields[1:22])
                         oldTpl = tuple(
                             filter(lambda n: newQtxAw in n[1], existingNotes))[

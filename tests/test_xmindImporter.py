@@ -73,7 +73,7 @@ class TestGetQuestions(TestImportMap):
         concept = [concept]
         answerDict = {'nodeTag': nodeTag, 'isAnswer': True, 'aId': str(0),
                       'crosslink': None, 'concepts': concept}
-        act = self.xmindImporter.getQuestions(parentAnswerDict=answerDict,
+        act = importer.getQuestions(parentAnswerDict=answerDict,
                                               ref='biological psychology')
         self.fail()
 
@@ -96,7 +96,8 @@ class TestGetQuestions(TestImportMap):
         answerDict = {'nodeTag': nodeTag, 'isAnswer': False, 'aId': str(0),
                       'crosslink': None, 'concepts': concepts}
         ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up'
-        act = self.xmindImporter.getQuestions(parentAnswerDict=answerDict, sortId='|{|{{{|',
+        act = self.xmindImporter.getQuestions(parentAnswerDict=answerDict,
+                                              sortId='|{|{{{|',
                                               ref=ref)
         self.fail()
 
@@ -162,7 +163,7 @@ class TestFindAnswerDicts(TestImportMap):
         parent.Xid = xid
         parents = [parent]
         content = {'content': 'splits up', 'media': {'image': None,
-                                                             'media': None}}
+                                                     'media': None}}
         act = importer.findAnswerDicts(parents=parents, question=question,
                                        sortId='{', ref=ref, content=content)
         self.assertIn('difference_to_MAO', map(lambda p: p.name,
@@ -187,6 +188,28 @@ class TestFindAnswerDicts(TestImportMap):
         parents[3].Xid = '73mo29opsuegqobtttlt2vbaqj'
         ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up</li>'
         content = {'content': 'are', 'media': {'image': None, 'media': None}}
-        act = importer.findAnswerDicts(parents=parents, question=question,
-                                       sortId='{', ref=ref, content=content)
+        act = importer.findAnswerDicts(
+            parents=parents, question=question, sortId='{', ref=ref,
+            content=content)
         self.assertEqual(4, len(act[0]['concepts'][0].Parent))
+
+    def test_bridge_question(self):
+        importer = self.xmindImporter
+        xid = '49a1au2r1i2mvpkufnrs18lb2h'
+        question = importer.activeManager.getTagById(xid)
+        parent = importer.onto.Concept('MAO')
+        ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li><li>example: MAO</li>'
+        parent.Image = None
+        parent.Media = None
+        parent.Xid = '7blr5ubl6uf6c9beflm85jte19'
+        parents = [parent]
+        content = {'content': 'difference to MAO', 'media': {'image': None,
+                                                             'media': None}}
+        sortId = '|{|{{{}'
+        act = importer.findAnswerDicts(
+            parents=parents, question=question, sortId=sortId, ref=ref,
+            content=content)
+        self.assertIsNone(act)
+        self.assertEqual(
+            'MAO is not a neurotransmitter', importer.onto.search(
+                iri='*#MAO')[0].difference_to_MAO[0].name)
