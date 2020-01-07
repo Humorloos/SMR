@@ -73,7 +73,7 @@ class XmindImporter(NoteImporter):
             class Reference(owlready2.AnnotationProperty):
                 pass
 
-    def findAnswerDicts(self, parent, question, sortId, ref, content):
+    def findAnswerDicts(self, parents, question, sortId, ref, content):
         """
         :param question: question tag to get the answers for
         :return: list of dictionaries created with getAnswerDict()
@@ -107,19 +107,27 @@ class XmindImporter(NoteImporter):
             image = content['media']['image']
             media = content['media']['media']
             children = list()
+            bridges = list()
             for childNode in childNotes:
                 answerDict = self.getAnswerDict(childNode)
-                answerDicts.append(answerDict)
                 if answerDict['isAnswer']:
-                    child = answerDict['concept']
+                    child = answerDict['concepts'][0]
                     children.append(child)
-                    self.onto.Reference[parent, objProp, child] = ref
-                    self.onto.Xid[parent, objProp, child] = question['id']
-                    if image:
-                        self.onto.Image[parent, objProp, child] = image
-                    if media:
-                        self.onto.Media[parent, objProp, child] = media
-            setattr(parent, title, children)
+                    for parent in parents:
+                        self.onto.Reference[parent, objProp, child] = ref
+                        self.onto.Xid[parent, objProp, child] = question['id']
+                        if image:
+                            self.onto.Image[parent, objProp, child] = image
+                        if media:
+                            self.onto.Media[parent, objProp, child] = media
+                else:
+                    bridges.append(answerDict)
+                answerDicts.append(answerDict)
+            if len(children) > 0:
+                for bridge in bridges:
+                    bridge['concepts'] = children
+                for parent in parents:
+                    setattr(parent, title, children)
             return answerDicts
 
     def getAnswerDict(self, nodeTag, root=False):
@@ -140,45 +148,54 @@ class XmindImporter(NoteImporter):
             if root:
                 concept = self.onto.Root(nodeContent['content'])
             else:
-                concept = self.onto.Concept(nodeContent['content'])
+                try:
+                    concept = self.onto.Concept(nodeContent['content'])
+                except TypeError:
+                    print('fehler')
+                    raise NameError('Invalid concept name')
+
             concept.Image = nodeContent['media']['image']
             concept.Media = nodeContent['media']['media']
             concept.Xid = nodeTag['id']
+            concept = [concept]
         # Check whether subtopic contains a crosslink
         crosslink = manager.getNodeCrosslink(nodeTag)
         # Todo: check whether aID is really necessary
         return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
-                    crosslink=crosslink, concept=concept)
+                    crosslink=crosslink, concepts=concept)
 
-    def getQuestions(self, answerDict: dict, sortId='', ref="",
+    def getQuestions(self, parentAnswerDict: dict, sortId='', ref="",
                      followsBridge=False):
         """
-        :param answerDict: parent answer node of the questions to get
+        :param parentAnswerDict: parent answer node of the questions to get
         :param sortId: current id for sortId field
         :param ref: current text for reference field
         :param followsBridge: ???
         :return: creates notes for each question following the answerDict
         """
         manager = self.activeManager
-        answerContent = manager.getNodeContent(answerDict['nodeTag'])['content']
+        answerContent = manager.getNodeContent(parentAnswerDict['nodeTag'])['content']
         # The reference doesn't have to be edited at the roottopic
-        if not isinstance(answerDict['concept'], self.onto.Root):
+        if not isinstance(parentAnswerDict['concepts'][0], self.onto.Root):
             # if the answerdict contains nothing (i.e. questions
             # following multiple answers), just close the reference
-            if self.activeManager.isEmptyNode(
-                    answerDict['nodeTag']) or not answerContent:
+            if not parentAnswerDict['isAnswer']:
                 ref = ref + '</li>'
             else:
                 ref = ref + ': ' + replaceSound(answerContent) + '</li>'
-        followRels = manager.getChildnodes(answerDict['nodeTag'])
+        followRels = manager.getChildnodes(parentAnswerDict['nodeTag'])
         for qId, followRel in enumerate(followRels, start=1):
             # Update the sorting ID
             nextSortId = updateId(previousId=sortId, idToAppend=qId)
             content = manager.getNodeContent(followRel)
-            answerDicts = self.findAnswerDicts(parent=answerDict['concept'],
-                                               question=followRel,
-                                               sortId=nextSortId, ref=ref,
-                                               content=content)
+            if parentAnswerDict['isAnswer']:
+                answerDicts = self.findAnswerDicts(
+                    parents=parentAnswerDict['concepts'], question=followRel,
+                    sortId=nextSortId, ref=ref, content=content)
+            else:
+                answerDicts = self.findAnswerDicts(
+                    parents=parentAnswerDict['concepts'], question=followRel,
+                    sortId=nextSortId, ref=ref, content=content)
             # if the current relation is a question and has more then 20
             # answers give a warning and stop running
             actualAnswers = list(filter(lambda a: a['isAnswer'], answerDicts))
@@ -194,8 +211,9 @@ class XmindImporter(NoteImporter):
             refContent = replaceSound(content['content'])
             nextRef = ref + '<li>' + refContent
             for aId, answerDict in enumerate(answerDicts, start=1):
-                if manager.getChildnodes(answerDict['nodeTag']):
-                    self.getQuestions(answerDict=answerDict, ref=nextRef,
+                if manager.getChildnodes(parentAnswerDict['nodeTag']):
+                    self.getQuestions(parentAnswerDict=answerDict,
+                                      ref=nextRef,
                                       sortId=updateId(previousId=nextSortId,
                                                       idToAppend=aId))
 
@@ -244,7 +262,7 @@ class XmindImporter(NoteImporter):
         self.col.decks.select(self.deckId)
         self.col.decks.current()['mid'] = xModel['id']
         rootDict = self.getAnswerDict(nodeTag=rootTopic, root=True)
-        self.getQuestions(answerDict=rootDict,
+        self.getQuestions(parentAnswerDict=rootDict,
                           ref=manager.getNodeTitle(rootTopic))
 
     def importSheets(self, selectedSheets):
