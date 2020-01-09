@@ -9,6 +9,7 @@ from anki import Collection
 
 from XmindImport.consts import ADDON_PATH
 from XmindImport.xmindimport import XmindImporter
+from XmindImport.xmanager import XManager
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 
@@ -40,9 +41,24 @@ class TestImportMap(TestXmindImporter):
         self.xmindImporter.currentSheetImport = 'biological psychology'
         self.xmindImporter.activeManager = self.xmindImporter.xManagers[0]
 
-    def test_import_example(self):
+    def test_import_biological_psychology(self):
         self.xmindImporter.importMap()
-        print('hi')
+        self.fail
+
+    def test_whole_example(self):
+        importer = self.xmindImporter
+        importer.xManagers.append(
+            XManager(os.path.join(
+                ADDON_PATH, 'resources', 'example_general_psychology.xmind')))
+        importer.importMap()
+        importer.currentSheetImport = 'clinical psychology'
+        importer.importMap()
+        importer.activeManager = importer.xManagers[1]
+        importer.currentSheetImport = 'general psychology'
+        importer.importMap()
+        self.fail()
+
+
 
 
 class TestGetAnswerDict(TestImportMap):
@@ -74,7 +90,7 @@ class TestGetQuestions(TestImportMap):
         answerDict = {'nodeTag': nodeTag, 'isAnswer': True, 'aId': str(0),
                       'crosslink': None, 'concepts': concept}
         act = importer.getQuestions(parentAnswerDict=answerDict,
-                                              ref='biological psychology')
+                                    ref='biological psychology')
         self.fail()
 
     def test_questions_following_multiple_answers(self):

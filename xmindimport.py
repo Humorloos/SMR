@@ -283,10 +283,10 @@ class XmindImporter(NoteImporter):
         """
         for manager in self.xManagers:
             self.activeManager = manager
-            validSheets = filter(lambda s: s in selectedSheets, manager.sheets)
+            validSheets = [s for s in selectedSheets if s in manager.sheets]
             for sheet in validSheets:
                 self.currentSheetImport = sheet
-                self.mw.progress.update(label='importing %s' % sheet['tag'],
+                self.mw.progress.update(label='importing %s' % sheet,
                                         maybeShow=False)
                 self.mw.app.processEvents()
                 self.importMap()
