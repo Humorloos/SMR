@@ -9,16 +9,15 @@ from .consts import ICONS_PATH
 
 
 class SheetSelector(QDialog):
-    def __init__(self, sheets):
+    def __init__(self, filename):
         try:
             self.parent = aqt.mw.app.activeWindow() or aqt.mw
         except:
             self.parent = None
         super().__init__(parent=self.parent)
-        self.sheets = sheets
         self.width = 600
         self.height = 100
-        self.deck_text = 'Choose Deck:'
+        self.deck_text = 'Choose Deck for map "%s":' % filename
         self.deck = None
         self.repairCheckbox = None
         self.running = True
@@ -59,9 +58,8 @@ class SheetSelector(QDialog):
         sheetLayout.addWidget(repairCheckbox)
 
     def getInputs(self):
-        return {'selectedSheets': self.sheets, 'repair': self.repair,
-                'deckId': self.deckId, 'running': self.running,
-                'tags': self.tags}
+        return {'repair': self.repair, 'deckId': self.deckId,
+                'running': self.running}
 
 
 class SingleSheetSelector(SheetSelector):
@@ -73,8 +71,6 @@ class SingleSheetSelector(SheetSelector):
         if not self.parent:
             self.width *= 2
             self.height *= 2
-        title = self.sheets[0]
-        tag_text = 'Enter name for sheet "' + title + '":'
         self.setWindowTitle('Xmind Import')
         self.setWindowIcon(QIcon(os.path.join(ICONS_PATH, "icon.ico")))
         self.resize(self.width, self.height)
@@ -92,9 +88,6 @@ class SingleSheetSelector(SheetSelector):
         label_deck = QtWidgets.QLabel(layout)
         label_deck.setText(self.deck_text)
         v_layout_2.addWidget(label_deck)
-        label_tag = QtWidgets.QLabel(layout)
-        label_tag.setText(tag_text)
-        v_layout_2.addWidget(label_tag)
 
         v_layout_3 = QtWidgets.QVBoxLayout()
         deckarea = QtWidgets.QWidget(layout)
@@ -104,9 +97,6 @@ class SingleSheetSelector(SheetSelector):
         except:
             self.deck = None
         v_layout_3.addWidget(deckarea)
-        self.user_input = QtWidgets.QLineEdit(layout)
-        self.user_input.setText(title)
-        v_layout_3.addWidget(self.user_input)
 
         h_layout_1.addLayout(v_layout_2)
         h_layout_1.addLayout(v_layout_3)
@@ -133,8 +123,6 @@ class SingleSheetSelector(SheetSelector):
             self.reject)
 
     def on_ok(self):
-        title = self.sheets[0]
-        self.tags[title] = self.getTag(self.user_input.text())
         self.deckId = self.get_deck_id()
         self.repair = self.repairCheckbox.isChecked()
         self.accept()

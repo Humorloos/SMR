@@ -20,8 +20,8 @@ class TestSheetSelector(TestCase):
 class TestSingleSheetSelector(TestSheetSelector):
     def setUp(self):
         super().setUp()
-        self.sheets = ['biological psychology']
-        self.singleSheetSelector = SingleSheetSelector(self.sheets)
+        self.filename = 'example_map.xmind'
+        self.singleSheetSelector = SingleSheetSelector(self.filename)
 
 
 class TestInitSingle(TestSingleSheetSelector):
