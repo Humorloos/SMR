@@ -12,6 +12,7 @@ from .sheetselectors import *
 from .utils import *
 from .consts import *
 from .xmanager import XManager
+from .xontology import XOntology
 
 
 # TODO: adjust sheet selection windows to adjust to the window size
@@ -41,37 +42,7 @@ class XmindImporter(NoteImporter):
         self.xManagers = [XManager(file)]
         self.activeManager = None
         self.currentSheetImport = ''
-        # set up ontology
-        self.onto = owlready2.get_ontology(
-            os.path.join(ADDON_PATH, 'resources', 'onto.owl'))
-        with self.onto:
-            class Concept(owlready2.Thing):
-                pass
-
-            class Root(Concept):
-                pass
-
-            # standard object properties
-            class Parent(Concept >> Concept):
-                pass
-
-            class Child(Concept >> Concept):
-                inverse_property = Parent
-                pass
-
-            # Annotation properties for Concepts
-            class Image(owlready2.AnnotationProperty):
-                pass
-
-            class Media(owlready2.AnnotationProperty):
-                pass
-
-            class Xid(owlready2.AnnotationProperty):
-                pass
-
-            # Annotation properties for relation triples
-            class Reference(owlready2.AnnotationProperty):
-                pass
+        self.onto = XOntology()
 
     def findAnswerDicts(self, parents, question, sortId, ref, content):
         """
