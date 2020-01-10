@@ -82,7 +82,6 @@ class XmindImporter(NoteImporter):
                                               (owlready2.ObjectProperty,))
                     relProp.domain = [self.onto.Concept]
                     relProp.range = [self.onto.Concept]
-                    relProp.inverse_property = self.onto.Parent
             image = content['media']['image']
             media = content['media']['media']
             children = list()
@@ -107,6 +106,8 @@ class XmindImporter(NoteImporter):
                     bridge['concepts'] = children
                 for parent in parents:
                     setattr(parent, relTitle, children)
+                for child in children:
+                    setattr(child, 'Parent', parents)
             return answerDicts
 
     def getAnswerDict(self, nodeTag, root=False):
