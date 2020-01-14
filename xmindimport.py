@@ -36,6 +36,7 @@ class XmindImporter(NoteImporter):
         self.srcDir = tempfile.mkdtemp()
         self.warnings = []
         self.deckId = ''
+        self.deckName = ''
         self.tags = dict()
         self.running = True
         self.repair = False
@@ -93,11 +94,19 @@ class XmindImporter(NoteImporter):
                     children.append(child)
                     for parent in parents:
                         self.onto.Reference[parent, relProp, child] = ref
+                        self.onto.SortId[parent, relProp, child] = sortId
+                        self.onto.Doc[parent, relProp, child] = \
+                            self.activeManager.file
+                        self.onto.Sheet[parent, relProp, child] = \
+                            self.activeManager.sheets[
+                                self.currentSheetImport]['id']
                         self.onto.Xid[parent, relProp, child] = question['id']
                         if image:
                             self.onto.Image[parent, relProp, child] = image
                         if media:
                             self.onto.Media[parent, relProp, child] = media
+                        self.onto.NoteTag[parent, relProp, child] = \
+                            self.getTag()
                 else:
                     bridges.append(answerDict)
                 answerDicts.append(answerDict)
@@ -232,6 +241,10 @@ class XmindImporter(NoteImporter):
                     self.xManagers.append(ref_xManager)
                     self.getRefManagers(ref_xManager)
 
+    def getTag(self):
+        return " " + (self.deckName + '_' + self.currentSheetImport).replace(
+            " ", "_") + " "
+
     def importMap(self):
         """
         :return: adds the roottopic of the active sheet to self.onto and starts
@@ -298,52 +311,34 @@ class XmindImporter(NoteImporter):
         """
         self.getRefManagers(self.xManagers[0])
         sheets = self.getValidSheets()
-        if len(sheets) > 1:
-            selector = MultiSheetSelector(sheets)
-        else:
-            selector = SingleSheetSelector(sheets)
+        selector = SingleSheetSelector(os.path.basename(self.xManagers[0].file))
         self.mw.progress.finish()
         selector.exec_()
         userInputs = selector.getInputs()
         if not userInputs['running']:
             self.log = ['Import canceled']
             return
-        selectedSheets = userInputs['selectedSheets']
         self.deckId = userInputs['deckId']
+        self.deckName = self.col.decks.get(self.deckId)['name']
         self.repair = userInputs['repair']
-        self.tags = userInputs['tags']
         self.mw.progress.start(immediate=True, label='importing...')
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
-        self.importSheets(selectedSheets)
+        self.importSheets(sheets)
 
         # receives a question, sheet and list of notes possibly following each
         # answer to this question and returns a json file
 
-    def getXMindMeta(self, question, answerDicts, siblings,
-                     connections):
+    def getXMindMeta(self, noteData):
         xMindMeta = dict()
-        xMindMeta['path'] = self.file
-        xMindMeta['sheetId'] = self.currentSheetImport['sheet']['id']
-        xMindMeta['questionId'] = question['id']
-        xMindMeta['answers'] = []
-        answers = list(filter(lambda answerDict: answerDict['isAnswer'],
-                              answerDicts))
-
-        # get questions following each answer
-        nextQuestions = self.getNextQuestions(answerDicts)
-        for aId, answer in enumerate(answers, start=0):
-            # write each answer and its following questions into meta
-            xMindMeta['answers'].append(dict())
-            xMindMeta['answers'][aId]['answerId'] = answer[
-                'nodeTag']['id']
-            xMindMeta['answers'][aId]['children'] = []
-            for question in nextQuestions[aId]:
-                xMindMeta['answers'][aId]['children'].append(
-                    question['qId'])
+        xMindMeta['path'] = noteData['document']
+        xMindMeta['sheetId'] = noteData['sheetId']
+        xMindMeta['questionId'] = noteData['questionId']
+        answers = [a for a in noteData['answers'] if len(a) != 0]
+        xMindMeta['answers'] = [{'answerId': a['id'],
+                                 'children': a['children']} for a in answers]
         xMindMeta['nAnswers'] = len(answers)
-        xMindMeta['siblings'] = siblings
-        xMindMeta['connections'] = connections
+        xMindMeta['subjects'] = noteData['subjects']
         xMindMeta['lastSync'] = intTime()
         return json.dumps(xMindMeta)
 
@@ -353,73 +348,6 @@ class XmindImporter(NoteImporter):
         # get image from subdirectory attachments in mediaDir
         srcPath = os.path.join(self.srcDir, attachment)
         self.col.media.addFile(srcPath)
-
-    def getNextQuestions(self, answerDicts: list, addCrosslinks=True,
-                         goDeeper=True):
-        """receives a list of answerDicts and returns a list of anki notes for each subtopic"""
-
-        nextQuestions = []
-        globalQuestions = []
-        bridges = list(filter(lambda answerDict: not answerDict['isAnswer'],
-                              answerDicts))
-        answers = list(filter(lambda answerDict: answerDict['isAnswer'],
-                              answerDicts))
-        # TODO: globalQUestions add connections as global questions check whtether thats true
-        for bridge in bridges:
-            globalQuestions.extend(self.getQuestionListForAnswer(bridge))
-        for answer in answers:
-            # Add one new note for each question following this subTopic
-            questionListForAnswer = self.getQuestionListForAnswer(
-                answerDict=answer, globalQuestions=globalQuestions,
-                addCrosslinks=addCrosslinks, goDeeper=goDeeper)
-            nextQuestions.append(questionListForAnswer)
-        return nextQuestions
-
-    # receives an answerDict and returns a list of xmind topic ids
-    def getQuestionListForAnswer(self, answerDict: dict, globalQuestions=None,
-                                 addCrosslinks=True, goDeeper=True):
-        # get all nodes following the answer in answerDict, including those
-        # following a potential crosslink
-        potentialQuestions = getChildnodes(answerDict['nodeTag'])
-        # iterate through all questions
-        questionList = []
-        for potentialQuestion in potentialQuestions:
-            if not (isEmptyNode(potentialQuestion)):
-                # If this question contains a crosslink to another question
-                crosslink = getNodeCrosslink(potentialQuestion)
-                if crosslink and isQuestionNode(
-                        getTagById(self.tagList, crosslink)):
-                    questionList.append(
-                        dict(qId=crosslink, isConnection=not addCrosslinks))
-                else:
-                    questionList.append(dict(qId=potentialQuestion['id'],
-                                             isConnection=not addCrosslinks))
-            else:
-                if goDeeper:
-                    nextAnswerDicts = self.findAnswerDicts(potentialQuestion)
-                    # code in brackets is for unlisting:
-                    # https://stackoverflow.com/a/952952
-                    followingQuestions = [item for sublist in
-                                          self.getNextQuestions(
-                                              answerDicts=nextAnswerDicts,
-                                              addCrosslinks=addCrosslinks,
-                                              goDeeper=False) for
-                                          item in sublist]
-                    questionList.extend(followingQuestions)
-        if globalQuestions:
-            questionList.extend(globalQuestions)
-        if answerDict['crosslink'] and addCrosslinks:
-            crosslinkNode = getTagById(tagList=self.tagList,
-                                       tagId=answerDict['crosslink'])
-            if not crosslinkNode:
-                self.running = False
-                return None
-            crosslinkAnswerDict = self.getAnswerDict(crosslinkNode)
-            # Do not add crosslinks following crosslinks to avoid endless loops
-            crosslinkQuestions = self.getQuestionListForAnswer(
-                answerDict=crosslinkAnswerDict, addCrosslinks=False)
-            questionList.extend(crosslinkQuestions)
-        return questionList
 
     def getNoteData(self, sortId, question, answerDicts, ref, siblings,
                     connections):
@@ -605,3 +533,35 @@ class XmindImporter(NoteImporter):
         for noteData in rows:
             self.col.addNote(self.noteFromNoteData(noteData))
             sleep(0.001)
+
+    def importOntology(self):
+        triples = self.onto.getNoteTriples()
+        ascendingSortId = sorted(triples, key=lambda t: self.onto.getSortId(
+            self.onto.getElements(t)))
+        correctOrder = sorted(
+            ascendingSortId, key=lambda t: self.onto.getNoteTag(
+                self.onto.getElements(t)))
+        sortIds = [self.onto.getSortId(self.onto.getElements(t)) for t in
+                   correctOrder]
+        groupedQuestions = []
+        questionList = [correctOrder[0]]
+        self.onto.getQuestionData(correctOrder[0])
+        for i, sortId in enumerate(sortIds[0:-1], start=1):
+            if sortId != sortIds[i]:
+                groupedQuestions.append(questionList)
+                questionList = [correctOrder[i]]
+            else:
+                questionList.append(correctOrder[i])
+        groupedQuestions.append(questionList)
+        for questionList in groupedQuestions:
+            self.noteFromQuestionList(questionList)
+
+    def noteFromQuestionList(self, questionList):
+        note = self.col.newNote()
+        note.model()['did'] = self.deckId
+        noteData = self.onto.getNoteData(questionList)
+        meta = self.getXMindMeta(noteData)
+        fields = []
+        note.fields = fields
+        note.tags.append(noteData[5].replace(" ", ""))
+        print('')

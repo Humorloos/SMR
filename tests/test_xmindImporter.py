@@ -37,13 +37,15 @@ class TestGetValidSheets(TestXmindImporter):
 class TestImportMap(TestXmindImporter):
     def setUp(self):
         super().setUp()
-        self.xmindImporter.deckId = '1'
-        self.xmindImporter.currentSheetImport = 'biological psychology'
-        self.xmindImporter.activeManager = self.xmindImporter.xManagers[0]
+        importer = self.xmindImporter
+        importer.deckId = '1'
+        importer.deckName = self.col.decks.get(importer.deckId)['name']
+        importer.currentSheetImport = 'biological psychology'
+        importer.activeManager = self.xmindImporter.xManagers[0]
 
     def test_import_biological_psychology(self):
         self.xmindImporter.importMap()
-        self.fail
+        self.fail()
 
     def test_whole_example(self):
         importer = self.xmindImporter
@@ -57,8 +59,6 @@ class TestImportMap(TestXmindImporter):
         importer.currentSheetImport = 'general psychology'
         importer.importMap()
         self.fail()
-
-
 
 
 class TestGetAnswerDict(TestImportMap):
@@ -229,3 +229,47 @@ class TestFindAnswerDicts(TestImportMap):
         self.assertEqual(
             'MAO is not a neurotransmitter', importer.onto.search(
                 iri='*#MAO')[0].difference_to_MAO[0].name)
+
+
+class TestImportOntology(TestImportMap):
+    def setUp(self):
+        super().setUp()
+        importer = self.xmindImporter
+        importer.xManagers.append(
+            XManager(os.path.join(
+                ADDON_PATH, 'resources', 'example_general_psychology.xmind')))
+        importer.importMap()
+        importer.currentSheetImport = 'clinical psychology'
+        importer.importMap()
+        importer.activeManager = importer.xManagers[1]
+        importer.currentSheetImport = 'general psychology'
+        importer.importMap()
+
+    def test_example(self):
+        importer = self.xmindImporter
+        importer.importOntology()
+        self.fail()
+
+
+class TestNoteFromQuestionList(TestImportOntology):
+    def test_multiple_answers(self):
+        importer = self.xmindImporter
+        questionList = [(315, 317, 318), (315, 317, 319)]
+        act = importer.noteFromQuestionList(questionList)
+        self.fail()
+
+    def test_bridge_parent(self):
+        importer = self.xmindImporter
+        questionList = [(328, 346, 325)]
+        act = importer.noteFromQuestionList(questionList)
+        self.fail()
+
+
+class TestGetXMindMeta(TestImportOntology):
+    def test_multiple_answers(self):
+        importer = self.xmindImporter
+        noteData = pickle.load(
+            open(os.path.join(SUPPORT_PATH, 'xmindImporter', 'noteData.p'),
+                 'rb'))
+        act = importer.getXMindMeta(noteData)
+        self.fail()

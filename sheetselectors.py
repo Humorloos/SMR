@@ -33,14 +33,6 @@ class SheetSelector(QDialog):
     def on_ok(self):
         return
 
-    def getTag(self, userInput):
-        if not self.deck:
-            deck_name = 'nodeck'
-        else:
-            deck_name = self.deck.deckName
-        return " " + (deck_name + '_' + userInput).replace(
-            " ", "_") + " "
-
     def get_deck_id(self):
         if self.deck:
             return self.deck.selectedId()
