@@ -44,17 +44,6 @@ class XManager:
         if title:
             content += title
 
-        # If the node contains a link to another node, add the text of that
-        # node. Use Beautifulsoup because minidom can't find nodes by attributes
-        if href and href.startswith('xmind:#'):
-            crosslinkTag = self.getTagById(tagId=href[7:])
-            crosslinkTitle = self.getNodeTitle(crosslinkTag)
-            if content:
-                content += ' '
-                content += crosslinkTitle
-            else:
-                content = crosslinkTitle
-
         # if necessary add image
         attachment = self.getNodeImg(tag=tag)
         if attachment:
@@ -63,6 +52,14 @@ class XManager:
             fileName = re.search('/.*', attachment).group()[1:]
             content += '<img src="%s">' % fileName
             media['image'] = attachment[4:]
+
+        # If the node contains a link to another node, add the text of that
+        # node. Use Beautifulsoup because minidom can't find nodes by attributes
+        if href and href.startswith('xmind:#'):
+            crosslinkTag = self.getTagById(tagId=href[7:])
+            crosslinkTitle = self.getNodeTitle(crosslinkTag)
+            if not content:
+                content = crosslinkTitle
 
         # if necessary add sound
         if href and href.endswith(('.mp3', '.wav', 'mp4')):

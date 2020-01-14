@@ -38,6 +38,8 @@ class XmindImporter(NoteImporter):
         self.deckId = ''
         self.deckName = ''
         self.tags = dict()
+        self.images = []
+        self.media = []
         self.running = True
         self.repair = False
         self.xManagers = [XManager(file)]
@@ -145,7 +147,9 @@ class XmindImporter(NoteImporter):
 
             concept.Image = nodeContent['media']['image']
             concept.Media = nodeContent['media']['media']
-            if not manager.getNodeCrosslink(nodeTag):
+            # Do not add an Xid if the node is a pure crosslink-node
+            if manager.getNodeTitle(nodeTag) or manager.getNodeImg(nodeTag) \
+                    or not manager.getNodeCrosslink(nodeTag):
                 concept.Xid.append(nodeTag['id'])
             concept = [concept]
         # Check whether subtopic contains a crosslink
@@ -166,8 +170,6 @@ class XmindImporter(NoteImporter):
         manager = self.activeManager
         answerContent = manager.getNodeContent(parentAnswerDict['nodeTag'])[
             'content']
-        if answerContent == 'MAO':
-            print()
         # The reference doesn't have to be edited at the roottopic
         if not isinstance(parentAnswerDict['concepts'][0], self.onto.Root):
             # if the answerdict contains nothing (i.e. questions
@@ -529,9 +531,9 @@ class XmindImporter(NoteImporter):
                 cardUpdates.append([str(0)] * 10)
         return cardUpdates
 
-    def addNew(self, rows):
-        for noteData in rows:
-            self.col.addNote(self.noteFromNoteData(noteData))
+    def addNew(self, notes):
+        for note in notes:
+            self.col.addNote(note)
             sleep(0.001)
 
     def importOntology(self):
@@ -543,25 +545,37 @@ class XmindImporter(NoteImporter):
                 self.onto.getElements(t)))
         sortIds = [self.onto.getSortId(self.onto.getElements(t)) for t in
                    correctOrder]
-        groupedQuestions = []
-        questionList = [correctOrder[0]]
-        self.onto.getQuestionData(correctOrder[0])
-        for i, sortId in enumerate(sortIds[0:-1], start=1):
-            if sortId != sortIds[i]:
-                groupedQuestions.append(questionList)
-                questionList = [correctOrder[i]]
+
+        questionList = []
+        tripleList = [correctOrder[0]]  # Initiate tripleList with first triple
+        for x, sortId in enumerate(sortIds[0:-1], start=1):
+            # Add the triple to the questionList if the next triple has a
+            # different
+            # sortId
+            if sortId != sortIds[x]:
+                questionList.append(tripleList)
+                tripleList = [correctOrder[x]]
+            # Add the triple to the tripleList if it pertains to the same
+            # question as the next triple
             else:
-                questionList.append(correctOrder[i])
-        groupedQuestions.append(questionList)
-        for questionList in groupedQuestions:
-            self.noteFromQuestionList(questionList)
+                tripleList.append(correctOrder[x])
+        questionList.append(tripleList)
+
+        notes = [self.noteFromQuestionList(q) for q in questionList]
+        self.addNew(notes=notes)
 
     def noteFromQuestionList(self, questionList):
         note = self.col.newNote()
         note.model()['did'] = self.deckId
         noteData = self.onto.getNoteData(questionList)
+        self.images.extend(noteData['images'])
+        self.media.extend(noteData['media'])
         meta = self.getXMindMeta(noteData)
-        fields = []
+        fields = [noteData['reference'],
+                  noteData['question']]
+        fields.extend([a['text'] if len(a) != 0 else '' for
+                       a in noteData['answers']])
+        fields.extend([noteData['sortId'], meta])
         note.fields = fields
-        note.tags.append(noteData[5].replace(" ", ""))
-        print('')
+        note.tags.append(noteData['tag'])
+        return note

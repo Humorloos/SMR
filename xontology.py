@@ -98,7 +98,7 @@ class XOntology(Ontology):
             if concept.Image:
                 images.append(concept.Image)
             if concept.Media:
-                media.append(concept.media)
+                media.append(concept.Media)
             childTriples = self.getChildTriples(s=answerDids[i])
             childElements = [self.getElements(t) for t in childTriples]
             answerDict['children'] = self.getChildQuestionIds(childElements)

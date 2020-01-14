@@ -76,6 +76,13 @@ class TestGetAnswerDict(TestImportMap):
         act = self.xmindImporter.getAnswerDict(nodeTag)
         self.fail()
 
+    def test_crosslink_and_text(self):
+        importer = self.xmindImporter
+        xid = '2koenah8ebavhq2bl2u6u1lh4h'
+        nodeTag = importer.activeManager.getTagById(xid)
+        act = self.xmindImporter.getAnswerDict(nodeTag)
+        self.fail()
+
 
 class TestGetQuestions(TestImportMap):
     def test_questions_for_root(self):
