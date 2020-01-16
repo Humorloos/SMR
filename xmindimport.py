@@ -185,6 +185,8 @@ class XmindImporter(NoteImporter):
             # following multiple answers), just close the reference
             if not parentAnswerDict['isAnswer']:
                 ref = ref + '</li>'
+            elif followsBridge:
+                ref = ref + replaceSound(answerContent) + '</li>'
             else:
                 ref = ref + ': ' + replaceSound(answerContent) + '</li>'
         followRels = manager.getChildnodes(parentAnswerDict['nodeTag'])
@@ -214,10 +216,11 @@ class XmindImporter(NoteImporter):
                 nextRef = ref + '<li>' + refContent
                 for aId, answerDict in enumerate(answerDicts, start=1):
                     if manager.getChildnodes(parentAnswerDict['nodeTag']):
-                        self.getQuestions(parentAnswerDict=answerDict,
-                                          ref=nextRef,
-                                          sortId=updateId(previousId=nextSortId,
-                                                          idToAppend=aId))
+                        self.getQuestions(
+                            parentAnswerDict=answerDict, ref=nextRef,
+                            sortId=updateId(
+                                previousId=nextSortId, idToAppend=aId),
+                            followsBridge=not isQuestion)
 
     def getValidSheets(self):
         """
