@@ -5,7 +5,7 @@ import owlready2
 from owlready2.namespace import Ontology, World
 
 from .consts import ADDON_PATH, X_MAX_ANSWERS
-from .utils import unclassify
+from .utils import unclassify, file_dict
 
 
 class XOntology(Ontology):
@@ -45,6 +45,10 @@ class XOntology(Ontology):
             class Xid(owlready2.AnnotationProperty):
                 pass
 
+            # Xmind file that contains the node
+            class Doc(owlready2.AnnotationProperty):
+                pass
+
             # Annotation properties for relation triples
 
             # For reference field
@@ -53,10 +57,6 @@ class XOntology(Ontology):
 
             # For sortId field
             class SortId(owlready2.AnnotationProperty):
-                pass
-
-            # Xmind file that contains the node
-            class Doc(owlready2.AnnotationProperty):
                 pass
 
             # Sheet that contains the node
@@ -118,9 +118,11 @@ class XOntology(Ontology):
             answerDict['text'] = concept.name
             answerDict['id'] = concept.Xid[0]
             if concept.Image:
-                images.append(concept.Image)
+                images.append(file_dict(identifier=concept.Image[0],
+                                        doc=concept.Doc[0]))
             if concept.Media:
-                media.append(concept.Media)
+                media.append(file_dict(identifier=concept.Media[0],
+                                       doc=concept.Doc[0]))
             childTriples = self.getChildTriples(s=answerDids[i])
             childElements = [self.getElements(t) for t in childTriples]
             answerDict['children'] = self.getChildQuestionIds(childElements)
@@ -174,7 +176,8 @@ class XOntology(Ontology):
 
     def getFiles(self, elements):
         files = [self.getImage(elements), self.getMedia(elements)]
-        return [None if len(f) == 0 else f[0] for f in files]
+        return [None if len(f) == 0 else file_dict(
+            identifier=f[0], doc=self.getDoc(elements)[0]) for f in files]
 
     def getChildQuestionIds(self, childElements):
         children = {'childQuestions': set(), 'bridges': list()}

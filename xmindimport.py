@@ -47,6 +47,20 @@ class XmindImporter(NoteImporter):
         self.currentSheetImport = ''
         self.onto = XOntology()
 
+    def addMedia(self):
+        for manager in self.xManagers:
+            for file in [f for f in self.media if f['doc'] == manager.file]:
+                if file['identifier'].startswith(('attachments', 'resources')):
+                    file_path = manager.getAttachment(identifier=file[
+                        'identifier'], dir=self.srcDir)
+                    self.col.media.addFile(file_path)
+                else:
+                    self.col.media.addFile(file['identifier'])
+            for image in [i for i in self.images if i['doc'] == manager.file]:
+                file_path = manager.getAttachment(identifier=image[
+                    'identifier'], dir=self.srcDir)
+                self.col.media.addFile(file_path)
+
     def addNew(self, notes):
         for note in notes:
             self.col.addNote(note)
@@ -112,27 +126,32 @@ class XmindImporter(NoteImporter):
                 child = answerDict['concepts'][0]
                 children.append(child)
                 for parent in parents:
-                    self.onto.Reference[parent, relProp, child] = ref
-                    if sortId:
-                        self.onto.SortId[parent, relProp, child] = sortId
-                    self.onto.Doc[parent, relProp, child] = \
-                        self.activeManager.file
-                    self.onto.Sheet[parent, relProp, child] = \
-                        self.activeManager.sheets[
-                            self.currentSheetImport]['id']
-                    self.onto.Xid[parent, relProp, child] = question['id']
-                    if image:
-                        self.onto.Image[parent, relProp, child] = image
-                    if media:
-                        self.onto.Media[parent, relProp, child] = media
-                    self.onto.NoteTag[parent, relProp, child] = \
-                        self.getTag()
-                    self.onto.AIndex[parent, relProp, child] = aIndex
+                    self.add_relation(aIndex, child, image, media, parent,
+                                      question, ref, relProp, sortId)
                 aIndex += 1
             else:
                 bridges.append(answerDict)
             answerDicts.append(answerDict)
         return bridges, children
+
+    def add_relation(self, aIndex, child, image, media, parent, question, ref,
+                     relProp, sortId):
+        self.onto.Reference[parent, relProp, child] = ref
+        if sortId:
+            self.onto.SortId[parent, relProp, child] = sortId
+        self.onto.Doc[parent, relProp, child] = self.activeManager.file
+        self.onto.Sheet[parent, relProp, child] = self.activeManager.sheets[
+            self.currentSheetImport]['id']
+        self.onto.Xid[parent, relProp, child] = question['id']
+        if image:
+            self.onto.Image[parent, relProp, child] = image
+        if media:
+            self.onto.Media[parent, relProp, child] = media
+        self.onto.NoteTag[parent, relProp, child] = self.getTag()
+        self.onto.AIndex[parent, relProp, child] = aIndex
+
+    def get_file_dict(self, path):
+        return [path, self.activeManager.file]
 
     def stop_or_add_cross_question(self, content, crosslink, manager, parents,
                                    question, ref, sortId):
@@ -186,8 +205,11 @@ class XmindImporter(NoteImporter):
                 except TypeError:
                     print('fehler')
                     raise NameError('Invalid concept name')
-            concept.Image = nodeContent['media']['image']
-            concept.Media = nodeContent['media']['media']
+            if nodeContent['media']['image']:
+                concept.Image = nodeContent['media']['image']
+            if nodeContent['media']['media']:
+                concept.Media = nodeContent['media']['media']
+            concept.Doc = self.activeManager.file
 
             # Do not add an Xid if the node is a pure crosslink-node because
             # these nodes are
@@ -349,6 +371,7 @@ class XmindImporter(NoteImporter):
 
         notes = [self.noteFromQuestionList(q) for q in questionList]
         self.addNew(notes=notes)
+        self.addMedia()
 
     def importSheets(self, selectedSheets):
         """
@@ -421,13 +444,6 @@ class XmindImporter(NoteImporter):
         self.mw.checkpoint("Import")
         self.importSheets(sheets)
 
-    def addAttachment(self, attachment):
-        # extract attachment to anki media directory
-        self.xZip.extract(attachment, self.srcDir)
-        # get image from subdirectory attachments in mediaDir
-        srcPath = os.path.join(self.srcDir, attachment)
-        self.col.media.addFile(srcPath)
-
     def getNoteData(self, sortId, question, answerDicts, ref, siblings,
                     connections):
         """returns a list of all content needed to create the a new note and
@@ -482,16 +498,6 @@ class XmindImporter(NoteImporter):
         note.fields = fields
         note.tags.append(noteData[5].replace(" ", ""))
         return note
-
-    def addMedia(self, media):
-        for files in media:
-            if files['image']:
-                self.addAttachment(files['image'])
-            if files['media']:
-                if files['media'].startswith(('attachments', 'resources')):
-                    self.addAttachment(files['media'])
-                else:
-                    self.col.media.addFile(files['media'])
 
     def maybeSync(self, sheetId, noteList):
         if self.repair:

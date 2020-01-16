@@ -137,3 +137,6 @@ def imgFromContent(content):
     except AttributeError:
         return None
 
+
+def file_dict(identifier, doc):
+    return {'identifier': identifier, 'doc': doc}

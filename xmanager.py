@@ -9,15 +9,21 @@ from bs4 import BeautifulSoup
 
 class XManager:
     def __init__(self, file):
-        xZip = zipfile.ZipFile(file, 'r')
+        self.xZip = zipfile.ZipFile(file, 'r')
         self.file = file
-        self.soup = BeautifulSoup(xZip.read('content.xml'),
+        self.soup = BeautifulSoup(self.xZip.read('content.xml'),
                                   features='html.parser')
         self.tagList = self.soup('topic')
         self.sheets = dict()
         for sheet in self.soup('sheet'):
             sheetTitle = sheet('title', recursive=False)[0].text
             self.sheets[sheetTitle] = sheet
+
+    def getAttachment(self, identifier, dir):
+        # extract attachment to anki media directory
+        self.xZip.extract(identifier, dir)
+        # get image from subdirectory attachments in mediaDir
+        return os.path.join(dir, identifier)
 
     def getChildnodes(self, tag):
         """
