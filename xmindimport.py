@@ -25,8 +25,8 @@ from .xontology import XOntology
 #  https://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
 #  https://docs.python.org/3.6/library/profile.html
 class XmindImporter(NoteImporter):
-
     needMapper = False
+
     def __init__(self, col, file):
         NoteImporter.__init__(self, col, file)
         self.model = col.models.byName(X_MODEL_NAME)
@@ -253,8 +253,7 @@ class XmindImporter(NoteImporter):
                     self.getRefManagers(ref_xManager)
 
     def getTag(self):
-        return " " + (self.deckName + '_' + self.currentSheetImport).replace(
-            " ", "_") + " "
+        return (self.deckName + '_' + self.currentSheetImport).replace(" ", "_")
 
     def getXMindMeta(self, noteData):
         xMindMeta = dict()
@@ -567,4 +566,3 @@ class XmindImporter(NoteImporter):
                 # get Values for a completely new card
                 cardUpdates.append([str(0)] * 10)
         return cardUpdates
-
