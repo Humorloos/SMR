@@ -61,74 +61,100 @@ class XmindImporter(NoteImporter):
         manager = self.activeManager
         crosslink = manager.getNodeCrosslink(question)
         childNotes = manager.getChildnodes(question)
+
         if len(childNotes) == 0:
-            # stop and warn if no nodes follow the question
-            if not crosslink:
-                self.running = False
-                self.log = ["""Warning:
+            return self.stop_or_add_cross_question(
+                content=content, crosslink=crosslink, manager=manager,
+                parents=parents, question=question, ref=ref, sortId=sortId)
+
+        # Convert the node content into a string that can be used as a
+        # class-name
+        relTitle = classify(content['content'])
+
+        # Add a Child relation if the node is a bridge
+        if not relTitle:
+            relProp = self.onto.Child
+            relTitle = 'Child'
+
+        # Add a custom relation if the node is a question
+        else:
+            with self.onto:
+                relProp = types.new_class(
+                    relTitle, (owlready2.ObjectProperty,))
+                relProp.domain = [self.onto.Concept]
+                relProp.range = [self.onto.Concept]
+        image = content['media']['image']
+        media = content['media']['media']
+        bridges, children = self.get_children_and_bridges(
+            answerDicts, childNotes, image, media, parents, question, ref,
+            relProp, sortId)
+        if len(children) > 0:
+
+            # Assign all children to bridge concepts because they are the
+            # subject of questions following bridges
+            for bridge in bridges:
+                bridge['concepts'] = children
+
+            for parent in parents:
+                setattr(parent, relTitle, children)
+            for child in children:
+                setattr(child, 'Parent', parents)
+        return answerDicts
+
+    def get_children_and_bridges(self, answerDicts, childNotes, image, media,
+                                 parents, question, ref, relProp, sortId):
+        children = list()
+        bridges = list()
+        aIndex = 1
+        for childNode in childNotes:
+            answerDict = self.getAnswerDict(childNode)
+            if answerDict['isAnswer']:
+                child = answerDict['concepts'][0]
+                children.append(child)
+                for parent in parents:
+                    self.onto.Reference[parent, relProp, child] = ref
+                    if sortId:
+                        self.onto.SortId[parent, relProp, child] = sortId
+                    self.onto.Doc[parent, relProp, child] = \
+                        self.activeManager.file
+                    self.onto.Sheet[parent, relProp, child] = \
+                        self.activeManager.sheets[
+                            self.currentSheetImport]['id']
+                    self.onto.Xid[parent, relProp, child] = question['id']
+                    if image:
+                        self.onto.Image[parent, relProp, child] = image
+                    if media:
+                        self.onto.Media[parent, relProp, child] = media
+                    self.onto.NoteTag[parent, relProp, child] = \
+                        self.getTag()
+                    self.onto.AIndex[parent, relProp, child] = aIndex
+                aIndex += 1
+            else:
+                bridges.append(answerDict)
+            answerDicts.append(answerDict)
+        return bridges, children
+
+    def stop_or_add_cross_question(self, content, crosslink, manager, parents,
+                                   question, ref, sortId):
+
+        # Stop and warn if no nodes follow the question
+        if not crosslink:
+            self.running = False
+            self.log = ["""Warning:
                         A Question titled "%s" (Path %s) is missing answers. Please adjust your 
                         Concept Map and try again.""" % (
-                    manager.getNodeContent(tag=question)[0],
-                    getCoordsFromId(sortId))]
-                return
-            # if the question contains a crosslink, add another relation
-            # from the parents of this question to the answers to the original
-            # question
-            else:
-                originalQuestion = manager.getTagById(crosslink)
-                self.findAnswerDicts(parents=parents,
-                                     question=originalQuestion,
-                                     sortId=sortId, ref=ref,
-                                     content=content)
-                return
-        # add relations to the ontology
+                manager.getNodeContent(tag=question)[0],
+                getCoordsFromId(sortId))]
+            return
+
+        # If the question contains a crosslink, add another relation
+        # from the parents of this question to the answers to the original
+        # question
         else:
-            relTitle = classify(content['content'])
-            if not relTitle:
-                relProp = self.onto.Child
-                relTitle = 'Child'
-            else:
-                with self.onto:
-                    relProp = types.new_class(relTitle,
-                                              (owlready2.ObjectProperty,))
-                    relProp.domain = [self.onto.Concept]
-                    relProp.range = [self.onto.Concept]
-            image = content['media']['image']
-            media = content['media']['media']
-            children = list()
-            bridges = list()
-            for childNode in childNotes:
-                answerDict = self.getAnswerDict(childNode)
-                if answerDict['isAnswer']:
-                    child = answerDict['concepts'][0]
-                    children.append(child)
-                    for parent in parents:
-                        self.onto.Reference[parent, relProp, child] = ref
-                        if sortId:
-                            self.onto.SortId[parent, relProp, child] = sortId
-                        self.onto.Doc[parent, relProp, child] = \
-                            self.activeManager.file
-                        self.onto.Sheet[parent, relProp, child] = \
-                            self.activeManager.sheets[
-                                self.currentSheetImport]['id']
-                        self.onto.Xid[parent, relProp, child] = question['id']
-                        if image:
-                            self.onto.Image[parent, relProp, child] = image
-                        if media:
-                            self.onto.Media[parent, relProp, child] = media
-                        self.onto.NoteTag[parent, relProp, child] = \
-                            self.getTag()
-                else:
-                    bridges.append(answerDict)
-                answerDicts.append(answerDict)
-            if len(children) > 0:
-                for bridge in bridges:
-                    bridge['concepts'] = children
-                for parent in parents:
-                    setattr(parent, relTitle, children)
-                for child in children:
-                    setattr(child, 'Parent', parents)
-            return answerDicts
+            originalQuestion = manager.getTagById(crosslink)
+            self.findAnswerDicts(parents=parents, question=originalQuestion,
+                                 sortId=sortId, ref=ref, content=content)
+            return
 
     def getAnswerDict(self, nodeTag, root=False):
         """
@@ -137,10 +163,14 @@ class XmindImporter(NoteImporter):
         :return: dictionary containing information for creating a note from
         this answer node, furthermore adds a Concept to onto for this node
         """
-        # Check whether subtopic is not empty
         manager = self.activeManager
         isAnswer = True
         concept = None
+
+        # Check whether subtopic contains a crosslink
+        crosslink = manager.getNodeCrosslink(nodeTag)
+
+        # If the node is empty do not create a concept
         if manager.isEmptyNode(nodeTag):
             isAnswer = False
         else:
@@ -148,21 +178,26 @@ class XmindImporter(NoteImporter):
             if root:
                 concept = self.onto.Root(nodeContent['content'])
             else:
+
+                # Some concept names (e.g. 'are') can lead to errors, catch
+                # them
                 try:
                     concept = self.onto.Concept(nodeContent['content'])
                 except TypeError:
                     print('fehler')
                     raise NameError('Invalid concept name')
-
             concept.Image = nodeContent['media']['image']
             concept.Media = nodeContent['media']['media']
-            # Do not add an Xid if the node is a pure crosslink-node
+
+            # Do not add an Xid if the node is a pure crosslink-node because
+            # these nodes are
             if manager.getNodeTitle(nodeTag) or manager.getNodeImg(nodeTag) \
-                    or not manager.getNodeCrosslink(nodeTag):
+                    or not crosslink:
                 concept.Xid.append(nodeTag['id'])
+
+            # Assign a list to concept since concept may also contain
+            # multiple concepts in case of bridges
             concept = [concept]
-        # Check whether subtopic contains a crosslink
-        crosslink = manager.getNodeCrosslink(nodeTag)
         # Todo: check whether aID is really necessary
         return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
                     crosslink=crosslink, concepts=concept)
@@ -191,6 +226,7 @@ class XmindImporter(NoteImporter):
                 ref = ref + ': ' + replaceSound(answerContent) + '</li>'
         followRels = manager.getChildnodes(parentAnswerDict['nodeTag'])
         for qId, followRel in enumerate(followRels, start=1):
+
             # Update the sorting ID
             nextSortId = updateId(previousId=sortId, idToAppend=qId)
             content = manager.getNodeContent(followRel)
@@ -200,10 +236,10 @@ class XmindImporter(NoteImporter):
                 parents=parentAnswerDict['concepts'], question=followRel,
                 sortId=nextSortId, ref=ref, content=content)
             if answerDicts:
-                # if the current relation is a question and has more then 20
-                # answers give a warning and stop running
                 actualAnswers = [a for a in answerDicts if a['isAnswer']]
                 isQuestion = not manager.isEmptyNode(followRel)
+                # If the current relation is a question and has too many
+                # answers give a warning and stop running
                 if isQuestion and len(actualAnswers) > X_MAX_ANSWERS:
                     self.running = False
                     self.log = ["""Warning:
@@ -211,9 +247,11 @@ class XmindImporter(NoteImporter):
                                 (manager.getNodeTitle(followRel),
                                  X_MAX_ANSWERS, X_MAX_ANSWERS)]
                     return
-                # update ref with content of this question but without sound
+
+                # Update ref with content of this question but without sound
                 refContent = replaceSound(content['content'])
                 nextRef = ref + '<li>' + refContent
+
                 for aId, answerDict in enumerate(answerDicts, start=1):
                     if manager.getChildnodes(parentAnswerDict['nodeTag']):
                         self.getQuestions(

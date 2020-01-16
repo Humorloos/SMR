@@ -32,29 +32,43 @@ class XOntology(Ontology):
                 pass
 
             # Annotation properties for Concepts
+
+            # For Image String from Xmind file
             class Image(owlready2.AnnotationProperty):
                 pass
 
+            # For Media String from Xmind file
             class Media(owlready2.AnnotationProperty):
                 pass
 
+            # For Node Id in Xmind file
             class Xid(owlready2.AnnotationProperty):
                 pass
 
             # Annotation properties for relation triples
+
+            # For reference field
             class Reference(owlready2.AnnotationProperty):
                 pass
 
+            # For sortId field
             class SortId(owlready2.AnnotationProperty):
                 pass
 
+            # Xmind file that contains the node
             class Doc(owlready2.AnnotationProperty):
                 pass
 
+            # Sheet that contains the node
             class Sheet(owlready2.AnnotationProperty):
                 pass
 
+            # Tag that will identify the note
             class NoteTag(owlready2.AnnotationProperty):
+                pass
+
+            # Answer Index for getting the right order of answers
+            class AIndex(owlready2.AnnotationProperty):
                 pass
 
     def getElements(self, triple):
@@ -85,9 +99,17 @@ class XOntology(Ontology):
     def getNoteTag(self, elements):
         return self.NoteTag[elements['s'], elements['p'], elements['o']]
 
+    def get_AIndex(self, t):
+        elements = self.getElements(t)
+        return self.AIndex[elements['s'], elements['p'], elements['o']]
+
     def getNoteData(self, questionList):
+
         elements = self.getElements(questionList[0])
-        answerDids = list(set(t[2] for t in questionList))
+        answerDids = set(t[2] for t in questionList)
+        # Sort answerDids by answer index to get the answers' order right
+        answerDids = sorted(answerDids, key=lambda d: self.get_AIndex(next(
+            t for t in questionList if t[2] == d)))
         answerDicts = [dict() for _ in range(X_MAX_ANSWERS)]
         images = []
         media = []
@@ -142,7 +164,7 @@ class XOntology(Ontology):
 
     def getChildTriples(self, s):
         questionStorids = [p.storid for p in self.object_properties() if
-                            p.name != 'Parent']
+                           p.name != 'Parent']
         return [t for t in self.get_triples(s=s) if t[1] in questionStorids]
 
     def getParentTriples(self, o):
