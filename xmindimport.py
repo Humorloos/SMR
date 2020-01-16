@@ -25,8 +25,8 @@ from .xontology import XOntology
 #  https://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
 #  https://docs.python.org/3.6/library/profile.html
 class XmindImporter(NoteImporter):
-    needMapper = False
 
+    needMapper = False
     def __init__(self, col, file):
         NoteImporter.__init__(self, col, file)
         self.model = col.models.byName(X_MODEL_NAME)
@@ -47,6 +47,11 @@ class XmindImporter(NoteImporter):
         self.currentSheetImport = ''
         self.onto = XOntology()
 
+    def addNew(self, notes):
+        for note in notes:
+            self.col.addNote(note)
+            sleep(0.001)
+
     def findAnswerDicts(self, parents, question, sortId, ref, content):
         """
         :param question: question tag to get the answers for
@@ -66,6 +71,9 @@ class XmindImporter(NoteImporter):
                     manager.getNodeContent(tag=question)[0],
                     getCoordsFromId(sortId))]
                 return
+            # if the question contains a crosslink, add another relation
+            # from the parents of this question to the answers to the original
+            # question
             else:
                 originalQuestion = manager.getTagById(crosslink)
                 self.findAnswerDicts(parents=parents,
@@ -96,7 +104,8 @@ class XmindImporter(NoteImporter):
                     children.append(child)
                     for parent in parents:
                         self.onto.Reference[parent, relProp, child] = ref
-                        self.onto.SortId[parent, relProp, child] = sortId
+                        if sortId:
+                            self.onto.SortId[parent, relProp, child] = sortId
                         self.onto.Doc[parent, relProp, child] = \
                             self.activeManager.file
                         self.onto.Sheet[parent, relProp, child] = \
@@ -247,6 +256,19 @@ class XmindImporter(NoteImporter):
         return " " + (self.deckName + '_' + self.currentSheetImport).replace(
             " ", "_") + " "
 
+    def getXMindMeta(self, noteData):
+        xMindMeta = dict()
+        xMindMeta['path'] = noteData['document']
+        xMindMeta['sheetId'] = noteData['sheetId']
+        xMindMeta['questionId'] = noteData['questionId']
+        answers = [a for a in noteData['answers'] if len(a) != 0]
+        xMindMeta['answers'] = [{'answerId': a['id'],
+                                 'children': a['children']} for a in answers]
+        xMindMeta['nAnswers'] = len(answers)
+        xMindMeta['subjects'] = noteData['subjects']
+        xMindMeta['lastSync'] = intTime()
+        return json.dumps(xMindMeta)
+
     def importMap(self):
         """
         :return: adds the roottopic of the active sheet to self.onto and starts
@@ -261,6 +283,32 @@ class XmindImporter(NoteImporter):
         rootDict = self.getAnswerDict(nodeTag=rootTopic, root=True)
         self.getQuestions(parentAnswerDict=rootDict,
                           ref=manager.getNodeTitle(rootTopic))
+
+    def importOntology(self):
+        triples = self.onto.getNoteTriples()
+        # Sort triples by question id for Triples pertaining to the same
+        # question to appear next to each other
+        ascendingQId = sorted(triples, key=lambda t: self.onto.getXid(
+            self.onto.getElements(t)))
+        qIds = [self.onto.getXid(self.onto.getElements(t)) for t in
+                ascendingQId]
+
+        questionList = []
+        tripleList = [ascendingQId[0]]  # Initiate tripleList with first triple
+        for x, qId in enumerate(qIds[0:-1], start=1):
+            # Add the triple to the questionList if the next triple has a
+            # different question id
+            if qId != qIds[x]:
+                questionList.append(tripleList)
+                tripleList = [ascendingQId[x]]
+            # Add the triple to the tripleList if it pertains to the same
+            # question as the next triple
+            else:
+                tripleList.append(ascendingQId[x])
+        questionList.append(tripleList)
+
+        notes = [self.noteFromQuestionList(q) for q in questionList]
+        self.addNew(notes=notes)
 
     def importSheets(self, selectedSheets):
         """
@@ -282,18 +330,7 @@ class XmindImporter(NoteImporter):
             return
         self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
                     ['removed', 0, 'notes']]
-        # get content of fields for the note to add for this question
-        # code from addxnotes, probably necessary here
-        # self.addMedia(media)
-        # noteData, media = self.getNoteData(sortId=sortId,
-        #                                    question=question,
-        #                                    answerDicts=answerDicts,
-        #                                    ref=ref,
-        #                                    siblings=siblings,
-        #                                    connections=connections)
-        #
-        for sheetId, noteList in self.notesToAdd.items():
-            self.maybeSync(sheetId=sheetId, noteList=noteList)
+        self.importOntology()
         for logId, log in enumerate(self.log, start=0):
             if log[1] == 1:
                 self.log[logId][2] = 'note'
@@ -305,6 +342,22 @@ class XmindImporter(NoteImporter):
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
         print("fertig")
+
+    def noteFromQuestionList(self, questionList):
+        note = self.col.newNote()
+        note.model()['did'] = self.deckId
+        noteData = self.onto.getNoteData(questionList)
+        self.images.extend(noteData['images'])
+        self.media.extend(noteData['media'])
+        meta = self.getXMindMeta(noteData)
+        fields = [noteData['reference'],
+                  noteData['question']]
+        fields.extend([a['text'] if len(a) != 0 else '' for
+                       a in noteData['answers']])
+        fields.extend([noteData['sortId'], meta])
+        note.fields = fields
+        note.tags.append(noteData['tag'])
+        return note
 
     def run(self):
         """
@@ -327,22 +380,6 @@ class XmindImporter(NoteImporter):
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
         self.importSheets(sheets)
-
-        # receives a question, sheet and list of notes possibly following each
-        # answer to this question and returns a json file
-
-    def getXMindMeta(self, noteData):
-        xMindMeta = dict()
-        xMindMeta['path'] = noteData['document']
-        xMindMeta['sheetId'] = noteData['sheetId']
-        xMindMeta['questionId'] = noteData['questionId']
-        answers = [a for a in noteData['answers'] if len(a) != 0]
-        xMindMeta['answers'] = [{'answerId': a['id'],
-                                 'children': a['children']} for a in answers]
-        xMindMeta['nAnswers'] = len(answers)
-        xMindMeta['subjects'] = noteData['subjects']
-        xMindMeta['lastSync'] = intTime()
-        return json.dumps(xMindMeta)
 
     def addAttachment(self, attachment):
         # extract attachment to anki media directory
@@ -531,51 +568,3 @@ class XmindImporter(NoteImporter):
                 cardUpdates.append([str(0)] * 10)
         return cardUpdates
 
-    def addNew(self, notes):
-        for note in notes:
-            self.col.addNote(note)
-            sleep(0.001)
-
-    def importOntology(self):
-        triples = self.onto.getNoteTriples()
-        ascendingSortId = sorted(triples, key=lambda t: self.onto.getSortId(
-            self.onto.getElements(t)))
-        correctOrder = sorted(
-            ascendingSortId, key=lambda t: self.onto.getNoteTag(
-                self.onto.getElements(t)))
-        sortIds = [self.onto.getSortId(self.onto.getElements(t)) for t in
-                   correctOrder]
-
-        questionList = []
-        tripleList = [correctOrder[0]]  # Initiate tripleList with first triple
-        for x, sortId in enumerate(sortIds[0:-1], start=1):
-            # Add the triple to the questionList if the next triple has a
-            # different
-            # sortId
-            if sortId != sortIds[x]:
-                questionList.append(tripleList)
-                tripleList = [correctOrder[x]]
-            # Add the triple to the tripleList if it pertains to the same
-            # question as the next triple
-            else:
-                tripleList.append(correctOrder[x])
-        questionList.append(tripleList)
-
-        notes = [self.noteFromQuestionList(q) for q in questionList]
-        self.addNew(notes=notes)
-
-    def noteFromQuestionList(self, questionList):
-        note = self.col.newNote()
-        note.model()['did'] = self.deckId
-        noteData = self.onto.getNoteData(questionList)
-        self.images.extend(noteData['images'])
-        self.media.extend(noteData['media'])
-        meta = self.getXMindMeta(noteData)
-        fields = [noteData['reference'],
-                  noteData['question']]
-        fields.extend([a['text'] if len(a) != 0 else '' for
-                       a in noteData['answers']])
-        fields.extend([noteData['sortId'], meta])
-        note.fields = fields
-        note.tags.append(noteData['tag'])
-        return note
