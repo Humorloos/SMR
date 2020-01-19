@@ -18,6 +18,7 @@ from. import sync
 def on_profile_loaded():
     get_or_create_model()
 
+
 # Add-on setup at profile-load time
 addHook("profileLoaded", on_profile_loaded)
 
