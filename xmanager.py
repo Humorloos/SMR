@@ -144,3 +144,6 @@ class XManager:
         if self.getNodeHyperlink(tag):
             return False
         return True
+
+    def content_sheets(self):
+        return [k for k in self.sheets.keys() if k != 'ref']

@@ -42,7 +42,7 @@ class XmindImporter(NoteImporter):
         self.media = []
         self.running = True
         self.repair = False
-        self.xManagers = [XManager(file)]
+        self.xManagers = [XManager(os.path.normpath(file))]
         self.activeManager = None
         self.currentSheetImport = ''
         self.onto = XOntology()
@@ -288,9 +288,7 @@ class XmindImporter(NoteImporter):
         """
         sheets = list()
         for manager in self.xManagers:
-            validSheets = filter(lambda k: k != 'ref',
-                                 list(manager.sheets.keys()))
-            sheets.extend(validSheets)
+            sheets.extend(manager.content_sheets())
         return sheets
 
     def getRefManagers(self, xManager):
