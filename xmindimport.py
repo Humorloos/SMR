@@ -149,6 +149,7 @@ class XmindImporter(NoteImporter):
             self.onto.Media[parent, relProp, child] = media
         self.onto.NoteTag[parent, relProp, child] = self.getTag()
         self.onto.AIndex[parent, relProp, child] = aIndex
+        self.onto.Mod[parent, relProp, child] = question['timestamp']
 
     def get_file_dict(self, path):
         return [path, self.activeManager.file]
@@ -210,9 +211,9 @@ class XmindImporter(NoteImporter):
             if nodeContent['media']['media']:
                 concept.Media = nodeContent['media']['media']
             concept.Doc = self.activeManager.file
+            concept.Mod = nodeTag['timestamp']
 
-            # Do not add an Xid if the node is a pure crosslink-node because
-            # these nodes are
+            # Do not add an Xid if the node is a pure crosslink-node
             if manager.getNodeTitle(nodeTag) or manager.getNodeImg(nodeTag) \
                     or not crosslink:
                 concept.Xid.append(nodeTag['id'])
@@ -323,10 +324,11 @@ class XmindImporter(NoteImporter):
         xMindMeta['questionId'] = noteData['questionId']
         answers = [a for a in noteData['answers'] if len(a) != 0]
         xMindMeta['answers'] = [{'answerId': a['id'],
-                                 'children': a['children']} for a in answers]
+                                 'children': a['children'],
+                                 'mod': a['mod']} for a in answers]
         xMindMeta['nAnswers'] = len(answers)
         xMindMeta['subjects'] = noteData['subjects']
-        xMindMeta['lastSync'] = intTime()
+        xMindMeta['questionMod'] = noteData['questionMod']
         return json.dumps(xMindMeta)
 
     def importMap(self):

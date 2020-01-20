@@ -49,6 +49,10 @@ class XOntology(Ontology):
             class Doc(owlready2.AnnotationProperty):
                 pass
 
+            # Node's last modification
+            class Mod(owlready2.AnnotationProperty):
+                pass
+
             # Annotation properties for relation triples
 
             # For reference field
@@ -99,6 +103,9 @@ class XOntology(Ontology):
     def getNoteTag(self, elements):
         return self.NoteTag[elements['s'], elements['p'], elements['o']]
 
+    def getMod(self, elements):
+        return self.Mod[elements['s'], elements['p'], elements['o']]
+
     def get_AIndex(self, t):
         elements = self.getElements(t)
         return self.AIndex[elements['s'], elements['p'], elements['o']]
@@ -126,6 +133,7 @@ class XOntology(Ontology):
             childTriples = self.getChildTriples(s=answerDids[i])
             childElements = [self.getElements(t) for t in childTriples]
             answerDict['children'] = self.getChildQuestionIds(childElements)
+            answerDict['mod'] = concept.Mod[0]
 
         parentDids = list(set(t[0] for t in questionList))
         parentDicts = []
@@ -155,7 +163,8 @@ class XOntology(Ontology):
             'subjects': parentDicts,
             'images': images,
             'media': media,
-            'tag': self.getNoteTag(elements)[0]
+            'tag': self.getNoteTag(elements)[0],
+            'questionMod': self.getMod(elements)[0]
         }
 
     def getNoteTriples(self):

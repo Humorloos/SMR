@@ -258,6 +258,7 @@ class TestImportOntology(TestImportMap):
         self.fail()
 
 
+# TODO: doesn't work, questionList has wrong ids, fix
 class TestNoteFromQuestionList(TestImportOntology):
     def test_multiple_answers(self):
         importer = self.xmindImporter

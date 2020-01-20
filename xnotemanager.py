@@ -18,3 +18,5 @@ class XNoteManager():
         return set(meta_from_flds(flds[0])['path'] for flds in
                    self.col.db.execute(
                        'select flds from notes where mid = %s' % model))
+
+
