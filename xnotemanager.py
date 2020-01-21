@@ -12,11 +12,31 @@ def meta_from_flds(flds):
 class XNoteManager():
     def __init__(self, col):
         self.col = col
+        self.model = xModelId(self.col)
 
     def get_xmind_files(self):
-        model = xModelId(self.col)
         return set(meta_from_flds(flds[0])['path'] for flds in
                    self.col.db.execute(
-                       'select flds from notes where mid = %s' % model))
+                       'select flds from notes where mid = %s' % self.model))
 
+    def get_local(self, file):
+        doc_notes = [{'id': r[1], 'ankiMod': r[2], 'meta': meta_from_flds(r[0])}
+                     for r in self.col.db.execute(
+                'select flds, id, mod from notes where mid = %s' % self.model)
+                     if meta_from_flds(r[0])['path'] == file]
+        sheet_ids = set(n['meta']['sheetId'] for n in doc_notes)
+        sheet_notes = {i: [n for n in doc_notes if n['meta']['sheetId'] == i]
+                       for i in sheet_ids}
+        sheets = {i: {'ankiMod': max([n['ankiMod'] for n in sheet_notes[i]]),
+                      'questions': {n['meta']['questionId']: {'ankiMod': n[
+                          'ankiMod'], 'answers': {
+                          n['meta']['answers'][x]['answerId']: {'ankiMod': a}
+                          for x, a in enumerate(self.get_answer_cards(
+                              n['id']))}} for n in sheet_notes[i]}} for i in
+                  sheet_ids}
+        docMod = max([n['ankiMod'] for n in doc_notes])
+        local = {'file': file, 'ankiMod': docMod, 'sheets': sheets}
+        return local
 
+    def get_answer_cards(self, nid):
+        return self.col.db.list('select mod from cards where nid = %s' % nid)
