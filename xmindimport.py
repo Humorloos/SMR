@@ -13,6 +13,7 @@ from .utils import *
 from .consts import *
 from .xmanager import XManager
 from .xontology import XOntology
+from .statusmanager import StatusManager
 
 
 # TODO: adjust sheet selection windows to adjust to the window size
@@ -46,6 +47,7 @@ class XmindImporter(NoteImporter):
         self.activeManager = None
         self.currentSheetImport = ''
         self.onto = XOntology()
+        self.statusManager = StatusManager()
 
     def addMedia(self):
         for manager in self.xManagers:
