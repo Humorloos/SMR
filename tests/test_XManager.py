@@ -62,3 +62,10 @@ class TestIsEmptyNode(TestXManager):
             tag = BeautifulSoup(file.read(), features='html.parser').topic
         act = self.xManager.isEmptyNode(tag)
         self.assertEqual(act, False)
+
+
+class TestGetRemote(TestXManager):
+    def test_get_remote(self):
+        manager = self.xManager
+        act = manager.get_remote()
+        self.fail()

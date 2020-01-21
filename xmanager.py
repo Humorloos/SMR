@@ -7,17 +7,17 @@ import zipfile
 
 from bs4 import BeautifulSoup
 
+
 class XManager:
     def __init__(self, file):
         self.xZip = zipfile.ZipFile(file, 'r')
         self.file = file
         self.soup = BeautifulSoup(self.xZip.read('content.xml'),
                                   features='html.parser')
-        self.tagList = self.soup('topic')
         self.sheets = dict()
         for sheet in self.soup('sheet'):
             sheetTitle = sheet('title', recursive=False)[0].text
-            self.sheets[sheetTitle] = sheet
+            self.sheets[sheetTitle] = {'tag': sheet, 'nodes': sheet('topic')}
 
     def getAttachment(self, identifier, dir):
         # extract attachment to anki media directory
@@ -127,9 +127,9 @@ class XManager:
         :return: the tag containing the Id
         """
         try:
-            return tuple(filter(lambda t: t['id'] == tagId, self.tagList))[0]
+            return tuple(filter(lambda t: t['id'] == tagId, self.tag_list()))[0]
         except IndexError:
-            #TODO: Warn if the node is not found
+            # TODO: Warn if the node is not found
             return None
 
     def isEmptyNode(self, tag):
@@ -145,5 +145,42 @@ class XManager:
             return False
         return True
 
+    def isQuestionNode(self, tag, level=0):
+        # If the Tag is the root topic, return true if the length of the path is odd
+        if tag.parent.name == 'sheet':
+            return level % 2 == 1
+        # Else add one to the path length and test again
+        return self.isQuestionNode(tag.parent.parent.parent, level + 1)
+
+    def is_anki_question(self, tag):
+        if not self.isQuestionNode(tag):
+            return False
+        if self.isEmptyNode(tag):
+            return False
+        children = self.getChildnodes(tag)
+        if len(children) == 0:
+            return False
+        for child in children:
+            if not self.isEmptyNode(child):
+                return True
+        return False
+
     def content_sheets(self):
         return [k for k in self.sheets.keys() if k != 'ref']
+
+    def get_remote(self):
+        content_keys = self.content_sheets()
+        content_sheets = [self.sheets[s] for s in content_keys]
+        sheets = {s['tag']['id']: {'xMod': s['tag']['timestamp'], 'questions': {
+            t['id']: {'xMod': t['timestamp'], 'answers': {
+                a['id']: {'xMod': a['timestamp']} for a in
+                self.getChildnodes(t) if not self.isEmptyNode(a)}} for t in
+            s['nodes'] if self.is_anki_question(t)}} for s in content_sheets}
+        docMod = self.soup.find('xmap-content')['timestamp']
+        remote = {'file': self.file, 'xMod': docMod, 'sheets': sheets}
+        print()
+
+    def tag_list(self):
+        # Nested list comprehension explained:
+        # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
+        return [t for s in self.sheets for t in self.sheets[s]['nodes']]

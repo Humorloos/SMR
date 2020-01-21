@@ -143,7 +143,7 @@ class XmindImporter(NoteImporter):
             self.onto.SortId[parent, relProp, child] = sortId
         self.onto.Doc[parent, relProp, child] = self.activeManager.file
         self.onto.Sheet[parent, relProp, child] = self.activeManager.sheets[
-            self.currentSheetImport]['id']
+            self.currentSheetImport]['tag']['id']
         self.onto.Xid[parent, relProp, child] = question['id']
         if image:
             self.onto.Image[parent, relProp, child] = image
@@ -339,7 +339,7 @@ class XmindImporter(NoteImporter):
             the map import by calling getQuestions
         """
         manager = self.activeManager
-        rootTopic = manager.sheets[self.currentSheetImport].topic
+        rootTopic = manager.sheets[self.currentSheetImport]['tag'].topic
         # Set model to Stepwise map retrieval model
         xModel = self.col.models.byName(X_MODEL_NAME)
         self.col.decks.select(self.deckId)
@@ -396,6 +396,7 @@ class XmindImporter(NoteImporter):
         self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
                     ['removed', 0, 'notes']]
         self.importOntology()
+        self.statusManager.add_new()
         for logId, log in enumerate(self.log, start=0):
             if log[1] == 1:
                 self.log[logId][2] = 'note'
