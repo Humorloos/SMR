@@ -27,6 +27,12 @@ class TestGetNodeContent(TestXManager):
         self.assertEqual(act['media']['image'], None)
         self.assertEqual(act['media']['media'], None)
 
+    def test_crosslink_answer(self):
+        manager = self.xManager
+        tag = manager.getTagById('3nb97928e68dcu5512pft7gkcg')
+        act = manager.getNodeContent(tag=tag)
+        self.fail()
+
 
 class TestGetNodeTitle(TestXManager):
     def test_getNodeTitle(self):
@@ -69,3 +75,26 @@ class TestGetRemote(TestXManager):
         manager = self.xManager
         act = manager.get_remote()
         self.fail()
+
+
+class TestGetAnswerNodes(TestXManager):
+    def test_crosslink_answers(self):
+        manager = self.xManager
+        tag = manager.getTagById('4lrqok8ac9hec8u2c2ul4mpo4k')
+        act = manager.get_answer_nodes(tag)
+        self.fail()
+
+    def test_no_answers(self):
+        manager = self.xManager
+        tag = manager.getTagById('4s27e1mvsb5jqoiuaqmnlo8m71')
+        act = manager.get_answer_nodes(tag)
+        self.fail()
+
+
+class TestIsCrosslinkNode(TestXManager):
+    def test_media_node(self):
+        manager = self.xManager
+        tag = manager.getTagById('1s7h0rvsclrnvs8qq9u71acml5')
+        act = manager.is_crosslink_node(tag)
+        self.assertFalse(act)
+

@@ -19,6 +19,11 @@ class XManager:
             sheetTitle = sheet('title', recursive=False)[0].text
             self.sheets[sheetTitle] = {'tag': sheet, 'nodes': sheet('topic')}
 
+    def get_answer_nodes(self, tag):
+        return [n if not self.is_crosslink_node(n) else self.getTagById(
+            self.getNodeCrosslink(n)) for n in self.getChildnodes(tag) if
+                        not self.isEmptyNode(n)]
+
     def getAttachment(self, identifier, dir):
         # extract attachment to anki media directory
         self.xZip.extract(identifier, dir)
@@ -60,8 +65,8 @@ class XManager:
             media['image'] = attachment[4:]
 
         # If the node contains a link to another node, add the text of that
-        # node. Use Beautifulsoup because minidom can't find nodes by attributes
-        if href and href.startswith('xmind:#'):
+        # node.
+        if href and self.is_crosslink(href):
             crosslinkTag = self.getTagById(tagId=href[7:])
             crosslinkTitle = self.getNodeTitle(crosslinkTag)
             if not content:
@@ -132,6 +137,16 @@ class XManager:
             # TODO: Warn if the node is not found
             return None
 
+    def is_crosslink(self, href):
+        return href.startswith('xmind:#')
+
+    def is_crosslink_node(self, tag):
+        href = self.getNodeHyperlink(tag)
+        if self.getNodeTitle(tag) or self.getNodeImg(tag) or \
+                (href and not self.is_crosslink(href)):
+            return False
+        return True
+
     def isEmptyNode(self, tag):
         """
         :param tag: tag to check for
@@ -171,14 +186,23 @@ class XManager:
     def get_remote(self):
         content_keys = self.content_sheets()
         content_sheets = [self.sheets[s] for s in content_keys]
-        sheets = {s['tag']['id']: {'xMod': s['tag']['timestamp'], 'questions': {
-            t['id']: {'xMod': t['timestamp'], 'answers': {
-                a['id']: {'xMod': a['timestamp']} for a in
-                self.getChildnodes(t) if not self.isEmptyNode(a)}} for t in
-            s['nodes'] if self.is_anki_question(t)}} for s in content_sheets}
+
+        sheets = dict()
+        for s in content_sheets:
+            questions = dict()
+            sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp'],
+                                      'questions': questions}
+            for t in s['nodes']:
+                if self.is_anki_question(t):
+                    answers = dict()
+                    questions[t['id']] = {'xMod': t['timestamp'],
+                                          'answers': answers}
+                    for a in self.get_answer_nodes(t):
+                        answers[a['id']] = {'xMod': a['timestamp']}
+
         docMod = self.soup.find('xmap-content')['timestamp']
         remote = {'file': self.file, 'xMod': docMod, 'sheets': sheets}
-        print()
+        return remote
 
     def tag_list(self):
         # Nested list comprehension explained:
