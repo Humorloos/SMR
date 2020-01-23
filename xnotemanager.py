@@ -27,13 +27,19 @@ class XNoteManager():
         sheet_ids = set(n['meta']['sheetId'] for n in doc_notes)
         sheet_notes = {i: [n for n in doc_notes if n['meta']['sheetId'] == i]
                        for i in sheet_ids}
-        sheets = {i: {'ankiMod': max([n['ankiMod'] for n in sheet_notes[i]]),
-                      'questions': {n['meta']['questionId']: {'ankiMod': n[
-                          'ankiMod'], 'answers': {
-                          n['meta']['answers'][x]['answerId']: {'ankiMod': a}
-                          for x, a in enumerate(self.get_answer_cards(
-                              n['id']))}} for n in sheet_notes[i]}} for i in
-                  sheet_ids}
+
+        sheets = dict()
+        for i in sheet_ids:
+            questions = dict()
+            sheets[i] = {'ankiMod': max([n['ankiMod'] for n in sheet_notes[
+                i]]), 'questions': questions}
+            for n in sheet_notes[i]:
+                answers = dict()
+                questions[n['meta']['questionId']] = {'ankiMod': n[
+                    'ankiMod'], 'answers': answers}
+                for x, a in enumerate(self.get_answer_cards(n['id'])):
+                    answers[n['meta']['answers'][x]['answerId']] = {
+                        'ankiMod': a}
         docMod = max([n['ankiMod'] for n in doc_notes])
         local = {'file': file, 'ankiMod': docMod, 'sheets': sheets}
         return local
