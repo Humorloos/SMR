@@ -302,8 +302,8 @@ class XmindImporter(NoteImporter):
         for key in xManager.sheets:
             sheet = xManager.sheets[key]
             # get reference sheets
-            if sheet('title', recursive=False)[0].text == 'ref':
-                ref_tags = xManager.getChildnodes(sheet.topic)
+            if sheet['tag']('title', recursive=False)[0].text == 'ref':
+                ref_tags = xManager.getChildnodes(sheet['tag'].topic)
                 ref_paths = map(xManager.getNodeHyperlink, ref_tags)
                 for path in filter(lambda ref_path: ref_path is not None,
                                    ref_paths):
