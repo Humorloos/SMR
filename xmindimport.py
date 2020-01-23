@@ -48,6 +48,7 @@ class XmindImporter(NoteImporter):
         self.currentSheetImport = ''
         self.onto = XOntology()
         self.statusManager = StatusManager()
+        self.lastNid = 0
 
     def addMedia(self):
         for manager in self.xManagers:
@@ -66,7 +67,6 @@ class XmindImporter(NoteImporter):
     def addNew(self, notes):
         for note in notes:
             self.col.addNote(note)
-            sleep(0.001)
 
     def findAnswerDicts(self, parents, question, sortId, ref, content):
         """
@@ -411,6 +411,9 @@ class XmindImporter(NoteImporter):
 
     def noteFromQuestionList(self, questionList):
         note = self.col.newNote()
+        if note.id <= self.lastNid:
+            note.id = self.lastNid + 1
+        self.lastNid = note.id
         note.model()['did'] = self.deckId
         noteData = self.onto.getNoteData(questionList)
         self.images.extend(noteData['images'])
