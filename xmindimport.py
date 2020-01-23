@@ -14,6 +14,7 @@ from .consts import *
 from .xmanager import XManager
 from .xontology import XOntology
 from .statusmanager import StatusManager
+from .xnotemanager import XNoteManager
 
 
 # TODO: adjust sheet selection windows to adjust to the window size
@@ -45,6 +46,7 @@ class XmindImporter(NoteImporter):
         self.repair = False
         self.xManagers = [XManager(os.path.normpath(file))]
         self.activeManager = None
+        self.noteManager = XNoteManager(col=self.col)
         self.currentSheetImport = ''
         self.onto = XOntology()
         self.statusManager = StatusManager()
@@ -396,7 +398,7 @@ class XmindImporter(NoteImporter):
         self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
                     ['removed', 0, 'notes']]
         self.importOntology()
-        self.statusManager.add_new()
+        self.update_status()
         for logId, log in enumerate(self.log, start=0):
             if log[1] == 1:
                 self.log[logId][2] = 'note'
@@ -619,3 +621,27 @@ class XmindImporter(NoteImporter):
                 # get Values for a completely new card
                 cardUpdates.append([str(0)] * 10)
         return cardUpdates
+
+    def update_status(self):
+        for manager in self.xManagers:
+            remote = manager.get_remote()
+            local = self.noteManager.get_local(manager.file)
+            status = self.deep_merge(remote=remote, local=local)
+            self.statusManager.add_new(status)
+        self.statusManager.save()
+
+    def deep_merge(self, remote, local, path=None):
+        if path is None:
+            path = []
+        for key in remote:
+            if key in local:
+                if isinstance(local[key], dict) and isinstance(remote[key], dict):
+                    self.deep_merge(local[key], remote[key], path + [str(key)])
+                elif local[key] == remote[key]:
+                    pass  # same leaf value
+                else:
+                    raise Exception(
+                        'Conflict at %s' % '.'.join(path + [str(key)]))
+            else:
+                local[key] = remote[key]
+        return local
