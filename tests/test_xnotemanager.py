@@ -29,3 +29,11 @@ class TestGetLocal(TestXNoteManager):
         file = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
         act = manager.get_local(file=file)
         self.fail()
+
+    def test_changes_general_psycholog(self):
+        col = Collection(os.path.join(SUPPORT_PATH, 'syncer',
+                                      'cols', 'changes', 'collection.anki2'))
+        manager = XNoteManager(col)
+        file = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
+        act = manager.get_local(file=file)
+        self.fail()

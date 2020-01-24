@@ -38,11 +38,15 @@ class XNoteManager():
                 questions[n['meta']['questionId']] = {'ankiMod': n[
                     'ankiMod'], 'answers': answers}
                 for x, a in enumerate(self.get_answer_cards(n['id'])):
-                    answers[n['meta']['answers'][x]['answerId']] = {
-                        'ankiMod': a}
+                    try:
+                        answers[n['meta']['answers'][x]['answerId']] = {
+                            'ankiMod': a[0]}
+                    except IndexError:
+                        answers[a[1]] = {'ankiMod': a[0]}
         docMod = max([n['ankiMod'] for n in doc_notes])
         local = {'file': file, 'ankiMod': docMod, 'sheets': sheets}
         return local
 
     def get_answer_cards(self, nid):
-        return self.col.db.list('select mod from cards where nid = %s' % nid)
+        return self.col.db.all('select mod, id from cards where nid = %s' %
+                                nid)
