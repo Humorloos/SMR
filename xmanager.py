@@ -8,10 +8,9 @@ import zipfile
 from bs4 import BeautifulSoup
 
 
-def remote_file(file, sheets=None):
-    docMod = os.stat(file).st_mtime
-    remote = {'file': file, 'xMod': docMod, 'sheets': sheets}
-    return remote
+def get_os_mod(file):
+    os_mod = os.stat(file).st_mtime
+    return {file: os_mod}
 
 
 class XManager:
@@ -186,6 +185,13 @@ class XManager:
                 return True
         return False
 
+    def remote_file(self, sheets=None):
+        docMod = self.soup.find('xmap-content')['timestamp']
+        os_mod = get_os_mod(self.file)[self.file]
+        remote = {'file': self.file, 'xMod': docMod, 'osMod': os_mod,
+                  'sheets': sheets}
+        return remote
+
     def content_sheets(self):
         return [k for k in self.sheets.keys() if k != 'ref']
 
@@ -206,7 +212,7 @@ class XManager:
                     for a in self.get_answer_nodes(t):
                         answers[a['id']] = {'xMod': a['timestamp']}
 
-        remote = remote_file(self.file, sheets)
+        remote = self.remote_file(sheets)
         return remote
 
     def tag_list(self):
