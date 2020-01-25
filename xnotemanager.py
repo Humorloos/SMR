@@ -20,29 +20,38 @@ class XNoteManager():
                        'select flds from notes where mid = %s' % self.model))
 
     def get_local(self, file):
-        doc_notes = [{'id': r[1], 'ankiMod': r[2], 'meta': meta_from_flds(r[0])}
+        doc_notes = [{'id': r[1], 'ankiMod': r[2], 'flds': splitFields(r[0])}
                      for r in self.col.db.execute(
                 'select flds, id, mod from notes where mid = %s' % self.model)
                      if meta_from_flds(r[0])['path'] == file]
+        for n in doc_notes:
+            n['meta'] = json.loads(self.get_field_by_name(n['flds'], 'mt'))
         sheet_ids = set(n['meta']['sheetId'] for n in doc_notes)
-        sheet_notes = {i: [n for n in doc_notes if n['meta']['sheetId'] == i]
-                       for i in sheet_ids}
+        sheet_notes = {i: {n['meta']['questionId']: n for n in doc_notes if
+                           n['meta']['sheetId'] == i} for i in sheet_ids}
 
         sheets = dict()
         for i in sheet_ids:
             questions = dict()
-            sheets[i] = {'ankiMod': max([n['ankiMod'] for n in sheet_notes[
-                i]]), 'questions': questions}
-            for n in sheet_notes[i]:
+            sheet_note = sheet_notes[i]
+            sheets[i] = {'ankiMod': max(
+                [sheet_note[n]['ankiMod'] for n in sheet_note]),
+                'questions': questions}
+            for n in sheet_note:
                 answers = dict()
-                questions[n['meta']['questionId']] = {'ankiMod': n[
-                    'ankiMod'], 'answers': answers}
-                for x, a in enumerate(self.get_answer_cards(n['id'])):
+                question = sheet_note[n]
+                questions[question['meta']['questionId']] = {
+                    'ankiMod': question['ankiMod'],
+                    'content': self.get_field_by_name(question['flds'], 'qt'),
+                    'answers': answers}
+                for x, a in enumerate(self.get_answer_cards(question['id'])):
                     try:
-                        answers[n['meta']['answers'][x]['answerId']] = {
-                            'ankiMod': a[0]}
+                        a_id = question['meta']['answers'][x]['answerId']
                     except IndexError:
-                        answers[a[1]] = {'ankiMod': a[0]}
+                        a_id = a[1]
+                    answers[a_id] = {'ankiMod': a[0],
+                                     'content': self.get_field_by_name(
+                                         question['flds'], 'a' + str(x+1))}
         docMod = max([n['ankiMod'] for n in doc_notes])
         local = {'file': file, 'ankiMod': docMod, 'sheets': sheets}
         return local
