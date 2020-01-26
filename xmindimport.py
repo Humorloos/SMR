@@ -12,7 +12,7 @@ from .sheetselectors import *
 from .utils import *
 from .consts import *
 from .xmanager import XManager
-from .xontology import XOntology
+from .xontology import *
 from .statusmanager import StatusManager
 from .xnotemanager import XNoteManager
 
@@ -70,6 +70,23 @@ class XmindImporter(NoteImporter):
         for note in notes:
             self.col.addNote(note)
 
+    def add_relation(self, aIndex, child, image, media, parent, question, ref,
+                     relProp, sortId):
+        self.onto.Reference[parent, relProp, child] = ref
+        if sortId:
+            self.onto.SortId[parent, relProp, child] = sortId
+        self.onto.Doc[parent, relProp, child] = self.activeManager.file
+        self.onto.Sheet[parent, relProp, child] = self.activeManager.sheets[
+            self.currentSheetImport]['tag']['id']
+        self.onto.Xid[parent, relProp, child] = question['id']
+        if image:
+            self.onto.Image[parent, relProp, child] = image
+        if media:
+            self.onto.Media[parent, relProp, child] = media
+        self.onto.NoteTag[parent, relProp, child] = self.getTag()
+        self.onto.AIndex[parent, relProp, child] = aIndex
+        self.onto.Mod[parent, relProp, child] = question['timestamp']
+
     def findAnswerDicts(self, parents, question, sortId, ref, content):
         """
         :param question: question tag to get the answers for
@@ -87,7 +104,7 @@ class XmindImporter(NoteImporter):
 
         # Convert the node content into a string that can be used as a
         # class-name
-        relTitle = classify(content['content'])
+        relTitle = classify(content)
 
         # Add a Child relation if the node is a bridge
         if not relTitle:
@@ -119,6 +136,55 @@ class XmindImporter(NoteImporter):
                 setattr(child, 'Parent', parents)
         return answerDicts
 
+    def getAnswerDict(self, nodeTag, root=False):
+        """
+        :param nodeTag: The answer node to get the dict for
+        :param root: whether the node is the root or not
+        :return: dictionary containing information for creating a note from
+        this answer node, furthermore adds a Concept to onto for this node
+        """
+        manager = self.activeManager
+        isAnswer = True
+        concept = None
+
+        # Check whether subtopic contains a crosslink
+        crosslink = manager.getNodeCrosslink(nodeTag)
+
+        # If the node is empty do not create a concept
+        if manager.isEmptyNode(nodeTag):
+            isAnswer = False
+        else:
+            nodeContent = manager.getNodeContent(nodeTag)
+            if root:
+                concept = self.onto.Root(classify(nodeContent))
+            else:
+
+                # Some concept names (e.g. 'are') can lead to errors, catch
+                # them
+                try:
+                    concept = self.onto.Concept(classify(nodeContent))
+                except TypeError:
+                    print('fehler')
+                    raise NameError('Invalid concept name')
+            if nodeContent['media']['image']:
+                concept.Image = nodeContent['media']['image']
+            if nodeContent['media']['media']:
+                concept.Media = nodeContent['media']['media']
+            concept.Doc = self.activeManager.file
+            concept.Mod = nodeTag['timestamp']
+
+            # Do not add an Xid if the node is a pure crosslink-node
+            if manager.getNodeTitle(nodeTag) or manager.getNodeImg(nodeTag) \
+                    or not crosslink:
+                concept.Xid.append(nodeTag['id'])
+
+            # Assign a list to concept since concept may also contain
+            # multiple concepts in case of bridges
+            concept = [concept]
+        # Todo: check whether aID is really necessary
+        return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
+                    crosslink=crosslink, concepts=concept)
+
     def get_children_and_bridges(self, answerDicts, childNotes, image, media,
                                  parents, question, ref, relProp, sortId):
         children = list()
@@ -137,23 +203,6 @@ class XmindImporter(NoteImporter):
                 bridges.append(answerDict)
             answerDicts.append(answerDict)
         return bridges, children
-
-    def add_relation(self, aIndex, child, image, media, parent, question, ref,
-                     relProp, sortId):
-        self.onto.Reference[parent, relProp, child] = ref
-        if sortId:
-            self.onto.SortId[parent, relProp, child] = sortId
-        self.onto.Doc[parent, relProp, child] = self.activeManager.file
-        self.onto.Sheet[parent, relProp, child] = self.activeManager.sheets[
-            self.currentSheetImport]['tag']['id']
-        self.onto.Xid[parent, relProp, child] = question['id']
-        if image:
-            self.onto.Image[parent, relProp, child] = image
-        if media:
-            self.onto.Media[parent, relProp, child] = media
-        self.onto.NoteTag[parent, relProp, child] = self.getTag()
-        self.onto.AIndex[parent, relProp, child] = aIndex
-        self.onto.Mod[parent, relProp, child] = question['timestamp']
 
     def get_file_dict(self, path):
         return [path, self.activeManager.file]
@@ -179,55 +228,6 @@ class XmindImporter(NoteImporter):
             self.findAnswerDicts(parents=parents, question=originalQuestion,
                                  sortId=sortId, ref=ref, content=content)
             return
-
-    def getAnswerDict(self, nodeTag, root=False):
-        """
-        :param nodeTag: The answer node to get the dict for
-        :param root: whether the node is the root or not
-        :return: dictionary containing information for creating a note from
-        this answer node, furthermore adds a Concept to onto for this node
-        """
-        manager = self.activeManager
-        isAnswer = True
-        concept = None
-
-        # Check whether subtopic contains a crosslink
-        crosslink = manager.getNodeCrosslink(nodeTag)
-
-        # If the node is empty do not create a concept
-        if manager.isEmptyNode(nodeTag):
-            isAnswer = False
-        else:
-            nodeContent = manager.getNodeContent(nodeTag)
-            if root:
-                concept = self.onto.Root(nodeContent['content'])
-            else:
-
-                # Some concept names (e.g. 'are') can lead to errors, catch
-                # them
-                try:
-                    concept = self.onto.Concept(nodeContent['content'])
-                except TypeError:
-                    print('fehler')
-                    raise NameError('Invalid concept name')
-            if nodeContent['media']['image']:
-                concept.Image = nodeContent['media']['image']
-            if nodeContent['media']['media']:
-                concept.Media = nodeContent['media']['media']
-            concept.Doc = self.activeManager.file
-            concept.Mod = nodeTag['timestamp']
-
-            # Do not add an Xid if the node is a pure crosslink-node
-            if manager.getNodeTitle(nodeTag) or manager.getNodeImg(nodeTag) \
-                    or not crosslink:
-                concept.Xid.append(nodeTag['id'])
-
-            # Assign a list to concept since concept may also contain
-            # multiple concepts in case of bridges
-            concept = [concept]
-        # Todo: check whether aID is really necessary
-        return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
-                    crosslink=crosslink, concepts=concept)
 
     def getQuestions(self, parentAnswerDict: dict, sortId='', ref="",
                      followsBridge=False):
@@ -257,8 +257,6 @@ class XmindImporter(NoteImporter):
             # Update the sorting ID
             nextSortId = updateId(previousId=sortId, idToAppend=qId)
             content = manager.getNodeContent(followRel)
-            if content['content'] == 'difference to MAO':
-                print('')
             answerDicts = self.findAnswerDicts(
                 parents=parentAnswerDict['concepts'], question=followRel,
                 sortId=nextSortId, ref=ref, content=content)

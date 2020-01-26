@@ -1,11 +1,24 @@
 import os
+import re
 
 import owlready2
 
 from owlready2.namespace import Ontology, World
 
 from .consts import ADDON_PATH, X_MAX_ANSWERS
-from .utils import unclassify, file_dict
+from .utils import file_dict
+from .xnotemanager import FieldTranslator
+
+
+def classify(content):
+    classified = content['content'].replace(" ", "_")
+    if content['media']['image']:
+        classified += "<img:" + re.sub(
+            'attachments/', '', content['media']['image']) + ">"
+    if content['media']['media']:
+        classified += "<media:" + re.sub(
+            'attachments/', '', content['media']['media']) + ">"
+    return classified
 
 
 class XOntology(Ontology):
@@ -15,6 +28,7 @@ class XOntology(Ontology):
         Ontology.__init__(self, world=World(), base_iri=iri)
         self.setUpClasses()
         self.parentStorid = self.Parent.storid
+        self.field_translator = FieldTranslator()
 
     def setUpClasses(self):
         with self:
@@ -122,7 +136,8 @@ class XOntology(Ontology):
         media = []
         for i, answerDict in enumerate(answerDicts[0:len(answerDids)]):
             concept = self.world._get_by_storid(answerDids[i])
-            answerDict['text'] = concept.name
+            answerDict['text'] = self.field_translator.field_from_class(
+                concept.name)
             answerDict['id'] = concept.Xid[0]
             if concept.Image:
                 images.append(file_dict(identifier=concept.Image[0],
@@ -154,7 +169,8 @@ class XOntology(Ontology):
             media.append(files[1])
         return {
             'reference': self.getRef(elements)[0],
-            'question': unclassify(elements['p'].name),
+            'question': self.field_translator.field_from_class(
+                elements['p'].name),
             'answers': answerDicts,
             'sortId': self.getSortId(elements)[0],
             'document': self.getDoc(elements)[0],

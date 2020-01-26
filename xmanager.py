@@ -63,10 +63,6 @@ class XManager:
         # if necessary add image
         attachment = self.getNodeImg(tag=tag)
         if attachment:
-            if content != '':
-                content += '<br>'
-            fileName = re.search('/.*', attachment).group()[1:]
-            content += '<img src="%s">' % fileName
             media['image'] = attachment[4:]
 
         # If the node contains a link to another node, add the text of that
@@ -78,16 +74,13 @@ class XManager:
                 content = crosslinkTitle
 
         # if necessary add sound
-        if href and href.endswith(('.mp3', '.wav', 'mp4')):
-            if content:
-                content += '<br>'
+        if href and href.endswith(X_MEDIA_EXTENSIONS):
             if href.startswith('file'):
                 mediaPath = urllib.parse.unquote(href[7:])
                 media['media'] = mediaPath
             else:
                 mediaPath = href[4:]
                 media['media'] = mediaPath
-            content += '[sound:%s]' % os.path.basename(mediaPath)
         return {'content': content, 'media': media}
 
     def getNodeCrosslink(self, tag):

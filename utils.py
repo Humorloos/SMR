@@ -11,14 +11,6 @@ from anki.utils import ids2str
 from .consts import X_MODEL_NAME
 
 
-def classify(className):
-    return className.replace(" ", "_")
-
-
-def unclassify(className):
-    return className.replace("_", " ")
-
-
 # receives a dictionary with an id for sorting the cards and an id for finding the card's position
 def updateId(previousId, idToAppend):
     return previousId + chr(idToAppend + 122)

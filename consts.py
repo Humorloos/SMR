@@ -7,6 +7,8 @@ X_MODEL_NAME = 'Stepwise Map Retrieval'
 X_MAX_ANSWERS = 20
 X_CARD_NAMES = list(map(lambda aswid: 'Answer ' + str(aswid),
                         list(range(1, X_MAX_ANSWERS + 1))))
+X_MEDIA_EXTENSIONS = ('mp3', 'wav', 'mp4')
+X_IMG_EXTENSIONS = ('jpeg', 'jpg', 'png')
 
 # Fields, use orderedDict to be able to access flds field in notes objects by
 # postition of dictionary key

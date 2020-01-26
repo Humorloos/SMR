@@ -59,3 +59,23 @@ class XNoteManager():
     def get_answer_cards(self, nid):
         return self.col.db.all('select mod, id from cards where nid = %s' %
                                 nid)
+
+
+class FieldTranslator():
+    def __init__(self):
+        self.field_re_dict = {
+            '.<': '<br>',
+            '<img:': '<img src="',
+            '<media:': '[sound:',
+        }
+        self.field_re_dict.update({e + '>': e + '">' for e in X_IMG_EXTENSIONS})
+        self.field_re_dict.update({e + '>': e + ']' for e in
+                                   X_MEDIA_EXTENSIONS})
+        self.field_regex = re.compile("(%s)" % "|".join(
+            map(re.escape, self.field_re_dict.keys())))
+
+    def field_from_class(self, class_name):
+        class_name = class_name.replace("_", " ")
+        return self.field_regex.sub(
+            lambda mo: self.field_re_dict[mo.string[mo.start():mo.end()]],
+            class_name)
