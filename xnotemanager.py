@@ -3,6 +3,14 @@ import json
 from anki.utils import splitFields
 
 from .utils import *
+from .consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS
+
+
+def img_from_field(field):
+    try:
+        return re.search('<img src=\"(.*\.(jpg|png))\">', field).group(1)
+    except AttributeError:
+        return None
 
 
 def meta_from_flds(flds):
@@ -64,18 +72,20 @@ class XNoteManager():
 class FieldTranslator():
     def __init__(self):
         self.field_re_dict = {
-            '.<': '<br>',
-            '<img:': '<img src="',
-            '<media:': '[sound:',
+            'ximage_': '<img src="',
+            'xmedia_': '[sound:',
         }
-        self.field_re_dict.update({e + '>': e + '">' for e in X_IMG_EXTENSIONS})
-        self.field_re_dict.update({e + '>': e + ']' for e in
-                                   X_MEDIA_EXTENSIONS})
         self.field_regex = re.compile("(%s)" % "|".join(
-            map(re.escape, self.field_re_dict.keys())))
+            self.field_re_dict.keys()))
 
     def field_from_class(self, class_name):
-        class_name = class_name.replace("_", " ")
-        return self.field_regex.sub(
+        class_name = re.sub('(.)(ximage_)', '\\1<br>\\2', class_name)
+        class_name = self.field_regex.sub(
             lambda mo: self.field_re_dict[mo.string[mo.start():mo.end()]],
             class_name)
+        class_name = re.sub('(_extension_)(' + '|'.join(X_IMG_EXTENSIONS) + ')',
+                            '.\\2">', class_name)
+        class_name = re.sub('(_extension_)(' + '|'.join(X_MEDIA_EXTENSIONS) +
+                            ')', '.\\2]', class_name)
+        class_name = class_name.replace("_", " ")
+        return class_name

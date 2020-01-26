@@ -1,0 +1,1078 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xml:base="C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\onto.owl"
+         xmlns="C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\onto.owl#">
+
+<owl:Ontology rdf:about="C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\onto.owl"/>
+
+<owl:ObjectProperty rdf:about="#Parent">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#Child">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#investigates">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#requires">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#types">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#ximage_09r2e442o8lppjfeblf7il2rmd_extension_png">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#affects">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#pronounciation">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#difference_to_MAO">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#modulated_by">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#example">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#stands_for">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#splits_up">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#are">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#completely_unrelated_animation">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#can_be_inhibited_by">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#triggered_by">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#can_be">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#can_be_triggered_by">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#examples">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#option_for_treatment">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#especially_effective_ones">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#inhibit_release_of">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#possible_causes">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#may_include">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:ObjectProperty rdf:about="#can_be_manipulated_by">
+  <rdfs:domain rdf:resource="#Concept"/>
+  <rdfs:range rdf:resource="#Concept"/>
+</owl:ObjectProperty>
+
+<owl:AnnotationProperty rdf:about="#Image"/>
+
+<owl:AnnotationProperty rdf:about="#Media"/>
+
+<owl:AnnotationProperty rdf:about="#Xid"/>
+
+<owl:AnnotationProperty rdf:about="#Doc"/>
+
+<owl:AnnotationProperty rdf:about="#Mod"/>
+
+<owl:AnnotationProperty rdf:about="#Reference"/>
+
+<owl:AnnotationProperty rdf:about="#SortId"/>
+
+<owl:AnnotationProperty rdf:about="#Sheet"/>
+
+<owl:AnnotationProperty rdf:about="#NoteTag"/>
+
+<owl:AnnotationProperty rdf:about="#AIndex"/>
+
+<owl:Class rdf:about="#Concept">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Root">
+  <rdfs:subClassOf rdf:resource="#Concept"/>
+</owl:Class>
+
+<Root rdf:about="#biological_psychology">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Child rdf:resource="#clinical_psychology"/>
+  <investigates rdf:resource="#perception"/>
+  <investigates rdf:resource="#information_transfer_and_processing"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">0pbme7b9sg9en8qqmmn9jj06od</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573037764522</Mod>
+</Root>
+
+<Concept rdf:about="#clinical_psychology">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <rdf:type rdf:resource="#Root"/>
+  <Parent rdf:resource="#biological_psychology"/>
+  <investigates rdf:resource="#psychological_disorders"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">5eaalsdnfrg772ka2j6pmupnkh</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030274669</Mod>
+</Concept>
+
+<Concept rdf:about="#information_transfer_and_processing">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#biological_psychology"/>
+  <requires rdf:resource="#neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png"/>
+  <modulated_by rdf:resource="#enzymes"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4okvq29odoin406qmiq86vv1i1</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030612793</Mod>
+</Concept>
+
+<Concept rdf:about="#perception">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#general_psychology"/>
+  <Child rdf:resource="#Pain"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4jf2lp878e4rn7pm85lca1vahr</Xid>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7f0arh33ufio60ii4s9dko3bor</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example_general_psychology.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1577961531103</Mod>
+</Concept>
+
+<Concept rdf:about="#neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#information_transfer_and_processing"/>
+  <types rdf:resource="#biogenic_amines"/>
+  <Image rdf:datatype="http://www.w3.org/2001/XMLSchema#string">attachments/629d18n2i73im903jkrjmr98fg.png</Image>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4r6avbt0pbuam4fg07jod0ubec</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1578314907411</Mod>
+</Concept>
+
+<Concept rdf:about="#biogenic_amines">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#Serotonin"/>
+  <Parent rdf:resource="#dopamine"/>
+  <Parent rdf:resource="#noradrenaline"/>
+  <Parent rdf:resource="#adrenaline"/>
+  <ximage_09r2e442o8lppjfeblf7il2rmd_extension_png rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">78k8nsh3vfibpmq73kangacbll</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573032312025</Mod>
+</Concept>
+
+<Concept rdf:about="#Serotonin">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#biochemical_factors"/>
+  <affects rdf:resource="#Pain"/>
+  <affects rdf:resource="#Sleep"/>
+  <affects rdf:resource="#psychological_disorders"/>
+  <pronounciation rdf:resource="#xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3"/>
+  <difference_to_MAO rdf:resource="#MAO_is_not_a_neurotransmitter"/>
+  <are rdf:resource="#biogenic_amines"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">122vli15fp65smkg4v6pq54gi3</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1579026927880</Mod>
+</Concept>
+
+<Concept rdf:about="#Sleep">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">519eu5jr1jkn93s5hmsscvm84i</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030557630</Mod>
+</Concept>
+
+<Concept rdf:about="#Pain">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#perception"/>
+  <can_be_inhibited_by rdf:resource="#Serotonin"/>
+  <triggered_by rdf:resource="#nociceptors"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">5asru7kdmre8059cemi8p5lm3v</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030941527</Mod>
+</Concept>
+
+<Concept rdf:about="#psychological_disorders">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#clinical_psychology"/>
+  <examples rdf:resource="#anxiety_disorders"/>
+  <examples rdf:resource="#schizophrenia"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1ijitnvjhg1b0lglikd7dknp0h</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030003987</Mod>
+</Concept>
+
+<Concept rdf:about="#xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#Serotonin"/>
+  <Media rdf:datatype="http://www.w3.org/2001/XMLSchema#string">attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3</Media>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1s7h0rvsclrnvs8qq9u71acml5</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1578315979641</Mod>
+</Concept>
+
+<Concept rdf:about="#MAO_is_not_a_neurotransmitter">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#MAO"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2kcf3k5g09u9ukv2m8qli363qj</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573043030527</Mod>
+</Concept>
+
+<Concept rdf:about="#enzymes">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#information_transfer_and_processing"/>
+  <example rdf:resource="#MAO"/>
+  <completely_unrelated_animation rdf:resource="#xmedia_395ke7i9a6nkutu85fcpa66as2_extension_mp4"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">5e2cicue01ikp5vnq5pp46np83</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031995294</Mod>
+</Concept>
+
+<Concept rdf:about="#MAO">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#MAO-inhibitors"/>
+  <difference_to_MAO rdf:resource="#MAO_is_not_a_neurotransmitter"/>
+  <stands_for rdf:resource="#monoamine_oxidase"/>
+  <splits_up rdf:resource="#Serotonin"/>
+  <splits_up rdf:resource="#dopamine"/>
+  <splits_up rdf:resource="#noradrenaline"/>
+  <splits_up rdf:resource="#adrenaline"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7blr5ubl6uf6c9beflm85jte19</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030659573</Mod>
+</Concept>
+
+<Concept rdf:about="#monoamine_oxidase">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#MAO"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7qe0jemeupmn623ck7817kkmeg</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030712545</Mod>
+</Concept>
+
+<Concept rdf:about="#dopamine">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#MAO"/>
+  <are rdf:resource="#biogenic_amines"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">03eokjlomuockpeaqn2923nvvp</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030774538</Mod>
+</Concept>
+
+<Concept rdf:about="#adrenaline">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#MAO"/>
+  <are rdf:resource="#biogenic_amines"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3f5lmmd8mjhe3gkbnaih1m9q8j</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030793617</Mod>
+</Concept>
+
+<Concept rdf:about="#noradrenaline">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#MAO"/>
+  <are rdf:resource="#biogenic_amines"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">73mo29opsuegqobtttlt2vbaqj</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030803082</Mod>
+</Concept>
+
+<Concept rdf:about="#xmedia_395ke7i9a6nkutu85fcpa66as2_extension_mp4">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#enzymes"/>
+  <Media rdf:datatype="http://www.w3.org/2001/XMLSchema#string">attachments/395ke7i9a6nkutu85fcpa66as2.mp4</Media>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">23nu73chqkkkem455dit5p8stu</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031959463</Mod>
+</Concept>
+
+<Concept rdf:about="#nociceptors">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#Pain"/>
+  <can_be rdf:resource="#chemical"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2mbb2crv3tdgr131i9j538n0ga</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031995280</Mod>
+</Concept>
+
+<Concept rdf:about="#chemical">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#nociceptors"/>
+  <can_be_triggered_by rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2jf5kkori2h7sdja7cgje5i71e</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031000699</Mod>
+</Concept>
+
+<Concept rdf:about="#anxiety_disorders">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#psychological_disorders"/>
+  <example rdf:resource="#phobias"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2dt2f6hmgutknau18vcfckvkkt</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030029949</Mod>
+</Concept>
+
+<Concept rdf:about="#schizophrenia">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#psychological_disorders"/>
+  <possible_causes rdf:resource="#biochemical_factors"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6evs6s91p1t90hllrf2emqfcfm</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030288643</Mod>
+</Concept>
+
+<Concept rdf:about="#phobias">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#anxiety_disorders"/>
+  <option_for_treatment rdf:resource="#biological_antidepressants"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4plvhhm8na66sp2hf5meq437o1</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030059387</Mod>
+</Concept>
+
+<Concept rdf:about="#biological_antidepressants">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#phobias"/>
+  <especially_effective_ones rdf:resource="#Serotonin_reuptake_inhibitors"/>
+  <especially_effective_ones rdf:resource="#MAO-inhibitors"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">13plemlb7a6574h8hnqm5omuvb</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030106387</Mod>
+</Concept>
+
+<Concept rdf:about="#MAO-inhibitors">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#biological_antidepressants"/>
+  <inhibit_release_of rdf:resource="#MAO"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">43p08frmml2td4lfp0enbkqnd4</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030210417</Mod>
+</Concept>
+
+<Concept rdf:about="#Serotonin_reuptake_inhibitors">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#biological_antidepressants"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2koenah8ebavhq2bl2u6u1lh4h</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1579026940793</Mod>
+</Concept>
+
+<Concept rdf:about="#biochemical_factors">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#schizophrenia"/>
+  <may_include rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">5p9v7aubas5saohakvntmdndir</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030315425</Mod>
+</Concept>
+
+<Root rdf:about="#general_psychology">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <investigates rdf:resource="#emotions"/>
+  <investigates rdf:resource="#perception"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6uucivj306fi6u07m9i9bv57d5</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example_general_psychology.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031042911</Mod>
+</Root>
+
+<Concept rdf:about="#emotions">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#general_psychology"/>
+  <can_be_manipulated_by rdf:resource="#chemical_substances"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">0ah6fc1fk2losqo1cpf39bct0f</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example_general_psychology.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031053639</Mod>
+</Concept>
+
+<Concept rdf:about="#chemical_substances">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#emotions"/>
+  <example rdf:resource="#neurotransmitters"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1ouerm12et7869vgepcgsfvgt8</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example_general_psychology.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031063182</Mod>
+</Concept>
+
+<Concept rdf:about="#neurotransmitters">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#chemical_substances"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4hf4df7s4nfl3oe6rqk38o66j4</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example_general_psychology.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1577961553525</Mod>
+</Concept>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#chemical_substances"/>
+  <owl:annotatedProperty rdf:resource="#example"/>
+  <owl:annotatedTarget rdf:resource="#neurotransmitters"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">5q3gp7efkled9n9m2adm0f9aqo</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example_general_psychology.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031065994</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">general psychology&lt;li&gt;investigates: emotions&lt;/li&gt;&lt;li&gt;can be manipulated by: chemical substances&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">58c9emm00d048luacr7sp1ohl5</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_general_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#emotions"/>
+  <owl:annotatedProperty rdf:resource="#can_be_manipulated_by"/>
+  <owl:annotatedTarget rdf:resource="#chemical_substances"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4btfk5dufc08ehigg83a9ao5j8</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example_general_psychology.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031059847</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">general psychology&lt;li&gt;investigates: emotions&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">58c9emm00d048luacr7sp1ohl5</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_general_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#general_psychology"/>
+  <owl:annotatedProperty rdf:resource="#investigates"/>
+  <owl:annotatedTarget rdf:resource="#perception"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3ijhnhd14hg812tjaqfg8g5hr9</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example_general_psychology.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031119976</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">general psychology</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">58c9emm00d048luacr7sp1ohl5</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_general_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#general_psychology"/>
+  <owl:annotatedProperty rdf:resource="#investigates"/>
+  <owl:annotatedTarget rdf:resource="#emotions"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3ijhnhd14hg812tjaqfg8g5hr9</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example_general_psychology.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031119976</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">general psychology</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">58c9emm00d048luacr7sp1ohl5</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_general_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biochemical_factors"/>
+  <owl:annotatedProperty rdf:resource="#may_include"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">0aghm51vmc5jbkjut7uicpa5bn</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030318802</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: schizophrenia&lt;/li&gt;&lt;li&gt;possible causes: biochemical factors&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{|{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#schizophrenia"/>
+  <owl:annotatedProperty rdf:resource="#possible_causes"/>
+  <owl:annotatedTarget rdf:resource="#biochemical_factors"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2qdg5f3jsvbljnakgk9m81dbr7</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030307941</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: schizophrenia&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{|{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO-inhibitors"/>
+  <owl:annotatedProperty rdf:resource="#inhibit_release_of"/>
+  <owl:annotatedTarget rdf:resource="#MAO"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3spe5tjcfkfdod7av3p5b3csl4</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030258069</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: anxiety disorders&lt;/li&gt;&lt;li&gt;example: phobias&lt;/li&gt;&lt;li&gt;option for treatment: biological antidepressants&lt;/li&gt;&lt;li&gt;especially effective ones: MAO-inhibitors&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{{{{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biological_antidepressants"/>
+  <owl:annotatedProperty rdf:resource="#especially_effective_ones"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin_reuptake_inhibitors"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">788vc5lde5kp5dpqj7idf7u9v2</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030135588</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: anxiety disorders&lt;/li&gt;&lt;li&gt;example: phobias&lt;/li&gt;&lt;li&gt;option for treatment: biological antidepressants&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biological_antidepressants"/>
+  <owl:annotatedProperty rdf:resource="#especially_effective_ones"/>
+  <owl:annotatedTarget rdf:resource="#MAO-inhibitors"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">788vc5lde5kp5dpqj7idf7u9v2</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030135588</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: anxiety disorders&lt;/li&gt;&lt;li&gt;example: phobias&lt;/li&gt;&lt;li&gt;option for treatment: biological antidepressants&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#phobias"/>
+  <owl:annotatedProperty rdf:resource="#option_for_treatment"/>
+  <owl:annotatedTarget rdf:resource="#biological_antidepressants"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3608177csnr6upug1edj9nfu97</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030091148</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: anxiety disorders&lt;/li&gt;&lt;li&gt;example: phobias&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#anxiety_disorders"/>
+  <owl:annotatedProperty rdf:resource="#example"/>
+  <owl:annotatedTarget rdf:resource="#phobias"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">5h7t01bohpviq2581t4atphedd</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030032849</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: anxiety disorders&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#psychological_disorders"/>
+  <owl:annotatedProperty rdf:resource="#examples"/>
+  <owl:annotatedTarget rdf:resource="#schizophrenia"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">26pj114igt039ms9jpc1r2afno</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030276665</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#psychological_disorders"/>
+  <owl:annotatedProperty rdf:resource="#examples"/>
+  <owl:annotatedTarget rdf:resource="#anxiety_disorders"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">26pj114igt039ms9jpc1r2afno</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030276665</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#clinical_psychology"/>
+  <owl:annotatedProperty rdf:resource="#investigates"/>
+  <owl:annotatedTarget rdf:resource="#psychological_disorders"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">39gqd4mhg32555lck1t33ib70t</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573029996028</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#chemical"/>
+  <owl:annotatedProperty rdf:resource="#can_be_triggered_by"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7ite3obkfmbchr1pc6ib0o7rga</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031007256</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: perception&lt;/li&gt;&lt;li&gt;Pain&lt;/li&gt;&lt;li&gt;triggered by: nociceptors&lt;/li&gt;&lt;li&gt;can be: chemical&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">||{{|{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#nociceptors"/>
+  <owl:annotatedProperty rdf:resource="#can_be"/>
+  <owl:annotatedTarget rdf:resource="#chemical"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4q3e21ritrvitgmjialvadn2m6</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030995015</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: perception&lt;/li&gt;&lt;li&gt;Pain&lt;/li&gt;&lt;li&gt;triggered by: nociceptors&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">||{{|{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Pain"/>
+  <owl:annotatedProperty rdf:resource="#triggered_by"/>
+  <owl:annotatedTarget rdf:resource="#nociceptors"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4rdraflh6n2hl4a459g2urdkr6</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030978953</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: perception&lt;/li&gt;&lt;li&gt;Pain&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">||{{|</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Pain"/>
+  <owl:annotatedProperty rdf:resource="#can_be_inhibited_by"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1scualcvt0scjd9iaoblg568ld</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030868375</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: perception&lt;/li&gt;&lt;li&gt;Pain&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">||{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#perception"/>
+  <owl:annotatedProperty rdf:resource="#Child"/>
+  <owl:annotatedTarget rdf:resource="#Pain"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">668iln3nrlmk5ibhnf4lvbbnmo</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573032060935</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: perception&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">||{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#enzymes"/>
+  <owl:annotatedProperty rdf:resource="#completely_unrelated_animation"/>
+  <owl:annotatedTarget rdf:resource="#xmedia_395ke7i9a6nkutu85fcpa66as2_extension_mp4"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4vfsmbd1fmn6s0tqmlj4cei7pe</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031995280</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{|</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO"/>
+  <owl:annotatedProperty rdf:resource="#difference_to_MAO"/>
+  <owl:annotatedTarget rdf:resource="#MAO_is_not_a_neurotransmitter"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">077tf3ovn4gc1j1dqte7or33fl</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573042889642</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{}</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#noradrenaline"/>
+  <owl:annotatedProperty rdf:resource="#are"/>
+  <owl:annotatedTarget rdf:resource="#biogenic_amines"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6iivm8tpoqj2c0euaabtput14l</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573032298736</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;&lt;li&gt;splits up&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#adrenaline"/>
+  <owl:annotatedProperty rdf:resource="#are"/>
+  <owl:annotatedTarget rdf:resource="#biogenic_amines"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6iivm8tpoqj2c0euaabtput14l</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573032298736</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;&lt;li&gt;splits up&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#dopamine"/>
+  <owl:annotatedProperty rdf:resource="#are"/>
+  <owl:annotatedTarget rdf:resource="#biogenic_amines"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6iivm8tpoqj2c0euaabtput14l</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573032298736</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;&lt;li&gt;splits up&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin"/>
+  <owl:annotatedProperty rdf:resource="#are"/>
+  <owl:annotatedTarget rdf:resource="#biogenic_amines"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6iivm8tpoqj2c0euaabtput14l</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573032298736</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;&lt;li&gt;splits up&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO"/>
+  <owl:annotatedProperty rdf:resource="#splits_up"/>
+  <owl:annotatedTarget rdf:resource="#noradrenaline"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">61irckf1nloq42brfmbu0ke92v</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573032204755</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">4</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO"/>
+  <owl:annotatedProperty rdf:resource="#splits_up"/>
+  <owl:annotatedTarget rdf:resource="#adrenaline"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">61irckf1nloq42brfmbu0ke92v</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573032204755</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO"/>
+  <owl:annotatedProperty rdf:resource="#splits_up"/>
+  <owl:annotatedTarget rdf:resource="#dopamine"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">61irckf1nloq42brfmbu0ke92v</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573032204755</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO"/>
+  <owl:annotatedProperty rdf:resource="#splits_up"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">61irckf1nloq42brfmbu0ke92v</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573032204755</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO"/>
+  <owl:annotatedProperty rdf:resource="#stands_for"/>
+  <owl:annotatedTarget rdf:resource="#monoamine_oxidase"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">351v1hg3rt5vejrq10c1p3tko0</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030725078</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#enzymes"/>
+  <owl:annotatedProperty rdf:resource="#example"/>
+  <owl:annotatedTarget rdf:resource="#MAO"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7e1s0urn8376a2q371nujihuab</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030641426</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#information_transfer_and_processing"/>
+  <owl:annotatedProperty rdf:resource="#modulated_by"/>
+  <owl:annotatedTarget rdf:resource="#enzymes"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7avqd95hi5tvj0kjcg2lne603g</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030618811</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin"/>
+  <owl:annotatedProperty rdf:resource="#difference_to_MAO"/>
+  <owl:annotatedTarget rdf:resource="#MAO_is_not_a_neurotransmitter"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">077tf3ovn4gc1j1dqte7or33fl</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573042889642</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;&lt;li&gt;: Serotonin&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{{}</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin"/>
+  <owl:annotatedProperty rdf:resource="#pronounciation"/>
+  <owl:annotatedTarget rdf:resource="#xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4s27e1mvsb5jqoiuaqmnlo8m71</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1578315976621</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;&lt;li&gt;: Serotonin&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{{|</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin"/>
+  <owl:annotatedProperty rdf:resource="#affects"/>
+  <owl:annotatedTarget rdf:resource="#psychological_disorders"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4lrqok8ac9hec8u2c2ul4mpo4k</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030827817</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;&lt;li&gt;: Serotonin&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin"/>
+  <owl:annotatedProperty rdf:resource="#affects"/>
+  <owl:annotatedTarget rdf:resource="#Pain"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4lrqok8ac9hec8u2c2ul4mpo4k</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030827817</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;&lt;li&gt;: Serotonin&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin"/>
+  <owl:annotatedProperty rdf:resource="#affects"/>
+  <owl:annotatedTarget rdf:resource="#Sleep"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4lrqok8ac9hec8u2c2ul4mpo4k</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030827817</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;&lt;li&gt;: Serotonin&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biogenic_amines"/>
+  <owl:annotatedProperty rdf:resource="#ximage_09r2e442o8lppjfeblf7il2rmd_extension_png"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin"/>
+  <Image rdf:datatype="http://www.w3.org/2001/XMLSchema#string">attachments/09r2e442o8lppjfeblf7il2rmd.png</Image>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">08eq1rdricsp1nt1b7aa181sq4</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1579197475503</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png"/>
+  <owl:annotatedProperty rdf:resource="#types"/>
+  <owl:annotatedTarget rdf:resource="#biogenic_amines"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">485fcs7jl72gtqesace4v8igf0</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573032291149</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#information_transfer_and_processing"/>
+  <owl:annotatedProperty rdf:resource="#requires"/>
+  <owl:annotatedTarget rdf:resource="#neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">730ahk5oc4himfrdvkqc5ci1o2</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1579189044076</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biological_psychology"/>
+  <owl:annotatedProperty rdf:resource="#investigates"/>
+  <owl:annotatedTarget rdf:resource="#perception"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4kdqkutdha46uns1j8jndi43ht</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573037764464</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biological_psychology"/>
+  <owl:annotatedProperty rdf:resource="#investigates"/>
+  <owl:annotatedTarget rdf:resource="#information_transfer_and_processing"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4kdqkutdha46uns1j8jndi43ht</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573037764464</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biological_psychology"/>
+  <owl:annotatedProperty rdf:resource="#Child"/>
+  <owl:annotatedTarget rdf:resource="#clinical_psychology"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">32dt8d2dflh4lr5oqc2oqqad28</Xid>
+  <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
+  <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1578066262451</Mod>
+  <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology</Reference>
+  <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{</SortId>
+  <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
+  <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+
+</rdf:RDF>

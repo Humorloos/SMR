@@ -397,6 +397,7 @@ class XmindImporter(NoteImporter):
                     ['removed', 0, 'notes']]
         self.importOntology()
         self.update_status()
+        self.onto.save(file=ONTO_FILE, format="rdfxml")
         for logId, log in enumerate(self.log, start=0):
             if log[1] == 1:
                 self.log[logId][2] = 'note'

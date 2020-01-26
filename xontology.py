@@ -5,7 +5,8 @@ import owlready2
 
 from owlready2.namespace import Ontology, World
 
-from .consts import ADDON_PATH, X_MAX_ANSWERS
+from .consts import ADDON_PATH, X_MAX_ANSWERS, X_IMG_EXTENSIONS,\
+    X_MEDIA_EXTENSIONS
 from .utils import file_dict
 from .xnotemanager import FieldTranslator
 
@@ -13,11 +14,15 @@ from .xnotemanager import FieldTranslator
 def classify(content):
     classified = content['content'].replace(" ", "_")
     if content['media']['image']:
-        classified += "<img:" + re.sub(
-            'attachments/', '', content['media']['image']) + ">"
+        classified += "ximage_" + re.sub(
+            'attachments/', '', content['media']['image'])
+        classified = re.sub('(\\.)('+'|'.join(X_IMG_EXTENSIONS) + ')',
+                            '_extension_\\2', classified)
     if content['media']['media']:
-        classified += "<media:" + re.sub(
-            'attachments/', '', content['media']['media']) + ">"
+        classified += "xmedia_" + re.sub(
+            'attachments/', '', content['media']['media'])
+        classified = re.sub('(\\.)('+'|'.join(X_MEDIA_EXTENSIONS) + ')',
+                            '_extension_\\2', classified)
     return classified
 
 

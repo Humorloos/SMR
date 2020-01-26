@@ -60,28 +60,28 @@ def getSheetBiologicalPsychology():
                            'sheet_biological_psychology.xml'), 'r') as file:
         return BeautifulSoup(file.read(), features='html.parser')
 
-# def getOntologyBiologicalPsychology():
-#     colPath = os.path.join(SUPPORT_PATH, 'collection.anki2')
-#     col = Collection(colPath)
-#     map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
-#     importer = XmindImporter(col=col, file=map)
-#     importer.deckId = '1'
-#     importer.currentSheetImport = 'biological psychology'
-#     importer.activeManager = importer.xManagers[0]
-#     importer.xManagers.append(
-#         XManager(os.path.join(
-#             ADDON_PATH, 'resources', 'example_general_psychology.xmind')))
-#     importer.importMap()
-#     importer.currentSheetImport = 'clinical psychology'
-#     importer.importMap()
-#     importer.activeManager = importer.xManagers[1]
-#     importer.currentSheetImport = 'general psychology'
-#     importer.importMap()
-#     output = os.path.join(SUPPORT_PATH, 'ontology_biological_psychology.rdf')
-#     importer.onto.save(file=output, format="rdfxml")
-#     # TODO: figure out how to store the ontology properly, currently when
-#     #  loading the ontology, properties and individuals cannot be accessed
-#     return owlready2.get_ontology(output).load()
+
+def getOntologyBiologicalPsychology():
+    colPath = os.path.join(SUPPORT_PATH, 'collection.anki2')
+    col = Collection(colPath)
+    map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
+    importer = XmindImporter(col=col, file=map)
+    importer.deckId = '1'
+    importer.currentSheetImport = 'biological psychology'
+    importer.activeManager = importer.xManagers[0]
+    importer.xManagers.append(
+        XManager(os.path.join(
+            ADDON_PATH, 'resources', 'example_general_psychology.xmind')))
+    importer.importMap()
+    importer.currentSheetImport = 'clinical psychology'
+    importer.importMap()
+    importer.activeManager = importer.xManagers[1]
+    importer.currentSheetImport = 'general psychology'
+    importer.importMap()
+    output = os.path.join(SUPPORT_PATH, 'ontology_biological_psychology.rdf')
+    importer.onto.save(file=output, format="rdfxml")
+    return owlready2.get_ontology(output).load()
+
 
 def getNoteData():
     colPath = os.path.join(SUPPORT_PATH, 'collection.anki2')
@@ -110,5 +110,5 @@ def getNoteData():
 sheetImports = getSheetImports()
 selectedSheets = getSelectedSheets()
 sheetBiologicalPsychology = getSheetBiologicalPsychology()
-# ontologyBiologicalPsychology = getOntologyBiologicalPsychology()
+ontologyBiologicalPsychology = getOntologyBiologicalPsychology()
 noteData = getNoteData()
