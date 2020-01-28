@@ -1,14 +1,10 @@
-import os
-import re
-
 import owlready2
+import types
 
 from owlready2.namespace import Ontology, World
 
-from .consts import ADDON_PATH, X_MAX_ANSWERS, X_IMG_EXTENSIONS,\
-    X_MEDIA_EXTENSIONS
-from .utils import file_dict
-from .xnotemanager import FieldTranslator
+from .consts import ADDON_PATH, X_MAX_ANSWERS
+from .xnotemanager import *
 
 
 def classify(content):
@@ -25,12 +21,17 @@ def classify(content):
                             '_extension_\\2', classified)
     return classified
 
-
+# TODO: implement change of ontology after changing a note
 class XOntology(Ontology):
-    def __init__(self):
-        iri = os.path.join(ADDON_PATH, 'resources', 'onto.owl#')
+    def __init__(self, iri=None):
+        if not iri:
+            base_iri = os.path.join(ADDON_PATH, 'resources', 'onto.owl#')
+        else:
+            base_iri = iri + '#'
         # owlready2.get_ontology(iri)
-        Ontology.__init__(self, world=World(), base_iri=iri)
+        Ontology.__init__(self, world=World(), base_iri=base_iri)
+        if iri:
+            self.load()
         self.setUpClasses()
         self.parentStorid = self.Parent.storid
         self.field_translator = FieldTranslator()
@@ -74,64 +75,89 @@ class XOntology(Ontology):
         # set annotation properties for parent relation
         self.Xid[child, self.Parent, parent] = x_id
 
-            # For sortId field
-            class SortId(owlready2.AnnotationProperty):
-                pass
+    def get_AIndex(self, elements):
+        return self.AIndex[elements['s'], elements['p'], elements['o']][0]
 
-            # Sheet that contains the node
-            class Sheet(owlready2.AnnotationProperty):
-                pass
+    def get_all_parent_triples(self):
+        return [t for t in self.get_triples() if t[1] == self.Parent.storid]
 
-            # Tag that will identify the note
-            class NoteTag(owlready2.AnnotationProperty):
-                pass
-
-            # Answer Index for getting the right order of answers
-            class AIndex(owlready2.AnnotationProperty):
-                pass
+    def getDoc(self, elements):
+        return self.Doc[elements['s'], elements['p'], elements['o']][0]
 
     def getElements(self, triple):
         elements = [self.world._get_by_storid(s) for s in triple]
         return {'s': elements[0], 'p': elements[1], 'o': elements[2]}
 
-    def getRef(self, elements):
-        return self.Reference[elements['s'], elements['p'], elements['o']]
-
-    def getSortId(self, elements):
-        return self.SortId[elements['s'], elements['p'], elements['o']]
-
-    def getDoc(self, elements):
-        return self.Doc[elements['s'], elements['p'], elements['o']]
-
-    def getXid(self, elements):
-        return self.Xid[elements['s'], elements['p'], elements['o']]
-
-    def getSheet(self, elements):
-        return self.Sheet[elements['s'], elements['p'], elements['o']]
-
     def getImage(self, elements):
-        return self.Image[elements['s'], elements['p'], elements['o']]
+        try:
+            return self.Image[elements['s'], elements['p'], elements['o']][0]
+        except:
+            return None
+
+    def get_inverse(self, x_id):
+        triples = self.get_all_parent_triples()
+        elements = [self.getElements(t) for t in triples]
+        inverse_elements = [e for e in elements if self.getXid(e) == x_id]
+        return inverse_elements
 
     def getMedia(self, elements):
-        return self.Media[elements['s'], elements['p'], elements['o']]
-
-    def getNoteTag(self, elements):
-        return self.NoteTag[elements['s'], elements['p'], elements['o']]
+        try:
+            return self.Media[elements['s'], elements['p'], elements['o']][0]
+        except IndexError:
+            return None
 
     def getMod(self, elements):
-        return self.Mod[elements['s'], elements['p'], elements['o']]
+        return self.Mod[elements['s'], elements['p'], elements['o']][0]
 
-    def get_AIndex(self, t):
-        elements = self.getElements(t)
-        return self.AIndex[elements['s'], elements['p'], elements['o']]
+    def getNoteTag(self, elements):
+        return self.NoteTag[elements['s'], elements['p'], elements['o']][0]
+
+    def getParentQuestionIds(self, parentElements):
+        parents = {'parentQuestions': set(), 'bridges': list()}
+        for elements in parentElements:
+            # Add id of question to set if parent is a normal question
+            if elements['p'].name != 'Child':
+                parents['parentQuestions'].add(self.getXid(elements))
+            # If parent is a bridge, add a dictionary titled by the answer
+            # containing parents of the bridge
+            else:
+                nextParentTriples = self.getParentTriples(o=elements[
+                    's'].storid)
+                nextParentElements = [
+                    self.getElements(t) for t in nextParentTriples]
+                # Named dictionary is necessary to understand map structure
+                # in case of bridges following bridges
+                bridge = {'subjectTitle': elements['o'].name}
+                bridge.update(self.getChildQuestionIds(nextParentElements))
+                parents['bridges'].append(bridge)
+        parents['parentQuestions'] = list(parents['parentQuestions'])
+        return parents
+
+    def get_question(self, x_id):
+        triples = self.getNoteTriples()
+        elements = [self.getElements(t) for t in triples]
+        question_elements = [e for e in elements if self.getXid(e) == x_id]
+        return question_elements
+
+    def getRef(self, elements):
+        return self.Reference[elements['s'], elements['p'], elements['o']][0]
+
+    def getSheet(self, elements):
+        return self.Sheet[elements['s'], elements['p'], elements['o']][0]
+
+    def getSortId(self, elements):
+        return self.SortId[elements['s'], elements['p'], elements['o']][0]
+
+    def getXid(self, elements):
+        return self.Xid[elements['s'], elements['p'], elements['o']][0]
 
     def getNoteData(self, questionList):
 
         elements = self.getElements(questionList[0])
         answerDids = set(t[2] for t in questionList)
         # Sort answerDids by answer index to get the answers' order right
-        answerDids = sorted(answerDids, key=lambda d: self.get_AIndex(next(
-            t for t in questionList if t[2] == d)))
+        answerDids = sorted(answerDids, key=lambda d: self.get_AIndex(
+            self.getElements(next(t for t in questionList if t[2] == d))))
         answerDicts = [dict() for _ in range(X_MAX_ANSWERS)]
         images = []
         media = []
@@ -169,19 +195,19 @@ class XOntology(Ontology):
         if files[1]:
             media.append(files[1])
         return {
-            'reference': self.getRef(elements)[0],
+            'reference': self.getRef(elements),
             'question': self.field_translator.field_from_class(
                 elements['p'].name),
             'answers': answerDicts,
-            'sortId': self.getSortId(elements)[0],
-            'document': self.getDoc(elements)[0],
-            'sheetId': self.getSheet(elements)[0],
-            'questionId': self.getXid(elements)[0],
+            'sortId': self.getSortId(elements),
+            'document': self.getDoc(elements),
+            'sheetId': self.getSheet(elements),
+            'questionId': self.getXid(elements),
             'subjects': parentDicts,
             'images': images,
             'media': media,
-            'tag': self.getNoteTag(elements)[0],
-            'questionMod': self.getMod(elements)[0]
+            'tag': self.getNoteTag(elements),
+            'questionMod': self.getMod(elements)
         }
 
     def getNoteTriples(self):
@@ -203,13 +229,13 @@ class XOntology(Ontology):
     def getFiles(self, elements):
         files = [self.getImage(elements), self.getMedia(elements)]
         return [None if len(f) == 0 else file_dict(
-            identifier=f[0], doc=self.getDoc(elements)[0]) for f in files]
+            identifier=f[0], doc=self.getDoc(elements)) for f in files]
 
     def getChildQuestionIds(self, childElements):
         children = {'childQuestions': set(), 'bridges': list()}
         for elements in childElements:
             if elements['p'].name != 'Child':
-                children['childQuestions'].add(self.getXid(elements)[0])
+                children['childQuestions'].add(self.getXid(elements))
             else:
                 nextChildTriples = self.getChildTriples(s=elements['o'].storid)
                 nextChildElements = [
@@ -220,23 +246,95 @@ class XOntology(Ontology):
         children['childQuestions'] = list(children['childQuestions'])
         return children
 
-    def getParentQuestionIds(self, parentElements):
-        parents = {'parentQuestions': set(), 'bridges': list()}
-        for elements in parentElements:
-            # Add id of question to set if parent is a normal question
-            if elements['p'].name != 'Child':
-                parents['parentQuestions'].add(self.getXid(elements)[0])
-            # If parent is a bridge, add a dictionary titled by the answer
-            # containing parents of the bridge
-            else:
-                nextParentTriples = self.getParentTriples(o=elements[
-                    's'].storid)
-                nextParentElements = [
-                    self.getElements(t) for t in nextParentTriples]
-                # Named dictionary is necessary to understand map structure
-                # in case of bridges following bridges
-                bridge = {'subjectTitle': elements['o'].name}
-                bridge.update(self.getChildQuestionIds(nextParentElements))
-                parents['bridges'].append(bridge)
-        parents['parentQuestions'] = list(parents['parentQuestions'])
-        return parents
+    def change_question(self, x_id, new_question):
+        question_triples = self.get_question(x_id)
+        parents = set(t['s'] for t in question_triples)
+        question = question_triples[0]['p']
+        answers = set(t['o'] for t in question_triples)
+
+        # remove old question for all parents
+        for parent in parents:
+            left_answers = [a for a in getattr(parent, question.name) if
+                            a not in answers]
+            setattr(parent, question.name, left_answers)
+
+        # remove old parent for all answers
+        for answer in answers:
+            left_parents = [p for p in answer.Parent if p not in parents]
+            answer.Parent = left_parents
+
+        class_text = classify(content_from_field(new_question))
+        # add new relationship
+        for parent in parents:
+            for child in answers:
+                self.add_relation(
+                    child=child, relation=class_text, parent=parent,
+                    aIndex=self.get_AIndex(question_triples[0]),
+                    image=self.getImage(question_triples[0]),
+                    media=self.getMedia(question_triples[0]),
+                    x_id=self.getXid(question_triples[0]),
+                    timestamp=self.getMod(question_triples[0]),
+                    ref=self.getRef(question_triples[0]),
+                    sortId=self.getSortId(question_triples[0]),
+                    doc=self.getDoc(question_triples[0]),
+                    sheet=self.getSheet(question_triples[0]),
+                    tag=self.getNoteTag(question_triples[0]))
+
+    def setUpClasses(self):
+        with self:
+            class Concept(owlready2.Thing):
+                pass
+
+            class Root(Concept):
+                pass
+
+            # standard object properties
+            class Parent(Concept >> Concept):
+                pass
+
+            class Child(Concept >> Concept):
+                pass
+
+            # Annotation properties for Concepts
+
+            # For Image String from Xmind file
+            class Image(owlready2.AnnotationProperty):
+                pass
+
+            # For Media String from Xmind file
+            class Media(owlready2.AnnotationProperty):
+                pass
+
+            # For Node Id in Xmind file
+            class Xid(owlready2.AnnotationProperty):
+                pass
+
+            # Xmind file that contains the node
+            class Doc(owlready2.AnnotationProperty):
+                pass
+
+            # Node's last modification
+            class Mod(owlready2.AnnotationProperty):
+                pass
+
+            # Annotation properties for relation triples
+
+            # For reference field
+            class Reference(owlready2.AnnotationProperty):
+                pass
+
+            # For sortId field
+            class SortId(owlready2.AnnotationProperty):
+                pass
+
+            # Sheet that contains the node
+            class Sheet(owlready2.AnnotationProperty):
+                pass
+
+            # Tag that will identify the note
+            class NoteTag(owlready2.AnnotationProperty):
+                pass
+
+            # Answer Index for getting the right order of answers
+            class AIndex(owlready2.AnnotationProperty):
+                pass
