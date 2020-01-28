@@ -75,6 +75,40 @@ class XOntology(Ontology):
         # set annotation properties for parent relation
         self.Xid[child, self.Parent, parent] = x_id
 
+    def change_question(self, x_id, new_question):
+        question_triples = self.get_question(x_id)
+        parents = set(t['s'] for t in question_triples)
+        question = question_triples[0]['p']
+        answers = set(t['o'] for t in question_triples)
+
+        # remove old question for all parents
+        for parent in parents:
+            left_answers = [a for a in getattr(parent, question.name) if
+                            a not in answers]
+            setattr(parent, question.name, left_answers)
+
+        # remove old parent for all answers
+        for answer in answers:
+            left_parents = [p for p in answer.Parent if p not in parents]
+            answer.Parent = left_parents
+
+        class_text = classify(content_from_field(new_question))
+        # add new relationship
+        for parent in parents:
+            for child in answers:
+                self.add_relation(
+                    child=child, relation=class_text, parent=parent,
+                    aIndex=self.get_AIndex(question_triples[0]),
+                    image=self.getImage(question_triples[0]),
+                    media=self.getMedia(question_triples[0]),
+                    x_id=self.getXid(question_triples[0]),
+                    timestamp=self.getMod(question_triples[0]),
+                    ref=self.getRef(question_triples[0]),
+                    sortId=self.getSortId(question_triples[0]),
+                    doc=self.getDoc(question_triples[0]),
+                    sheet=self.getSheet(question_triples[0]),
+                    tag=self.getNoteTag(question_triples[0]))
+
     def get_AIndex(self, elements):
         return self.AIndex[elements['s'], elements['p'], elements['o']][0]
 
@@ -245,40 +279,6 @@ class XOntology(Ontology):
                 children['bridges'].append(bridge)
         children['childQuestions'] = list(children['childQuestions'])
         return children
-
-    def change_question(self, x_id, new_question):
-        question_triples = self.get_question(x_id)
-        parents = set(t['s'] for t in question_triples)
-        question = question_triples[0]['p']
-        answers = set(t['o'] for t in question_triples)
-
-        # remove old question for all parents
-        for parent in parents:
-            left_answers = [a for a in getattr(parent, question.name) if
-                            a not in answers]
-            setattr(parent, question.name, left_answers)
-
-        # remove old parent for all answers
-        for answer in answers:
-            left_parents = [p for p in answer.Parent if p not in parents]
-            answer.Parent = left_parents
-
-        class_text = classify(content_from_field(new_question))
-        # add new relationship
-        for parent in parents:
-            for child in answers:
-                self.add_relation(
-                    child=child, relation=class_text, parent=parent,
-                    aIndex=self.get_AIndex(question_triples[0]),
-                    image=self.getImage(question_triples[0]),
-                    media=self.getMedia(question_triples[0]),
-                    x_id=self.getXid(question_triples[0]),
-                    timestamp=self.getMod(question_triples[0]),
-                    ref=self.getRef(question_triples[0]),
-                    sortId=self.getSortId(question_triples[0]),
-                    doc=self.getDoc(question_triples[0]),
-                    sheet=self.getSheet(question_triples[0]),
-                    tag=self.getNoteTag(question_triples[0]))
 
     def setUpClasses(self):
         with self:
