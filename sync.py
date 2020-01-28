@@ -57,15 +57,21 @@ class XSyncer():
     def process_local_answers(self, status, local, question):
         sort_id = None
         for answer in {**local, **status}:
-            if answer not in local:
-                print('remove answer from map')
+            # if the question was removed it is still contained in local
+            # (since the id was not removed) but has an empty string as content
+            if not local[answer]['content']:
+                self.map_manager.remove_node(answer)
+                title = ''
             elif answer not in status:
                 print('add answer to map')
                 continue
             elif not status[answer]['content'] == local[answer]['content']:
                 title = title_from_field(local[answer]['content'])
                 img = img_from_field(local[answer]['content'])
-                answer_tag = self.map_manager.getTagById(answer)
+                try:
+                    answer_tag = self.map_manager.getTagById(answer)
+                except:
+                    print()
                 self.map_manager.set_node_content(
                     tag=answer_tag, title=title, img=img,
                     media_dir=self.note_manager.media_dir)

@@ -198,6 +198,11 @@ class XManager:
                   'sheets': sheets}
         return remote
 
+    def remove_node(self, x_id):
+        tag = self.getTagById(x_id)
+        if not self.getChildnodes(tag):
+            tag.decompose()
+
     def save_changes(self):
         self.xZip.close()
         if self.changes:
