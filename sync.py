@@ -68,10 +68,7 @@ class XSyncer():
             elif not status[answer]['content'] == local[answer]['content']:
                 title = title_from_field(local[answer]['content'])
                 img = img_from_field(local[answer]['content'])
-                try:
-                    answer_tag = self.map_manager.getTagById(answer)
-                except:
-                    print()
+                answer_tag = self.map_manager.getTagById(answer)
                 self.map_manager.set_node_content(
                     tag=answer_tag, title=title, img=img,
                     media_dir=self.note_manager.media_dir)
@@ -82,11 +79,9 @@ class XSyncer():
                     self.note_manager.get_flds_from_qId(question), 'id')
             self.change_list[sort_id] = title
 
-
     def process_local_changes(self, status, local):
         for sheet in {**local, **status}:
-            if local[sheet]['ankiMod'] != status[sheet][
-                    'ankiMod']:
+            if local[sheet]['ankiMod'] != status[sheet]['ankiMod']:
                 self.process_local_questions(status=status[sheet]['questions'],
                                              local=local[sheet]['questions'])
 

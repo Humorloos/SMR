@@ -61,6 +61,13 @@ class TestGetNodeHyperlink(TestXManager):
         self.assertEqual(act, None)
 
 
+class TestGetTagById(TestXManager):
+    def test_get_tag_by_id(self):
+        x_id = '4r6avbt0pbuam4fg07jod0ubec'
+        act = self.xManager.getTagById(x_id)
+        self.fail()
+
+
 class TestIsEmptyNode(TestXManager):
     def test_not_empty(self):
         with open(os.path.join(SUPPORT_PATH, 'xmindImporter',

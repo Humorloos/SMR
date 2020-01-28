@@ -203,6 +203,7 @@ class XManager:
         tag = self.getTagById(x_id)
         if not self.getChildnodes(tag):
             tag.decompose()
+            self.tag_list.remove(tag)
 
     def save_changes(self):
         self.xZip.close()
