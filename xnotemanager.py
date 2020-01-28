@@ -74,7 +74,8 @@ class XNoteManager():
     def get_local(self, file):
         doc_notes = [{'id': r[1], 'ankiMod': r[2], 'flds': splitFields(r[0])}
                      for r in self.col.db.execute(
-                'select flds, id, mod from notes where mid = %s' % self.model)
+                'select flds, id, mod from notes where mid = %s' %
+                self.model)
                      if meta_from_flds(r[0])['path'] == file]
         for n in doc_notes:
             n['meta'] = json.loads(self.get_field_by_name(n['flds'], 'mt'))
@@ -103,9 +104,14 @@ class XNoteManager():
                         a_id = a[1]
                     answers[a_id] = {'ankiMod': a[0],
                                      'content': self.get_field_by_name(
-                                         question['flds'], 'a' + str(x+1))}
+                                         question['flds'], 'a' + str(x + 1))}
         docMod = max([n['ankiMod'] for n in doc_notes])
-        local = {'file': file, 'ankiMod': docMod, 'sheets': sheets}
+        deck = self.col.db.first(
+            'select did from cards where nid = %s' % doc_notes[0]['id'])[0]
+        local = {'file': file,
+                 'ankiMod': docMod,
+                 'sheets': sheets,
+                 'deck': deck}
         return local
 
     def get_answer_cards(self, nid):
