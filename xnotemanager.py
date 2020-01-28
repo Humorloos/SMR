@@ -48,6 +48,23 @@ class XNoteManager():
     def __init__(self, col):
         self.col = col
         self.model = xModelId(self.col)
+        self.media_dir = re.sub(r"(?i)\.(anki2)$", ".media", self.col.path)
+
+    def get_field_by_name(self, flds, name):
+        if name not in X_FLDS:
+            raise NameError('Name not in X_FLDS, valid names are ' +
+                            X_FLDS.keys())
+        return flds[list(X_FLDS.keys()).index(name)]
+
+    def get_flds_from_qId(self, qId):
+        return splitFields(self.col.db.first(
+            "select flds from notes where flds like '%\"questionId\": \"" +
+            qId + "\"%'")[0])
+
+    def getNoteFromQId(self, qId):
+        return self.col.db.list(
+            "select id from notes where flds like '%\"questionId\": \"" +
+            qId + "\"%'")
 
     def get_xmind_files(self):
         return set(meta_from_flds(flds[0])['path'] for flds in
@@ -93,7 +110,7 @@ class XNoteManager():
 
     def get_answer_cards(self, nid):
         return self.col.db.all('select mod, id from cards where nid = %s' %
-                                nid)
+                               nid)
 
 
 class FieldTranslator():
