@@ -19,7 +19,27 @@ class TestRun(TestCase):
                                'collection.anki2')
         col = Collection(colPath)
 
-        # status_file = None
         self.syncer = XSyncer(col=col, status_file=self.status_file)
         self.syncer.run()
+        self.fail()
+
+    def test_col_changes(self):
+        # Save original map before synchronization to tempfile
+        map_path = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
+        temp_dir = tempfile.gettempdir()
+        temp_path = os.path.join(temp_dir, 'example map.xmind')
+        shutil.copy2(map_path, temp_path)
+
+        col_path = os.path.join(SUPPORT_PATH, 'cols', 'changes',
+                                'collection.anki2')
+        col = Collection(col_path)
+        self.syncer = XSyncer(col=col, status_file=self.status_file)
+
+        # Init test
+        self.syncer.run()
+
+        # Restore original version and remove temp file
+        shutil.copy(temp_path, map_path)
+        os.remove(temp_path)
+
         self.fail()
