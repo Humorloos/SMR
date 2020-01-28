@@ -60,7 +60,24 @@ class XSyncer():
             # if the question was removed it is still contained in local
             # (since the id was not removed) but has an empty string as content
             if not local[answer]['content']:
-                self.map_manager.remove_node(answer)
+                try:
+                    self.map_manager.remove_node(answer)
+                except AttributeError:
+                    question_note = self.col.getNote(
+                        self.note_manager.getNoteFromQId(question)[0])
+                    tag = question_note.tags[0]
+                    question_title = self.note_manager.get_field_by_name(
+                        question_note.fields, 'qt')
+                    reference = self.note_manager.get_field_by_name(
+                        question_note.fields, 'rf')
+                    raise ReferenceError(
+                        'Detected invalid deletion: Cannot delete Answer "' +
+                        status[answer]['content'] + '" to question "' +
+                        question_title + '" in map "' + tag +
+                        '" (reference "' + reference +
+                        '"). Please restore the answer and try synchronizing '
+                        'again. You can delete this answer in the xmind file '
+                        'directly.')
                 title = ''
             elif answer not in status:
                 print('add answer to map')

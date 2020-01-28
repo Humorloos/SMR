@@ -43,3 +43,12 @@ class TestRun(TestCase):
         os.remove(temp_path)
 
         self.fail()
+
+    def test_non_leaf_answer_deletion_error(self):
+        col_path = os.path.join(
+            SUPPORT_PATH, 'cols', 'non_leaf_answer_deletion_error',
+            'collection.anki2')
+        col = Collection(col_path)
+        self.syncer = XSyncer(col=col, status_file=self.status_file)
+        with self.assertRaises(ReferenceError):
+            self.syncer.run()
