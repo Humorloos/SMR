@@ -282,3 +282,15 @@ class TestGetXMindMeta(TestImportOntology):
                  'rb'))
         act = importer.getXMindMeta(noteData)
         self.fail()
+
+
+class TestUpdateStatus(TestImportOntology):
+    def setUp(self):
+        super().setUp()
+        self.xmindImporter.importOntology()
+
+    def test_update_status(self):
+        importer = self.xmindImporter
+        importer.update_status()
+        os.remove(importer.statusManager.status_file)
+        self.fail()
