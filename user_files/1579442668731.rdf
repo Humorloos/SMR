@@ -169,8 +169,8 @@
 <Root rdf:about="#biological_psychology">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <Child rdf:resource="#clinical_psychology"/>
-  <investigates rdf:resource="#perception"/>
   <investigates rdf:resource="#information_transfer_and_processing"/>
+  <investigates rdf:resource="#perception"/>
   <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">0pbme7b9sg9en8qqmmn9jj06od</Xid>
   <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
   <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573037764522</Mod>
@@ -231,9 +231,9 @@
 <Concept rdf:about="#Serotonin">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <Parent rdf:resource="#biochemical_factors"/>
+  <affects rdf:resource="#psychological_disorders"/>
   <affects rdf:resource="#Pain"/>
   <affects rdf:resource="#Sleep"/>
-  <affects rdf:resource="#psychological_disorders"/>
   <pronounciation rdf:resource="#xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3"/>
   <difference_to_MAO rdf:resource="#MAO_is_not_a_neurotransmitter"/>
   <are rdf:resource="#biogenic_amines"/>
@@ -263,8 +263,8 @@
 <Concept rdf:about="#psychological_disorders">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <Parent rdf:resource="#clinical_psychology"/>
-  <examples rdf:resource="#anxiety_disorders"/>
   <examples rdf:resource="#schizophrenia"/>
+  <examples rdf:resource="#anxiety_disorders"/>
   <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1ijitnvjhg1b0lglikd7dknp0h</Xid>
   <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
   <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030003987</Mod>
@@ -403,8 +403,8 @@
 <Concept rdf:about="#biological_antidepressants">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <Parent rdf:resource="#phobias"/>
-  <especially_effective_ones rdf:resource="#Serotonin_reuptake_inhibitors"/>
   <especially_effective_ones rdf:resource="#MAO-inhibitors"/>
+  <especially_effective_ones rdf:resource="#Serotonin_reuptake_inhibitors"/>
   <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">13plemlb7a6574h8hnqm5omuvb</Xid>
   <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
   <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030106387</Mod>
@@ -438,8 +438,8 @@
 
 <Root rdf:about="#general_psychology">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
-  <investigates rdf:resource="#emotions"/>
   <investigates rdf:resource="#perception"/>
+  <investigates rdf:resource="#emotions"/>
   <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6uucivj306fi6u07m9i9bv57d5</Xid>
   <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example_general_psychology.xmind</Doc>
   <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573031042911</Mod>
@@ -481,7 +481,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">general psychology&lt;li&gt;investigates: emotions&lt;/li&gt;&lt;li&gt;can be manipulated by: chemical substances&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">58c9emm00d048luacr7sp1ohl5</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_general_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_general_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -495,7 +495,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">general psychology&lt;li&gt;investigates: emotions&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">58c9emm00d048luacr7sp1ohl5</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_general_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_general_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -509,7 +509,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">general psychology</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">58c9emm00d048luacr7sp1ohl5</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_general_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_general_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
 </owl:Axiom>
 
@@ -523,7 +523,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">general psychology</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">58c9emm00d048luacr7sp1ohl5</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_general_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_general_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -537,7 +537,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: schizophrenia&lt;/li&gt;&lt;li&gt;possible causes: biochemical factors&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{|{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_clinical_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -551,7 +551,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: schizophrenia&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{|{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_clinical_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -565,7 +565,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: anxiety disorders&lt;/li&gt;&lt;li&gt;example: phobias&lt;/li&gt;&lt;li&gt;option for treatment: biological antidepressants&lt;/li&gt;&lt;li&gt;especially effective ones: MAO-inhibitors&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{{{{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_clinical_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -579,7 +579,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: anxiety disorders&lt;/li&gt;&lt;li&gt;example: phobias&lt;/li&gt;&lt;li&gt;option for treatment: biological antidepressants&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_clinical_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
 </owl:Axiom>
 
@@ -593,7 +593,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: anxiety disorders&lt;/li&gt;&lt;li&gt;example: phobias&lt;/li&gt;&lt;li&gt;option for treatment: biological antidepressants&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_clinical_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -607,7 +607,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: anxiety disorders&lt;/li&gt;&lt;li&gt;example: phobias&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_clinical_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -621,7 +621,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;&lt;li&gt;examples: anxiety disorders&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_clinical_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -635,7 +635,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_clinical_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
 </owl:Axiom>
 
@@ -649,7 +649,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology&lt;li&gt;investigates: psychological disorders&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_clinical_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -663,7 +663,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">clinical psychology</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_clinical_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -677,7 +677,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: perception&lt;/li&gt;&lt;li&gt;Pain&lt;/li&gt;&lt;li&gt;triggered by: nociceptors&lt;/li&gt;&lt;li&gt;can be: chemical&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">||{{|{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -691,7 +691,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: perception&lt;/li&gt;&lt;li&gt;Pain&lt;/li&gt;&lt;li&gt;triggered by: nociceptors&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">||{{|{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -705,7 +705,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: perception&lt;/li&gt;&lt;li&gt;Pain&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">||{{|</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -719,7 +719,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: perception&lt;/li&gt;&lt;li&gt;Pain&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">||{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -733,7 +733,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: perception&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">||{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -747,7 +747,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{|</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -761,7 +761,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{}</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -775,7 +775,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;&lt;li&gt;splits up&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -789,7 +789,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;&lt;li&gt;splits up&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -803,7 +803,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;&lt;li&gt;splits up&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -817,7 +817,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;&lt;li&gt;splits up&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -831,7 +831,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">4</AIndex>
 </owl:Axiom>
 
@@ -845,7 +845,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</AIndex>
 </owl:Axiom>
 
@@ -859,7 +859,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
 </owl:Axiom>
 
@@ -873,7 +873,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{|</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -887,7 +887,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;&lt;li&gt;example: MAO&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -901,7 +901,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;modulated by: enzymes&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -915,7 +915,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{|</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -929,7 +929,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;&lt;li&gt;: Serotonin&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{{}</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -943,7 +943,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;&lt;li&gt;: Serotonin&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{{|</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -957,7 +957,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;&lt;li&gt;: Serotonin&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</AIndex>
 </owl:Axiom>
 
@@ -971,7 +971,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;&lt;li&gt;: Serotonin&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
 </owl:Axiom>
 
@@ -985,7 +985,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;&lt;li&gt;: Serotonin&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -1000,7 +1000,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;&lt;li&gt;types: biogenic amines&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -1014,7 +1014,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;&lt;li&gt;requires: neurotransmitters&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -1028,7 +1028,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology&lt;li&gt;investigates: information transfer and processing&lt;/li&gt;</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|{{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -1042,7 +1042,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
 </owl:Axiom>
 
@@ -1056,7 +1056,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">|</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
@@ -1070,7 +1070,7 @@
   <Reference rdf:datatype="http://www.w3.org/2001/XMLSchema#string">biological psychology</Reference>
   <SortId rdf:datatype="http://www.w3.org/2001/XMLSchema#string">{</SortId>
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
-  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Default_biological_psychology</NoteTag>
+  <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Example_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
 </owl:Axiom>
 
