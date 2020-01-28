@@ -75,12 +75,15 @@ class XSyncer():
             if local_field != status[question]['content']:
                 title = title_from_field(local_field)
                 img = img_from_field(local_field)
+                # Export changed question to xmind
                 question_tag = self.map_manager.getTagById(question)
                 self.map_manager.set_node_content(
                     tag=question_tag, title=title, img=img,
                     media_dir=self.note_manager.media_dir)
+                # Change question in ontology
                 self.onto.change_question(x_id=question,
                                           new_question=local_field)
+                # Change notes affected from
             self.process_local_answers(status=status[question]['answers'],
                                        local=local[question]['answers'])
             print()
