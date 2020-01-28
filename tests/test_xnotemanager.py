@@ -5,7 +5,7 @@ from unittest import TestCase
 from anki import Collection
 
 from XmindImport.consts import ADDON_PATH
-from XmindImport.xnotemanager import XNoteManager, FieldTranslator
+from XmindImport.xnotemanager import *
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 
@@ -54,14 +54,33 @@ class FieldFromClass(TestFieldTranslator):
 
     def test_only_image(self):
         translator = self.field_translator
-        content = '<img:09r2e442o8lppjfeblf7il2rmd.png>'
+        content = 'ximage_09r2e442o8lppjfeblf7il2rmd_extension_png'
         act = translator.field_from_class(content)
         exp = '<img src="09r2e442o8lppjfeblf7il2rmd.png">'
         self.assertEqual(exp, act)
 
     def test_only_media(self):
         translator = self.field_translator
-        content = '<media:3lv2k1fhghfb9ghfb8depnqvdt.mp3>'
+        content = 'xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3'
         act = translator.field_from_class(content)
         exp = '[sound:3lv2k1fhghfb9ghfb8depnqvdt.mp3]'
         self.assertEqual(exp, act)
+
+    def test_all_three(self):
+        translator = self.field_translator
+        content = 'MAO_is_not_a_neurotransmitter=:media:3lv2k1fhghfb9ghfb8depnqvdt.mp3:==:img:09r2e442o8lppjfeblf7il2rmd.png:='
+        act = translator.field_from_class(content)
+        exp = 'MAO is not a neurotransmitter[sound:3lv2k1fhghfb9ghfb8depnqvdt.mp3]<br><img src="09r2e442o8lppjfeblf7il2rmd.png">'
+        self.assertEqual(exp, act)
+
+
+class TestContentFromField(TestCase):
+    def test_content_from_field(self):
+        field = 'MAO is not a neurotransmitter[sound:3lv2k1fhghfb9ghfb8depnqvdt.mp3]<br><img src="09r2e442o8lppjfeblf7il2rmd.png">'
+        act = content_from_field(field)
+        self.fail()
+
+    def test_only_text(self):
+        field = 'former image'
+        act = content_from_field(field)
+        self.fail()
