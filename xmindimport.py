@@ -139,27 +139,6 @@ class XmindImporter(NoteImporter):
         return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
                     crosslink=crosslink, concepts=concept)
 
-    def add_concept(self, concept_source, nodeContent, mod, x_id, root, file):
-        if root:
-            concept = self.onto.Root(classify(nodeContent))
-        else:
-            # Some concept names (e.g. 'are') can lead to errors, catch
-            # them
-            try:
-                concept = self.onto.Concept(classify(nodeContent))
-            except TypeError:
-                raise NameError('Invalid concept name')
-        if nodeContent['media']['image']:
-            concept.Image = nodeContent['media']['image']
-        if nodeContent['media']['media']:
-            concept.Media = nodeContent['media']['media']
-        concept.Doc = file
-        concept.Mod = mod
-        # Do not add an Xid if the node is a pure crosslink-node
-        if concept_source:
-            concept.Xid.append(x_id)
-        return concept
-
     def get_children_and_bridges(self, answerDicts, childNotes, image, media,
                                  parents, question, ref, relTitle, sortId):
         children = list()

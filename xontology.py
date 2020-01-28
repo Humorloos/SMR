@@ -36,6 +36,27 @@ class XOntology(Ontology):
         self.parentStorid = self.Parent.storid
         self.field_translator = FieldTranslator()
 
+    def add_concept(self, concept_source, nodeContent, mod, x_id, root, file):
+        if root:
+            concept = self.Root(classify(nodeContent))
+        else:
+            # Some concept names (e.g. 'are') can lead to errors, catch
+            # them
+            try:
+                concept = self.Concept(classify(nodeContent))
+            except TypeError:
+                raise NameError('Invalid concept name')
+        if nodeContent['media']['image']:
+            concept.Image = nodeContent['media']['image']
+        if nodeContent['media']['media']:
+            concept.Media = nodeContent['media']['media']
+        concept.Doc = file
+        concept.Mod = mod
+        # Do not add an Xid if the node is a pure crosslink-node
+        if concept_source:
+            concept.Xid.append(x_id)
+        return concept
+
     def add_relation(self, child, relation, parent, aIndex, image, media, x_id,
                      timestamp, ref, sortId, doc, sheet, tag):
 
