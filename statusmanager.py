@@ -12,8 +12,9 @@ class StatusManager:
             self.status_file = os.path.join(
                 ADDON_PATH, 'user_files', 'status.json')
         try:
-            self.status = json.loads(self.status_file)
-        except json.decoder.JSONDecodeError:
+            with open(self.status_file) as status_file:
+                self.status = json.load(status_file)
+        except FileNotFoundError:
             self.status = []
 
     def add_new(self, status):
