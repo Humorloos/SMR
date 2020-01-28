@@ -126,35 +126,39 @@ class XmindImporter(NoteImporter):
             isAnswer = False
         else:
             nodeContent = manager.getNodeContent(nodeTag)
-            if root:
-                concept = self.onto.Root(classify(nodeContent))
-            else:
-
-                # Some concept names (e.g. 'are') can lead to errors, catch
-                # them
-                try:
-                    concept = self.onto.Concept(classify(nodeContent))
-                except TypeError:
-                    print('fehler')
-                    raise NameError('Invalid concept name')
-            if nodeContent['media']['image']:
-                concept.Image = nodeContent['media']['image']
-            if nodeContent['media']['media']:
-                concept.Media = nodeContent['media']['media']
-            concept.Doc = self.activeManager.file
-            concept.Mod = nodeTag['timestamp']
-
-            # Do not add an Xid if the node is a pure crosslink-node
-            if manager.getNodeTitle(nodeTag) or manager.getNodeImg(nodeTag) \
-                    or not crosslink:
-                concept.Xid.append(nodeTag['id'])
-
+            concept_source = manager.getNodeTitle(
+                nodeTag) or manager.getNodeImg(nodeTag) or not crosslink
+            x_id = nodeTag['id']
+            concept = self.add_concept(
+                concept_source=concept_source, nodeContent=nodeContent,
+                mod=nodeTag['timestamp'], x_id=x_id, root=root, file=file)
             # Assign a list to concept since concept may also contain
             # multiple concepts in case of bridges
             concept = [concept]
         # Todo: check whether aID is really necessary
         return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
                     crosslink=crosslink, concepts=concept)
+
+    def add_concept(self, concept_source, nodeContent, mod, x_id, root, file):
+        if root:
+            concept = self.onto.Root(classify(nodeContent))
+        else:
+            # Some concept names (e.g. 'are') can lead to errors, catch
+            # them
+            try:
+                concept = self.onto.Concept(classify(nodeContent))
+            except TypeError:
+                raise NameError('Invalid concept name')
+        if nodeContent['media']['image']:
+            concept.Image = nodeContent['media']['image']
+        if nodeContent['media']['media']:
+            concept.Media = nodeContent['media']['media']
+        concept.Doc = file
+        concept.Mod = mod
+        # Do not add an Xid if the node is a pure crosslink-node
+        if concept_source:
+            concept.Xid.append(x_id)
+        return concept
 
     def get_children_and_bridges(self, answerDicts, childNotes, image, media,
                                  parents, question, ref, relTitle, sortId):
@@ -175,7 +179,7 @@ class XmindImporter(NoteImporter):
                 children.append(child)
                 for parent in parents:
                     self.onto.add_relation(
-                        child=child, relation = relTitle, parent=parent,
+                        child=child, relation=relTitle, parent=parent,
                         aIndex=aIndex, image=image, media=media,
                         x_id=question['id'], timestamp=question['timestamp'],
                         ref=ref, sortId=sortId, doc=doc, sheet=sheet, tag=tag)
