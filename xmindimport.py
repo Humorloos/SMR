@@ -378,7 +378,10 @@ class XmindImporter(NoteImporter):
                     ['removed', 0, 'notes']]
         self.importOntology()
         self.update_status()
-        self.onto.save(file=ONTO_FILE, format="rdfxml")
+        self.onto.save(
+            file=os.path.join(USER_PATH, str(
+                self.statusManager.status[-1]['deck']) + '.rdf'),
+            format="rdfxml")
         for logId, log in enumerate(self.log, start=0):
             if log[1] == 1:
                 self.log[logId][2] = 'note'
@@ -615,7 +618,8 @@ class XmindImporter(NoteImporter):
             path = []
         for key in remote:
             if key in local:
-                if isinstance(local[key], dict) and isinstance(remote[key], dict):
+                if isinstance(local[key], dict) and isinstance(remote[key],
+                                                               dict):
                     self.deep_merge(local[key], remote[key], path + [str(key)])
                 elif local[key] == remote[key]:
                     pass  # same leaf value
