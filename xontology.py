@@ -35,48 +35,44 @@ class XOntology(Ontology):
         self.parentStorid = self.Parent.storid
         self.field_translator = FieldTranslator()
 
-    def setUpClasses(self):
-        with self:
-            class Concept(owlready2.Thing):
-                pass
+    def add_relation(self, child, relation, parent, aIndex, image, media, x_id,
+                     timestamp, ref, sortId, doc, sheet, tag):
 
-            class Root(Concept):
-                pass
+        relProp = getattr(self, relation)
 
-            # standard object properties
-            class Parent(Concept >> Concept):
-                pass
+        # add objectproperty if not yet in ontology
+        if not relProp:
+            with self:
+                relProp = types.new_class(
+                    relation, (owlready2.ObjectProperty,))
+                relProp.domain = [self.Concept]
+                relProp.range = [self.Concept]
 
-            class Child(Concept >> Concept):
-                pass
+        current_children = getattr(parent, relation)
+        new_children = current_children + [child]
+        setattr(parent, relation, new_children)
 
-            # Annotation properties for Concepts
+        current_parents = getattr(child, 'Parent')
+        new_parents = current_parents + [parent]
+        setattr(child, 'Parent', new_parents)
 
-            # For Image String from Xmind file
-            class Image(owlready2.AnnotationProperty):
-                pass
+        # set annotation porperties for child relation
+        self.Reference[parent, relProp, child] = ref
+        if sortId:
+            self.SortId[parent, relProp, child] = sortId
+        self.Doc[parent, relProp, child] = doc
+        self.Sheet[parent, relProp, child] = sheet
+        self.Xid[parent, relProp, child] = x_id
+        if image:
+            self.Image[parent, relProp, child] = image
+        if media:
+            self.Media[parent, relProp, child] = media
+        self.NoteTag[parent, relProp, child] = tag
+        self.AIndex[parent, relProp, child] = aIndex
+        self.Mod[parent, relProp, child] = timestamp
 
-            # For Media String from Xmind file
-            class Media(owlready2.AnnotationProperty):
-                pass
-
-            # For Node Id in Xmind file
-            class Xid(owlready2.AnnotationProperty):
-                pass
-
-            # Xmind file that contains the node
-            class Doc(owlready2.AnnotationProperty):
-                pass
-
-            # Node's last modification
-            class Mod(owlready2.AnnotationProperty):
-                pass
-
-            # Annotation properties for relation triples
-
-            # For reference field
-            class Reference(owlready2.AnnotationProperty):
-                pass
+        # set annotation properties for parent relation
+        self.Xid[child, self.Parent, parent] = x_id
 
             # For sortId field
             class SortId(owlready2.AnnotationProperty):

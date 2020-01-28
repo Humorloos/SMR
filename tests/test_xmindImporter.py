@@ -16,7 +16,7 @@ SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 
 class TestXmindImporter(TestCase):
     def setUp(self):
-        colPath = os.path.join(SUPPORT_PATH, 'collection.anki2')
+        colPath = os.path.join(SUPPORT_PATH, 'empty_smr_col.anki2')
         self.col = Collection(colPath)
         self.map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
         self.xmindImporter = XmindImporter(col=self.col, file=self.map)
@@ -58,6 +58,7 @@ class TestImportMap(TestXmindImporter):
         importer.activeManager = importer.xManagers[1]
         importer.currentSheetImport = 'general psychology'
         importer.importMap()
+        self.assertEqual(861, len(importer.onto.graph))
         self.fail()
 
 

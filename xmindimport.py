@@ -70,23 +70,6 @@ class XmindImporter(NoteImporter):
         for note in notes:
             self.col.addNote(note)
 
-    def add_relation(self, aIndex, child, image, media, parent, question, ref,
-                     relProp, sortId):
-        self.onto.Reference[parent, relProp, child] = ref
-        if sortId:
-            self.onto.SortId[parent, relProp, child] = sortId
-        self.onto.Doc[parent, relProp, child] = self.activeManager.file
-        self.onto.Sheet[parent, relProp, child] = self.activeManager.sheets[
-            self.currentSheetImport]['tag']['id']
-        self.onto.Xid[parent, relProp, child] = question['id']
-        if image:
-            self.onto.Image[parent, relProp, child] = image
-        if media:
-            self.onto.Media[parent, relProp, child] = media
-        self.onto.NoteTag[parent, relProp, child] = self.getTag()
-        self.onto.AIndex[parent, relProp, child] = aIndex
-        self.onto.Mod[parent, relProp, child] = question['timestamp']
-
     def findAnswerDicts(self, parents, question, sortId, ref, content):
         """
         :param question: question tag to get the answers for
@@ -108,21 +91,13 @@ class XmindImporter(NoteImporter):
 
         # Add a Child relation if the node is a bridge
         if not relTitle:
-            relProp = self.onto.Child
             relTitle = 'Child'
 
-        # Add a custom relation if the node is a question
-        else:
-            with self.onto:
-                relProp = types.new_class(
-                    relTitle, (owlready2.ObjectProperty,))
-                relProp.domain = [self.onto.Concept]
-                relProp.range = [self.onto.Concept]
         image = content['media']['image']
         media = content['media']['media']
         bridges, children = self.get_children_and_bridges(
             answerDicts, childNotes, image, media, parents, question, ref,
-            relProp, sortId)
+            relTitle, sortId)
         if len(children) > 0:
 
             # Assign all children to bridge concepts because they are the
@@ -130,10 +105,6 @@ class XmindImporter(NoteImporter):
             for bridge in bridges:
                 bridge['concepts'] = children
 
-            for parent in parents:
-                setattr(parent, relTitle, children)
-            for child in children:
-                setattr(child, 'Parent', parents)
         return answerDicts
 
     def getAnswerDict(self, nodeTag, root=False):
@@ -186,18 +157,28 @@ class XmindImporter(NoteImporter):
                     crosslink=crosslink, concepts=concept)
 
     def get_children_and_bridges(self, answerDicts, childNotes, image, media,
-                                 parents, question, ref, relProp, sortId):
+                                 parents, question, ref, relTitle, sortId):
         children = list()
         bridges = list()
         aIndex = 1
+        sheet = self.activeManager.sheets[
+            self.currentSheetImport]['tag']['id']
+        doc = self.activeManager.file
+        tag = self.getTag()
         for childNode in childNotes:
             answerDict = self.getAnswerDict(childNode)
+            # only add relations to answers that are concepts (not to empty
+            # answers that serve as bridges for questions following multiple
+            # answers)
             if answerDict['isAnswer']:
                 child = answerDict['concepts'][0]
                 children.append(child)
                 for parent in parents:
-                    self.add_relation(aIndex, child, image, media, parent,
-                                      question, ref, relProp, sortId)
+                    self.onto.add_relation(
+                        child=child, relation = relTitle, parent=parent,
+                        aIndex=aIndex, image=image, media=media,
+                        x_id=question['id'], timestamp=question['timestamp'],
+                        ref=ref, sortId=sortId, doc=doc, sheet=sheet, tag=tag)
                 aIndex += 1
             else:
                 bridges.append(answerDict)

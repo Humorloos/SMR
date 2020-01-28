@@ -169,8 +169,8 @@
 <Root rdf:about="#biological_psychology">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <Child rdf:resource="#clinical_psychology"/>
-  <investigates rdf:resource="#perception"/>
   <investigates rdf:resource="#information_transfer_and_processing"/>
+  <investigates rdf:resource="#perception"/>
   <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">0pbme7b9sg9en8qqmmn9jj06od</Xid>
   <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
   <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573037764522</Mod>
@@ -198,6 +198,7 @@
 
 <Concept rdf:about="#perception">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#biological_psychology"/>
   <Parent rdf:resource="#general_psychology"/>
   <Child rdf:resource="#Pain"/>
   <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4jf2lp878e4rn7pm85lca1vahr</Xid>
@@ -218,10 +219,11 @@
 
 <Concept rdf:about="#biogenic_amines">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png"/>
   <Parent rdf:resource="#Serotonin"/>
   <Parent rdf:resource="#dopamine"/>
-  <Parent rdf:resource="#noradrenaline"/>
   <Parent rdf:resource="#adrenaline"/>
+  <Parent rdf:resource="#noradrenaline"/>
   <ximage_09r2e442o8lppjfeblf7il2rmd_extension_png rdf:resource="#Serotonin"/>
   <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">78k8nsh3vfibpmq73kangacbll</Xid>
   <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
@@ -230,9 +232,13 @@
 
 <Concept rdf:about="#Serotonin">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#biogenic_amines"/>
+  <Parent rdf:resource="#MAO"/>
+  <Parent rdf:resource="#Pain"/>
+  <Parent rdf:resource="#chemical"/>
   <Parent rdf:resource="#biochemical_factors"/>
-  <affects rdf:resource="#Pain"/>
   <affects rdf:resource="#Sleep"/>
+  <affects rdf:resource="#Pain"/>
   <affects rdf:resource="#psychological_disorders"/>
   <pronounciation rdf:resource="#xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3"/>
   <difference_to_MAO rdf:resource="#MAO_is_not_a_neurotransmitter"/>
@@ -252,6 +258,7 @@
 
 <Concept rdf:about="#Pain">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#Serotonin"/>
   <Parent rdf:resource="#perception"/>
   <can_be_inhibited_by rdf:resource="#Serotonin"/>
   <triggered_by rdf:resource="#nociceptors"/>
@@ -262,6 +269,7 @@
 
 <Concept rdf:about="#psychological_disorders">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#Serotonin"/>
   <Parent rdf:resource="#clinical_psychology"/>
   <examples rdf:resource="#anxiety_disorders"/>
   <examples rdf:resource="#schizophrenia"/>
@@ -281,6 +289,7 @@
 
 <Concept rdf:about="#MAO_is_not_a_neurotransmitter">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#Serotonin"/>
   <Parent rdf:resource="#MAO"/>
   <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2kcf3k5g09u9ukv2m8qli363qj</Xid>
   <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
@@ -299,13 +308,14 @@
 
 <Concept rdf:about="#MAO">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+  <Parent rdf:resource="#enzymes"/>
   <Parent rdf:resource="#MAO-inhibitors"/>
   <difference_to_MAO rdf:resource="#MAO_is_not_a_neurotransmitter"/>
   <stands_for rdf:resource="#monoamine_oxidase"/>
   <splits_up rdf:resource="#Serotonin"/>
   <splits_up rdf:resource="#dopamine"/>
-  <splits_up rdf:resource="#noradrenaline"/>
   <splits_up rdf:resource="#adrenaline"/>
+  <splits_up rdf:resource="#noradrenaline"/>
   <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7blr5ubl6uf6c9beflm85jte19</Xid>
   <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
   <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030659573</Mod>
@@ -403,8 +413,8 @@
 <Concept rdf:about="#biological_antidepressants">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
   <Parent rdf:resource="#phobias"/>
-  <especially_effective_ones rdf:resource="#Serotonin_reuptake_inhibitors"/>
   <especially_effective_ones rdf:resource="#MAO-inhibitors"/>
+  <especially_effective_ones rdf:resource="#Serotonin_reuptake_inhibitors"/>
   <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">13plemlb7a6574h8hnqm5omuvb</Xid>
   <Doc rdf:datatype="http://www.w3.org/2001/XMLSchema#string">C:\Users\lloos\OneDrive - bwedu\Projects\AnkiAddon\anki-addon-dev\addons21\XmindImport\resources\example map.xmind</Doc>
   <Mod rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1573030106387</Mod>
@@ -472,6 +482,13 @@
 </Concept>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#neurotransmitters"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#chemical_substances"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">5q3gp7efkled9n9m2adm0f9aqo</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#chemical_substances"/>
   <owl:annotatedProperty rdf:resource="#example"/>
   <owl:annotatedTarget rdf:resource="#neurotransmitters"/>
@@ -483,6 +500,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">58c9emm00d048luacr7sp1ohl5</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_general_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#chemical_substances"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#emotions"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4btfk5dufc08ehigg83a9ao5j8</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -500,6 +524,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#perception"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#general_psychology"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3ijhnhd14hg812tjaqfg8g5hr9</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#general_psychology"/>
   <owl:annotatedProperty rdf:resource="#investigates"/>
   <owl:annotatedTarget rdf:resource="#perception"/>
@@ -511,6 +542,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">58c9emm00d048luacr7sp1ohl5</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_general_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#emotions"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#general_psychology"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3ijhnhd14hg812tjaqfg8g5hr9</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -528,6 +566,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#biochemical_factors"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">0aghm51vmc5jbkjut7uicpa5bn</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#biochemical_factors"/>
   <owl:annotatedProperty rdf:resource="#may_include"/>
   <owl:annotatedTarget rdf:resource="#Serotonin"/>
@@ -539,6 +584,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biochemical_factors"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#schizophrenia"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2qdg5f3jsvbljnakgk9m81dbr7</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -556,6 +608,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#MAO-inhibitors"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3spe5tjcfkfdod7av3p5b3csl4</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#MAO-inhibitors"/>
   <owl:annotatedProperty rdf:resource="#inhibit_release_of"/>
   <owl:annotatedTarget rdf:resource="#MAO"/>
@@ -567,6 +626,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin_reuptake_inhibitors"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#biological_antidepressants"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">788vc5lde5kp5dpqj7idf7u9v2</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -584,6 +650,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO-inhibitors"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#biological_antidepressants"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">788vc5lde5kp5dpqj7idf7u9v2</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#biological_antidepressants"/>
   <owl:annotatedProperty rdf:resource="#especially_effective_ones"/>
   <owl:annotatedTarget rdf:resource="#MAO-inhibitors"/>
@@ -595,6 +668,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biological_antidepressants"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#phobias"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">3608177csnr6upug1edj9nfu97</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -612,6 +692,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#phobias"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#anxiety_disorders"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">5h7t01bohpviq2581t4atphedd</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#anxiety_disorders"/>
   <owl:annotatedProperty rdf:resource="#example"/>
   <owl:annotatedTarget rdf:resource="#phobias"/>
@@ -623,6 +710,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#schizophrenia"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#psychological_disorders"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">26pj114igt039ms9jpc1r2afno</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -640,6 +734,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#anxiety_disorders"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#psychological_disorders"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">26pj114igt039ms9jpc1r2afno</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#psychological_disorders"/>
   <owl:annotatedProperty rdf:resource="#examples"/>
   <owl:annotatedTarget rdf:resource="#anxiety_disorders"/>
@@ -651,6 +752,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1bt0u8ahp0p8d41j6pto2d9q8t</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_clinical_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#psychological_disorders"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#clinical_psychology"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">39gqd4mhg32555lck1t33ib70t</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -668,6 +776,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#chemical"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7ite3obkfmbchr1pc6ib0o7rga</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#chemical"/>
   <owl:annotatedProperty rdf:resource="#can_be_triggered_by"/>
   <owl:annotatedTarget rdf:resource="#Serotonin"/>
@@ -679,6 +794,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#chemical"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#nociceptors"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4q3e21ritrvitgmjialvadn2m6</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -696,6 +818,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#nociceptors"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#Pain"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4rdraflh6n2hl4a459g2urdkr6</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#Pain"/>
   <owl:annotatedProperty rdf:resource="#triggered_by"/>
   <owl:annotatedTarget rdf:resource="#nociceptors"/>
@@ -707,6 +836,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#Pain"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1scualcvt0scjd9iaoblg568ld</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -724,6 +860,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Pain"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#perception"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">668iln3nrlmk5ibhnf4lvbbnmo</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#perception"/>
   <owl:annotatedProperty rdf:resource="#Child"/>
   <owl:annotatedTarget rdf:resource="#Pain"/>
@@ -735,6 +878,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#xmedia_395ke7i9a6nkutu85fcpa66as2_extension_mp4"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#enzymes"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4vfsmbd1fmn6s0tqmlj4cei7pe</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -752,6 +902,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO_is_not_a_neurotransmitter"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#MAO"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">077tf3ovn4gc1j1dqte7or33fl</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#MAO"/>
   <owl:annotatedProperty rdf:resource="#difference_to_MAO"/>
   <owl:annotatedTarget rdf:resource="#MAO_is_not_a_neurotransmitter"/>
@@ -763,6 +920,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biogenic_amines"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#noradrenaline"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6iivm8tpoqj2c0euaabtput14l</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -780,6 +944,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biogenic_amines"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#adrenaline"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6iivm8tpoqj2c0euaabtput14l</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#adrenaline"/>
   <owl:annotatedProperty rdf:resource="#are"/>
   <owl:annotatedTarget rdf:resource="#biogenic_amines"/>
@@ -791,6 +962,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biogenic_amines"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#dopamine"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6iivm8tpoqj2c0euaabtput14l</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -808,6 +986,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biogenic_amines"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">6iivm8tpoqj2c0euaabtput14l</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#Serotonin"/>
   <owl:annotatedProperty rdf:resource="#are"/>
   <owl:annotatedTarget rdf:resource="#biogenic_amines"/>
@@ -819,6 +1004,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#noradrenaline"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#MAO"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">61irckf1nloq42brfmbu0ke92v</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -836,6 +1028,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#adrenaline"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#MAO"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">61irckf1nloq42brfmbu0ke92v</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#MAO"/>
   <owl:annotatedProperty rdf:resource="#splits_up"/>
   <owl:annotatedTarget rdf:resource="#adrenaline"/>
@@ -847,6 +1046,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#dopamine"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#MAO"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">61irckf1nloq42brfmbu0ke92v</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -864,6 +1070,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#MAO"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">61irckf1nloq42brfmbu0ke92v</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#MAO"/>
   <owl:annotatedProperty rdf:resource="#splits_up"/>
   <owl:annotatedTarget rdf:resource="#Serotonin"/>
@@ -875,6 +1088,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#monoamine_oxidase"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#MAO"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">351v1hg3rt5vejrq10c1p3tko0</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -892,6 +1112,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#enzymes"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7e1s0urn8376a2q371nujihuab</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#enzymes"/>
   <owl:annotatedProperty rdf:resource="#example"/>
   <owl:annotatedTarget rdf:resource="#MAO"/>
@@ -903,6 +1130,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#enzymes"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#information_transfer_and_processing"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">7avqd95hi5tvj0kjcg2lne603g</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -920,6 +1154,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#MAO_is_not_a_neurotransmitter"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">077tf3ovn4gc1j1dqte7or33fl</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#Serotonin"/>
   <owl:annotatedProperty rdf:resource="#difference_to_MAO"/>
   <owl:annotatedTarget rdf:resource="#MAO_is_not_a_neurotransmitter"/>
@@ -931,6 +1172,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4s27e1mvsb5jqoiuaqmnlo8m71</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -948,6 +1196,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#psychological_disorders"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4lrqok8ac9hec8u2c2ul4mpo4k</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#Serotonin"/>
   <owl:annotatedProperty rdf:resource="#affects"/>
   <owl:annotatedTarget rdf:resource="#psychological_disorders"/>
@@ -959,6 +1214,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Pain"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4lrqok8ac9hec8u2c2ul4mpo4k</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -976,6 +1238,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Sleep"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#Serotonin"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4lrqok8ac9hec8u2c2ul4mpo4k</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#Serotonin"/>
   <owl:annotatedProperty rdf:resource="#affects"/>
   <owl:annotatedTarget rdf:resource="#Sleep"/>
@@ -987,6 +1256,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#Serotonin"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#biogenic_amines"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">08eq1rdricsp1nt1b7aa181sq4</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -1005,6 +1281,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#biogenic_amines"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">485fcs7jl72gtqesace4v8igf0</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png"/>
   <owl:annotatedProperty rdf:resource="#types"/>
   <owl:annotatedTarget rdf:resource="#biogenic_amines"/>
@@ -1016,6 +1299,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#information_transfer_and_processing"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">730ahk5oc4himfrdvkqc5ci1o2</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
@@ -1033,6 +1323,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#perception"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#biological_psychology"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4kdqkutdha46uns1j8jndi43ht</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#biological_psychology"/>
   <owl:annotatedProperty rdf:resource="#investigates"/>
   <owl:annotatedTarget rdf:resource="#perception"/>
@@ -1047,6 +1344,13 @@
 </owl:Axiom>
 
 <owl:Axiom>
+  <owl:annotatedSource rdf:resource="#information_transfer_and_processing"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#biological_psychology"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">4kdqkutdha46uns1j8jndi43ht</Xid>
+</owl:Axiom>
+
+<owl:Axiom>
   <owl:annotatedSource rdf:resource="#biological_psychology"/>
   <owl:annotatedProperty rdf:resource="#investigates"/>
   <owl:annotatedTarget rdf:resource="#information_transfer_and_processing"/>
@@ -1058,6 +1362,13 @@
   <Sheet rdf:datatype="http://www.w3.org/2001/XMLSchema#string">2485j5qgetfevlt00vhrn53961</Sheet>
   <NoteTag rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_biological_psychology</NoteTag>
   <AIndex rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</AIndex>
+</owl:Axiom>
+
+<owl:Axiom>
+  <owl:annotatedSource rdf:resource="#clinical_psychology"/>
+  <owl:annotatedProperty rdf:resource="#Parent"/>
+  <owl:annotatedTarget rdf:resource="#biological_psychology"/>
+  <Xid rdf:datatype="http://www.w3.org/2001/XMLSchema#string">32dt8d2dflh4lr5oqc2oqqad28</Xid>
 </owl:Axiom>
 
 <owl:Axiom>
