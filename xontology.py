@@ -270,6 +270,14 @@ class XOntology(Ontology):
         children['childQuestions'] = list(children['childQuestions'])
         return children
 
+    def remove_answer(self, q_id, a_id):
+        question_triples = self.get_question(q_id)
+        parents = set(t['s'] for t in question_triples)
+        answer = next(t['o'] for t in question_triples if t['o'].Xid == a_id)
+
+        self.remove_relations(answers=answer, parents=parents,
+                              question_triples=question_triples)
+
     def remove_relations(self, answers, parents, question_triples):
         question = question_triples[0]['p']
         # remove old question for all parents

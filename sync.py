@@ -20,6 +20,8 @@ class XSyncer():
     def maybe_remove_answer(self, answer, question, status):
         try:
             self.map_manager.remove_node(answer)
+            self.onto.remove_answer(question, answer)
+            print()
         except AttributeError:
             question_note = self.col.getNote(
                 self.note_manager.getNoteFromQId(question)[0])
@@ -81,7 +83,7 @@ class XSyncer():
             # (since the id was not removed) but has an empty string as content
             if not local[answer]['content']:
                 self.maybe_remove_answer(answer, question, status)
-                title = ''
+                title = 'identification to '
             elif answer not in status:
                 print('add answer to map')
                 continue
