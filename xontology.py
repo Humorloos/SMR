@@ -294,7 +294,7 @@ class XOntology(Ontology):
     def remove_answer(self, q_id, a_id):
         question_triples = self.get_question(q_id)
         parents = set(t['s'] for t in question_triples)
-        answer = next(t['o'] for t in question_triples if t['o'].Xid == a_id)
+        answer = set(t['o'] for t in question_triples if a_id in t['o'].Xid)
 
         self.remove_relations(answers=answer, parents=parents,
                               question_triples=question_triples)

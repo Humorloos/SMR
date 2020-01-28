@@ -83,7 +83,7 @@ class XSyncer():
             # (since the id was not removed) but has an empty string as content
             if not local[answer]['content']:
                 self.maybe_remove_answer(answer, question, status)
-                title = 'identification to '
+
             elif answer not in status:
                 print('add answer to map')
                 continue
