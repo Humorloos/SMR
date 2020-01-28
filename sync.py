@@ -15,6 +15,7 @@ class XSyncer():
         self.map_manager = None
         self.onto = None
         self.status_manager = StatusManager(status_file=status_file)
+        self.change_list = None
 
     def run(self):
         local = {f: self.note_manager.get_local(f) for f in self.xmind_files}
@@ -24,6 +25,7 @@ class XSyncer():
         for d in x_decks:
             self.onto = None
             for f in self.xmind_files:
+                self.change_list = dict()
                 local_change = status[f]['ankiMod'] != local[f]['ankiMod']
                 if status[f]['osMod'] != os_file_mods[f]:
                     self.map_manager = XManager(f)
@@ -41,18 +43,25 @@ class XSyncer():
                     self.map_manager = XManager(f)
                     self.process_local_changes(status=status[f]['sheets'],
                                                local=local[f]['sheets'])
+                    # Adjust notes according to self.change_list
+                    self.process_change_list()
                     self.map_manager.save_changes()
                 elif not local_change and remote_change:
                     print('')
                 else:
                     print('')
 
-    def process_local_answers(self, status, local):
+    def process_change_list(self):
+        print('TODO')
+
+    def process_local_answers(self, status, local, question):
+        sort_id = None
         for answer in {**local, **status}:
             if answer not in local:
                 print('remove answer from map')
             elif answer not in status:
                 print('add answer to map')
+                continue
             elif not status[answer]['content'] == local[answer]['content']:
                 title = title_from_field(local[answer]['content'])
                 img = img_from_field(local[answer]['content'])
@@ -60,6 +69,12 @@ class XSyncer():
                 self.map_manager.set_node_content(
                     tag=answer_tag, title=title, img=img,
                     media_dir=self.note_manager.media_dir)
+            else:
+                continue
+            if not sort_id:
+                sort_id = self.note_manager.get_field_by_name(
+                    self.note_manager.get_flds_from_qId(question), 'id')
+            self.change_list[sort_id] = title
 
 
     def process_local_changes(self, status, local):
@@ -83,7 +98,11 @@ class XSyncer():
                 # Change question in ontology
                 self.onto.change_question(x_id=question,
                                           new_question=local_field)
-                # Change notes affected from
+                # Remember this change for final note adjustments
+                sort_id = self.note_manager.get_field_by_name(
+                    self.note_manager.get_flds_from_qId(question), 'id')
+                self.change_list[sort_id] = local_field
             self.process_local_answers(status=status[question]['answers'],
-                                       local=local[question]['answers'])
+                                       local=local[question]['answers'],
+                                       question=question)
             print()
