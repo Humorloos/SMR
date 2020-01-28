@@ -8,13 +8,40 @@ from .consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS
 
 def img_from_field(field):
     try:
-        return re.search('<img src=\"(.*\.(jpg|png))\">', field).group(1)
+        return re.search('<img src=\"(.*\.(' + '|'.join(X_IMG_EXTENSIONS) +
+                         '))\">', field).group(1)
+    except AttributeError:
+        return None
+
+
+def media_from_field(field):
+    try:
+        return re.search('\[sound:(.*\.(' + '|'.join(X_MEDIA_EXTENSIONS) +
+                         '))\]', field).group(1)
     except AttributeError:
         return None
 
 
 def meta_from_flds(flds):
     return json.loads(splitFields(flds)[-1])
+
+
+def title_from_field(field):
+    return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", field)
+
+
+def content_from_field(field):
+    image = img_from_field(field)
+    if image:
+        image = 'attachments/' + image
+    media = media_from_field(field)
+    if media:
+        media = 'attachments/' + media
+    return {'content': title_from_field(field),
+            'media': {
+                'image': image,
+                'media': media
+            }}
 
 
 class XNoteManager():
