@@ -36,6 +36,7 @@ class XManager:
             sheetTitle = sheet('title', recursive=False)[0].text
             self.sheets[sheetTitle] = {'tag': sheet, 'nodes': sheet('topic')}
         self.changes = False
+        self.tag_list = None
 
     def get_answer_nodes(self, tag):
         return [n if not self.is_crosslink_node(n) else self.getTagById(
@@ -143,7 +144,7 @@ class XManager:
         :return: the tag containing the Id
         """
         try:
-            return tuple(filter(lambda t: t['id'] == tagId, self.tag_list()))[0]
+            return tuple(filter(lambda t: t['id'] == tagId, self.get_tag_list()))[0]
         except IndexError:
             # TODO: Warn if the node is not found
             return None
@@ -312,7 +313,9 @@ class XManager:
         remote = self.remote_file(sheets)
         return remote
 
-    def tag_list(self):
+    def get_tag_list(self):
+        if not self.tag_list:
+            self.tag_list = [t for s in self.sheets for t in self.sheets[s]['nodes']]
         # Nested list comprehension explained:
         # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
-        return [t for s in self.sheets for t in self.sheets[s]['nodes']]
+        return self.tag_list
