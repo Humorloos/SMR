@@ -4,13 +4,21 @@ import os
 import urllib.parse
 import re
 import zipfile
+import shutil
+import tempfile
 
 from bs4 import BeautifulSoup
+
+from .consts import X_MEDIA_EXTENSIONS
 
 
 def get_os_mod(file):
     os_mod = os.stat(file).st_mtime
-    return {file: os_mod}
+    return os_mod
+
+
+def setNodeTitle(tag, title):
+    tag.find('title', recursive=False).string = title
 
 
 class XManager:
@@ -20,9 +28,14 @@ class XManager:
         self.soup = BeautifulSoup(self.xZip.read('content.xml'),
                                   features='html.parser')
         self.sheets = dict()
+        manifestContent = self.xZip.read("META-INF/manifest.xml")
+        self.manifest = BeautifulSoup(manifestContent, features='html.parser')
+        self.fileBin = []
+        self.srcDir = tempfile.mkdtemp()
         for sheet in self.soup('sheet'):
             sheetTitle = sheet('title', recursive=False)[0].text
             self.sheets[sheetTitle] = {'tag': sheet, 'nodes': sheet('topic')}
+        self.changes = False
 
     def get_answer_nodes(self, tag):
         return [n if not self.is_crosslink_node(n) else self.getTagById(
@@ -180,10 +193,96 @@ class XManager:
 
     def remote_file(self, sheets=None):
         docMod = self.soup.find('xmap-content')['timestamp']
-        os_mod = get_os_mod(self.file)[self.file]
+        os_mod = get_os_mod(self.file)
         remote = {'file': self.file, 'xMod': docMod, 'osMod': os_mod,
                   'sheets': sheets}
         return remote
+
+    def save_changes(self):
+        if self.changes:
+            self.updateZip()
+        # Remove temp dir and its files
+        shutil.rmtree(self.srcDir)
+        self.xZip.close()
+
+    def set_node_content(self, tag, title, img, media_dir):
+        if title != self.getNodeTitle(tag):
+            setNodeTitle(tag=tag, title=title)
+        nodeImg = self.getNodeImg(tag)
+        # If the note has an image and the tag not or the image is different
+        # or the image was deleted, change it
+        if (img and not nodeImg or img and img not in nodeImg) or \
+                nodeImg and not img:
+            self.set_node_img(tag=tag, noteImg=img, nodeImg=nodeImg,
+                              media_dir=media_dir)
+        self.changes = True
+
+    def set_node_img(self, tag, noteImg, nodeImg, media_dir):
+        if not noteImg:
+            # remove image node from Map, i do not know why decompose() has
+            # to be called twice but it only works this way
+            imgTag = tag.find('xhtml:img')
+            imgTag.decompose()
+            fullPath = nodeImg[4:]
+            self.fileBin.append(fullPath)
+            self.manifest.find('file-entry',
+                               attrs={"full-path": fullPath}).decompose()
+            return
+        # move image from note to the directory of images to add
+        imgPath = os.path.join(media_dir, noteImg)
+        shutil.copy(src=imgPath, dst=self.srcDir)
+        newFullPath = 'attachments/' + noteImg
+        newMediaType = "image/" + os.path.splitext(noteImg)[1][1:]
+        if not nodeImg:
+            # create a new image tag and add it to the node Tag
+            imgTag = self.manifest.new_tag(name='xhtml:img', align='bottom')
+            fileEntry = self.manifest.new_tag(name='file-entry')
+            imgTag['xhtml:src'] = 'xap:' + newFullPath
+            fileEntry['full-path'] = newFullPath
+            fileEntry['media-type'] = newMediaType
+            self.manifest.find('manifest').append(fileEntry)
+            tag.append(imgTag)
+            return
+        # change image
+        fullPath = nodeImg[4:]
+        self.fileBin.append(fullPath)
+        fileEntry = self.manifest.find('file-entry',
+                                       attrs={"full-path": fullPath})
+        fileEntry['full-path'] = newFullPath
+        fileEntry['media-type'] = newMediaType
+        imgTag = tag.find('xhtml:img')
+        imgTag['xhtml:src'] = 'xap:' + newFullPath
+
+    def updateZip(self):
+        """ taken from https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file-using-python, replaces one file in a zipfile"""
+        # generate a temp file
+        tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(self.file))
+        os.close(tmpfd)
+
+        # create a temp copy of the archive without filename
+        with zipfile.ZipFile(self.file, 'r') as zin:
+            with zipfile.ZipFile(tmpname, 'w') as zout:
+                zout.comment = zin.comment  # preserve the comment
+                for item in zin.infolist():
+                    if item.filename not in ['content.xml',
+                                             'META-INF/manifest.xml'] + \
+                            self.fileBin:
+                        zout.writestr(item, zin.read(item.filename))
+
+        # replace with the temp archive
+        os.remove(self.file)
+        os.rename(tmpname, self.file)
+
+        # now add filename with its new data
+        with zipfile.ZipFile(self.file, mode='a',
+                             compression=zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr('content.xml', str(self.soup))
+            for file in os.listdir(self.srcDir):
+                zf.write(filename=os.path.join(self.srcDir, file),
+                         arcname=os.path.join('attachments', file))
+            zf.writestr(zinfo_or_arcname='META-INF/manifest.xml',
+                        data=str(self.manifest))
+
 
     def content_sheets(self):
         return [k for k in self.sheets.keys() if k != 'ref']

@@ -87,12 +87,6 @@ def xModelId(col):
                 v['name'] == X_MODEL_NAME)
 
 
-def getNotesFromQIds(qIds, col):
-    return sum(map(lambda qId: col.db.list(
-        "select id from notes where flds like '%\"questionId\": \"" +
-        qId + "\"%'"), qIds), [])
-
-
 def getDueAnswersToNote(nId, dueAnswers, col):
     cardTpls = list(col.db.execute(
         """select id, ord from cards where nid = ? and id in """ + ids2str(
@@ -101,25 +95,6 @@ def getDueAnswersToNote(nId, dueAnswers, col):
     for cardTpl in cardTpls:
         cards.append(dict(cId=cardTpl[0], ord=cardTpl[1]))
     return cards
-
-
-def setNodeTitle(tag, title):
-    tag.find('title', recursive=False).string = title
-
-
-def titleFromContent(content):
-    try:
-        return BeautifulSoup(content, features="html.parser").select('.title')[
-            0].text
-    except IndexError:
-        return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", content)
-
-
-def imgFromContent(content):
-    try:
-        return re.search('<img src=\"(.*\.(jpg|png))\">', content).group(1)
-    except AttributeError:
-        return None
 
 
 def file_dict(identifier, doc):
