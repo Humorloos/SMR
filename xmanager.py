@@ -199,11 +199,11 @@ class XManager:
         return remote
 
     def save_changes(self):
+        self.xZip.close()
         if self.changes:
             self.updateZip()
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
-        self.xZip.close()
 
     def set_node_content(self, tag, title, img, media_dir):
         if title != self.getNodeTitle(tag):
