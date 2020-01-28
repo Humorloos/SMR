@@ -115,4 +115,6 @@ X_CARD_CSS = """.card {
 
 ADDON_PATH = os.path.dirname(__file__)
 
+USER_PATH = os.path.join(ADDON_PATH, 'user_files')
+
 ICONS_PATH = os.path.join(ADDON_PATH, "icons")
