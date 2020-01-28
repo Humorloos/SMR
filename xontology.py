@@ -77,20 +77,10 @@ class XOntology(Ontology):
 
     def change_question(self, x_id, new_question):
         question_triples = self.get_question(x_id)
-        parents = set(t['s'] for t in question_triples)
-        question = question_triples[0]['p']
         answers = set(t['o'] for t in question_triples)
+        parents = set(t['s'] for t in question_triples)
 
-        # remove old question for all parents
-        for parent in parents:
-            left_answers = [a for a in getattr(parent, question.name) if
-                            a not in answers]
-            setattr(parent, question.name, left_answers)
-
-        # remove old parent for all answers
-        for answer in answers:
-            left_parents = [p for p in answer.Parent if p not in parents]
-            answer.Parent = left_parents
+        self.remove_relations(answers, parents, question_triples)
 
         class_text = classify(content_from_field(new_question))
         # add new relationship
@@ -279,6 +269,18 @@ class XOntology(Ontology):
                 children['bridges'].append(bridge)
         children['childQuestions'] = list(children['childQuestions'])
         return children
+
+    def remove_relations(self, answers, parents, question_triples):
+        question = question_triples[0]['p']
+        # remove old question for all parents
+        for parent in parents:
+            left_answers = [a for a in getattr(parent, question.name) if
+                            a not in answers]
+            setattr(parent, question.name, left_answers)
+        # remove old parents for all answers
+        for answer in answers:
+            left_parents = [p for p in answer.Parent if p not in parents]
+            answer.Parent = left_parents
 
     def setUpClasses(self):
         with self:
