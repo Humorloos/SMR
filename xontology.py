@@ -136,8 +136,8 @@ class XOntology(Ontology):
     def getImage(self, elements):
         try:
             return self.Image[elements['s'], elements['p'], elements['o']][0]
-        except:
-            return None
+        except IndexError:
+            return []
 
     def get_inverse(self, x_id):
         triples = self.get_all_parent_triples()
@@ -149,7 +149,7 @@ class XOntology(Ontology):
         try:
             return self.Media[elements['s'], elements['p'], elements['o']][0]
         except IndexError:
-            return None
+            return []
 
     def getMod(self, elements):
         return self.Mod[elements['s'], elements['p'], elements['o']][0]
