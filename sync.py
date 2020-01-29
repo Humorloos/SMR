@@ -16,11 +16,11 @@ class XSyncer():
         self.onto = None
         self.status_manager = StatusManager(status_file=status_file)
         self.change_list = None
+        self.warnings = []
 
     def maybe_remove_answer(self, answer, question, status):
         try:
-            self.map_manager.remove_node(answer)
-            self.onto.remove_answer(question, answer)
+            self.map_manager.remove_node(q_id=question, a_id=answer)
             print()
         except AttributeError:
             question_note = self.col.getNote(
@@ -38,6 +38,22 @@ class XSyncer():
                 '"). Please restore the answer and try synchronizing '
                 'again. You can delete this answer in the xmind file '
                 'directly.')
+        except AssertionError:
+            question_note = self.col.getNote(
+                self.note_manager.getNoteFromQId(question)[0])
+            tag = question_note.tags[0]
+            question_title = self.note_manager.get_field_by_name(
+                question_note.fields, 'qt')
+            reference = self.note_manager.get_field_by_name(
+                question_note.fields, 'rf')
+            self.warnings.append(
+                'Invalid deletion request: Could not delete Answer "' +
+                status[answer]['content'] + '" to question "' +
+                question_title + '" in map "' + tag +
+                '" (reference "' + reference +
+                '")')
+            return
+        self.onto.remove_answer(question, answer)
 
     def run(self):
         local = {f: self.note_manager.get_local(f) for f in self.xmind_files}
