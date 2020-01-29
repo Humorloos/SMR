@@ -129,9 +129,10 @@ class XmindImporter(NoteImporter):
             concept_source = manager.getNodeTitle(
                 nodeTag) or manager.getNodeImg(nodeTag) or not crosslink
             x_id = nodeTag['id']
-            concept = self.add_concept(
+            concept = self.onto.add_concept(
                 concept_source=concept_source, nodeContent=nodeContent,
-                mod=nodeTag['timestamp'], x_id=x_id, root=root, file=file)
+                mod=nodeTag['timestamp'], x_id=x_id, root=root,
+                file=self.activeManager.file)
             # Assign a list to concept since concept may also contain
             # multiple concepts in case of bridges
             concept = [concept]

@@ -21,7 +21,6 @@ class XSyncer():
     def maybe_remove_answer(self, answer, question, status):
         try:
             self.map_manager.remove_node(q_id=question, a_id=answer)
-            print()
         except AttributeError:
             question_note = self.col.getNote(
                 self.note_manager.getNoteFromQId(question)[0])
