@@ -137,7 +137,7 @@ class XOntology(Ontology):
         try:
             return self.Image[elements['s'], elements['p'], elements['o']][0]
         except IndexError:
-            return []
+            return ''
 
     def get_inverse(self, x_id):
         triples = self.get_all_parent_triples()
@@ -149,7 +149,7 @@ class XOntology(Ontology):
         try:
             return self.Media[elements['s'], elements['p'], elements['o']][0]
         except IndexError:
-            return []
+            return ''
 
     def getMod(self, elements):
         return self.Mod[elements['s'], elements['p'], elements['o']][0]
@@ -273,8 +273,8 @@ class XOntology(Ontology):
 
     def getFiles(self, elements):
         files = [self.getImage(elements), self.getMedia(elements)]
-        return [None if len(f) == 0 else file_dict(
-            identifier=f[0], doc=self.getDoc(elements)) for f in files]
+        return [None if not f else file_dict(
+            identifier=f, doc=self.getDoc(elements)) for f in files]
 
     def getChildQuestionIds(self, childElements):
         children = {'childQuestions': set(), 'bridges': list()}
