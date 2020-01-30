@@ -218,17 +218,9 @@ class XOntology(Ontology):
             concept = self.world._get_by_storid(answerDids[i])
             answerDict['text'] = self.field_translator.field_from_class(
                 concept.name)
-            if concept.Xid:
-                id_dict = json.loads(concept.Xid[0])
-                if q_id in id_dict:
-                    answerDict['id'] = id_dict[q_id]
-                    answerDict['crosslink'] = ''
-            if concept.Crosslink:
-                crosslink_dict = json.loads(concept.Crosslink[0])
-                if q_id in crosslink_dict:
-                    answerDict['id'] = ''
-                    answerDict['crosslink'] = crosslink_dict[q_id]
-
+            id_dict = json.loads(concept.Xid[0])
+            answerDict['src'] = id_dict[q_id]['src']
+            answerDict['crosslink'] = id_dict[q_id]['crosslink']
             if concept.Image:
                 images.append(file_dict(identifier=concept.Image[0],
                                         doc=concept.Doc[0]))
