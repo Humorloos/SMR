@@ -52,3 +52,12 @@ class TestRun(TestCase):
         self.syncer = XSyncer(col=col, status_file=self.status_file)
         with self.assertRaises(ReferenceError):
             self.syncer.run()
+
+    def test_answer_added_error(self):
+        col_path = os.path.join(
+            SUPPORT_PATH, 'cols', 'answer_added_error',
+            'collection.anki2')
+        col = Collection(col_path)
+        self.syncer = XSyncer(col=col, status_file=self.status_file)
+        with self.assertRaises(ReferenceError):
+            self.syncer.run()

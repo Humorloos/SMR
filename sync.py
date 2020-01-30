@@ -36,8 +36,9 @@ class XSyncer():
         print('add answer to ontology')
         print('add answer to meta')
         print('add answer to status')
-        question_note = self.note_manager.getNoteFromQId(q_id)
-        self.raise_sync_error(
+        question_note = self.col.getNote(
+            self.note_manager.getNoteFromQId(q_id)[0])
+        raise_sync_error(
             content=local[a_id]['content'], question_note=question_note,
             text_pre='Detected added answer "',
             text_post='Adding answers in anki is not supported yet. You can '
