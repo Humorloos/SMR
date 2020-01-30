@@ -225,31 +225,13 @@ class XManager:
                   'sheets': sheets}
         return remote
 
-    def remove_node(self, q_id, a_id):
+    def remove_node(self, a_id):
         tag = self.getTagById(a_id)
-        question_tag = self.getTagById(q_id)
-        child_nodes = self.getChildnodes(question_tag)
-        if tag in child_nodes:
-            if not self.getChildnodes(tag):
-                tag.decompose()
-                self.tag_list.remove(tag)
-            else:
-                raise AttributeError('Topic has subtopics, can not remove.')
-        # if a_id does not belong to any of the question's answers,
-        # check whether an answer has a crosslink to this node
+        if not self.getChildnodes(tag):
+            tag.decompose()
+            self.tag_list.remove(tag)
         else:
-            src_topic = [t for t in child_nodes if
-                         self.getNodeCrosslink(t) == a_id]
-            # if there is a crosslink node, delete it
-            if src_topic:
-                if not self.getChildnodes(src_topic[0]):
-                    src_topic[0].decompose()
-                    self.tag_list.remove(src_topic[0])
-                else:
-                    raise AttributeError('Topic has subtopics, can not remove.')
-
-            else:
-                raise AssertionError('Topic not found, can not remove')
+            raise AttributeError('Topic has subtopics, can not remove.')
 
     def save_changes(self):
         self.xZip.close()
