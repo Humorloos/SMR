@@ -38,7 +38,7 @@ class XSyncer():
                 '"). Please restore the answer and try synchronizing '
                 'again. You can delete this answer in the xmind file '
                 'directly.')
-        # remove answer from ontology
+        # Remove answer from ontology
         self.onto.remove_answer(question, answer)
 
     def run(self):
