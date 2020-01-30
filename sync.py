@@ -44,7 +44,10 @@ class XSyncer():
 
         # Remove answer from note meta
         meta = meta_from_fields(question_note.fields)
-        print()
+        meta['answers'].remove(
+            next(a for a in meta['answers'] if a['answerId'] == answer))
+        meta['nAnswers'] -= 1
+        set_meta(note=question_note, meta=meta)
 
     def run(self):
         local = {f: self.note_manager.get_local(f) for f in self.xmind_files}
