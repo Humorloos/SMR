@@ -7,10 +7,14 @@ from .consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS
 
 
 def get_field_by_name(fields, name):
+    return fields[get_index_by_field_name(name)]
+
+
+def get_index_by_field_name(name):
     if name not in X_FLDS:
         raise NameError('Name not in X_FLDS, valid names are ' +
                         X_FLDS.keys())
-    return fields[list(X_FLDS.keys()).index(name)]
+    return list(X_FLDS.keys()).index(name)
 
 
 def img_from_field(field):
