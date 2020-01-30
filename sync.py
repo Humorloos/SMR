@@ -5,6 +5,18 @@ from .consts import USER_PATH
 from .xontology import XOntology
 
 
+def raise_sync_error(content, question_note, text_pre, text_post):
+    tag = question_note.tags[0]
+    question_title = get_field_by_name(
+        question_note.fields, 'qt')
+    reference = get_field_by_name(
+        question_note.fields, 'rf')
+    raise ReferenceError(
+        text_pre + content + '" to question "' + question_title +
+        '" in map "' + tag + '" (reference "' + reference + '"). ' +
+        text_post)
+
+
 # Algorithm for synchronization was adopted from
 # https://unterwaditzer.net/2016/sync-algorithm.html
 class XSyncer():
@@ -32,19 +44,13 @@ class XSyncer():
         try:
             self.map_manager.remove_node(a_id=answer)
         except AttributeError:
-            tag = question_note.tags[0]
-            question_title = get_field_by_name(
-                question_note.fields, 'qt')
-            reference = get_field_by_name(
-                question_note.fields, 'rf')
-            raise ReferenceError(
-                'Detected invalid deletion: Cannot delete Answer "' +
-                status[answer]['content'] + '" to question "' +
-                question_title + '" in map "' + tag +
-                '" (reference "' + reference +
-                '"). Please restore the answer and try synchronizing '
+            self.raise_sync_error(
+                content=status[answer]['content'], question_note=question_note,
+                text_pre='Detected invalid deletion: Cannot delete answer "',
+                text_post='Please restore the answer and try synchronizing '
                 'again. You can delete this answer in the xmind file '
                 'directly.')
+
         # Remove answer from ontology
         self.onto.remove_answer(question, answer)
 
