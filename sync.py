@@ -52,7 +52,7 @@ class XSyncer():
         try:
             self.map_manager.remove_node(a_id=answer)
         except AttributeError:
-            self.raise_sync_error(
+            raise_sync_error(
                 content=status[answer]['content'], question_note=question_note,
                 text_pre='Detected invalid deletion: Cannot delete answer "',
                 text_post='Please restore the answer and try synchronizing '
