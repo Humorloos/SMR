@@ -105,7 +105,11 @@ class XSyncer():
             elif not status[answer]['content'] == local[answer]['content']:
                 title = title_from_field(local[answer]['content'])
                 img = img_from_field(local[answer]['content'])
-                answer_tag = self.map_manager.getTagById(answer)
+                if status[answer]['crosslink']:
+                    x_id = status[answer]['crosslink']['x_id']
+                else:
+                    x_id = answer
+                answer_tag = self.map_manager.getTagById(x_id)
                 self.map_manager.set_node_content(
                     tag=answer_tag, title=title, img=img,
                     media_dir=self.note_manager.media_dir)
