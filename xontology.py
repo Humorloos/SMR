@@ -36,7 +36,8 @@ class XOntology(Ontology):
         self.parentStorid = self.Parent.storid
         self.field_translator = FieldTranslator()
 
-    def add_concept(self, concept_source, nodeContent, mod, x_id, root, file):
+    def add_concept(self, concept_source, nodeContent, mod, x_id, root, file,
+                    question):
         if root:
             concept = self.Root(classify(nodeContent))
         else:
@@ -52,11 +53,23 @@ class XOntology(Ontology):
             concept.Media = nodeContent['media']['media']
         concept.Doc = file
         concept.Mod = mod
-        # Do not add an Xid if the node is a pure crosslink-node
+        if root:
+            question = 'root'
         if concept_source:
-            concept.Xid.append(x_id)
+            if not concept.Xid:
+                concept.Xid.append(json.dumps({question: x_id}))
+            else:
+                id_prop = json.loads(concept.Xid[0])
+                id_prop[question] = x_id
+                concept.Xid[0] = (json.dumps(id_prop))
+        # Add crosslink instead of x_id if topic is not source of content
         else:
-            concept.Crosslink.append(x_id)
+            if not concept.Crosslink:
+                concept.Crosslink.append(json.dumps({question: x_id}))
+            else:
+                id_prop = json.loads(concept.Crosslink[0])
+                id_prop[question] = x_id
+                concept.Crosslink[0] = (json.dumps(id_prop))
         return concept
 
     def add_relation(self, child, relation, parent, aIndex, image, media, x_id,

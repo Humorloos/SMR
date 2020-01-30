@@ -107,7 +107,7 @@ class XmindImporter(NoteImporter):
 
         return answerDicts
 
-    def getAnswerDict(self, nodeTag, root=False):
+    def getAnswerDict(self, nodeTag, question=None, root=False):
         """
         :param nodeTag: The answer node to get the dict for
         :param root: whether the node is the root or not
@@ -132,7 +132,7 @@ class XmindImporter(NoteImporter):
             concept = self.onto.add_concept(
                 concept_source=concept_source, nodeContent=nodeContent,
                 mod=nodeTag['timestamp'], x_id=x_id, root=root,
-                file=self.activeManager.file)
+                file=self.activeManager.file, question=question)
             # Assign a list to concept since concept may also contain
             # multiple concepts in case of bridges
             concept = [concept]
@@ -149,8 +149,9 @@ class XmindImporter(NoteImporter):
             self.currentSheetImport]['tag']['id']
         doc = self.activeManager.file
         tag = self.getTag()
+        x_id = question['id']
         for childNode in childNotes:
-            answerDict = self.getAnswerDict(childNode)
+            answerDict = self.getAnswerDict(nodeTag=childNode, question=x_id)
             # only add relations to answers that are concepts (not to empty
             # answers that serve as bridges for questions following multiple
             # answers)
@@ -161,7 +162,7 @@ class XmindImporter(NoteImporter):
                     self.onto.add_relation(
                         child=child, relation=relTitle, parent=parent,
                         aIndex=aIndex, image=image, media=media,
-                        x_id=question['id'], timestamp=question['timestamp'],
+                        x_id=x_id, timestamp=question['timestamp'],
                         ref=ref, sortId=sortId, doc=doc, sheet=sheet, tag=tag)
                 aIndex += 1
             else:
