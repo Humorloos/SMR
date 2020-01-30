@@ -558,7 +558,8 @@ class XmindImporter(NoteImporter):
             if key in local:
                 if isinstance(local[key], dict) and isinstance(remote[key],
                                                                dict):
-                    self.deep_merge(local[key], remote[key], path + [str(key)])
+                    self.deep_merge(remote=remote[key], local=local[key],
+                                    path=path + [str(key)])
                 elif local[key] == remote[key]:
                     pass  # same leaf value
                 else:
