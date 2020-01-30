@@ -90,7 +90,8 @@ class XSyncer():
     def process_local_answers(self, status, local, question):
         sort_id = None
         for answer in {**local, **status}:
-            # if the question was removed it is still contained in local
+
+            # If the answer was removed it is still contained in local
             # (since the id was not removed) but has an empty string as content
             if not local[answer]['content']:
                 self.maybe_remove_answer(answer, question, status)
