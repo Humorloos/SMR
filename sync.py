@@ -18,6 +18,12 @@ class XSyncer():
         self.change_list = None
         self.warnings = []
 
+    def add_answer(self, a_id, q_id, local, status):
+        print('add answer to map')
+        print('add answer to ontology')
+        print('add answer to meta')
+        print('add answer to status')
+
     def maybe_remove_answer(self, answer, question, status):
         question_note = self.col.getNote(
             self.note_manager.getNoteFromQId(question)[0])
@@ -100,6 +106,8 @@ class XSyncer():
                 self.maybe_remove_answer(answer, question, status)
 
             elif answer not in status:
+                self.add_answer(a_id=answer, q_id=question, local=local,
+                                status=status)
                 print('add answer to map')
                 continue
             elif not status[answer]['content'] == local[answer]['content']:
