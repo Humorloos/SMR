@@ -45,6 +45,19 @@ class XSyncer():
                       'add answers directly in the xmind file. Remove the '
                       'answer and try synchronizing again.')
 
+    def change_answer(self, answer, local, status):
+        # TODO: also change choncept in ontology
+        title = title_from_field(local[answer]['content'])
+        img = img_from_field(local[answer]['content'])
+        if status[answer]['crosslink']:
+            x_id = status[answer]['crosslink']['x_id']
+        else:
+            x_id = answer
+        answer_tag = self.map_manager.getTagById(x_id)
+        self.map_manager.set_node_content(
+            tag=answer_tag, title=title, img=img,
+            media_dir=self.note_manager.media_dir)
+
     def maybe_remove_answer(self, answer, question, status):
         question_note = self.col.getNote(
             self.note_manager.getNoteFromQId(question)[0])
@@ -125,23 +138,13 @@ class XSyncer():
                                 status=status)
                 continue
             elif not status[answer]['content'] == local[answer]['content']:
-                title = title_from_field(local[answer]['content'])
-                img = img_from_field(local[answer]['content'])
-                if status[answer]['crosslink']:
-                    x_id = status[answer]['crosslink']['x_id']
-                else:
-                    x_id = answer
-                answer_tag = self.map_manager.getTagById(x_id)
-                self.map_manager.set_node_content(
-                    tag=answer_tag, title=title, img=img,
-                    media_dir=self.note_manager.media_dir)
-            # TODO: also change choncept in ontology
+                self.change_answer(answer, local, status)
             else:
                 continue
             if not sort_id:
                 sort_id = get_field_by_name(
                     self.note_manager.get_flds_from_qId(question), 'id')
-            self.change_list[sort_id] = title
+            # self.change_list[sort_id] = title
 
     def process_local_changes(self, status, local):
         for sheet in {**local, **status}:
