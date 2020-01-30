@@ -75,6 +75,7 @@ class XSyncer():
                     # Adjust notes according to self.change_list
                     self.process_change_list()
                     self.map_manager.save_changes()
+                    # TODO: save col
                 elif not local_change and remote_change:
                     print('')
                 else:
