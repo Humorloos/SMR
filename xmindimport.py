@@ -172,28 +172,6 @@ class XmindImporter(NoteImporter):
     def get_file_dict(self, path):
         return [path, self.activeManager.file]
 
-    def stop_or_add_cross_question(self, content, crosslink, manager, parents,
-                                   question, ref, sortId):
-
-        # Stop and warn if no nodes follow the question
-        if not crosslink:
-            self.running = False
-            self.log = ["""Warning:
-                        A Question titled "%s" (Path %s) is missing answers. Please adjust your 
-                        Concept Map and try again.""" % (
-                manager.getNodeContent(tag=question)[0],
-                getCoordsFromId(sortId))]
-            return
-
-        # If the question contains a crosslink, add another relation
-        # from the parents of this question to the answers to the original
-        # question
-        else:
-            originalQuestion = manager.getTagById(crosslink)
-            self.findAnswerDicts(parents=parents, question=originalQuestion,
-                                 sortId=sortId, ref=ref, content=content)
-            return
-
     def getQuestions(self, parentAnswerDict: dict, sortId='', ref="",
                      followsBridge=False):
         """
@@ -419,52 +397,27 @@ class XmindImporter(NoteImporter):
         self.mw.checkpoint("Import")
         self.importSheets(sheets)
 
-    def getNoteData(self, sortId, question, answerDicts, ref, siblings,
-                    connections):
-        """returns a list of all content needed to create the a new note and
-        the media contained in that note in a list"""
+    def stop_or_add_cross_question(self, content, crosslink, manager, parents,
+                                   question, ref, sortId):
 
-        noteList = []
-        media = []
+        # Stop and warn if no nodes follow the question
+        if not crosslink:
+            self.running = False
+            self.log = ["""Warning:
+                        A Question titled "%s" (Path %s) is missing answers. Please adjust your 
+                        Concept Map and try again.""" % (
+                manager.getNodeContent(tag=question)[0],
+                getCoordsFromId(sortId))]
+            return
 
-        # Set field Reference
-        noteList.append('<ul>%s</ul>' % ref)
-
-        # Set field Question
-        qtContent, qtMedia = getNodeContent(tagList=self.tagList, tag=question)
-        noteList.append(qtContent)
-        media.append(qtMedia)
-
-        # Set Answer fields
-        aId = 0
-        for answerDict in answerDicts:
-            if answerDict['isAnswer']:
-                aId += 1
-                # noinspection PyTypeChecker
-                anContent, anMedia = getNodeContent(tagList=self.tagList,
-                                                    tag=answerDict['nodeTag'])
-                noteList.append(anContent)
-                media.append(anMedia)
-                answerDict['aId'] = str(aId)
-
-        # noinspection PyShadowingNames
-        for i in range(aId, X_MAX_ANSWERS):
-            noteList.append('')
-
-        # set field ID
-        noteList.append(sortId)
-
-        # set field Meta
-        meta = self.getXMindMeta(question=question, answerDicts=answerDicts,
-                                 siblings=siblings, connections=connections)
-        noteList.append(meta)
-
-        nId = timestampID(self.col.db, "notes")
-        noteData = [nId, guid64(), self.model['id'], intTime(), self.col.usn(),
-                    self.currentSheetImport['tag'], joinFields(noteList), "",
-                    "", 0, ""]
-
-        return noteData, media
+        # If the question contains a crosslink, add another relation
+        # from the parents of this question to the answers to the original
+        # question
+        else:
+            originalQuestion = manager.getTagById(crosslink)
+            self.findAnswerDicts(parents=parents, question=originalQuestion,
+                                 sortId=sortId, ref=ref, content=content)
+            return
 
     def noteFromNoteData(self, noteData):
         note = self.col.newNote()
@@ -613,3 +566,51 @@ class XmindImporter(NoteImporter):
             else:
                 local[key] = remote[key]
         return local
+
+
+    def getNoteData(self, sortId, question, answerDicts, ref, siblings,
+                    connections):
+        """returns a list of all content needed to create the a new note and
+        the media contained in that note in a list"""
+
+        noteList = []
+        media = []
+
+        # Set field Reference
+        noteList.append('<ul>%s</ul>' % ref)
+
+        # Set field Question
+        qtContent, qtMedia = getNodeContent(tagList=self.tagList, tag=question)
+        noteList.append(qtContent)
+        media.append(qtMedia)
+
+        # Set Answer fields
+        aId = 0
+        for answerDict in answerDicts:
+            if answerDict['isAnswer']:
+                aId += 1
+                # noinspection PyTypeChecker
+                anContent, anMedia = getNodeContent(tagList=self.tagList,
+                                                    tag=answerDict['nodeTag'])
+                noteList.append(anContent)
+                media.append(anMedia)
+                answerDict['aId'] = str(aId)
+
+        # noinspection PyShadowingNames
+        for i in range(aId, X_MAX_ANSWERS):
+            noteList.append('')
+
+        # set field ID
+        noteList.append(sortId)
+
+        # set field Meta
+        meta = self.getXMindMeta(question=question, answerDicts=answerDicts,
+                                 siblings=siblings, connections=connections)
+        noteList.append(meta)
+
+        nId = timestampID(self.col.db, "notes")
+        noteData = [nId, guid64(), self.model['id'], intTime(), self.col.usn(),
+                    self.currentSheetImport['tag'], joinFields(noteList), "",
+                    "", 0, ""]
+
+        return noteData, media
