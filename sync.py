@@ -62,6 +62,22 @@ class XSyncer():
 
         # Change answer in status
 
+    def change_question(self, local_field, question):
+        # Change question in map
+        title = title_from_field(local_field)
+        img = img_from_field(local_field)
+        question_tag = self.map_manager.getTagById(question)
+        self.map_manager.set_node_content(
+            tag=question_tag, title=title, img=img,
+            media_dir=self.note_manager.media_dir)
+        # Change question in ontology
+        self.onto.change_question(x_id=question,
+                                  new_question=local_field)
+        # Remember this change for final note adjustments
+        sort_id = get_field_by_name(
+            self.note_manager.get_flds_from_qId(question), 'id')
+        self.change_list[sort_id] = local_field
+
     def maybe_remove_answer(self, answer, question, status):
         question_note = self.col.getNote(
             self.note_manager.getNoteFromQId(question)[0])
@@ -160,21 +176,9 @@ class XSyncer():
         for question in {**local, **status}:
             local_field = local[question]['content']
             if local_field != status[question]['content']:
-                title = title_from_field(local_field)
-                img = img_from_field(local_field)
-                # Export changed question to xmind
-                question_tag = self.map_manager.getTagById(question)
-                self.map_manager.set_node_content(
-                    tag=question_tag, title=title, img=img,
-                    media_dir=self.note_manager.media_dir)
-                # Change question in ontology
-                self.onto.change_question(x_id=question,
-                                          new_question=local_field)
-                # Remember this change for final note adjustments
-                sort_id = get_field_by_name(
-                    self.note_manager.get_flds_from_qId(question), 'id')
-                self.change_list[sort_id] = local_field
+                self.change_question(local_field, question)
             self.process_local_answers(status=status[question]['answers'],
                                        local=local[question]['answers'],
                                        question=question)
             print()
+
