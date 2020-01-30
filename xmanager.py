@@ -158,8 +158,8 @@ class XManager:
                             'crosslink': {}}
                         if a['crosslink']:
                             answers[a['src']['id']]['crosslink'] = {
-                                'xMod': s['crosslink']['timestamp'],
-                                'x_id': s['crosslink']['id']}
+                                'xMod': a['crosslink']['timestamp'],
+                                'x_id': a['crosslink']['id']}
 
         remote = self.remote_file(sheets)
         return remote
