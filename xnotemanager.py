@@ -99,7 +99,12 @@ class XNoteManager():
                     'answers': answers}
                 for x, a in enumerate(self.get_answer_cards(question['id'])):
                     try:
-                        a_id = question['meta']['answers'][x]['answerIds']
+                        # a_id is a dictionary key that consists of the
+                        # topic_ids of all topics that contain this concept
+                        a_id = ','.join(
+                            question['meta']['answers'][x]['answerIds'])
+                    # If this answer does not yet exist in meta, use the
+                    # answer's card id as id instead
                     except IndexError:
                         a_id = a[1]
                     answers[a_id] = {'ankiMod': a[0],
