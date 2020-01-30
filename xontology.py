@@ -305,10 +305,10 @@ class XOntology(Ontology):
     def remove_answer(self, q_id, a_id):
         question_triples = self.get_question(q_id)
         parents = set(t['s'] for t in question_triples)
-        answer = set(t['o'] for t in question_triples if
+        answer = next(t['o'] for t in question_triples if
                      a_id == json.loads(t['o'].Xid[0])[q_id]['src'])
 
-        self.remove_relations(answers=answer, parents=parents,
+        self.remove_relations(answers=[answer], parents=parents,
                               question_triples=question_triples)
 
     def remove_relations(self, answers, parents, question_triples):
