@@ -41,6 +41,10 @@ def meta_from_flds(flds):
     return meta_from_fields(splitFields(flds))
 
 
+def set_meta(note, meta):
+    note.fields[get_index_by_field_name('mt')] = json.dumps(meta)
+
+
 def title_from_field(field):
     return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", field)
 
