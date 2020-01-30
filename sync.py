@@ -49,6 +49,9 @@ class XSyncer():
         meta['nAnswers'] -= 1
         set_meta(note=question_note, meta=meta)
 
+        # Remove answer from status
+        del status[answer]
+
     def run(self):
         local = {f: self.note_manager.get_local(f) for f in self.xmind_files}
         os_file_mods = {f: get_os_mod(f) for f in self.xmind_files}
