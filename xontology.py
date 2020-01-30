@@ -12,14 +12,15 @@ def classify(content):
     if content['media']['image']:
         classified += "ximage_" + re.sub(
             'attachments/', '', content['media']['image'])
-        classified = re.sub('(\\.)('+'|'.join(X_IMG_EXTENSIONS) + ')',
+        classified = re.sub('(\\.)(' + '|'.join(X_IMG_EXTENSIONS) + ')',
                             '_extension_\\2', classified)
     if content['media']['media']:
         classified += "xmedia_" + re.sub(
             'attachments/', '', content['media']['media'])
-        classified = re.sub('(\\.)('+'|'.join(X_MEDIA_EXTENSIONS) + ')',
+        classified = re.sub('(\\.)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')',
                             '_extension_\\2', classified)
     return classified
+
 
 # TODO: implement change of ontology after changing a note
 class XOntology(Ontology):
@@ -56,7 +57,7 @@ class XOntology(Ontology):
         if root:
             question = 'root'
         id_dict = {'src': x_id,
-         'crosslink': crosslink}
+                   'crosslink': crosslink}
         if not concept.Xid:
             concept.Xid.append(json.dumps({question: id_dict}))
         else:
