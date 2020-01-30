@@ -58,7 +58,7 @@ class TestImportMap(TestXmindImporter):
         importer.activeManager = importer.xManagers[1]
         importer.currentSheetImport = 'general psychology'
         importer.importMap()
-        self.assertEqual(1086, len(importer.onto.graph))
+        self.assertEqual(1076, len(importer.onto.graph))
 
 
 class TestGetAnswerDict(TestImportMap):

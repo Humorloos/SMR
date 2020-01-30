@@ -126,11 +126,9 @@ class XmindImporter(NoteImporter):
             isAnswer = False
         else:
             nodeContent = manager.getNodeContent(nodeTag)
-            concept_source = manager.getNodeTitle(
-                nodeTag) or manager.getNodeImg(nodeTag) or not crosslink
             x_id = nodeTag['id']
             concept = self.onto.add_concept(
-                concept_source=concept_source, nodeContent=nodeContent,
+                crosslink=crosslink, nodeContent=nodeContent,
                 mod=nodeTag['timestamp'], x_id=x_id, root=root,
                 file=self.activeManager.file, question=question)
             # Assign a list to concept since concept may also contain
