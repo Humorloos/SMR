@@ -39,9 +39,9 @@ class XManager:
         self.tag_list = None
 
     def get_answer_nodes(self, tag):
-        return [n if not self.is_crosslink_node(n) else self.getTagById(
-            self.getNodeCrosslink(n)) for n in self.getChildnodes(tag) if
-                        not self.isEmptyNode(n)]
+        return [{'src': n, 'crosslink': '' if not self.is_crosslink_node(n)
+                else self.getTagById(self.getNodeCrosslink(n))} for n in
+                self.getChildnodes(tag) if not self.isEmptyNode(n)]
 
     def getAttachment(self, identifier, dir):
         # extract attachment to anki media directory
@@ -153,7 +153,13 @@ class XManager:
                     questions[t['id']] = {'xMod': t['timestamp'],
                                           'answers': answers}
                     for a in self.get_answer_nodes(t):
-                        answers[a['id']] = {'xMod': a['timestamp']}
+                        answers[a['src']['id']] = {
+                            'xMod': a['src']['timestamp'],
+                            'crosslink': {}}
+                        if a['crosslink']:
+                            answers[a['src']['id']]['crosslink'] = {
+                                'xMod': s['crosslink']['timestamp'],
+                                'x_id': s['crosslink']['id']}
 
         remote = self.remote_file(sheets)
         return remote
