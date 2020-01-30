@@ -79,7 +79,7 @@ class XSyncer():
 
         # Remember this change for final note adjustments
         sort_id = get_field_by_name(
-            self.note_manager.get_flds_from_qId(question), 'id')
+            self.note_manager.get_fields_from_qId(question), 'id')
         self.change_list[sort_id] = local_field
 
     def maybe_remove_answer(self, answer, question, status):
@@ -167,8 +167,7 @@ class XSyncer():
                 continue
             if not sort_id:
                 sort_id = get_field_by_name(
-                    self.note_manager.get_flds_from_qId(question), 'id')
-            # self.change_list[sort_id] = title
+                    self.note_manager.get_fields_from_qId(question), 'id')
 
     def process_local_changes(self, status, local):
         for sheet in {**local, **status}:

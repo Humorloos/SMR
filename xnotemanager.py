@@ -69,7 +69,7 @@ class XNoteManager():
         self.model = xModelId(self.col)
         self.media_dir = re.sub(r"(?i)\.(anki2)$", ".media", self.col.path)
 
-    def get_flds_from_qId(self, qId):
+    def get_fields_from_qId(self, qId):
         return splitFields(self.col.db.first(
             "select flds from notes where flds like '%\"questionId\": \"" +
             qId + "\"%'")[0])
