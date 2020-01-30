@@ -268,7 +268,8 @@ class XmindImporter(NoteImporter):
         xMindMeta['sheetId'] = noteData['sheetId']
         xMindMeta['questionId'] = noteData['questionId']
         answers = [a for a in noteData['answers'] if len(a) != 0]
-        xMindMeta['answers'] = [{'answerId': a['id'],
+        xMindMeta['answers'] = [{'answerIds': a['id'],
+                                 'crosslinks': a['crosslink'],
                                  'children': a['children'],
                                  'mod': a['mod']} for a in answers]
         xMindMeta['nAnswers'] = len(answers)

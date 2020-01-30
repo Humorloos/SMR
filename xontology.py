@@ -55,6 +55,8 @@ class XOntology(Ontology):
         # Do not add an Xid if the node is a pure crosslink-node
         if concept_source:
             concept.Xid.append(x_id)
+        else:
+            concept.Crosslink.append(x_id)
         return concept
 
     def add_relation(self, child, relation, parent, aIndex, image, media, x_id,
@@ -211,6 +213,7 @@ class XOntology(Ontology):
             answerDict['text'] = self.field_translator.field_from_class(
                 concept.name)
             answerDict['id'] = list(concept.Xid)
+            answerDict['crosslink'] = list(concept.Crosslink)
             if concept.Image:
                 images.append(file_dict(identifier=concept.Image[0],
                                         doc=concept.Doc[0]))
@@ -338,6 +341,10 @@ class XOntology(Ontology):
 
             # For Node Id in Xmind file
             class Xid(owlready2.AnnotationProperty):
+                pass
+
+            # For Id of crosslink pointing to this concept in Xmind file
+            class Crosslink(owlready2.AnnotationProperty):
                 pass
 
             # Xmind file that contains the node
