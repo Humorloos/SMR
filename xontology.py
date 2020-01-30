@@ -210,7 +210,7 @@ class XOntology(Ontology):
             concept = self.world._get_by_storid(answerDids[i])
             answerDict['text'] = self.field_translator.field_from_class(
                 concept.name)
-            answerDict['id'] = concept.Xid[0]
+            answerDict['id'] = list(concept.Xid)
             if concept.Image:
                 images.append(file_dict(identifier=concept.Image[0],
                                         doc=concept.Doc[0]))
