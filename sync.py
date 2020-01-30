@@ -46,7 +46,7 @@ class XSyncer():
                       'answer and try synchronizing again.')
 
     def change_answer(self, answer, local, status):
-        # TODO: also change choncept in ontology
+        # Change answer in map
         title = title_from_field(local[answer]['content'])
         img = img_from_field(local[answer]['content'])
         if status[answer]['crosslink']:
@@ -57,6 +57,10 @@ class XSyncer():
         self.map_manager.set_node_content(
             tag=answer_tag, title=title, img=img,
             media_dir=self.note_manager.media_dir)
+
+        # Change answer in Ontology
+
+        # Change answer in status
 
     def maybe_remove_answer(self, answer, question, status):
         question_note = self.col.getNote(
