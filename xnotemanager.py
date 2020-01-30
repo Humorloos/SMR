@@ -29,8 +29,12 @@ def media_from_field(field):
         return None
 
 
+def meta_from_fields(fields):
+    return json.loads(get_field_by_name(fields, 'mt'))
+
+
 def meta_from_flds(flds):
-    return json.loads(splitFields(flds)[-1])
+    return meta_from_fields(splitFields(flds))
 
 
 def title_from_field(field):
