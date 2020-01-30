@@ -19,6 +19,7 @@ class XSyncer():
         self.warnings = []
 
     def maybe_remove_answer(self, answer, question, status):
+        # Remove answer from map
         try:
             self.map_manager.remove_node(a_id=answer)
         except AttributeError:
@@ -37,6 +38,7 @@ class XSyncer():
                 '"). Please restore the answer and try synchronizing '
                 'again. You can delete this answer in the xmind file '
                 'directly.')
+        # remove answer from ontology
         self.onto.remove_answer(question, answer)
 
     def run(self):
@@ -98,6 +100,7 @@ class XSyncer():
                 self.map_manager.set_node_content(
                     tag=answer_tag, title=title, img=img,
                     media_dir=self.note_manager.media_dir)
+            # TODO: also change choncept in ontology
             else:
                 continue
             if not sort_id:
