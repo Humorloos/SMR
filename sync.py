@@ -45,7 +45,7 @@ class XSyncer():
                       'add answers directly in the xmind file. Remove the '
                       'answer and try synchronizing again.')
 
-    def change_answer(self, answer, local, status):
+    def change_answer(self, answer, question, local, status):
         # Change answer in map
         title = title_from_field(local[answer]['content'])
         img = img_from_field(local[answer]['content'])
@@ -61,6 +61,11 @@ class XSyncer():
         # Change answer in Ontology
 
         # Change answer in status
+
+        # Remember this change for final note adjustments
+        sort_id = get_field_by_name(
+            self.note_manager.get_fields_from_qId(question), 'id')
+        self.change_list[sort_id] = title
 
     def change_question(self, local_field, question):
         # Change question in map
@@ -162,12 +167,10 @@ class XSyncer():
                                 status=status)
                 continue
             elif not status[answer]['content'] == local[answer]['content']:
-                self.change_answer(answer, local, status)
+                self.change_answer(answer=answer, question=question,
+                                   local=local, status=status)
             else:
                 continue
-            if not sort_id:
-                sort_id = get_field_by_name(
-                    self.note_manager.get_fields_from_qId(question), 'id')
 
     def process_local_changes(self, status, local):
         for sheet in {**local, **status}:
