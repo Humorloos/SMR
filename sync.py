@@ -123,7 +123,6 @@ class XSyncer():
             elif answer not in status:
                 self.add_answer(a_id=answer, q_id=question, local=local,
                                 status=status)
-                print('add answer to map')
                 continue
             elif not status[answer]['content'] == local[answer]['content']:
                 title = title_from_field(local[answer]['content'])
