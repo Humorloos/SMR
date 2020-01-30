@@ -138,6 +138,26 @@ class XManager:
         except AttributeError:
             return ''
 
+    def get_remote(self):
+        content_keys = self.content_sheets()
+        content_sheets = [self.sheets[s] for s in content_keys]
+
+        sheets = dict()
+        for s in content_sheets:
+            questions = dict()
+            sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp'],
+                                      'questions': questions}
+            for t in s['nodes']:
+                if self.is_anki_question(t):
+                    answers = dict()
+                    questions[t['id']] = {'xMod': t['timestamp'],
+                                          'answers': answers}
+                    for a in self.get_answer_nodes(t):
+                        answers[a['id']] = {'xMod': a['timestamp']}
+
+        remote = self.remote_file(sheets)
+        return remote
+
     def getTagById(self, tagId):
         """
         :param tagId: the id property of the tag
@@ -313,26 +333,6 @@ class XManager:
 
     def content_sheets(self):
         return [k for k in self.sheets.keys() if k != 'ref']
-
-    def get_remote(self):
-        content_keys = self.content_sheets()
-        content_sheets = [self.sheets[s] for s in content_keys]
-
-        sheets = dict()
-        for s in content_sheets:
-            questions = dict()
-            sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp'],
-                                      'questions': questions}
-            for t in s['nodes']:
-                if self.is_anki_question(t):
-                    answers = dict()
-                    questions[t['id']] = {'xMod': t['timestamp'],
-                                          'answers': answers}
-                    for a in self.get_answer_nodes(t):
-                        answers[a['id']] = {'xMod': a['timestamp']}
-
-        remote = self.remote_file(sheets)
-        return remote
 
     def get_tag_list(self):
         if not self.tag_list:
