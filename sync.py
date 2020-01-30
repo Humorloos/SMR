@@ -30,11 +30,19 @@ class XSyncer():
         self.change_list = None
         self.warnings = []
 
+    # TODO: implement this
     def add_answer(self, a_id, q_id, local, status):
         print('add answer to map')
         print('add answer to ontology')
         print('add answer to meta')
         print('add answer to status')
+        question_note = self.note_manager.getNoteFromQId(q_id)
+        self.raise_sync_error(
+            content=local[a_id]['content'], question_note=question_note,
+            text_pre='Detected added answer "',
+            text_post='Adding answers in anki is not supported yet. You can '
+                      'add answers directly in the xmind file. Remove the '
+                      'answer and try synchronizing again.')
 
     def maybe_remove_answer(self, answer, question, status):
         question_note = self.col.getNote(
