@@ -19,12 +19,13 @@ class XSyncer():
         self.warnings = []
 
     def maybe_remove_answer(self, answer, question, status):
+        question_note = self.col.getNote(
+            self.note_manager.getNoteFromQId(question)[0])
+
         # Remove answer from map
         try:
             self.map_manager.remove_node(a_id=answer)
         except AttributeError:
-            question_note = self.col.getNote(
-                self.note_manager.getNoteFromQId(question)[0])
             tag = question_note.tags[0]
             question_title = self.note_manager.get_field_by_name(
                 question_note.fields, 'qt')
@@ -40,6 +41,10 @@ class XSyncer():
                 'directly.')
         # Remove answer from ontology
         self.onto.remove_answer(question, answer)
+
+        # Remove answer from note meta
+        meta = meta_from_fields(question_note.fields)
+        print()
 
     def run(self):
         local = {f: self.note_manager.get_local(f) for f in self.xmind_files}
