@@ -70,9 +70,13 @@ class XSyncer():
         self.map_manager.set_node_content(
             tag=question_tag, title=title, img=img,
             media_dir=self.note_manager.media_dir)
+
         # Change question in ontology
         self.onto.change_question(x_id=question,
                                   new_question=local_field)
+
+        # TODO: Change question in status
+
         # Remember this change for final note adjustments
         sort_id = get_field_by_name(
             self.note_manager.get_flds_from_qId(question), 'id')
