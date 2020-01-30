@@ -99,7 +99,7 @@ class XNoteManager():
                     'answers': answers}
                 for x, a in enumerate(self.get_answer_cards(question['id'])):
                     try:
-                        a_id = question['meta']['answers'][x]['answerId']
+                        a_id = question['meta']['answers'][x]['answerIds']
                     except IndexError:
                         a_id = a[1]
                     answers[a_id] = {'ankiMod': a[0],
