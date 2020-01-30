@@ -58,9 +58,9 @@ class XSyncer():
             tag=answer_tag, title=title, img=img,
             media_dir=self.note_manager.media_dir)
 
-        # Change answer in Ontology
+        # TODO: Change answer in Ontology
 
-        # Change answer in status
+        # TODO: Change answer in status
 
         # Remember this change for final note adjustments
         sort_id = get_field_by_name(
