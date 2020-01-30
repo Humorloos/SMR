@@ -212,8 +212,8 @@ class XOntology(Ontology):
         return self.Xid[elements['s'], elements['p'], elements['o']][0]
 
     def getNoteData(self, questionList):
-
         elements = self.getElements(questionList[0])
+        q_id = self.getXid(elements)
         answerDids = set(t[2] for t in questionList)
         # Sort answerDids by answer index to get the answers' order right
         answerDids = sorted(answerDids, key=lambda d: self.get_AIndex(
@@ -225,8 +225,17 @@ class XOntology(Ontology):
             concept = self.world._get_by_storid(answerDids[i])
             answerDict['text'] = self.field_translator.field_from_class(
                 concept.name)
-            answerDict['id'] = list(concept.Xid)
-            answerDict['crosslink'] = list(concept.Crosslink)
+            if concept.Xid:
+                id_dict = json.loads(concept.Xid[0])
+                if q_id in id_dict:
+                    answerDict['id'] = id_dict[q_id]
+                    answerDict['crosslink'] = ''
+            if concept.Crosslink:
+                crosslink_dict = json.loads(concept.Crosslink[0])
+                if q_id in crosslink_dict:
+                    answerDict['id'] = ''
+                    answerDict['crosslink'] = crosslink_dict[q_id]
+
             if concept.Image:
                 images.append(file_dict(identifier=concept.Image[0],
                                         doc=concept.Doc[0]))
@@ -263,7 +272,7 @@ class XOntology(Ontology):
             'sortId': self.getSortId(elements),
             'document': self.getDoc(elements),
             'sheetId': self.getSheet(elements),
-            'questionId': self.getXid(elements),
+            'questionId': q_id,
             'subjects': parentDicts,
             'images': images,
             'media': media,
