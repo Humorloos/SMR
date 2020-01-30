@@ -6,6 +6,13 @@ from .utils import *
 from .consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS
 
 
+def get_field_by_name(flds, name):
+    if name not in X_FLDS:
+        raise NameError('Name not in X_FLDS, valid names are ' +
+                        X_FLDS.keys())
+    return flds[list(X_FLDS.keys()).index(name)]
+
+
 def img_from_field(field):
     try:
         return re.search('<img src=\"(.*\.(' + '|'.join(X_IMG_EXTENSIONS) +
@@ -50,12 +57,6 @@ class XNoteManager():
         self.model = xModelId(self.col)
         self.media_dir = re.sub(r"(?i)\.(anki2)$", ".media", self.col.path)
 
-    def get_field_by_name(self, flds, name):
-        if name not in X_FLDS:
-            raise NameError('Name not in X_FLDS, valid names are ' +
-                            X_FLDS.keys())
-        return flds[list(X_FLDS.keys()).index(name)]
-
     def get_flds_from_qId(self, qId):
         return splitFields(self.col.db.first(
             "select flds from notes where flds like '%\"questionId\": \"" +
@@ -78,7 +79,7 @@ class XNoteManager():
                 self.model)
                      if meta_from_flds(r[0])['path'] == file]
         for n in doc_notes:
-            n['meta'] = json.loads(self.get_field_by_name(n['flds'], 'mt'))
+            n['meta'] = json.loads(get_field_by_name(n['flds'], 'mt'))
         sheet_ids = set(n['meta']['sheetId'] for n in doc_notes)
         sheet_notes = {i: {n['meta']['questionId']: n for n in doc_notes if
                            n['meta']['sheetId'] == i} for i in sheet_ids}
@@ -95,7 +96,7 @@ class XNoteManager():
                 question = sheet_note[n]
                 questions[question['meta']['questionId']] = {
                     'ankiMod': question['ankiMod'],
-                    'content': self.get_field_by_name(question['flds'], 'qt'),
+                    'content': get_field_by_name(question['flds'], 'qt'),
                     'answers': answers}
                 for x, a in enumerate(self.get_answer_cards(question['id'])):
                     try:
@@ -105,7 +106,7 @@ class XNoteManager():
                     except IndexError:
                         a_id = a[1]
                     answers[a_id] = {'ankiMod': a[0],
-                                     'content': self.get_field_by_name(
+                                     'content': get_field_by_name(
                                          question['flds'], 'a' + str(x + 1))}
         docMod = max([n['ankiMod'] for n in doc_notes])
         deck = self.col.db.first(

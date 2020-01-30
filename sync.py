@@ -27,9 +27,9 @@ class XSyncer():
             self.map_manager.remove_node(a_id=answer)
         except AttributeError:
             tag = question_note.tags[0]
-            question_title = self.note_manager.get_field_by_name(
+            question_title = get_field_by_name(
                 question_note.fields, 'qt')
-            reference = self.note_manager.get_field_by_name(
+            reference = get_field_by_name(
                 question_note.fields, 'rf')
             raise ReferenceError(
                 'Detected invalid deletion: Cannot delete Answer "' +
@@ -109,7 +109,7 @@ class XSyncer():
             else:
                 continue
             if not sort_id:
-                sort_id = self.note_manager.get_field_by_name(
+                sort_id = get_field_by_name(
                     self.note_manager.get_flds_from_qId(question), 'id')
             self.change_list[sort_id] = title
 
@@ -134,7 +134,7 @@ class XSyncer():
                 self.onto.change_question(x_id=question,
                                           new_question=local_field)
                 # Remember this change for final note adjustments
-                sort_id = self.note_manager.get_field_by_name(
+                sort_id = get_field_by_name(
                     self.note_manager.get_flds_from_qId(question), 'id')
                 self.change_list[sort_id] = local_field
             self.process_local_answers(status=status[question]['answers'],
