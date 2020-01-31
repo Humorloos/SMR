@@ -62,8 +62,8 @@ class XOntology(Ontology):
 
         print('add answer')
 
-    def add_concept(self, crosslink, nodeContent, x_id, root, file,
-                    question):
+    def add_concept(self, crosslink, nodeContent, x_id, file,
+                    question, root=False):
         if root:
             concept = self.Root(classify(nodeContent))
         else:
