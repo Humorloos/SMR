@@ -73,13 +73,14 @@ class XOntology(Ontology):
         self.parentStorid = self.Parent.storid
         self.field_translator = FieldTranslator()
 
-    def add_answer(self, parents, q_id, a_id, answer_field, file, rel_dict):
+    def add_answer(self, parents, q_id, a_id, answer_field, file, rel_dict,
+                   question_class):
         answer_content = content_from_field(answer_field)
         answer_concept = self.add_concept(nodeContent=answer_content, q_id=q_id,
                                           a_id=a_id, file=file)
         for parent in parents:
-            self.add_relation(child=answer_concept, class_text=classify(
-                answer_content), parent=parent, rel_dict=rel_dict)
+            self.add_relation(child=answer_concept, class_text=question_class,
+                              parent=parent, rel_dict=rel_dict)
         print('add answer')
 
     def add_concept(self, nodeContent, q_id, a_id, file, root=False,
@@ -161,13 +162,15 @@ class XOntology(Ontology):
         answer = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
         answer_triples = [t for t in self.get_question(q_id) if t['o'] ==
                           answer]
+        question_class = answer_triples[0]['p'].name
         parents = set(t['s'] for t in answer_triples)
         file = answer.Doc[0]
         rel_dict = self.rel_dict_from_triple(answer_triples[0])
         self.remove_answer(q_id=q_id, a_id=a_id)
 
         self.add_answer(parents=parents, q_id=q_id, a_id=a_id,
-                        answer_field=new_answer, file=file, rel_dict=rel_dict)
+                        answer_field=new_answer, file=file,
+                        rel_dict=rel_dict, question_class=question_class)
 
         print('change answer')
 
