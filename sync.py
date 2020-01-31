@@ -1,7 +1,7 @@
+from .consts import USER_PATH
+from .statusmanager import StatusManager
 from .xmanager import XManager, get_os_mod
 from .xnotemanager import *
-from .statusmanager import StatusManager
-from .consts import USER_PATH
 from .xontology import XOntology
 
 
