@@ -81,7 +81,6 @@ class XOntology(Ontology):
         for parent in parents:
             self.add_relation(child=answer_concept, class_text=question_class,
                               parent=parent, rel_dict=rel_dict)
-        print('add answer')
 
     def add_concept(self, nodeContent, q_id, a_id, file, root=False,
                     crosslink=None):
@@ -171,8 +170,6 @@ class XOntology(Ontology):
         self.add_answer(parents=parents, q_id=q_id, a_id=a_id,
                         answer_field=new_answer, file=file,
                         rel_dict=rel_dict, question_class=question_class)
-
-        print('change answer')
 
     def change_question(self, x_id, new_question):
         question_triples = self.get_question(x_id)
