@@ -335,7 +335,7 @@ class XOntology(Ontology):
 
         # Remove answer from question
         remove_relations(answers=[answer], parents=parents,
-                              question_triples=question_triples)
+                         question_triples=question_triples)
 
         # Remove answer's x_id from concept or destroy concept if no x_ids
         # are left
