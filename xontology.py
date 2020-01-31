@@ -73,8 +73,13 @@ class XOntology(Ontology):
         self.parentStorid = self.Parent.storid
         self.field_translator = FieldTranslator()
 
-    def add_answer(self, q_id, a_id, answer_content):
-
+    def add_answer(self, parents, q_id, a_id, answer_field, file, rel_dict):
+        answer_content = content_from_field(answer_field)
+        answer_concept = self.add_concept(nodeContent=answer_content, q_id=q_id,
+                                          a_id=a_id, file=file)
+        for parent in parents:
+            self.add_relation(child=answer_concept, class_text=classify(
+                answer_content), parent=parent, rel_dict=rel_dict)
         print('add answer')
 
     def add_concept(self, nodeContent, q_id, a_id, file, root=False,
