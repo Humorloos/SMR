@@ -1,11 +1,10 @@
 # class for reading and writing xmind files
 
 import os
-import urllib.parse
-import re
-import zipfile
 import shutil
 import tempfile
+import urllib.parse
+import zipfile
 
 from bs4 import BeautifulSoup
 
