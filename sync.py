@@ -57,8 +57,7 @@ class XSyncer:
             img=img, title=title, x_id=x_id,
             media_dir=self.note_manager.media_dir)
 
-        # TODO: Change answer in Ontology
-        print('change answer in ontology')
+        # Change answer in Ontology
         self.onto.change_answer(q_id=question, a_id=answer,
                                 new_answer=local[answer]['content'])
         # TODO: Change answer in status
