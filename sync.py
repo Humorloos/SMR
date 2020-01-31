@@ -60,7 +60,9 @@ class XSyncer:
         # Change answer in Ontology
         self.onto.change_answer(q_id=question, a_id=answer,
                                 new_answer=local[answer]['content'])
-        # TODO: Change answer in status
+
+        # Change answer in status
+        status[answer].update(local[answer])
 
         # Remember this change for final note adjustments
         sort_id = get_field_by_name(
