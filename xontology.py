@@ -172,6 +172,9 @@ class XOntology(Ontology):
     def get_AIndex(self, elements):
         return self.AIndex[elements['s'], elements['p'], elements['o']][0]
 
+    def get_answer_by_a_id(self, a_id, q_id):
+        return self.search(Xid='*{"'+q_id+'": {"src": "'+a_id+'*')[0]
+
     def get_all_parent_triples(self):
         return [t for t in self.get_triples() if t[1] == self.Parent.storid]
 
