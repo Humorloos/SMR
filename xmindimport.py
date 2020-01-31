@@ -128,9 +128,8 @@ class XmindImporter(NoteImporter):
             nodeContent = manager.getNodeContent(nodeTag)
             x_id = nodeTag['id']
             concept = self.onto.add_concept(
-                crosslink=crosslink, nodeContent=nodeContent,
-                mod=nodeTag['timestamp'], x_id=x_id, root=root,
-                file=self.activeManager.file, question=question)
+                crosslink=crosslink, nodeContent=nodeContent, x_id=x_id,
+                root=root, file=self.activeManager.file, question=question)
             # Assign a list to concept since concept may also contain
             # multiple concepts in case of bridges
             concept = [concept]
@@ -269,8 +268,7 @@ class XmindImporter(NoteImporter):
         answers = [a for a in noteData['answers'] if len(a) != 0]
         xMindMeta['answers'] = [{'answerId': a['src'],
                                  'crosslink': a['crosslink'],
-                                 'children': a['children'],
-                                 'mod': a['mod']} for a in answers]
+                                 'children': a['children']} for a in answers]
         xMindMeta['nAnswers'] = len(answers)
         xMindMeta['subjects'] = noteData['subjects']
         xMindMeta['questionMod'] = noteData['questionMod']

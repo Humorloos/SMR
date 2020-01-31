@@ -58,7 +58,11 @@ class XOntology(Ontology):
         self.parentStorid = self.Parent.storid
         self.field_translator = FieldTranslator()
 
-    def add_concept(self, crosslink, nodeContent, mod, x_id, root, file,
+    def add_answer(self, q_id, a_id, answer_content):
+
+        print('add answer')
+
+    def add_concept(self, crosslink, nodeContent, x_id, root, file,
                     question):
         if root:
             concept = self.Root(classify(nodeContent))
@@ -74,7 +78,6 @@ class XOntology(Ontology):
         if nodeContent['media']['media']:
             concept.Media = nodeContent['media']['media']
         concept.Doc = file
-        concept.Mod = mod
         if root:
             question = 'root'
         id_dict = {'src': x_id,
@@ -256,7 +259,6 @@ class XOntology(Ontology):
             childTriples = self.getChildTriples(s=answerDids[i])
             childElements = [self.getElements(t) for t in childTriples]
             answerDict['children'] = self.getChildQuestionIds(childElements)
-            answerDict['mod'] = concept.Mod[0]
 
         parentDids = list(set(t[0] for t in questionList))
         parentDicts = []
@@ -381,10 +383,6 @@ class XOntology(Ontology):
 
             # Xmind file that contains the node
             class Doc(owlready2.AnnotationProperty):
-                pass
-
-            # Node's last modification
-            class Mod(owlready2.AnnotationProperty):
                 pass
 
             # Annotation properties for relation triples
