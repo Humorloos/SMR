@@ -1,20 +1,10 @@
-import json
-import shutil
-import owlready2
-import types
-
-from time import sleep
-
 from anki.importing.noteimp import NoteImporter
-from anki.utils import splitFields, joinFields, intTime, guid64, timestampID
-
-from .sheetselectors import *
-from .utils import *
+from anki.utils import joinFields, intTime, guid64, timestampID
 from .consts import *
+from .sheetselectors import *
+from .statusmanager import StatusManager
 from .xmanager import *
 from .xontology import *
-from .statusmanager import StatusManager
-from .xnotemanager import XNoteManager
 
 
 # TODO: adjust sheet selection windows to adjust to the window size
