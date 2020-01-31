@@ -22,6 +22,21 @@ def classify(content):
     return classified
 
 
+def rel_dict(aIndex, image, media, x_id, timestamp,
+             ref, sortId, doc, sheet, tag):
+    return {
+            'aIndex': aIndex,
+            'image': image,
+            'media': media,
+            'x_id': x_id,
+            'timestamp': timestamp,
+            'ref': ref,
+            'sortId': sortId,
+            'doc': doc,
+            'sheet': sheet,
+            'tag': tag}
+
+
 def remove_relations(answers, parents, question_triples):
     """
     Removes relations from parents to answers
@@ -173,6 +188,19 @@ class XOntology(Ontology):
         """
         self.add_relation(
             child=child, relation=class_text, parent=parent,
+            aIndex=self.get_AIndex(question_triple),
+            image=self.getImage(question_triple),
+            media=self.getMedia(question_triple),
+            x_id=self.getXid(question_triple),
+            timestamp=self.getMod(question_triple),
+            ref=self.getRef(question_triple),
+            sortId=self.getSortId(question_triple),
+            doc=self.getDoc(question_triple),
+            sheet=self.getSheet(question_triple),
+            tag=self.getNoteTag(question_triple))
+
+    def rel_dict_from_triple(self, question_triple):
+        return rel_dict(
             aIndex=self.get_AIndex(question_triple),
             image=self.getImage(question_triple),
             media=self.getMedia(question_triple),
