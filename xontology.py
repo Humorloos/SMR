@@ -25,16 +25,16 @@ def classify(content):
 def rel_dict(aIndex, image, media, x_id, timestamp,
              ref, sortId, doc, sheet, tag):
     return {
-            'aIndex': aIndex,
-            'image': image,
-            'media': media,
-            'x_id': x_id,
-            'timestamp': timestamp,
-            'ref': ref,
-            'sortId': sortId,
-            'doc': doc,
-            'sheet': sheet,
-            'tag': tag}
+        'aIndex': aIndex,
+        'image': image,
+        'media': media,
+        'x_id': x_id,
+        'timestamp': timestamp,
+        'ref': ref,
+        'sortId': sortId,
+        'doc': doc,
+        'sheet': sheet,
+        'tag': tag}
 
 
 def remove_relations(answers, parents, question_triples):
@@ -116,10 +116,9 @@ class XOntology(Ontology):
         return concept
 
     def add_relation(self, child, class_text, parent, rel_dict):
-
         relProp = getattr(self, class_text)
 
-        # add objectproperty if not yet in ontology
+        # Add objectproperty if not yet in ontology
         if not relProp:
             with self:
                 relProp = types.new_class(
