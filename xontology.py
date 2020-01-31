@@ -311,16 +311,19 @@ class XOntology(Ontology):
         parents = set(t['s'] for t in question_triples)
         answer = next(t['o'] for t in question_triples if
                       a_id == json.loads(t['o'].Xid[0])[q_id]['src'])
+
         # Remove answer from question
         self.remove_relations(answers=[answer], parents=parents,
                               question_triples=question_triples)
-        # Remove answer's x_id from concept
+
+        # Remove answer's x_id from concept or destroy concept if no x_ids
+        # are left
         id_dict = json.loads(answer.Xid[0])
         del id_dict[q_id]
         if id_dict:
             answer.Xid[0] = json.dumps(id_dict)
         else:
-            answer.Xid = []
+            self.destroy_entity(answer)
 
     def remove_relations(self, answers, parents, question_triples):
         question = question_triples[0]['p']
