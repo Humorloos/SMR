@@ -2,6 +2,7 @@ import owlready2
 import types
 
 from owlready2.namespace import Ontology, World
+from owlready2.prop import destroy_entity
 
 from .consts import ADDON_PATH, X_MAX_ANSWERS
 from .xnotemanager import *
@@ -406,7 +407,7 @@ class XOntology(Ontology):
         if id_dict:
             answer.Xid[0] = json.dumps(id_dict)
         else:
-            self.destroy_entity(answer)
+            destroy_entity(answer)
 
     def setUpClasses(self):
         with self:
