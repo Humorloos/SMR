@@ -105,6 +105,10 @@ class XOntology(Ontology):
         # set annotation properties for parent relation
         self.Xid[child, self.Parent, parent] = x_id
 
+    def change_answer(self, q_id, a_id, new_answer):
+        question_triples = self.get_question(q_id)
+        print('change answer')
+
     def change_question(self, x_id, new_question):
         question_triples = self.get_question(x_id)
         answers = set(t['o'] for t in question_triples)
