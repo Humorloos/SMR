@@ -22,7 +22,20 @@ def classify(content):
     return classified
 
 
-# TODO: implement change of ontology after changing a note
+def remove_relations(answers, parents, question_triples):
+    question = question_triples[0]['p']
+    # Remove old question for all parents
+    for parent in parents:
+        left_answers = [a for a in getattr(parent, question.name) if
+                        a not in answers]
+        setattr(parent, question.name, left_answers)
+
+    # Remove old parents for all answers
+    for answer in answers:
+        left_parents = [p for p in answer.Parent if p not in parents]
+        answer.Parent = left_parents
+
+
 class XOntology(Ontology):
     def __init__(self, iri=None):
         if not iri:
@@ -114,7 +127,7 @@ class XOntology(Ontology):
         answers = set(t['o'] for t in question_triples)
         parents = set(t['s'] for t in question_triples)
 
-        self.remove_relations(answers, parents, question_triples)
+        remove_relations(answers, parents, question_triples)
 
         class_text = classify(content_from_field(new_question))
         # add new relationship
@@ -313,7 +326,7 @@ class XOntology(Ontology):
                       a_id == json.loads(t['o'].Xid[0])[q_id]['src'])
 
         # Remove answer from question
-        self.remove_relations(answers=[answer], parents=parents,
+        remove_relations(answers=[answer], parents=parents,
                               question_triples=question_triples)
 
         # Remove answer's x_id from concept or destroy concept if no x_ids
@@ -324,18 +337,6 @@ class XOntology(Ontology):
             answer.Xid[0] = json.dumps(id_dict)
         else:
             self.destroy_entity(answer)
-
-    def remove_relations(self, answers, parents, question_triples):
-        question = question_triples[0]['p']
-        # remove old question for all parents
-        for parent in parents:
-            left_answers = [a for a in getattr(parent, question.name) if
-                            a not in answers]
-            setattr(parent, question.name, left_answers)
-        # remove old parents for all answers
-        for answer in answers:
-            left_parents = [p for p in answer.Parent if p not in parents]
-            answer.Parent = left_parents
 
     def setUpClasses(self):
         with self:
