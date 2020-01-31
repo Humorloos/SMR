@@ -158,9 +158,17 @@ class XOntology(Ontology):
         self.Xid[child, self.Parent, parent] = rel_dict['x_id']
 
     def change_answer(self, q_id, a_id, new_answer):
-        question_triples = self.get_question(q_id)
+        answer = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
+        answer_triples = [t for t in self.get_question(q_id) if t['o'] ==
+                          answer]
+        parents = set(t['s'] for t in answer_triples)
+        file = answer.Doc[0]
+        rel_dict = self.rel_dict_from_triple(answer_triples[0])
         self.remove_answer(q_id=q_id, a_id=a_id)
-        self.add_answer(q_id=q_id, a_id=a_id, answer_content=new_answer)
+
+        self.add_answer(parents=parents, q_id=q_id, a_id=a_id,
+                        answer_field=new_answer, file=file, rel_dict=rel_dict)
+
         print('change answer')
 
     def change_question(self, x_id, new_question):
