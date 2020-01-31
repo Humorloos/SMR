@@ -38,6 +38,12 @@ class XManager:
         self.changes = False
         self.tag_list = None
 
+    def change_node_content(self, img, title, x_id, media_dir):
+        answer_tag = self.getTagById(x_id)
+        self.set_node_content(
+            tag=answer_tag, title=title, img=img,
+            media_dir=media_dir)
+
     def get_answer_nodes(self, tag):
         return [{'src': n, 'crosslink': '' if not self.is_crosslink_node(n)
                 else self.getTagById(self.getNodeCrosslink(n))} for n in

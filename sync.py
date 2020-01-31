@@ -53,9 +53,8 @@ class XSyncer:
             x_id = status[answer]['crosslink']['x_id']
         else:
             x_id = answer
-        answer_tag = self.map_manager.getTagById(x_id)
-        self.map_manager.set_node_content(
-            tag=answer_tag, title=title, img=img,
+        self.map_manager.change_node_content(
+            img=img, title=title, x_id=x_id,
             media_dir=self.note_manager.media_dir)
 
         # TODO: Change answer in Ontology
