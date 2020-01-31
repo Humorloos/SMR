@@ -156,24 +156,39 @@ class XOntology(Ontology):
         # add new relationship
         for parent in parents:
             for child in answers:
-                self.add_relation(
-                    child=child, relation=class_text, parent=parent,
-                    aIndex=self.get_AIndex(question_triples[0]),
-                    image=self.getImage(question_triples[0]),
-                    media=self.getMedia(question_triples[0]),
-                    x_id=self.getXid(question_triples[0]),
-                    timestamp=self.getMod(question_triples[0]),
-                    ref=self.getRef(question_triples[0]),
-                    sortId=self.getSortId(question_triples[0]),
-                    doc=self.getDoc(question_triples[0]),
-                    sheet=self.getSheet(question_triples[0]),
-                    tag=self.getNoteTag(question_triples[0]))
+                self.relation_from_triple(
+                    child=child, class_text=class_text, parent=parent,
+                    question_triple=question_triples[0])
+
+    def relation_from_triple(self, child, class_text, parent, question_triple):
+        """
+        Creates a new relation between the child and the parent with the
+        given name and the attributes of the relation described in
+        question_triple
+        :param child: Object concept (answer)
+        :param class_text: Name of the relation to add (question name)
+        :param parent: Subject concept (parent to question)
+        :param question_triple: Dictionary of three concepts that provides the
+        attributes of the question relation
+        """
+        self.add_relation(
+            child=child, relation=class_text, parent=parent,
+            aIndex=self.get_AIndex(question_triple),
+            image=self.getImage(question_triple),
+            media=self.getMedia(question_triple),
+            x_id=self.getXid(question_triple),
+            timestamp=self.getMod(question_triple),
+            ref=self.getRef(question_triple),
+            sortId=self.getSortId(question_triple),
+            doc=self.getDoc(question_triple),
+            sheet=self.getSheet(question_triple),
+            tag=self.getNoteTag(question_triple))
 
     def get_AIndex(self, elements):
         return self.AIndex[elements['s'], elements['p'], elements['o']][0]
 
     def get_answer_by_a_id(self, a_id, q_id):
-        return self.search(Xid='*{"'+q_id+'": {"src": "'+a_id+'*')[0]
+        return self.search(Xid='*{"' + q_id + '": {"src": "' + a_id + '*')[0]
 
     def get_all_parent_triples(self):
         return [t for t in self.get_triples() if t[1] == self.Parent.storid]
