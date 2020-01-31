@@ -53,7 +53,7 @@ class XSyncer:
             x_id = status[answer]['crosslink']['x_id']
         else:
             x_id = answer
-        self.map_manager.change_node_content(
+        self.map_manager.set_node_content(
             img=img, title=title, x_id=x_id,
             media_dir=self.note_manager.media_dir)
 
@@ -72,10 +72,10 @@ class XSyncer:
         # Change question in map
         title = title_from_field(local_field)
         img = img_from_field(local_field)
-        question_tag = self.map_manager.getTagById(question)
         self.map_manager.set_node_content(
-            tag=question_tag, title=title, img=img,
-            media_dir=self.note_manager.media_dir)
+            img=img, title=title, x_id=question,
+            media_dir=self.note_manager.media_dir
+        )
 
         # Change question in ontology
         self.onto.change_question(x_id=question,

@@ -38,12 +38,6 @@ class XManager:
         self.changes = False
         self.tag_list = None
 
-    def change_node_content(self, img, title, x_id, media_dir):
-        answer_tag = self.getTagById(x_id)
-        self.set_node_content(
-            tag=answer_tag, title=title, img=img,
-            media_dir=media_dir)
-
     def get_answer_nodes(self, tag):
         return [{'src': n, 'crosslink': '' if not self.is_crosslink_node(n)
                 else self.getTagById(self.getNodeCrosslink(n))} for n in
@@ -246,7 +240,8 @@ class XManager:
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
 
-    def set_node_content(self, tag, title, img, media_dir):
+    def set_node_content(self, x_id, title, img, media_dir):
+        tag = self.getTagById(x_id)
         if title != self.getNodeTitle(tag):
             setNodeTitle(tag=tag, title=title)
         nodeImg = self.getNodeImg(tag)
