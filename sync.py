@@ -100,8 +100,8 @@ class XSyncer:
                 content=status[answer]['content'], question_note=question_note,
                 text_pre='Detected invalid deletion: Cannot delete answer "',
                 text_post='Please restore the answer and try synchronizing '
-                'again. You can delete this answer in the xmind file '
-                'directly.')
+                          'again. You can delete this answer in the xmind file '
+                          'directly.')
 
         # Remove answer from ontology
         self.onto.remove_answer(question, answer)
