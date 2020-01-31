@@ -20,6 +20,18 @@ def setNodeTitle(tag, title):
     tag.find('title', recursive=False).string = title
 
 
+def getChildnodes(tag):
+    """
+    :param tag: the tag to get the childnodes for
+    :return: childnodes as tags, empty list if it doesn't have any
+    """
+    try:
+        return tag.find('children', recursive=False).find(
+            'topics', recursive=False)('topic', recursive=False)
+    except AttributeError:
+        return []
+
+
 class XManager:
     def __init__(self, file):
         self.xZip = zipfile.ZipFile(file, 'r')
@@ -40,24 +52,13 @@ class XManager:
     def get_answer_nodes(self, tag):
         return [{'src': n, 'crosslink': '' if not self.is_crosslink_node(n)
                 else self.getTagById(self.getNodeCrosslink(n))} for n in
-                self.getChildnodes(tag) if not self.isEmptyNode(n)]
+                getChildnodes(tag) if not self.isEmptyNode(n)]
 
     def getAttachment(self, identifier, dir):
         # extract attachment to anki media directory
         self.xZip.extract(identifier, dir)
         # get image from subdirectory attachments in mediaDir
         return os.path.join(dir, identifier)
-
-    def getChildnodes(self, tag):
-        """
-        :param tag: the tag to get the childnodes for
-        :return: childnodes as tags, empty list if it doesn't have any
-        """
-        try:
-            return tag.find('children', recursive=False).find(
-                'topics', recursive=False)('topic', recursive=False)
-        except AttributeError:
-            return []
 
     def getNodeContent(self, tag):
         """
@@ -209,7 +210,7 @@ class XManager:
             return False
         if self.isEmptyNode(tag):
             return False
-        children = self.getChildnodes(tag)
+        children = getChildnodes(tag)
         if len(children) == 0:
             return False
         for child in children:
@@ -226,7 +227,7 @@ class XManager:
 
     def remove_node(self, a_id):
         tag = self.getTagById(a_id)
-        if not self.getChildnodes(tag):
+        if not getChildnodes(tag):
             tag.decompose()
             self.tag_list.remove(tag)
         else:

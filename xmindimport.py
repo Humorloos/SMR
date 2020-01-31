@@ -11,7 +11,7 @@ from anki.utils import splitFields, joinFields, intTime, guid64, timestampID
 from .sheetselectors import *
 from .utils import *
 from .consts import *
-from .xmanager import XManager
+from .xmanager import *
 from .xontology import *
 from .statusmanager import StatusManager
 from .xnotemanager import XNoteManager
@@ -78,7 +78,7 @@ class XmindImporter(NoteImporter):
         answerDicts = list()
         manager = self.activeManager
         crosslink = manager.getNodeCrosslink(question)
-        childNotes = manager.getChildnodes(question)
+        childNotes = getChildnodes(question)
 
         if len(childNotes) == 0:
             return self.stop_or_add_cross_question(
@@ -195,7 +195,7 @@ class XmindImporter(NoteImporter):
                 ref = ref + replaceSound(answerContent) + '</li>'
             else:
                 ref = ref + ': ' + replaceSound(answerContent) + '</li>'
-        followRels = manager.getChildnodes(parentAnswerDict['nodeTag'])
+        followRels = getChildnodes(parentAnswerDict['nodeTag'])
         for qId, followRel in enumerate(followRels, start=1):
 
             # Update the sorting ID
@@ -222,7 +222,7 @@ class XmindImporter(NoteImporter):
                 nextRef = ref + '<li>' + refContent
 
                 for aId, answerDict in enumerate(answerDicts, start=1):
-                    if manager.getChildnodes(parentAnswerDict['nodeTag']):
+                    if getChildnodes(parentAnswerDict['nodeTag']):
                         self.getQuestions(
                             parentAnswerDict=answerDict, ref=nextRef,
                             sortId=updateId(
@@ -247,7 +247,7 @@ class XmindImporter(NoteImporter):
             sheet = xManager.sheets[key]
             # get reference sheets
             if sheet['tag']('title', recursive=False)[0].text == 'ref':
-                ref_tags = xManager.getChildnodes(sheet['tag'].topic)
+                ref_tags = getChildnodes(sheet['tag'].topic)
                 ref_paths = map(xManager.getNodeHyperlink, ref_tags)
                 for path in filter(lambda ref_path: ref_path is not None,
                                    ref_paths):
