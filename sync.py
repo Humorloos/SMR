@@ -19,7 +19,7 @@ def raise_sync_error(content, question_note, text_pre, text_post):
 
 # Algorithm for synchronization was adopted from
 # https://unterwaditzer.net/2016/sync-algorithm.html
-class XSyncer():
+class XSyncer:
     def __init__(self, col, status_file=None):
         self.col = col
         self.note_manager = XNoteManager(col=col)
@@ -31,7 +31,7 @@ class XSyncer():
         self.warnings = []
 
     # TODO: implement this
-    def add_answer(self, a_id, q_id, local, status):
+    def add_answer(self, a_id, q_id, local):
         print('add answer to map')
         print('add answer to ontology')
         print('add answer to meta')
@@ -119,7 +119,7 @@ class XSyncer():
         local = {f: self.note_manager.get_local(f) for f in self.xmind_files}
         os_file_mods = {f: get_os_mod(f) for f in self.xmind_files}
         status = {d['file']: d for d in self.status_manager.status}
-        x_decks = set(local[l]['deck'] for l in local)
+        x_decks = set(local[x_id]['deck'] for x_id in local)
         for d in x_decks:
             self.onto = None
             for f in self.xmind_files:
@@ -154,7 +154,6 @@ class XSyncer():
         print('TODO')
 
     def process_local_answers(self, status, local, question):
-        sort_id = None
         for answer in {**local, **status}:
 
             # If the answer was removed it is still contained in local
@@ -163,8 +162,7 @@ class XSyncer():
                 self.maybe_remove_answer(answer, question, status)
 
             elif answer not in status:
-                self.add_answer(a_id=answer, q_id=question, local=local,
-                                status=status)
+                self.add_answer(a_id=answer, q_id=question, local=local)
                 continue
             elif not status[answer]['content'] == local[answer]['content']:
                 self.change_answer(answer=answer, question=question,
@@ -187,4 +185,3 @@ class XSyncer():
                                        local=local[question]['answers'],
                                        question=question)
             print()
-
