@@ -87,17 +87,17 @@ class XmindImporter(NoteImporter):
 
         # Convert the node content into a string that can be used as a
         # class-name
-        relTitle = classify(content)
+        question_class = classify(content)
 
         # Add a Child relation if the node is a bridge
-        if not relTitle:
-            relTitle = 'Child'
+        if not question_class:
+            question_class = 'Child'
 
         image = content['media']['image']
         media = content['media']['media']
         bridges, children = self.get_children_and_bridges(
             answerDicts, childNotes, image, media, parents, question, ref,
-            relTitle, sortId)
+            question_class, sortId)
         if len(children) > 0:
 
             # Assign all children to bridge concepts because they are the
@@ -138,7 +138,8 @@ class XmindImporter(NoteImporter):
                     crosslink=crosslink, concepts=concept)
 
     def get_children_and_bridges(self, answerDicts, childNotes, image, media,
-                                 parents, question, ref, relTitle, sortId):
+                                 parents, question, ref, question_class,
+                                 sortId):
         children = list()
         bridges = list()
         aIndex = 1
@@ -161,7 +162,7 @@ class XmindImporter(NoteImporter):
                         timestamp=question['timestamp'], ref=ref, sortId=sortId,
                         doc=doc, sheet=sheet, tag=tag)
                     self.onto.add_relation(
-                        child=child, relation=relTitle, parent=parent,
+                        child=child, class_text=question_class, parent=parent,
                         rel_dict=rel_dict)
                 aIndex += 1
             else:

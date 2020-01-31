@@ -115,21 +115,21 @@ class XOntology(Ontology):
             concept.Xid[0] = (json.dumps(id_prop))
         return concept
 
-    def add_relation(self, child, relation, parent, rel_dict):
+    def add_relation(self, child, class_text, parent, rel_dict):
 
-        relProp = getattr(self, relation)
+        relProp = getattr(self, class_text)
 
         # add objectproperty if not yet in ontology
         if not relProp:
             with self:
                 relProp = types.new_class(
-                    relation, (owlready2.ObjectProperty,))
+                    class_text, (owlready2.ObjectProperty,))
                 relProp.domain = [self.Concept]
                 relProp.range = [self.Concept]
 
-        current_children = getattr(parent, relation)
+        current_children = getattr(parent, class_text)
         new_children = current_children + [child]
-        setattr(parent, relation, new_children)
+        setattr(parent, class_text, new_children)
 
         current_parents = getattr(child, 'Parent')
         new_parents = current_parents + [parent]
@@ -186,7 +186,7 @@ class XOntology(Ontology):
         attributes of the question relation
         """
         self.add_relation(
-            child=child, relation=class_text, parent=parent,
+            child=child, class_text=class_text, parent=parent,
             rel_dict=self.rel_dict_from_triple(question_triple=question_triple))
 
     def rel_dict_from_triple(self, question_triple):
