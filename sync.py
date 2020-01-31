@@ -69,7 +69,7 @@ class XSyncer:
             self.note_manager.get_fields_from_qId(question), 'id')
         self.change_list[sort_id] = title
 
-    def change_question(self, local_field, question):
+    def change_question(self, local_field, question, status, local):
         # Change question in map
         title = title_from_field(local_field)
         img = img_from_field(local_field)
@@ -82,7 +82,8 @@ class XSyncer:
         self.onto.change_question(x_id=question,
                                   new_question=local_field)
 
-        # TODO: Change question in status
+        # Change question in status
+        status[question].update(local[question])
 
         # Remember this change for final note adjustments
         sort_id = get_field_by_name(
@@ -182,7 +183,7 @@ class XSyncer:
         for question in {**local, **status}:
             local_field = local[question]['content']
             if local_field != status[question]['content']:
-                self.change_question(local_field, question)
+                self.change_question(local_field, question, status, local)
             self.process_local_answers(status=status[question]['answers'],
                                        local=local[question]['answers'],
                                        question=question)
