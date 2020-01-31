@@ -115,8 +115,7 @@ class XOntology(Ontology):
             concept.Xid[0] = (json.dumps(id_prop))
         return concept
 
-    def add_relation(self, child, relation, parent, aIndex, image, media, x_id,
-                     timestamp, ref, sortId, doc, sheet, tag):
+    def add_relation(self, child, relation, parent, rel_dict):
 
         relProp = getattr(self, relation)
 
@@ -137,22 +136,22 @@ class XOntology(Ontology):
         setattr(child, 'Parent', new_parents)
 
         # set annotation porperties for child relation
-        self.Reference[parent, relProp, child] = ref
-        if sortId:
-            self.SortId[parent, relProp, child] = sortId
-        self.Doc[parent, relProp, child] = doc
-        self.Sheet[parent, relProp, child] = sheet
-        self.Xid[parent, relProp, child] = x_id
-        if image:
-            self.Image[parent, relProp, child] = image
-        if media:
-            self.Media[parent, relProp, child] = media
-        self.NoteTag[parent, relProp, child] = tag
-        self.AIndex[parent, relProp, child] = aIndex
-        self.Mod[parent, relProp, child] = timestamp
+        self.Reference[parent, relProp, child] = rel_dict['ref']
+        if rel_dict['sortId']:
+            self.SortId[parent, relProp, child] = rel_dict['sortId']
+        self.Doc[parent, relProp, child] = rel_dict['doc']
+        self.Sheet[parent, relProp, child] = rel_dict['sheet']
+        self.Xid[parent, relProp, child] = rel_dict['x_id']
+        if rel_dict['image']:
+            self.Image[parent, relProp, child] = rel_dict['image']
+        if rel_dict['media']:
+            self.Media[parent, relProp, child] = rel_dict['media']
+        self.NoteTag[parent, relProp, child] = rel_dict['tag']
+        self.AIndex[parent, relProp, child] = rel_dict['aIndex']
+        self.Mod[parent, relProp, child] = rel_dict['timestamp']
 
         # set annotation properties for parent relation
-        self.Xid[child, self.Parent, parent] = x_id
+        self.Xid[child, self.Parent, parent] = rel_dict['x_id']
 
     def change_answer(self, q_id, a_id, new_answer):
         question_triples = self.get_question(q_id)
@@ -188,16 +187,7 @@ class XOntology(Ontology):
         """
         self.add_relation(
             child=child, relation=class_text, parent=parent,
-            aIndex=self.get_AIndex(question_triple),
-            image=self.getImage(question_triple),
-            media=self.getMedia(question_triple),
-            x_id=self.getXid(question_triple),
-            timestamp=self.getMod(question_triple),
-            ref=self.getRef(question_triple),
-            sortId=self.getSortId(question_triple),
-            doc=self.getDoc(question_triple),
-            sheet=self.getSheet(question_triple),
-            tag=self.getNoteTag(question_triple))
+            rel_dict=self.rel_dict_from_triple(question_triple=question_triple))
 
     def rel_dict_from_triple(self, question_triple):
         return rel_dict(
