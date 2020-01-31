@@ -23,7 +23,15 @@ def classify(content):
 
 
 def remove_relations(answers, parents, question_triples):
+    """
+    Removes relations from parents to answers
+    :param answers: List of object concepts the relations refer to
+    :param parents: List of subject concepts the relations refer to
+    :param question_triples: List of concept triples that represent the
+    relations to remove
+    """
     question = question_triples[0]['p']
+
     # Remove old question for all parents
     for parent in parents:
         left_answers = [a for a in getattr(parent, question.name) if
