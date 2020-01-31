@@ -66,6 +66,7 @@ class XOntology(Ontology):
                     question, root=False):
         if root:
             concept = self.Root(classify(nodeContent))
+            question = 'root'
         else:
             # Some concept names (e.g. 'are') can lead to errors, catch
             # them
@@ -78,8 +79,6 @@ class XOntology(Ontology):
         if nodeContent['media']['media']:
             concept.Media = nodeContent['media']['media']
         concept.Doc = file
-        if root:
-            question = 'root'
         id_dict = {'src': x_id,
                    'crosslink': crosslink}
         if not concept.Xid:
