@@ -250,6 +250,7 @@ class XManager:
         if title != self.getNodeTitle(tag):
             setNodeTitle(tag=tag, title=title)
         nodeImg = self.getNodeImg(tag)
+
         # If the note has an image and the tag not or the image is different
         # or the image was deleted, change it
         if (img and not nodeImg or img and img not in nodeImg) or \
