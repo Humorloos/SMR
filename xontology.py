@@ -62,11 +62,22 @@ class XOntology(Ontology):
 
         print('add answer')
 
-    def add_concept(self, crosslink, nodeContent, x_id, file,
-                    question, root=False):
+    def add_concept(self, nodeContent, q_id, a_id, file, root=False,
+                    crosslink=None):
+        """
+        Adds a new concept to the ontology
+        :param nodeContent: Content dict containing concept's title, image, and
+        media.
+        :param a_id: Id attribute of the topic in the xmind file
+        :param file: Path to the xmind file
+        :param q_id: Id attribute of the question topic in the xmind file
+        :param root: Whether the concept is the xmind file's root or not
+        :param crosslink: If the note contains a crosslink
+        :return: Answer Concept
+        """
         if root:
             concept = self.Root(classify(nodeContent))
-            question = 'root'
+            q_id = 'root'
         else:
             # Some concept names (e.g. 'are') can lead to errors, catch
             # them
@@ -79,13 +90,13 @@ class XOntology(Ontology):
         if nodeContent['media']['media']:
             concept.Media = nodeContent['media']['media']
         concept.Doc = file
-        id_dict = {'src': x_id,
+        id_dict = {'src': a_id,
                    'crosslink': crosslink}
         if not concept.Xid:
-            concept.Xid.append(json.dumps({question: id_dict}))
+            concept.Xid.append(json.dumps({q_id: id_dict}))
         else:
             id_prop = json.loads(concept.Xid[0])
-            id_prop[question] = id_dict
+            id_prop[q_id] = id_dict
             concept.Xid[0] = (json.dumps(id_prop))
         return concept
 
@@ -130,6 +141,8 @@ class XOntology(Ontology):
 
     def change_answer(self, q_id, a_id, new_answer):
         question_triples = self.get_question(q_id)
+        self.remove_answer(q_id=q_id, a_id=a_id)
+        self.add_answer(q_id=q_id, a_id=a_id, answer_content=new_answer)
         print('change answer')
 
     def change_question(self, x_id, new_question):

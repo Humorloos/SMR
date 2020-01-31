@@ -128,8 +128,8 @@ class XmindImporter(NoteImporter):
             nodeContent = manager.getNodeContent(nodeTag)
             x_id = nodeTag['id']
             concept = self.onto.add_concept(
-                crosslink=crosslink, nodeContent=nodeContent, x_id=x_id,
-                root=root, file=self.activeManager.file, question=question)
+                crosslink=crosslink, nodeContent=nodeContent, a_id=x_id,
+                root=root, file=self.activeManager.file, q_id=question)
             # Assign a list to concept since concept may also contain
             # multiple concepts in case of bridges
             concept = [concept]
