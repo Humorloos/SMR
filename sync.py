@@ -30,7 +30,7 @@ class XSyncer:
         self.change_list = None
         self.warnings = []
 
-    # TODO: implement this
+    # TODO: implement add_answer()
     def add_answer(self, a_id, q_id, local):
         print('add answer to map')
         print('add answer to ontology')
