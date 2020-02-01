@@ -178,7 +178,8 @@ class XmindImporter(NoteImporter):
             'content']
         # The reference doesn't have to be edited at the roottopic
         if not isinstance(parentAnswerDict['concepts'][0], self.onto.Root):
-            # if the answerdict contains nothing (i.e. questions
+
+            # If the answerdict contains nothing (i.e. questions
             # following multiple answers), just close the reference
             if not parentAnswerDict['isAnswer']:
                 ref = ref + '</li>'
@@ -198,6 +199,7 @@ class XmindImporter(NoteImporter):
             if answerDicts:
                 actualAnswers = [a for a in answerDicts if a['isAnswer']]
                 isQuestion = not manager.isEmptyNode(followRel)
+
                 # If the current relation is a question and has too many
                 # answers give a warning and stop running
                 if isQuestion and len(actualAnswers) > X_MAX_ANSWERS:
