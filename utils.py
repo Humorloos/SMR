@@ -11,6 +11,25 @@ from anki.utils import ids2str
 from .consts import X_MODEL_NAME
 
 
+def deep_merge(remote, local, path=None):
+    if path is None:
+        path = []
+    for key in remote:
+        if key in local:
+            if isinstance(local[key], dict) and isinstance(remote[key],
+                                                           dict):
+                deep_merge(remote=remote[key], local=local[key],
+                           path=path + [str(key)])
+            elif local[key] == remote[key]:
+                pass  # same leaf value
+            else:
+                raise Exception(
+                    'Conflict at %s' % '.'.join(path + [str(key)]))
+        else:
+            local[key] = remote[key]
+    return local
+
+
 # receives a dictionary with an id for sorting the cards and an id for finding the card's position
 def updateId(previousId, idToAppend):
     return previousId + chr(idToAppend + 122)

@@ -5,6 +5,7 @@ from .sheetselectors import *
 from .statusmanager import StatusManager
 from .xmanager import *
 from .xontology import *
+from .utils import deep_merge
 
 
 # TODO: adjust sheet selection windows to adjust to the window size
@@ -537,28 +538,9 @@ class XmindImporter(NoteImporter):
         for manager in self.xManagers:
             remote = manager.get_remote()
             local = self.noteManager.get_local(manager.file)
-            status = self.deep_merge(remote=remote, local=local)
+            status = deep_merge(remote=remote, local=local)
             self.statusManager.add_new(status)
         self.statusManager.save()
-
-    def deep_merge(self, remote, local, path=None):
-        if path is None:
-            path = []
-        for key in remote:
-            if key in local:
-                if isinstance(local[key], dict) and isinstance(remote[key],
-                                                               dict):
-                    self.deep_merge(remote=remote[key], local=local[key],
-                                    path=path + [str(key)])
-                elif local[key] == remote[key]:
-                    pass  # same leaf value
-                else:
-                    raise Exception(
-                        'Conflict at %s' % '.'.join(path + [str(key)]))
-            else:
-                local[key] = remote[key]
-        return local
-
 
     def getNoteData(self, sortId, question, answerDicts, ref, siblings,
                     connections):
