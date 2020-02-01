@@ -25,10 +25,13 @@ class TestRun(TestCase):
 
     def test_col_changes(self):
         # Save original map before synchronization to tempfile
-        map_path = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
+        files_2_conserve = ['example map.xmind',
+                            'example_general_psychology.xmind']
         temp_dir = tempfile.gettempdir()
-        temp_path = os.path.join(temp_dir, 'example map.xmind')
-        shutil.copy2(map_path, temp_path)
+        paths = [{'map': os.path.join(ADDON_PATH, 'resources', f),
+                  'temp': os.path.join(temp_dir, f)} for f in files_2_conserve]
+        for path in paths:
+            shutil.copy2(path['map'], path['temp'])
 
         col_path = os.path.join(SUPPORT_PATH, 'cols', 'changes',
                                 'collection.anki2')
@@ -39,8 +42,9 @@ class TestRun(TestCase):
         self.syncer.run()
 
         # Restore original version and remove temp file
-        shutil.copy(temp_path, map_path)
-        os.remove(temp_path)
+        for path in paths:
+            shutil.copy(path['temp'], path['map'])
+            os.remove(path['temp'])
 
         self.fail()
 
