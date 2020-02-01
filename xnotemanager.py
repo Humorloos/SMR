@@ -166,7 +166,17 @@ class XNoteManager():
                                nid)
 
     def get_sheet_child_notes(self, seed):
-        pass
+        tag = ' ' + seed.tags[0] + ' '
+        sort_id = get_field_by_name(seed.fields, 'id') + '%'
+        all_child_notes = self.col.db.all(
+            'select id, sfld from notes where tags is ? and sfld '
+                        'like ? and length(sfld) > ?', tag, sort_id,
+                        len(sort_id))
+        min_sort_id_len = min(len(t[1]) for t in all_child_notes)
+        direct_child_nids = [t[0] for t in all_child_notes if len(t[1]) ==
+                              min_sort_id_len]
+        direct_child_notes = [self.col.getNote(n) for n in direct_child_nids]
+        return direct_child_notes
 
 
 class FieldTranslator():

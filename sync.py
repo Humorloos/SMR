@@ -166,8 +166,9 @@ class XSyncer:
                                      for n in changed_notes)
             seed = next(n for n in changed_notes if len(
                 get_field_by_name(n.fields, 'id')) == shortest_id_length)
-            if self.note_manager.get_sheet_child_notes(seed):
-                pass
+            sheet_child_notes = self.note_manager.get_sheet_child_notes(seed)
+            if sheet_child_notes:
+                print()
         pass
 
     # def adjust_ref(self, note, new_ref=None):
