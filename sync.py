@@ -65,8 +65,9 @@ class XSyncer:
         status[answer].update(local[answer])
 
         # Remember this change for final note adjustments
-        self.change_list[self.current_sheet_sync].update({question: {
-            answer: title}})
+        self.change_list[self.current_sheet_sync].update(
+            deep_merge(self.change_list[self.current_sheet_sync],
+                       {question: {answer: title}}))
 
     def change_question(self, local_field, question, status, local):
         # Change question in map
@@ -82,7 +83,8 @@ class XSyncer:
                                   new_question=local_field)
 
         # Change question in status
-        status[question].update(local[question])
+        status[question]['ankiMod'] = local[question]['ankiMod']
+        status[question]['content'] = local[question]['content']
 
         # Remember this change for final note adjustments
         self.change_list[self.current_sheet_sync][question] = {
