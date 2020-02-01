@@ -121,6 +121,7 @@ class XmindImporter(NoteImporter):
             concept = self.onto.add_concept(
                 crosslink=crosslink, nodeContent=nodeContent, a_id=x_id,
                 root=root, file=self.activeManager.file, q_id=question)
+
             # Assign a list to concept since concept may also contain
             # multiple concepts in case of bridges
             concept = [concept]
@@ -141,7 +142,8 @@ class XmindImporter(NoteImporter):
         x_id = question['id']
         for childNode in childNotes:
             answerDict = self.getAnswerDict(nodeTag=childNode, question=x_id)
-            # only add relations to answers that are concepts (not to empty
+
+            # Only add relations to answers that are concepts (not to empty
             # answers that serve as bridges for questions following multiple
             # answers)
             if answerDict['isAnswer']:
@@ -176,6 +178,7 @@ class XmindImporter(NoteImporter):
         manager = self.activeManager
         answerContent = manager.getNodeContent(parentAnswerDict['nodeTag'])[
             'content']
+
         # The reference doesn't have to be edited at the roottopic
         if not isinstance(parentAnswerDict['concepts'][0], self.onto.Root):
             ref = ref_plus_answer(
