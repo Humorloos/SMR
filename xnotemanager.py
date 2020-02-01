@@ -41,6 +41,10 @@ def meta_from_flds(flds):
     return meta_from_fields(splitFields(flds))
 
 
+def ref_minus_last(ref):
+    return re.sub('<li>(?!.*<li>).*', '', ref)
+
+
 def ref_plus_answer(field, followsBridge, ref, mult_subjects):
     # If the answerdict contains nothing (i.e. questions
     # following multiple answers), just close the reference
