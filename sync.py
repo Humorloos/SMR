@@ -169,7 +169,20 @@ class XSyncer:
                                      for n in changed_notes)
             seed = next(n for n in changed_notes if len(
                 get_field_by_name(n.fields, 'id')) == shortest_id_length)
+
             sheet_child_notes = self.note_manager.get_sheet_child_notes(seed)
+            # TODO: Differentiate child_notes by answer since ref depends on
+            #  the answer, best start is by adjusting the uml diagram in the
+            #  same manner.
+            # if sheet_child_notes:
+                # old_ref = get_field_by_name(sheet_child_notes[0].fields, 'rf')
+                # new_ref = ref_plus_question(
+                #     field=get_field_by_name(seed.fields, 'qt'), ref=old_ref)
+                # new_ref = ref_plus_answer(field=new_ref, get_field_by_name(
+                #     seed.fields,
+                #                                                      'rf'), )
+                # for note in sheet_child_notes:
+
             if sheet_child_notes:
                 print()
         pass
