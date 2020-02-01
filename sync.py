@@ -47,6 +47,9 @@ class XSyncer:
 
     def change_answer(self, answer, question, local, status):
         # Change answer in map
+        # TODO: In case of crosslinks, do not edit the source but delete the
+        #  crosslink and add the text directly to the note, don't forget to
+        #  remove the crosslink from the ontology afterwards
         title = title_from_field(local[answer]['content'])
         img = img_from_field(local[answer]['content'])
         if status[answer]['crosslink']:
