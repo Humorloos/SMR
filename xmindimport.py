@@ -178,15 +178,9 @@ class XmindImporter(NoteImporter):
             'content']
         # The reference doesn't have to be edited at the roottopic
         if not isinstance(parentAnswerDict['concepts'][0], self.onto.Root):
-
-            # If the answerdict contains nothing (i.e. questions
-            # following multiple answers), just close the reference
-            if not parentAnswerDict['isAnswer']:
-                ref = ref + '</li>'
-            elif followsBridge:
-                ref = ref + replaceSound(answerContent) + '</li>'
-            else:
-                ref = ref + ': ' + replaceSound(answerContent) + '</li>'
+            ref = ref_plus_answer(
+                answerContent=answerContent, followsBridge=followsBridge,
+                ref=ref, mult_subjects=not parentAnswerDict['isAnswer'])
         followRels = getChildnodes(parentAnswerDict['nodeTag'])
         for qId, followRel in enumerate(followRels, start=1):
 
@@ -210,9 +204,8 @@ class XmindImporter(NoteImporter):
                                  X_MAX_ANSWERS, X_MAX_ANSWERS)]
                     return
 
-                # Update ref with content of this question but without sound
-                refContent = replaceSound(content['content'])
-                nextRef = ref + '<li>' + refContent
+                nextRef = ref_plus_question(
+                    field=content['content'], ref=ref)
 
                 for aId, answerDict in enumerate(answerDicts, start=1):
                     if getChildnodes(parentAnswerDict['nodeTag']):

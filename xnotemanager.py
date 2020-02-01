@@ -41,6 +41,25 @@ def meta_from_flds(flds):
     return meta_from_fields(splitFields(flds))
 
 
+def ref_plus_answer(answerContent, followsBridge, ref, mult_subjects):
+    # If the answerdict contains nothing (i.e. questions
+    # following multiple answers), just close the reference
+    if mult_subjects:
+        ref = ref + '</li>'
+    elif followsBridge:
+        ref = ref + replaceSound(answerContent) + '</li>'
+    else:
+        ref = ref + ': ' + replaceSound(answerContent) + '</li>'
+    return ref
+
+
+def ref_plus_question(field, ref):
+    # Update ref with content of this question but without sound
+    refContent = replaceSound(field)
+    nextRef = ref + '<li>' + refContent
+    return nextRef
+
+
 def set_meta(note, meta):
     note.fields[get_index_by_field_name('mt')] = json.dumps(meta)
 
