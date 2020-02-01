@@ -28,6 +28,7 @@ class XSyncer:
         self.onto = None
         self.status_manager = StatusManager(status_file=status_file)
         self.change_list = None
+        self.current_sheet_sync = None
         self.warnings = []
 
     # TODO: implement add_answer()
@@ -67,7 +68,7 @@ class XSyncer:
         # Remember this change for final note adjustments
         sort_id = get_field_by_name(
             self.note_manager.get_fields_from_qId(question), 'id')
-        self.change_list[sort_id] = title
+        self.change_list[self.current_sheet_sync][sort_id] = title
 
     def change_question(self, local_field, question, status, local):
         # Change question in map
@@ -88,7 +89,7 @@ class XSyncer:
         # Remember this change for final note adjustments
         sort_id = get_field_by_name(
             self.note_manager.get_fields_from_qId(question), 'id')
-        self.change_list[sort_id] = local_field
+        self.change_list[self.current_sheet_sync][sort_id] = local_field
 
     def maybe_remove_answer(self, answer, question, status):
         question_note = self.col.getNote(
@@ -126,7 +127,7 @@ class XSyncer:
         for d in x_decks:
             self.onto = None
             for f in self.xmind_files:
-                self.change_list = dict()
+                self.change_list = {}
                 local_change = status[f]['ankiMod'] != local[f]['ankiMod']
                 if status[f]['osMod'] != os_file_mods[f]:
                     self.map_manager = XManager(f)
@@ -155,7 +156,8 @@ class XSyncer:
                     print('')
 
     def process_change_list(self):
-        print('TODO')
+
+        pass
 
     def process_local_answers(self, status, local, question):
         for answer in {**local, **status}:
@@ -177,6 +179,8 @@ class XSyncer:
     def process_local_changes(self, status, local):
         for sheet in {**local, **status}:
             if local[sheet]['ankiMod'] != status[sheet]['ankiMod']:
+                self.current_sheet_sync = sheet
+                self.change_list[sheet] = {}
                 self.process_local_questions(status=status[sheet]['questions'],
                                              local=local[sheet]['questions'])
 
