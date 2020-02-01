@@ -1,8 +1,9 @@
 Changes made to the original version:
 
 Sheet biological psychology:
-    changed question:
-    - Example image question to 'Serotonin' is now text 'former image'
+    changed question and answer:
+    - biogenic amines - example (image) question to 'Serotonin' is now biogenic
+    amines - former image - Serotonin new
     removed answers:
     - MAO splits up Serotonin, dopmine, adrenaline (no more noradrenaline)
     removed answer with crosslink and changed answer with crosslink:
