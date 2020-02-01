@@ -157,9 +157,23 @@ class XSyncer:
         for sheet in self.change_list:
             changed_notes = [self.note_manager.get_note_from_q_id(q_id) for
                              q_id in self.change_list[sheet]]
-            # sort_id = get_field_by_name(
-            #     self.note_manager.get_fields_from_qId(question), 'id')
+            self.initiate_ref_changes(changed_notes)
         pass
+
+    def initiate_ref_changes(self, changed_notes):
+        if changed_notes:
+            shortest_id_length = min(len(get_field_by_name(n.fields, 'id'))
+                                     for n in changed_notes)
+            seed = next(n for n in changed_notes if len(
+                get_field_by_name(n.fields, 'id')) == shortest_id_length)
+            if self.note_manager.get_sheet_child_notes(seed):
+                pass
+        pass
+
+    # def adjust_ref(self, note, new_ref=None):
+    #     if not new_ref:
+    #         new_ref = self.update_ref(note)
+    #     pass
 
     def process_local_answers(self, status, local, question):
         for answer in {**local, **status}:
@@ -195,3 +209,8 @@ class XSyncer:
                                        local=local[question]['answers'],
                                        question=question)
             print()
+    #
+    # def update_ref(self, note):
+    #     old_ref = get_field_by_name(note.fields, 'rf')
+    #
+    #     pass

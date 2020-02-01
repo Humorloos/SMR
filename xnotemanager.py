@@ -165,6 +165,9 @@ class XNoteManager():
         return self.col.db.all('select mod, id from cards where nid = %s' %
                                nid)
 
+    def get_sheet_child_notes(self, seed):
+        pass
+
 
 class FieldTranslator():
     def __init__(self):
