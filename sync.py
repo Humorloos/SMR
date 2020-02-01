@@ -37,8 +37,7 @@ class XSyncer:
         print('add answer to ontology')
         print('add answer to meta')
         print('add answer to status')
-        question_note = self.col.getNote(
-            self.note_manager.get_nid_from_q_id(q_id)[0])
+        question_note = self.note_manager.get_note_from_q_id(q_id)
         raise_sync_error(
             content=local[a_id]['content'], question_note=question_note,
             text_pre='Detected added answer "',
@@ -92,8 +91,7 @@ class XSyncer:
         self.change_list[self.current_sheet_sync][sort_id] = local_field
 
     def maybe_remove_answer(self, answer, question, status):
-        question_note = self.col.getNote(
-            self.note_manager.get_nid_from_q_id(question)[0])
+        question_note = self.note_manager.get_note_from_q_id(question)
 
         # Remove answer from map
         try:

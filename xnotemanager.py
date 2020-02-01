@@ -80,9 +80,17 @@ class XNoteManager():
         :param qId: Xmind id of the question to get the note for
         :return: Id of the note containing this question
         """
-        return self.col.db.list(
+        return self.col.db.first(
             "select id from notes where flds like '%\"questionId\": \"" +
-            qId + "\"%'")
+            qId + "\"%'")[0]
+
+    def get_note_from_q_id(self, q_id):
+        """
+        Gets the note that contains the question with the given q_id
+        :param q_id: Xmind id of the question to get the note for
+        :return: Note that contains the question with the given q_id
+        """
+        return self.col.getNote(self.get_nid_from_q_id(q_id))
 
     def get_xmind_files(self):
         return set(meta_from_flds(flds[0])['path'] for flds in
