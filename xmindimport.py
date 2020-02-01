@@ -182,7 +182,7 @@ class XmindImporter(NoteImporter):
         # The reference doesn't have to be edited at the roottopic
         if not isinstance(parentAnswerDict['concepts'][0], self.onto.Root):
             ref = ref_plus_answer(
-                answerContent=answerContent, followsBridge=followsBridge,
+                field=answerContent, followsBridge=followsBridge,
                 ref=ref, mult_subjects=not parentAnswerDict['isAnswer'])
         followRels = getChildnodes(parentAnswerDict['nodeTag'])
         for qId, followRel in enumerate(followRels, start=1):

@@ -41,15 +41,15 @@ def meta_from_flds(flds):
     return meta_from_fields(splitFields(flds))
 
 
-def ref_plus_answer(answerContent, followsBridge, ref, mult_subjects):
+def ref_plus_answer(field, followsBridge, ref, mult_subjects):
     # If the answerdict contains nothing (i.e. questions
     # following multiple answers), just close the reference
     if mult_subjects:
         ref = ref + '</li>'
     elif followsBridge:
-        ref = ref + replaceSound(answerContent) + '</li>'
+        ref = ref + replaceSound(field) + '</li>'
     else:
-        ref = ref + ': ' + replaceSound(answerContent) + '</li>'
+        ref = ref + ': ' + replaceSound(field) + '</li>'
     return ref
 
 
