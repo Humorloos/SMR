@@ -38,7 +38,7 @@ class XSyncer:
         print('add answer to meta')
         print('add answer to status')
         question_note = self.col.getNote(
-            self.note_manager.getNoteFromQId(q_id)[0])
+            self.note_manager.get_nid_from_q_id(q_id)[0])
         raise_sync_error(
             content=local[a_id]['content'], question_note=question_note,
             text_pre='Detected added answer "',
@@ -93,7 +93,7 @@ class XSyncer:
 
     def maybe_remove_answer(self, answer, question, status):
         question_note = self.col.getNote(
-            self.note_manager.getNoteFromQId(question)[0])
+            self.note_manager.get_nid_from_q_id(question)[0])
 
         # Remove answer from map
         try:

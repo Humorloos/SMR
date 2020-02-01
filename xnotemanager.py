@@ -74,7 +74,12 @@ class XNoteManager():
             "select flds from notes where flds like '%\"questionId\": \"" +
             qId + "\"%'")[0])
 
-    def getNoteFromQId(self, qId):
+    def get_nid_from_q_id(self, qId):
+        """
+        Gets the nid of the note containing the questino with the given q_id
+        :param qId: Xmind id of the question to get the note for
+        :return: Id of the note containing this question
+        """
         return self.col.db.list(
             "select id from notes where flds like '%\"questionId\": \"" +
             qId + "\"%'")
