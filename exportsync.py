@@ -161,8 +161,6 @@ class MapSyncer:
         imgTag = tag.find('xhtml:img')
         imgTag['xhtml:src'] = 'xap:' + newFullPath
 
-        # TODO: add code for changing images
-
     def updateZip(self, zipname, filename, data):
         """ taken from https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file-using-python, replaces one file in a zipfile"""
         # generate a temp file
