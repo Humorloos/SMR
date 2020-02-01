@@ -132,9 +132,9 @@ class XSyncer:
                     self.map_manager = XManager(f)
                     remote = self.map_manager.get_remote()
                     remote_change = status[f]['xMod'] != remote['xMod']
+                    status[f]['osMod'] = os_file_mods[f]
                 else:
                     remote_change = False
-
                 if not local_change and not remote_change:
                     pass
                 elif local_change and not remote_change:
@@ -144,6 +144,7 @@ class XSyncer:
                     self.map_manager = XManager(f)
                     self.process_local_changes(status=status[f]['sheets'],
                                                local=local[f]['sheets'])
+
                     # Adjust notes according to self.change_list
                     self.process_change_list()
                     self.map_manager.save_changes()
