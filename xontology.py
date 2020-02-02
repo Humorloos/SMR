@@ -220,6 +220,11 @@ class XOntology(Ontology):
     def get_all_parent_triples(self):
         return [t for t in self.get_triples() if t[1] == self.Parent.storid]
 
+    def getChildTriples(self, s):
+        questionStorids = [p.storid for p in self.object_properties() if
+                           p.name != 'Parent']
+        return [t for t in self.get_triples(s=s) if t[1] in questionStorids]
+
     def getDoc(self, elements):
         return self.Doc[elements['s'], elements['p'], elements['o']][0]
 
@@ -351,11 +356,6 @@ class XOntology(Ontology):
         questionsStorids = [p.storid for p in self.object_properties() if
                             p.name not in noNoteRels]
         return [t for t in self.get_triples() if t[1] in questionsStorids]
-
-    def getChildTriples(self, s):
-        questionStorids = [p.storid for p in self.object_properties() if
-                           p.name != 'Parent']
-        return [t for t in self.get_triples(s=s) if t[1] in questionStorids]
 
     def getParentTriples(self, o):
         questionsStorids = [p.storid for p in self.object_properties() if
