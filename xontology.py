@@ -226,14 +226,19 @@ class XOntology(Ontology):
             if elements['p'].name != 'Child':
                 children['childQuestions'].add(self.getXid(elements))
             else:
-                nextChildTriples = self.getChildTriples(s=elements['o'].storid)
-                nextChildElements = [
-                    self.getElements(t) for t in nextChildTriples]
+                nextChildElements = self.get_child_elements(
+                    elements['o'].storid)
                 bridge = {'objectTitle': elements['s'].name}
                 bridge.update(self.getChildQuestionIds(nextChildElements))
                 children['bridges'].append(bridge)
         children['childQuestions'] = list(children['childQuestions'])
         return children
+
+    def get_child_elements(self, s_storid):
+        nextChildTriples = self.getChildTriples(s=s_storid)
+        nextChildElements = [
+            self.getElements(t) for t in nextChildTriples]
+        return nextChildElements
 
     def getChildTriples(self, s):
         questionStorids = [p.storid for p in self.object_properties() if
