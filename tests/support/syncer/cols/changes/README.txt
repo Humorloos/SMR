@@ -8,6 +8,8 @@ Sheet biological psychology:
     - MAO splits up Serotonin, dopmine, adrenaline (no more noradrenaline)
     removed answer with crosslink and changed answer with crosslink:
     - Serotonin affects Sleep, changed answer with crosslink, (no more psychological disorders)
+    changed question following multiple answers:
+    - splits up - are - biogenic amines: Now question 'are changed question'
 
 Sheet clinical psychology:
     changed answer:
