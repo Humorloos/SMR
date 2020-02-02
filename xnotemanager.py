@@ -25,6 +25,10 @@ def img_from_field(field):
         return None
 
 
+def index_from_sort_id(sort_id):
+    return str(ord(sort_id) - 122)
+
+
 def media_from_field(field):
     try:
         return re.search('\[sound:(.*\.(' + '|'.join(X_MEDIA_EXTENSIONS) +
