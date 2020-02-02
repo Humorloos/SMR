@@ -23,14 +23,12 @@ def classify(content):
     return classified
 
 
-def get_rel_dict(aIndex, image, media, x_id, timestamp,
-                 ref, sortId, doc, sheet, tag):
+def get_rel_dict(aIndex, image, media, x_id, ref, sortId, doc, sheet, tag):
     return {
         'aIndex': aIndex,
         'image': image,
         'media': media,
         'x_id': x_id,
-        'timestamp': timestamp,
         'ref': ref,
         'sortId': sortId,
         'doc': doc,
@@ -207,7 +205,6 @@ class XOntology(Ontology):
             image=self.getImage(question_triple),
             media=self.getMedia(question_triple),
             x_id=self.getXid(question_triple),
-            timestamp=self.getMod(question_triple),
             ref=self.getRef(question_triple),
             sortId=self.getSortId(question_triple),
             doc=self.getDoc(question_triple),

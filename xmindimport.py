@@ -152,8 +152,7 @@ class XmindImporter(NoteImporter):
                 for parent in parents:
                     rel_dict = get_rel_dict(
                         aIndex=aIndex, image=image, media=media, x_id=x_id,
-                        timestamp=question['timestamp'], ref=ref, sortId=sortId,
-                        doc=doc, sheet=sheet, tag=tag)
+                        ref=ref, sortId=sortId, doc=doc, sheet=sheet, tag=tag)
                     self.onto.add_relation(
                         child=child, class_text=question_class, parent=parent,
                         rel_dict=rel_dict)
