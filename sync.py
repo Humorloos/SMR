@@ -72,10 +72,10 @@ class XSyncer:
             deep_merge(self.change_list[self.current_sheet_sync],
                        {question: {answer: title}}))
 
-    def change_question(self, local_field, question, status, local):
+    def change_question(self, question, status, local):
         # Change question in map
-        title = title_from_field(local_field)
-        img = img_from_field(local_field)
+        title = title_from_field(local[question]['content'])
+        img = img_from_field(local[question]['content'])
         self.map_manager.set_node_content(
             img=img, title=title, x_id=question,
             media_dir=self.note_manager.media_dir
@@ -83,7 +83,7 @@ class XSyncer:
 
         # Change question in ontology
         self.onto.change_question(x_id=question,
-                                  new_question=local_field)
+                                  new_question=local[question]['content'])
 
         # Change question in status
         status[question]['ankiMod'] = local[question]['ankiMod']
@@ -218,9 +218,8 @@ class XSyncer:
 
     def process_local_questions(self, status, local):
         for question in {**local, **status}:
-            local_field = local[question]['content']
-            if local_field != status[question]['content']:
-                self.change_question(local_field, question, status, local)
+            if local[question]['content'] != status[question]['content']:
+                self.change_question(question, status, local)
             self.process_local_answers(status=status[question]['answers'],
                                        local=local[question]['answers'],
                                        question=question)
