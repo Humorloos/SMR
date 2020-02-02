@@ -220,6 +220,21 @@ class XOntology(Ontology):
     def get_all_parent_triples(self):
         return [t for t in self.get_triples() if t[1] == self.Parent.storid]
 
+    def getChildQuestionIds(self, childElements):
+        children = {'childQuestions': set(), 'bridges': list()}
+        for elements in childElements:
+            if elements['p'].name != 'Child':
+                children['childQuestions'].add(self.getXid(elements))
+            else:
+                nextChildTriples = self.getChildTriples(s=elements['o'].storid)
+                nextChildElements = [
+                    self.getElements(t) for t in nextChildTriples]
+                bridge = {'objectTitle': elements['s'].name}
+                bridge.update(self.getChildQuestionIds(nextChildElements))
+                children['bridges'].append(bridge)
+        children['childQuestions'] = list(children['childQuestions'])
+        return children
+
     def getChildTriples(self, s):
         questionStorids = [p.storid for p in self.object_properties() if
                            p.name != 'Parent']
@@ -366,21 +381,6 @@ class XOntology(Ontology):
         files = [self.getImage(elements), self.getMedia(elements)]
         return [None if not f else file_dict(
             identifier=f, doc=self.getDoc(elements)) for f in files]
-
-    def getChildQuestionIds(self, childElements):
-        children = {'childQuestions': set(), 'bridges': list()}
-        for elements in childElements:
-            if elements['p'].name != 'Child':
-                children['childQuestions'].add(self.getXid(elements))
-            else:
-                nextChildTriples = self.getChildTriples(s=elements['o'].storid)
-                nextChildElements = [
-                    self.getElements(t) for t in nextChildTriples]
-                bridge = {'objectTitle': elements['s'].name}
-                bridge.update(self.getChildQuestionIds(nextChildElements))
-                children['bridges'].append(bridge)
-        children['childQuestions'] = list(children['childQuestions'])
-        return children
 
     def remove_answer(self, q_id, a_id):
         question_triples = self.get_question(q_id)
