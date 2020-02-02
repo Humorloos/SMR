@@ -80,6 +80,7 @@ class XOntology(Ontology):
         for parent in parents:
             self.add_relation(child=answer_concept, class_text=question_class,
                               parent=parent, rel_dict=rel_dict)
+        return answer_concept
 
     def add_concept(self, nodeContent, q_id, a_id, file, root=False,
                     crosslink=None):
@@ -159,15 +160,27 @@ class XOntology(Ontology):
         answer = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
         answer_triples = [t for t in self.get_question(q_id) if t['o'] ==
                           answer]
+        q_id = next(self.get_trpl_x_id(t) for t in answer_triples)
+        q_ref = next(self.get_trpl_ref(t) for t in answer_triples)
+        questions_2_answer = [t for t in self.get_child_elements(
+            answer.storid) if q_ref in self.get_trpl_ref(t)]
+        objects_2_answer = [{
+            'child': t['o'], 'rel_dict': self.rel_dict_from_triple(t),
+            'class_text': t['p'].name} for t in questions_2_answer]
         question_class = answer_triples[0]['p'].name
         parents = set(t['s'] for t in answer_triples)
         file = answer.Doc[0]
         rel_dict = self.rel_dict_from_triple(answer_triples[0])
         self.remove_answer(q_id=q_id, a_id=a_id)
 
-        self.add_answer(parents=parents, q_id=q_id, a_id=a_id,
-                        answer_field=new_answer, file=file,
-                        rel_dict=rel_dict, question_class=question_class)
+        new_answer = self.add_answer(parents=parents, q_id=q_id, a_id=a_id,
+                                     answer_field=new_answer, file=file,
+                                     rel_dict=rel_dict,
+                                     question_class=question_class)
+
+        for o in objects_2_answer:
+            self.add_relation(child=o['child'], class_text=o['class_text'],
+                              parent=new_answer, rel_dict=o['rel_dict'])
 
     def change_question(self, x_id, new_question):
         question_triples = self.get_question(x_id)
