@@ -150,7 +150,7 @@ class XmindImporter(NoteImporter):
                 child = answerDict['concepts'][0]
                 children.append(child)
                 for parent in parents:
-                    rel_dict = rel_dict(
+                    rel_dict = get_rel_dict(
                         aIndex=aIndex, image=image, media=media, x_id=x_id,
                         timestamp=question['timestamp'], ref=ref, sortId=sortId,
                         doc=doc, sheet=sheet, tag=tag)
