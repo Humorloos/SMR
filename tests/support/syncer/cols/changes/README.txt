@@ -15,7 +15,11 @@ Sheet clinical psychology:
     changed answer:
     - clinical psychology investigates psychological disorders alt
     - psychological disorders - examples - new disorder, schizophrenia
-
+    changed question after first answer:
+    - anxiety disorders - example - phobias has now question 'example answer 1'
+    changed question after second answer:
+    - schizophrenia - possible causes - biochemical factors has now question
+    'possible causes answer 2'
 Sheet general psychology:
     changed question:
     - general psychology - new question - emotions, perception
