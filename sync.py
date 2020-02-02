@@ -64,15 +64,15 @@ class XSyncer:
         self.onto.change_answer(q_id=question, a_id=answer,
                                 new_answer=local[answer]['content'])
 
-        # Change answer in status
-        status[answer].update(local[answer])
-
         # Remember this change for final note adjustments
         self.change_list[self.current_sheet_sync].update(
             deep_merge(self.change_list[self.current_sheet_sync],
                        {question: {answer: {
                            'old': status[answer]['content'],
                            'new': local[answer]['content']}}}))
+
+        # Change answer in status
+        status[answer].update(local[answer])
 
     def change_question(self, question, status, local):
         # Change question in map
@@ -87,15 +87,15 @@ class XSyncer:
         self.onto.change_question(x_id=question,
                                   new_question=local[question]['content'])
 
-        # Change question in status
-        status[question]['ankiMod'] = local[question]['ankiMod']
-        status[question]['content'] = local[question]['content']
-
         # Remember this change for final note adjustments
         self.change_list[self.current_sheet_sync][question] = {
             'question': {
                 'old': status[question]['content'],
                 'new': local[question]['content']}}
+
+        # Change question in status
+        status[question]['ankiMod'] = local[question]['ankiMod']
+        status[question]['content'] = local[question]['content']
 
     def maybe_remove_answer(self, answer, question, status):
         question_note = self.note_manager.get_note_from_q_id(question)
