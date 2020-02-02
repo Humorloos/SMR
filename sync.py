@@ -7,9 +7,9 @@ from .xontology import XOntology
 
 def raise_sync_error(content, question_note, text_pre, text_post):
     tag = question_note.tags[0]
-    question_title = get_field_by_name(
+    question_title = field_by_name(
         question_note.fields, 'qt')
-    reference = get_field_by_name(
+    reference = field_by_name(
         question_note.fields, 'rf')
     raise ReferenceError(
         text_pre + content + '" to question "' + question_title +
@@ -165,11 +165,10 @@ class XSyncer:
 
     def initiate_ref_changes(self, changed_notes):
         if changed_notes:
-            shortest_id_length = min(len(get_field_by_name(n.fields, 'id'))
+            shortest_id_length = min(len(field_by_name(n.fields, 'id'))
                                      for n in changed_notes)
             seed = next(n for n in changed_notes if len(
-                get_field_by_name(n.fields, 'id')) == shortest_id_length)
-
+                field_by_name(n.fields, 'id')) == shortest_id_length)
             sheet_child_notes = self.note_manager.get_sheet_child_notes(seed)
             # TODO: Differentiate child_notes by answer since ref depends on
             #  the answer, best start is by adjusting the uml diagram in the

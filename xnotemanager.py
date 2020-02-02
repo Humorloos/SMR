@@ -6,7 +6,7 @@ from .utils import *
 from .consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS
 
 
-def get_field_by_name(fields, name):
+def field_by_name(fields, name):
     return fields[get_index_by_field_name(name)]
 
 
@@ -34,7 +34,7 @@ def media_from_field(field):
 
 
 def meta_from_fields(fields):
-    return json.loads(get_field_by_name(fields, 'mt'))
+    return json.loads(field_by_name(fields, 'mt'))
 
 
 def meta_from_flds(flds):
@@ -127,7 +127,7 @@ class XNoteManager():
                 self.model)
                      if meta_from_flds(r[0])['path'] == file]
         for n in doc_notes:
-            n['meta'] = json.loads(get_field_by_name(n['flds'], 'mt'))
+            n['meta'] = json.loads(field_by_name(n['flds'], 'mt'))
         sheet_ids = set(n['meta']['sheetId'] for n in doc_notes)
         sheet_notes = {i: {n['meta']['questionId']: n for n in doc_notes if
                            n['meta']['sheetId'] == i} for i in sheet_ids}
@@ -144,7 +144,7 @@ class XNoteManager():
                 question = sheet_note[n]
                 questions[question['meta']['questionId']] = {
                     'ankiMod': question['ankiMod'],
-                    'content': get_field_by_name(question['flds'], 'qt'),
+                    'content': field_by_name(question['flds'], 'qt'),
                     'answers': answers}
                 for x, a in enumerate(self.get_answer_cards(question['id'])):
                     try:
@@ -154,7 +154,7 @@ class XNoteManager():
                     except IndexError:
                         a_id = a[1]
                     answers[a_id] = {'ankiMod': a[0],
-                                     'content': get_field_by_name(
+                                     'content': field_by_name(
                                          question['flds'], 'a' + str(x + 1))}
         docMod = max([n['ankiMod'] for n in doc_notes])
         deck = self.col.db.first(
@@ -171,7 +171,7 @@ class XNoteManager():
 
     def get_sheet_child_notes(self, seed):
         tag = ' ' + seed.tags[0] + ' '
-        sort_id = get_field_by_name(seed.fields, 'id') + '%'
+        sort_id = field_by_name(seed.fields, 'id') + '%'
         all_child_notes = self.col.db.all(
             'select id, sfld from notes where tags is ? and sfld '
             'like ? and length(sfld) > ?', tag, sort_id, len(sort_id))
