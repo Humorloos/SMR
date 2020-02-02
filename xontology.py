@@ -201,18 +201,15 @@ class XOntology(Ontology):
 
     def rel_dict_from_triple(self, question_triple):
         return get_rel_dict(
-            aIndex=self.get_AIndex(question_triple),
-            image=self.getImage(question_triple),
-            media=self.getMedia(question_triple),
-            x_id=self.getXid(question_triple),
-            ref=self.getRef(question_triple),
-            sortId=self.getSortId(question_triple),
-            doc=self.getDoc(question_triple),
-            sheet=self.getSheet(question_triple),
+            aIndex=self.get_trpl_a_index(question_triple),
+            image=self.get_trpl_image(question_triple),
+            media=self.get_trpl_media(question_triple),
+            x_id=self.get_trpl_x_id(question_triple),
+            ref=self.get_trpl_ref(question_triple),
+            sortId=self.get_trpl_sort_id(question_triple),
+            doc=self.get_trpl_doc(question_triple),
+            sheet=self.get_trpl_sheet(question_triple),
             tag=self.getNoteTag(question_triple))
-
-    def get_AIndex(self, elements):
-        return self.AIndex[elements['s'], elements['p'], elements['o']][0]
 
     def get_answer_by_a_id(self, a_id, q_id):
         return self.search(Xid='*"' + q_id + '": {"src": "' + a_id + '*')[0]
@@ -224,7 +221,7 @@ class XOntology(Ontology):
         children = {'childQuestions': set(), 'bridges': list()}
         for elements in childElements:
             if elements['p'].name != 'Child':
-                children['childQuestions'].add(self.getXid(elements))
+                children['childQuestions'].add(self.get_trpl_x_id(elements))
             else:
                 nextChildElements = self.get_child_elements(
                     elements['o'].storid)
@@ -245,30 +242,21 @@ class XOntology(Ontology):
                            p.name != 'Parent']
         return [t for t in self.get_triples(s=s) if t[1] in questionStorids]
 
-    def getDoc(self, elements):
-        return self.Doc[elements['s'], elements['p'], elements['o']][0]
-
     def getElements(self, triple):
         elements = [self.world._get_by_storid(s) for s in triple]
         return {'s': elements[0], 'p': elements[1], 'o': elements[2]}
 
-    def getImage(self, elements):
-        try:
-            return self.Image[elements['s'], elements['p'], elements['o']][0]
-        except IndexError:
-            return ''
+    def getFiles(self, elements):
+        files = [self.get_trpl_image(elements), self.get_trpl_media(elements)]
+        return [None if not f else file_dict(
+            identifier=f, doc=self.get_trpl_doc(elements)) for f in files]
 
     def get_inverse(self, x_id):
         triples = self.get_all_parent_triples()
         elements = [self.getElements(t) for t in triples]
-        inverse_elements = [e for e in elements if self.getXid(e) == x_id]
+        inverse_elements = [e for e in elements if self.get_trpl_x_id(e) == x_id]
         return inverse_elements
 
-    def getMedia(self, elements):
-        try:
-            return self.Media[elements['s'], elements['p'], elements['o']][0]
-        except IndexError:
-            return ''
 
     def getNoteTag(self, elements):
         return self.NoteTag[elements['s'], elements['p'], elements['o']][0]
@@ -278,7 +266,7 @@ class XOntology(Ontology):
         for elements in parentElements:
             # Add id of question to set if parent is a normal question
             if elements['p'].name != 'Child':
-                parents['parentQuestions'].add(self.getXid(elements))
+                parents['parentQuestions'].add(self.get_trpl_x_id(elements))
             # If parent is a bridge, add a dictionary titled by the answer
             # containing parents of the bridge
             else:
@@ -297,27 +285,15 @@ class XOntology(Ontology):
     def get_question(self, x_id):
         triples = self.getNoteTriples()
         elements = [self.getElements(t) for t in triples]
-        question_elements = [e for e in elements if self.getXid(e) == x_id]
+        question_elements = [e for e in elements if self.get_trpl_x_id(e) == x_id]
         return question_elements
-
-    def getRef(self, elements):
-        return self.Reference[elements['s'], elements['p'], elements['o']][0]
-
-    def getSheet(self, elements):
-        return self.Sheet[elements['s'], elements['p'], elements['o']][0]
-
-    def getSortId(self, elements):
-        return self.SortId[elements['s'], elements['p'], elements['o']][0]
-
-    def getXid(self, elements):
-        return self.Xid[elements['s'], elements['p'], elements['o']][0]
 
     def getNoteData(self, questionList):
         elements = self.getElements(questionList[0])
-        q_id = self.getXid(elements)
+        q_id = self.get_trpl_x_id(elements)
         answerDids = set(t[2] for t in questionList)
         # Sort answerDids by answer index to get the answers' order right
-        answerDids = sorted(answerDids, key=lambda d: self.get_AIndex(
+        answerDids = sorted(answerDids, key=lambda d: self.get_trpl_a_index(
             self.getElements(next(t for t in questionList if t[2] == d))))
         answerDicts = [dict() for _ in range(X_MAX_ANSWERS)]
         images = []
@@ -357,13 +333,13 @@ class XOntology(Ontology):
         if files[1]:
             media.append(files[1])
         return {
-            'reference': self.getRef(elements),
+            'reference': self.get_trpl_ref(elements),
             'question': self.field_translator.field_from_class(
                 elements['p'].name),
             'answers': answerDicts,
-            'sortId': self.getSortId(elements),
-            'document': self.getDoc(elements),
-            'sheetId': self.getSheet(elements),
+            'sortId': self.get_trpl_sort_id(elements),
+            'document': self.get_trpl_doc(elements),
+            'sheetId': self.get_trpl_sheet(elements),
             'questionId': q_id,
             'subjects': parentDicts,
             'images': images,
@@ -382,10 +358,36 @@ class XOntology(Ontology):
                             p.name != 'Parent']
         return [t for t in self.get_triples(o=o) if t[1] in questionsStorids]
 
-    def getFiles(self, elements):
-        files = [self.getImage(elements), self.getMedia(elements)]
-        return [None if not f else file_dict(
-            identifier=f, doc=self.getDoc(elements)) for f in files]
+    def get_trpl_a_index(self, elements):
+        return self.AIndex[elements['s'], elements['p'], elements['o']][0]
+
+    def get_trpl_doc(self, elements):
+        return self.Doc[elements['s'], elements['p'], elements['o']][0]
+
+    def get_trpl_image(self, elements):
+        try:
+            return self.Image[elements['s'], elements['p'], elements['o']][0]
+        except IndexError:
+            return ''
+
+    def get_trpl_media(self, elements):
+        try:
+            return self.Media[elements['s'], elements['p'], elements['o']][0]
+        except IndexError:
+            return ''
+
+    def get_trpl_ref(self, elements):
+        return self.Reference[elements['s'], elements['p'], elements['o']][
+            0]
+
+    def get_trpl_sheet(self, elements):
+        return self.Sheet[elements['s'], elements['p'], elements['o']][0]
+
+    def get_trpl_sort_id(self, elements):
+        return self.SortId[elements['s'], elements['p'], elements['o']][0]
+
+    def get_trpl_x_id(self, elements):
+        return self.Xid[elements['s'], elements['p'], elements['o']][0]
 
     def remove_answer(self, q_id, a_id):
         question_triples = self.get_question(q_id)

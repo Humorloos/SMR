@@ -283,9 +283,9 @@ class XmindImporter(NoteImporter):
         triples = self.onto.getNoteTriples()
         # Sort triples by question id for Triples pertaining to the same
         # question to appear next to each other
-        ascendingQId = sorted(triples, key=lambda t: self.onto.getXid(
+        ascendingQId = sorted(triples, key=lambda t: self.onto.get_trpl_x_id(
             self.onto.getElements(t)))
-        qIds = [self.onto.getXid(self.onto.getElements(t)) for t in
+        qIds = [self.onto.get_trpl_x_id(self.onto.getElements(t)) for t in
                 ascendingQId]
 
         questionList = []
