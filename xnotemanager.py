@@ -174,12 +174,14 @@ class XNoteManager():
         sort_id = get_field_by_name(seed.fields, 'id') + '%'
         all_child_notes = self.col.db.all(
             'select id, sfld from notes where tags is ? and sfld '
-                        'like ? and length(sfld) > ?', tag, sort_id,
-                        len(sort_id))
+            'like ? and length(sfld) > ?', tag, sort_id, len(sort_id))
         min_sort_id_len = min(len(t[1]) for t in all_child_notes)
-        direct_child_nids = [t[0] for t in all_child_notes if len(t[1]) ==
-                              min_sort_id_len]
-        direct_child_notes = [self.col.getNote(n) for n in direct_child_nids]
+        direct_children = [t for t in all_child_notes if len(t[1]) ==
+                           min_sort_id_len]
+        answer_s_ids = set(t[1][-1] for t in all_child_notes)
+        direct_child_notes = {
+            s: [self.col.getNote(c[0]) for c in direct_children if
+                c[1][-1] == s] for s in answer_s_ids}
         return direct_child_notes
 
 
