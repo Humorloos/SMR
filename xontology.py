@@ -153,7 +153,6 @@ class XOntology(Ontology):
             self.Media[parent, relProp, child] = rel_dict['media']
         self.NoteTag[parent, relProp, child] = rel_dict['tag']
         self.AIndex[parent, relProp, child] = rel_dict['aIndex']
-        self.Mod[parent, relProp, child] = rel_dict['timestamp']
 
         # set annotation properties for parent relation
         self.Xid[child, self.Parent, parent] = rel_dict['x_id']
@@ -248,9 +247,6 @@ class XOntology(Ontology):
             return self.Media[elements['s'], elements['p'], elements['o']][0]
         except IndexError:
             return ''
-
-    def getMod(self, elements):
-        return self.Mod[elements['s'], elements['p'], elements['o']][0]
 
     def getNoteTag(self, elements):
         return self.NoteTag[elements['s'], elements['p'], elements['o']][0]
@@ -350,8 +346,7 @@ class XOntology(Ontology):
             'subjects': parentDicts,
             'images': images,
             'media': media,
-            'tag': self.getNoteTag(elements),
-            'questionMod': self.getMod(elements)
+            'tag': self.getNoteTag(elements)
         }
 
     def getNoteTriples(self):

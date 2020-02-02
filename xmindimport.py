@@ -263,7 +263,6 @@ class XmindImporter(NoteImporter):
                                  'children': a['children']} for a in answers]
         xMindMeta['nAnswers'] = len(answers)
         xMindMeta['subjects'] = noteData['subjects']
-        xMindMeta['questionMod'] = noteData['questionMod']
         return json.dumps(xMindMeta)
 
     def importMap(self):
