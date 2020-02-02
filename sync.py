@@ -70,7 +70,9 @@ class XSyncer:
         # Remember this change for final note adjustments
         self.change_list[self.current_sheet_sync].update(
             deep_merge(self.change_list[self.current_sheet_sync],
-                       {question: {answer: title}}))
+                       {question: {answer: {
+                           'old': status[answer]['content'],
+                           'new': local[answer]['content']}}}))
 
     def change_question(self, question, status, local):
         # Change question in map
@@ -91,7 +93,9 @@ class XSyncer:
 
         # Remember this change for final note adjustments
         self.change_list[self.current_sheet_sync][question] = {
-            'question': local_field}
+            'question': {
+                'old': status[question]['content'],
+                'new': local[question]['content']}}
 
     def maybe_remove_answer(self, answer, question, status):
         question_note = self.note_manager.get_note_from_q_id(question)
@@ -173,10 +177,21 @@ class XSyncer:
             # TODO: Differentiate child_notes by answer since ref depends on
             #  the answer, best start is by adjusting the uml diagram in the
             #  same manner.
-            # if sheet_child_notes:
-                # old_ref = get_field_by_name(sheet_child_notes[0].fields, 'rf')
-                # new_ref = ref_plus_question(
-                #     field=get_field_by_name(seed.fields, 'qt'), ref=old_ref)
+            if sheet_child_notes:
+                update_dict = {}
+                changes = self.change_list[
+                    meta_from_fields(seed.fields)['questionId']]
+                if 'question' in changes.keys():
+                    update_dict[changes['question']['old']] = changes[
+                        'question']['new']
+                # old_ref = field_by_name(
+                #     sheet_child_notes[list(
+                #         sheet_child_notes.keys())[0]][0].fields, 'rf')
+                # for s_id in sheet_child_notes:
+                #     answer_field = field_by_name(seed.fields,
+                #                                  'a' + index_from_sort_id(s_id))
+                #     answer_ref = ref_plus_answer()
+                #     print()
                 # new_ref = ref_plus_answer(field=new_ref, get_field_by_name(
                 #     seed.fields,
                 #                                                      'rf'), )
