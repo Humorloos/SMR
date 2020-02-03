@@ -184,22 +184,10 @@ class XSyncer:
                 if 'question' in changes.keys():
                     update_dict[changes['question']['old']] = changes[
                         'question']['new']
-                # old_ref = field_by_name(
-                #     sheet_child_notes[list(
-                #         sheet_child_notes.keys())[0]][0].fields, 'rf')
-                # for s_id in sheet_child_notes:
-                #     answer_field = field_by_name(seed.fields,
-                #                                  'a' + index_from_sort_id(s_id))
-                #     answer_ref = ref_plus_answer()
-                #     print()
-                # new_ref = ref_plus_answer(field=new_ref, get_field_by_name(
-                #     seed.fields,
-                #                                                      'rf'), )
-                # for note in sheet_child_notes:
-
-            if sheet_child_notes:
-                print()
-        pass
+                old_ref = field_by_name(sheet_child_notes[list(
+                        sheet_child_notes.keys())[0]][0].fields, 'rf')
+                for sort_id in sheet_child_notes:
+                    print()
 
     # def adjust_ref(self, note, new_ref=None):
     #     if not new_ref:
