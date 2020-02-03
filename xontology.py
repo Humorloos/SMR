@@ -173,10 +173,9 @@ class XOntology(Ontology):
         rel_dict = self.rel_dict_from_triple(answer_triples[0])
         self.remove_answer(q_id=q_id, a_id=a_id)
 
-        new_answer = self.add_answer(parents=parents, q_id=q_id, a_id=a_id,
-                                     answer_field=new_answer, file=file,
-                                     rel_dict=rel_dict,
-                                     question_class=question_class)
+        new_answer = self.add_answer(
+            parents=parents, q_id=q_id, a_id=a_id, answer_field=new_answer,
+            file=file, rel_dict=rel_dict, question_class=question_class)
 
         for o in objects_2_answer:
             self.add_relation(child=o['child'], class_text=o['class_text'],
