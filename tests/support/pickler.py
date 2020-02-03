@@ -112,3 +112,8 @@ selectedSheets = getSelectedSheets()
 sheetBiologicalPsychology = getSheetBiologicalPsychology()
 ontologyBiologicalPsychology = getOntologyBiologicalPsychology()
 noteData = getNoteData()
+
+# onto_sqlite3 = getOntologyBiologicalPsychology()
+# onto_sqlite3.world.set_backend(filename=os.path.join(SUPPORT_PATH,
+#                                               'test_onto.sqlite3'))
+# onto_sqlite3.world.save()
