@@ -18,12 +18,14 @@ def field_from_content(content):
     if content['media']['image']:
         if field != '':
             field += '<br>'
-        field += '<img src="%s">' % content['media']['image']
+        field += '<img src="%s">' % re.sub('attachments/', '', content['media'][
+            'image'])
 
     if content['media']['media']:
         if field != '':
             field += '<br>'
-        field += '[sound:%s]' % content['media']['media']
+        field += '[sound:%s]' % re.sub('attachments/', '', content['media'][
+            'media'])
 
     return field
 
