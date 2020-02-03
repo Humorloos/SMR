@@ -207,7 +207,7 @@ class XmindImporter(NoteImporter):
                     return
 
                 nextRef = ref_plus_question(
-                    field=content['content'], ref=ref)
+                    field=field_from_content(content), ref=ref)
 
                 for aId, answerDict in enumerate(answerDicts, start=1):
                     if getChildnodes(parentAnswerDict['nodeTag']):

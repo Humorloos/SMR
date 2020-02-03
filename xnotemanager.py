@@ -10,6 +10,24 @@ def field_by_name(fields, name):
     return fields[get_index_by_field_name(name)]
 
 
+def field_from_content(content):
+    field = ''
+    if content['content']:
+        field += content['content']
+
+    if content['media']['image']:
+        if field != '':
+            field += '<br>'
+        field += '<img src="%s">' % content['media']['image']
+
+    if content['media']['media']:
+        if field != '':
+            field += '<br>'
+        field += '[sound:%s]' % content['media']['media']
+
+    return field
+
+
 def get_index_by_field_name(name):
     if name not in X_FLDS:
         raise NameError('Name not in X_FLDS, valid names are ' +
