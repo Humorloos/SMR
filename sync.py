@@ -164,10 +164,10 @@ class XSyncer:
         for sheet in self.change_list:
             changed_notes = [self.note_manager.get_note_from_q_id(q_id) for
                              q_id in self.change_list[sheet]]
-            self.initiate_ref_changes(changed_notes)
+            self.initiate_ref_changes(changed_notes, self.change_list[sheet])
         pass
 
-    def initiate_ref_changes(self, changed_notes):
+    def initiate_ref_changes(self, changed_notes, change_list):
         if changed_notes:
             shortest_id_length = min(len(field_by_name(n.fields, 'id'))
                                      for n in changed_notes)
@@ -179,7 +179,7 @@ class XSyncer:
             #  same manner.
             if sheet_child_notes:
                 update_dict = {}
-                changes = self.change_list[
+                changes = change_list[
                     meta_from_fields(seed.fields)['questionId']]
                 if 'question' in changes.keys():
                     update_dict[changes['question']['old']] = changes[
