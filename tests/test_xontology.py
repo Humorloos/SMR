@@ -64,3 +64,9 @@ class TestChangeQuestion(TestXOntology):
                                         new_question='whatever')
         act = self.x_ontology.get_question(x_id)[0]['p'].name
         self.assertEqual('whatever', act)
+
+
+class TestGetNoteTriples(TestXOntology):
+    def test_get_note_triples(self):
+        a = self.x_ontology.getNoteTriples()
+        self.fail()
