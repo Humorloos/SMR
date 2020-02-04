@@ -98,8 +98,16 @@ def set_meta(note, meta):
     note.fields[get_index_by_field_name('mt')] = json.dumps(meta)
 
 
+def sort_id_from_index(index):
+    return chr(index + 122)
+
+
 def title_from_field(field):
     return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", field)
+
+
+def update_sort_id(previousId, idToAppend):
+    return previousId + sort_id_from_index(idToAppend)
 
 
 def content_from_field(field):

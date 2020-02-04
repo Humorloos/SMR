@@ -187,7 +187,7 @@ class XmindImporter(NoteImporter):
         for qId, followRel in enumerate(followRels, start=1):
 
             # Update the sorting ID
-            nextSortId = updateId(previousId=sortId, idToAppend=qId)
+            nextSortId = update_sort_id(previousId=sortId, idToAppend=qId)
             content = manager.getNodeContent(followRel)
             answerDicts = self.findAnswerDicts(
                 parents=parentAnswerDict['concepts'], question=followRel,
@@ -213,7 +213,7 @@ class XmindImporter(NoteImporter):
                     if getChildnodes(parentAnswerDict['nodeTag']):
                         self.getQuestions(
                             parentAnswerDict=answerDict, ref=nextRef,
-                            sortId=updateId(
+                            sortId=update_sort_id(
                                 previousId=nextSortId, idToAppend=aId),
                             followsBridge=not isQuestion)
 

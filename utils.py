@@ -30,11 +30,6 @@ def deep_merge(remote, local, path=None):
     return local
 
 
-# receives a dictionary with an id for sorting the cards and an id for finding the card's position
-def updateId(previousId, idToAppend):
-    return previousId + chr(idToAppend + 122)
-
-
 # replace the anki sound html code with (sound) to avoid anki playing sounds
 # when they are mentioned in the reference
 def replaceSound(content: str):
