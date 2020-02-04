@@ -188,9 +188,8 @@ class XSyncer:
                 if a_id in changes:
                     answer_dict[changes[a_id]['old']] = changes[a_id]['new']
                 for note in sheet_child_notes:
-                    self.note_manager.update_ref(
-                        question_dict=question_dict, answer_dict=answer_dict,
-                        note=note)
+                    update_ref(question_dict=question_dict,
+                               answer_dict=answer_dict, note=note)
 
                 # if answer['answerId'] in changes:
             # if sheet_child_notes:
