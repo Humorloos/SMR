@@ -173,22 +173,29 @@ class XSyncer:
                                      for n in changed_notes)
             seed = next(n for n in changed_notes if len(
                 field_by_name(n.fields, 'id')) == shortest_id_length)
-            sheet_child_notes = self.note_manager.get_sheet_child_notes(seed)
-            # TODO: Differentiate child_notes by answer since ref depends on
-            #  the answer, best start is by adjusting the uml diagram in the
-            #  same manner.
-            if sheet_child_notes:
-                update_dict = {}
-                changes = change_list[
-                    meta_from_fields(seed.fields)['questionId']]
-                if 'question' in changes.keys():
-                    update_dict[changes['question']['old']] = changes[
-                        'question']['new']
-                old_ref = field_by_name(sheet_child_notes['{'].fields, 'rf')
-                for sort_id in sheet_child_notes:
-                    # TODO: look at uml and complete code based on diagram
-                    print()
+            meta = meta_from_fields(seed.fields)
+            for answer in meta['answers']:
+                sheet_child_notes = self.note_manager.get_sheet_child_notes(
+                    seed)
+                # if answer['answerId'] in changes:
+            # if sheet_child_notes:
+            #     update_dict = {}
+            #     changes = change_list[
+            #         meta_from_fields(seed.fields)['questionId']]
+            #     if 'question' in changes:
+            #         update_dict[changes['question']['old']] = changes[
+            #             'question']['new']
+            #     old_ref = field_by_name(sheet_child_notes['{'].fields, 'rf')
+            #
+                # for sort_id in sheet_child_notes:
+                #     # TODO: look at uml and complete code based on diagram
+                #
+                #     a_id = meta['answers'][index_from_sort_id(sort_id)-1][
+                #         'answerId']
+                #     if a_id in changes:
+                #         update_dict.update(changes[a_id])
 
+                print()
     # def adjust_ref(self, note, new_ref=None):
     #     if not new_ref:
     #         new_ref = self.update_ref(note)
