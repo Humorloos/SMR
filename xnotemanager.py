@@ -3,7 +3,7 @@ import json
 from anki.utils import splitFields
 
 from .utils import *
-from .consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS
+from .consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS, X_MAX_ANSWERS
 
 
 def field_by_name(fields, name):
@@ -35,6 +35,12 @@ def get_index_by_field_name(name):
         raise NameError('Name not in X_FLDS, valid names are ' +
                         X_FLDS.keys())
     return list(X_FLDS.keys()).index(name)
+
+
+def get_n_answers(note):
+    answers = [field_by_name(note.fields, 'a' + str(i)) != '' for i in
+               range(1, X_MAX_ANSWERS+1)]
+    return sum(answers)
 
 
 def img_from_field(field):
