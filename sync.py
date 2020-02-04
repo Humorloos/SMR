@@ -154,11 +154,13 @@ class XSyncer:
                     # Adjust notes according to self.change_list
                     self.process_change_list()
                     self.map_manager.save_changes()
-                    # TODO: save col
                 elif not local_change and remote_change:
                     print('')
                 else:
                     print('')
+            if self.onto:
+                self.onto.save_changes()
+        self.note_manager.save_col()
 
     def process_change_list(self):
         for sheet in self.change_list:

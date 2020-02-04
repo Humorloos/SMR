@@ -420,6 +420,9 @@ class XOntology(Ontology):
         else:
             destroy_entity(answer)
 
+    def save_changes(self):
+        self.save(file=self.name + '.rdf', format='rdfxml')
+
     def setUpClasses(self):
         with self:
             class Concept(owlready2.Thing):
