@@ -46,7 +46,7 @@ def img_from_field(field):
 
 
 def index_from_sort_id(sort_id):
-    return str(ord(sort_id) - 122)
+    return ord(sort_id) - 122
 
 
 def media_from_field(field):
