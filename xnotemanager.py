@@ -94,6 +94,12 @@ def ref_plus_question(field, ref):
     return nextRef
 
 
+def replace_ref_answer(ref, answer_dict):
+    old_answer = next(iter(answer_dict))
+    return re.sub(': ' + old_answer + '</li>',
+                  ': ' + answer_dict[old_answer] + '</li>', ref)
+
+
 def replace_ref_question(ref, question_dict):
     old_question = next(iter(question_dict))
     return re.sub('<li>' + old_question + ':',
