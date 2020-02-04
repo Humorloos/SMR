@@ -202,10 +202,10 @@ class XNoteManager():
         min_sort_id_len = min(len(t[1]) for t in all_child_notes)
         direct_children = [t for t in all_child_notes if len(t[1]) ==
                            min_sort_id_len]
-        answer_s_ids = set(t[1][-1] for t in all_child_notes)
+        answer_sort_ids = set(t[1][-1] for t in all_child_notes)
         direct_child_notes = {
-            s: [self.col.getNote(c[0]) for c in direct_children if
-                c[1][-1] == s] for s in answer_s_ids}
+            s: next(self.col.getNote(c[0]) for c in direct_children if
+                    c[1][-1] == s) for s in answer_sort_ids}
         return direct_child_notes
 
 
