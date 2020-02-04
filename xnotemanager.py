@@ -1,6 +1,6 @@
 import json
 
-from anki.utils import splitFields
+from anki.utils import splitFields, joinFields
 
 from .utils import *
 from .consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS, X_MAX_ANSWERS
@@ -110,29 +110,12 @@ def set_meta(note, meta):
     note.fields[get_index_by_field_name('mt')] = json.dumps(meta)
 
 
-def set_ref(note, ref):
-    note.fields[get_index_by_field_name('rf')] = ref
-
-
 def sort_id_from_index(index):
     return chr(index + 122)
 
 
 def title_from_field(field):
     return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", field)
-
-
-def update_ref(question_dict, answer_dict, note):
-    old_ref = field_by_name(note.fields, 'rf')
-    new_ref = old_ref
-    if question_dict:
-        new_ref = replace_ref_question(
-            ref=old_ref, question_dict=question_dict)
-    if answer_dict:
-        new_ref = replace_ref_answer(ref=new_ref, answer_dict=answer_dict)
-    if new_ref == old_ref:
-        print()
-    set_ref(note=note, ref=new_ref)
 
 
 def update_sort_id(previousId, idToAppend):
@@ -244,6 +227,27 @@ class XNoteManager:
             'select id from notes where tags is ? and sfld '
             'like ? and length(sfld) > ?', tag, sort_id + '%', len(sort_id))
         return [self.col.getNote(n) for n in all_child_nids]
+
+    def save_col(self):
+        self.col.save()
+
+    def set_ref(self, note, ref):
+        note.fields[get_index_by_field_name('rf')] = ref
+        flds = joinFields(note.fields)
+        self.col.db.execute("""update notes set flds = ? where id = ?""",
+                            (flds, note.id))
+
+    def update_ref(self, question_dict, answer_dict, note):
+        old_ref = field_by_name(note.fields, 'rf')
+        new_ref = old_ref
+        if question_dict:
+            new_ref = replace_ref_question(
+                ref=old_ref, question_dict=question_dict)
+        if answer_dict:
+            new_ref = replace_ref_answer(ref=new_ref, answer_dict=answer_dict)
+        if new_ref == old_ref:
+            print()
+        self.set_ref(note=note, ref=new_ref)
 
 
 class FieldTranslator:
