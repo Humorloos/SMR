@@ -207,20 +207,14 @@ class XNoteManager():
         return self.col.db.all('select mod, id from cards where nid = %s' %
                                nid)
 
-    def get_sheet_child_notes(self, seed):
-        tag = ' ' + seed.tags[0] + ' '
-        sort_id = field_by_name(seed.fields, 'id') + '%'
-        all_child_notes = self.col.db.all(
-            'select id, sfld from notes where tags is ? and sfld '
-            'like ? and length(sfld) > ?', tag, sort_id, len(sort_id))
-        min_sort_id_len = min(len(t[1]) for t in all_child_notes)
-        direct_children = [t for t in all_child_notes if len(t[1]) ==
-                           min_sort_id_len]
-        answer_sort_ids = set(t[1][-1] for t in all_child_notes)
-        direct_child_notes = {
-            s: next(self.col.getNote(c[0]) for c in direct_children if
-                    c[1][-1] == s) for s in answer_sort_ids}
-        return direct_child_notes
+    def get_sheet_child_notes(self, note, answer):
+        tag = ' ' + note.tags[0] + ' '
+        sort_id = field_by_name(note.fields, 'id') + sort_id_from_index(
+            answer)
+        all_child_nids = self.col.db.list(
+            'select id from notes where tags is ? and sfld '
+            'like ? and length(sfld) > ?', tag, sort_id + '%', len(sort_id))
+        return [self.col.getNote(n) for n in all_child_nids]
 
 
 class FieldTranslator():
