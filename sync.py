@@ -174,17 +174,28 @@ class XSyncer:
             seed = next(n for n in changed_notes if len(
                 field_by_name(n.fields, 'id')) == shortest_id_length)
             meta = meta_from_fields(seed.fields)
-            for answer in meta['answers']:
+            question_dict = {}
+            changes = change_list[meta['questionId']]
+            if 'question' in changes:
+                question_dict[changes['question']['old']] = changes[
+                            'question']['new']
+            for i in range(1, get_n_answers(seed)+1):
+                # a_id = answer['answerId']
                 sheet_child_notes = self.note_manager.get_sheet_child_notes(
-                    seed)
+                    note=seed, answer=i)
+                a_id = meta['answers'][i-1]['answerId']
+                answer_dict = {}
+                if a_id in changes:
+                    answer_dict[changes[a_id]['old']] = changes[a_id]['new']
+                for note in sheet_child_notes:
+                    update_ref(question_dict=question_dict,
+                               answer_dict=answer_dict, note=note)
+
                 # if answer['answerId'] in changes:
             # if sheet_child_notes:
-            #     update_dict = {}
-            #     changes = change_list[
-            #         meta_from_fields(seed.fields)['questionId']]
-            #     if 'question' in changes:
-            #         update_dict[changes['question']['old']] = changes[
-            #             'question']['new']
+            #
+            #
+            #
             #     old_ref = field_by_name(sheet_child_notes['{'].fields, 'rf')
             #
                 # for sort_id in sheet_child_notes:
