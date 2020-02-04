@@ -184,8 +184,7 @@ class XSyncer:
                 if 'question' in changes.keys():
                     update_dict[changes['question']['old']] = changes[
                         'question']['new']
-                old_ref = field_by_name(sheet_child_notes[list(
-                        sheet_child_notes.keys())[0]][0].fields, 'rf')
+                old_ref = field_by_name(sheet_child_notes['{'].fields, 'rf')
                 for sort_id in sheet_child_notes:
                     # TODO: look at uml and complete code based on diagram
                     print()
