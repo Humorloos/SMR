@@ -97,6 +97,8 @@ def ref_plus_question(field, ref):
 def set_meta(note, meta):
     note.fields[get_index_by_field_name('mt')] = json.dumps(meta)
 
+def set_ref(note, ref):
+    note.fields[get_index_by_field_name('rf')] = ref
 
 def sort_id_from_index(index):
     return chr(index + 122)
