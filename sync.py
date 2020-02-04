@@ -164,53 +164,27 @@ class XSyncer:
         for sheet in self.change_list:
             changed_notes = [self.note_manager.get_note_from_q_id(q_id) for
                              q_id in self.change_list[sheet]]
-            self.initiate_ref_changes(changed_notes, self.change_list[sheet])
-        pass
-
-    def initiate_ref_changes(self, changed_notes, change_list):
-        if changed_notes:
-            shortest_id_length = min(len(field_by_name(n.fields, 'id'))
-                                     for n in changed_notes)
-            seed = next(n for n in changed_notes if len(
-                field_by_name(n.fields, 'id')) == shortest_id_length)
-            meta = meta_from_fields(seed.fields)
-            question_dict = {}
-            changes = change_list[meta['questionId']]
-            if 'question' in changes:
-                question_dict[changes['question']['old']] = changes[
-                            'question']['new']
-            for i in range(1, get_n_answers(seed)+1):
-                # a_id = answer['answerId']
-                sheet_child_notes = self.note_manager.get_sheet_child_notes(
-                    note=seed, answer=i)
-                a_id = meta['answers'][i-1]['answerId']
-                answer_dict = {}
-                if a_id in changes:
-                    answer_dict[changes[a_id]['old']] = changes[a_id]['new']
-                for note in sheet_child_notes:
-                    update_ref(question_dict=question_dict,
-                               answer_dict=answer_dict, note=note)
-
-                # if answer['answerId'] in changes:
-            # if sheet_child_notes:
-            #
-            #
-            #
-            #     old_ref = field_by_name(sheet_child_notes['{'].fields, 'rf')
-            #
-                # for sort_id in sheet_child_notes:
-                #     # TODO: look at uml and complete code based on diagram
-                #
-                #     a_id = meta['answers'][index_from_sort_id(sort_id)-1][
-                #         'answerId']
-                #     if a_id in changes:
-                #         update_dict.update(changes[a_id])
-
-                print()
-    # def adjust_ref(self, note, new_ref=None):
-    #     if not new_ref:
-    #         new_ref = self.update_ref(note)
-    #     pass
+            if changed_notes:
+                shortest_id_length = min(len(field_by_name(n.fields, 'id'))
+                                         for n in changed_notes)
+                seed = next(n for n in changed_notes if len(
+                    field_by_name(n.fields, 'id')) == shortest_id_length)
+                meta = meta_from_fields(seed.fields)
+                question_dict = {}
+                changes = self.change_list[sheet][meta['questionId']]
+                if 'question' in changes:
+                    question_dict[changes['question']['old']] = changes[
+                                'question']['new']
+                for i in range(1, get_n_answers(seed)+1):
+                    sheet_child_notes = self.note_manager.get_sheet_child_notes(
+                        note=seed, answer=i)
+                    a_id = meta['answers'][i-1]['answerId']
+                    answer_dict = {}
+                    if a_id in changes:
+                        answer_dict[changes[a_id]['old']] = changes[a_id]['new']
+                    for note in sheet_child_notes:
+                        update_ref(question_dict=question_dict,
+                                   answer_dict=answer_dict, note=note)
 
     def process_local_answers(self, status, local, question):
         for answer in {**local, **status}:
