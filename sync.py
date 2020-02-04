@@ -164,26 +164,24 @@ class XSyncer:
         for sheet in self.change_list:
             changed_notes = [self.note_manager.get_note_from_q_id(q_id) for
                              q_id in self.change_list[sheet]]
-            shortest_id_length = min(len(field_by_name(n.fields, 'id'))
-                                     for n in changed_notes)
-            seed = next(n for n in changed_notes if len(
-                field_by_name(n.fields, 'id')) == shortest_id_length)
-            meta = meta_from_fields(seed.fields)
-            question_dict = {}
-            changes = self.change_list[sheet][meta['questionId']]
-            if 'question' in changes:
-                question_dict[changes['question']['old']] = changes[
-                            'question']['new']
-            for i in range(1, get_n_answers(seed)+1):
-                sheet_child_notes = self.note_manager.get_sheet_child_notes(
-                    note=seed, answer=i)
-                a_id = meta['answers'][i-1]['answerId']
-                answer_dict = {}
-                if a_id in changes:
-                    answer_dict[changes[a_id]['old']] = changes[a_id]['new']
-                for note in sheet_child_notes:
-                    update_ref(question_dict=question_dict,
-                               answer_dict=answer_dict, note=note)
+            for note in changed_notes:
+                meta = meta_from_fields(note.fields)
+                question_dict = {}
+                changes = self.change_list[sheet][meta['questionId']]
+                if 'question' in changes:
+                    question_dict[changes['question']['old']] = changes[
+                                'question']['new']
+                for i in range(1, get_n_answers(note)+1):
+                    sheet_child_notes = self.note_manager.get_sheet_child_notes(
+                        note=note, answer=i)
+                    a_id = meta['answers'][i-1]['answerId']
+                    answer_dict = {}
+                    if a_id in changes:
+                        answer_dict[changes[a_id]['old']] = changes[a_id]['new']
+                    for sheet_child_note in sheet_child_notes:
+                        update_ref(question_dict=question_dict,
+                                   answer_dict=answer_dict,
+                                   note=sheet_child_note)
 
     def process_local_answers(self, status, local, question):
         for answer in {**local, **status}:
