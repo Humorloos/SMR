@@ -94,6 +94,12 @@ def ref_plus_question(field, ref):
     return nextRef
 
 
+def replace_ref_question(ref, question_dict):
+    old_question = next(iter(question_dict))
+    return re.sub('<li>' + old_question + ':',
+                  '<li>' + question_dict[old_question] + ':', ref)
+
+
 def set_meta(note, meta):
     note.fields[get_index_by_field_name('mt')] = json.dumps(meta)
 
