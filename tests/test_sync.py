@@ -48,6 +48,33 @@ class TestRun(TestCase):
 
         self.fail()
 
+    def test_map_changes(self):
+        # Save original map before synchronization to tempfile and change it
+        # to map with changes
+        files_2_conserve = ['example map.xmind',
+                            'example_general_psychology.xmind']
+        temp_dir = tempfile.gettempdir()
+        paths = [{
+            'change': os.path.join(SUPPORT_PATH, 'maps', 'changes', f),
+            'resource': os.path.join(ADDON_PATH, 'resources', f),
+            'temp': os.path.join(temp_dir, f)} for f in files_2_conserve]
+        for path in paths:
+            shutil.copy2(path['resource'], path['temp'])
+            shutil.copy2(path['change'], path['resource'])
+
+        col_path = os.path.join(SUPPORT_PATH, 'cols', 'no_changes',
+                                'collection.anki2')
+        col = Collection(col_path)
+        self.syncer = XSyncer(col=col, status_file=self.status_file)
+
+        # Init test
+        self.syncer.run()
+
+        # Restore original version and remove temp file
+        for path in paths:
+            shutil.copy(path['temp'], path['map'])
+            os.remove(path['temp'])
+
     def test_non_leaf_answer_deletion_error(self):
         col_path = os.path.join(
             SUPPORT_PATH, 'cols', 'non_leaf_answer_deletion_error',
