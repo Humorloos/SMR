@@ -103,8 +103,10 @@ def replace_ref_question(ref, question_dict):
 def set_meta(note, meta):
     note.fields[get_index_by_field_name('mt')] = json.dumps(meta)
 
+
 def set_ref(note, ref):
     note.fields[get_index_by_field_name('rf')] = ref
+
 
 def sort_id_from_index(index):
     return chr(index + 122)
