@@ -124,7 +124,7 @@ def content_from_field(field):
             }}
 
 
-class XNoteManager():
+class XNoteManager:
     def __init__(self, col):
         self.col = col
         self.model = xModelId(self.col)
@@ -219,7 +219,8 @@ class XNoteManager():
     def update_ref(self, question_dict, answer_dict, note):
         pass
 
-class FieldTranslator():
+
+class FieldTranslator:
     def __init__(self):
         self.field_re_dict = {
             'ximage_': '<img src="',
