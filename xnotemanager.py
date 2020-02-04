@@ -106,10 +106,6 @@ def replace_ref_question(ref, question_dict):
                   '<li>' + question_dict[old_question] + ':', ref)
 
 
-def set_meta(note, meta):
-    note.fields[get_index_by_field_name('mt')] = json.dumps(meta)
-
-
 def sort_id_from_index(index):
     return chr(index + 122)
 
@@ -231,11 +227,18 @@ class XNoteManager:
     def save_col(self):
         self.col.save()
 
-    def set_ref(self, note, ref):
-        note.fields[get_index_by_field_name('rf')] = ref
+    def save_note(self, note):
         flds = joinFields(note.fields)
         self.col.db.execute("""update notes set flds = ? where id = ?""",
-                            (flds, note.id))
+                            flds, note.id)
+
+    def set_meta(self, note, meta):
+        note.fields[get_index_by_field_name('mt')] = json.dumps(meta)
+        self.save_note(note)
+
+    def set_ref(self, note, ref):
+        note.fields[get_index_by_field_name('rf')] = ref
+        self.save_note(note)
 
     def update_ref(self, question_dict, answer_dict, note):
         old_ref = field_by_name(note.fields, 'rf')

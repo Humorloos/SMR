@@ -119,7 +119,7 @@ class XSyncer:
         meta['answers'].remove(
             next(a for a in meta['answers'] if a['answerId'] == answer))
         meta['nAnswers'] -= 1
-        set_meta(note=question_note, meta=meta)
+        self.note_manager.set_meta(note=question_note, meta=meta)
 
         # Remove answer from status
         del status[answer]
