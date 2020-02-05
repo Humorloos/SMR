@@ -142,7 +142,7 @@ class XSyncer:
                 else:
                     remote_change = False
                 if not local_change and not remote_change:
-                    pass
+                    continue
                 elif local_change and not remote_change:
                     if not self.onto:
                         self.onto = XOntology(os.path.join(USER_PATH,
