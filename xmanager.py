@@ -11,6 +11,15 @@ from bs4 import BeautifulSoup
 from .consts import X_MEDIA_EXTENSIONS
 
 
+def clean_ref_path(path):
+    clean_path = path.replace('file://', '')
+    clean_path = clean_path.replace('%20', ' ')
+    clean_path = clean_path.split('/')
+    clean_path[0] = clean_path[0] + '\\'
+    clean_path = os.path.join(*clean_path)
+    return clean_path
+
+
 def get_os_mod(file):
     os_mod = os.stat(file).st_mtime
     return os_mod
