@@ -147,6 +147,19 @@ class XManager:
         except AttributeError:
             return ''
 
+    def get_ref_files(self):
+        ref_files = []
+        for key in self.sheets:
+            sheet = self.sheets[key]
+
+            # Get reference sheets
+            if sheet['tag']('title', recursive=False)[0].text == 'ref':
+                ref_tags = getChildnodes(sheet['tag'].topic)
+                ref_paths = (self.getNodeHyperlink(t) for t in ref_tags)
+                ref_files = [clean_ref_path(p) for p in ref_paths if p is not
+                             None]
+        return ref_files
+
     def get_remote(self):
         remote_sheets = self.get_remote_sheets()
 
