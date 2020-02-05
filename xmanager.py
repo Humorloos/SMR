@@ -244,6 +244,11 @@ class XManager:
         tag = self.getTagById(x_id)
         if title != self.getNodeTitle(tag):
             setNodeTitle(tag=tag, title=title)
+
+        # Remove crosslink if the tag has one
+        if self.getNodeCrosslink(tag):
+            del tag['xlink:href']
+
         nodeImg = self.getNodeImg(tag)
 
         # If the note has an image and the tag not or the image is different

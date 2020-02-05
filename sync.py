@@ -46,16 +46,11 @@ class XSyncer:
                       'answer and try synchronizing again.')
 
     def change_answer(self, answer, question, local, status):
+
         # Change answer in map
-        # TODO: In case of crosslinks, do not edit the source but delete the
-        #  crosslink and add the text directly to the note, don't forget to
-        #  remove the crosslink from the ontology afterwards
         title = title_from_field(local[answer]['content'])
         img = img_from_field(local[answer]['content'])
-        if status[answer]['crosslink']:
-            x_id = status[answer]['crosslink']['x_id']
-        else:
-            x_id = answer
+        x_id = answer
         self.map_manager.set_node_content(
             img=img, title=title, x_id=x_id,
             media_dir=self.note_manager.media_dir)
