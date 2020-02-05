@@ -231,22 +231,10 @@ class XmindImporter(NoteImporter):
         :param xManager: the xManager to get References from
         :return: adds xManagers referenced by ref sheet to xManagers list
         """
-        for key in xManager.sheets:
-            sheet = xManager.sheets[key]
-            # get reference sheets
-            if sheet['tag']('title', recursive=False)[0].text == 'ref':
-                ref_tags = getChildnodes(sheet['tag'].topic)
-                ref_paths = map(xManager.getNodeHyperlink, ref_tags)
-                for path in filter(lambda ref_path: ref_path is not None,
-                                   ref_paths):
-                    clean_path = path.replace('file://', '')
-                    clean_path = clean_path.replace('%20', ' ')
-                    clean_path = clean_path.split('/')
-                    clean_path[0] = clean_path[0] + '\\'
-                    clean_path = os.path.join(*clean_path)
-                    ref_xManager = XManager(clean_path)
-                    self.xManagers.append(ref_xManager)
-                    self.getRefManagers(ref_xManager)
+        ref_managers = [XManager(f) for f in xManager.get_ref_files()]
+        self.xManagers.extend(ref_managers)
+        for manager in ref_managers:
+            self.getRefManagers(manager)
 
     def getTag(self):
         return (self.deckName + '_' + self.currentSheetImport).replace(" ", "_")
