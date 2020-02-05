@@ -222,8 +222,3 @@ class XSyncer:
                                        local=local[question]['answers'],
                                        question=question)
             print()
-    #
-    # def update_ref(self, note):
-    #     old_ref = get_field_by_name(note.fields, 'rf')
-    #
-    #     pass
