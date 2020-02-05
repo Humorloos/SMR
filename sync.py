@@ -131,8 +131,8 @@ class XSyncer:
                 local_change = status[f]['ankiMod'] != local[f]['ankiMod']
                 if status[f]['osMod'] != os_file_mods[f]:
                     self.map_manager = XManager(f)
-                    remote = self.map_manager.get_remote()
-                    remote_change = status[f]['xMod'] != remote['xMod']
+                    remote_file = self.map_manager.remote_file()
+                    remote_change = status[f]['xMod'] != remote_file['xMod']
                     status[f]['osMod'] = os_file_mods[f]
                 else:
                     remote_change = False
@@ -150,7 +150,10 @@ class XSyncer:
                     self.process_change_list()
                     self.map_manager.save_changes()
                 elif not local_change and remote_change:
-                    print('')
+                    remote_sheets = self.map_manager.get_remote_sheets()
+                    # noinspection PyUnboundLocalVariable
+                    self.process_remote_changes(status=status[f]['sheets'],
+                                                remote=remote_sheets)
                 else:
                     print('')
             if self.onto:
@@ -217,3 +220,8 @@ class XSyncer:
                                        local=local[question]['answers'],
                                        question=question)
             print()
+
+    def process_remote_changes(self, status, remote):
+        for sheet in {**remote, **status}:
+            # if remote:
+            pass
