@@ -39,7 +39,7 @@ def get_index_by_field_name(name):
 
 def get_n_answers(note):
     answers = [field_by_name(note.fields, 'a' + str(i)) != '' for i in
-               range(1, X_MAX_ANSWERS+1)]
+               range(1, X_MAX_ANSWERS + 1)]
     return sum(answers)
 
 
