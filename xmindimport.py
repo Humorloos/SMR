@@ -305,9 +305,10 @@ class XmindImporter(NoteImporter):
             validSheets = [s for s in selectedSheets if s in manager.sheets]
             for sheet in validSheets:
                 self.currentSheetImport = sheet
-                self.mw.progress.update(label='importing %s' % sheet,
-                                        maybeShow=False)
-                self.mw.app.processEvents()
+                if self.mw:
+                    self.mw.progress.update(label='importing %s' % sheet,
+                                            maybeShow=False)
+                    self.mw.app.processEvents()
                 self.importMap()
         # add all notes to the collection
         if not self.running:
@@ -327,7 +328,8 @@ class XmindImporter(NoteImporter):
 
         self.log = [
             ", ".join(list(map(lambda l: " ".join(l), self.log)))]
-        self.mw.progress.finish()
+        if self.mw:
+            self.mw.progress.finish()
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
         print("fertig")
