@@ -139,14 +139,11 @@ class XManager:
             return ''
 
     def get_remote(self):
-        content_keys = self.content_sheets()
-        content_sheets = [self.sheets[s] for s in content_keys]
+        remote_sheets = self.get_remote_sheets()
 
-        sheets = dict()
-        for s in content_sheets:
+        for s in remote_sheets:
             questions = dict()
-            sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp'],
-                                      'questions': questions}
+            s['questions'] = questions
             for t in s['nodes']:
                 if self.is_anki_question(t):
                     answers = dict()
@@ -161,8 +158,16 @@ class XManager:
                                 'xMod': a['crosslink']['timestamp'],
                                 'x_id': a['crosslink']['id']}
 
-        remote = self.remote_file(sheets)
+        remote = self.remote_file(remote_sheets)
         return remote
+
+    def get_remote_sheets(self):
+        content_keys = self.content_sheets()
+        content_sheets = [self.sheets[s] for s in content_keys]
+        sheets = dict()
+        for s in content_sheets:
+            sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
+        return sheets
 
     def getTagById(self, tagId):
         """
