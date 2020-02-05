@@ -162,9 +162,9 @@ class XNoteManager:
         return self.col.getNote(self.get_nid_from_q_id(q_id))
 
     def get_xmind_files(self):
-        return set(meta_from_flds(flds[0])['path'] for flds in
-                   self.col.db.execute(
-                       'select flds from notes where mid = %s' % self.model))
+        return list(set(
+            meta_from_flds(flds[0])['path'] for flds in self.col.db.execute(
+                'select flds from notes where mid = %s' % self.model)))
 
     def get_local(self, file):
         doc_notes = [{'id': r[1], 'ankiMod': r[2], 'flds': splitFields(r[0])}
