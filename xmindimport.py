@@ -334,6 +334,17 @@ class XmindImporter(NoteImporter):
         shutil.rmtree(self.srcDir)
         print("fertig")
 
+    def init_import(self, deck_id, repair):
+        sheets = self.getValidSheets()
+        self.deckId = deck_id
+        self.deckName = self.col.decks.get(self.deckId)['name']
+        self.repair = repair
+        if self.mw:
+            self.mw.progress.start(immediate=True, label='importing...')
+            self.mw.app.processEvents()
+            self.mw.checkpoint("Import")
+        self.importSheets(sheets)
+
     def noteFromQuestionList(self, questionList):
         note = self.col.newNote()
         if note.id <= self.lastNid:
@@ -359,7 +370,6 @@ class XmindImporter(NoteImporter):
             selected sheets
         """
         self.getRefManagers(self.xManagers[0])
-        sheets = self.getValidSheets()
         selector = SingleSheetSelector(os.path.basename(self.xManagers[0].file))
         self.mw.progress.finish()
         selector.exec_()
@@ -367,13 +377,8 @@ class XmindImporter(NoteImporter):
         if not userInputs['running']:
             self.log = ['Import canceled']
             return
-        self.deckId = userInputs['deckId']
-        self.deckName = self.col.decks.get(self.deckId)['name']
-        self.repair = userInputs['repair']
-        self.mw.progress.start(immediate=True, label='importing...')
-        self.mw.app.processEvents()
-        self.mw.checkpoint("Import")
-        self.importSheets(sheets)
+        self.init_import(deck_id=userInputs['deckId'],
+                         repair=userInputs['repair'])
 
     def stop_or_add_cross_question(self, content, crosslink, manager, parents,
                                    question, ref, sortId):
