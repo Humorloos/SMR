@@ -156,6 +156,8 @@ class XOntology(Ontology):
         # set annotation properties for parent relation
         self.Xid[child, self.Parent, parent] = rel_dict['x_id']
 
+        return relProp
+
     def change_answer(self, q_id, a_id, new_answer):
         answer = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
         answer_triples = [t for t in self.get_question(q_id) if t['o'] ==

@@ -22,6 +22,7 @@ class XmindImporter(NoteImporter):
 
     def __init__(self, col, file):
         NoteImporter.__init__(self, col, file)
+        self.storids_added_relations = []
         self.model = col.models.byName(X_MODEL_NAME)
         self.mw = aqt.mw
         self.mediaDir = os.path.join(os.path.dirname(col.path),
@@ -140,6 +141,7 @@ class XmindImporter(NoteImporter):
         doc = self.activeManager.file
         tag = self.getTag()
         x_id = question['id']
+        rel_prop = None
         for childNode in childNotes:
             answerDict = self.getAnswerDict(nodeTag=childNode, question=x_id)
 
@@ -153,13 +155,15 @@ class XmindImporter(NoteImporter):
                     rel_dict = get_rel_dict(
                         aIndex=aIndex, image=image, media=media, x_id=x_id,
                         ref=ref, sortId=sortId, doc=doc, sheet=sheet, tag=tag)
-                    self.onto.add_relation(
+                    rel_prop = self.onto.add_relation(
                         child=child, class_text=question_class, parent=parent,
                         rel_dict=rel_dict)
                 aIndex += 1
             else:
                 bridges.append(answerDict)
             answerDicts.append(answerDict)
+        if rel_prop:
+            self.storids_added_relations.append(rel_prop.storid)
         return bridges, children
 
     def get_file_dict(self, path):
