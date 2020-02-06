@@ -236,6 +236,13 @@ class XSyncer:
                 importer.importMap(sheet=sheet, deck_id=deck_id)
                 importer.finish_import()
             elif sheet not in remote:
+                self.remove_sheet(sheet)
                 print('remove whole sheet')
             elif remote[sheet]['xMod'] != status[sheet]['xMod']:
                 print('process_remote_questions')
+
+    def remove_sheet(self, sheet):
+        self.note_manager.remove_sheet(sheet)
+        print('Remove notes and tag pertaining to this sheet from anki')
+        print('remove sheet from status')
+        print('remove all nodes pertaining to this sheet from ontology')
