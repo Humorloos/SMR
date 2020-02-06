@@ -23,6 +23,33 @@ def classify(content):
     return classified
 
 
+def get_question_sets(q_id_elements):
+
+    # Sort triples by question id for Triples pertaining to the same
+    # question to appear next to each other
+    ascendingQId = sorted(q_id_elements, key=lambda t: t['q_id'])
+    questionList = []
+
+    # Initiate tripleList with first triple
+    tripleList = [ascendingQId[0]]
+    for x, t in enumerate(ascendingQId[0:-1], start=1):
+
+        # Add the triple to the questionList if the next triple has a
+        # different question id
+        if t['q_id'] != ascendingQId[x]['q_id']:
+            questionList.append(tripleList)
+            tripleList = [ascendingQId[x]]
+
+        # Add the triple to the tripleList if it pertains to the same
+        # question as the next triple
+        else:
+            tripleList.append(ascendingQId[x])
+
+    # Finally add the last triple_list to the question_list
+    questionList.append(tripleList)
+    return questionList
+
+
 def get_rel_dict(aIndex, image, media, x_id, ref, sortId, doc, sheet, tag):
     return {
         'aIndex': aIndex,

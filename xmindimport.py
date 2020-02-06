@@ -314,29 +314,7 @@ class XmindImporter(NoteImporter):
                               for t in triples]
         added_triples = [t for t in triples_with_q_ids if t['q_id'] in
                          self.added_relations['q_ids']]
-
-        # Sort triples by question id for Triples pertaining to the same
-        # question to appear next to each other
-        ascendingQId = sorted(added_triples, key=lambda t: t['q_id'])
-        questionList = []
-
-        # Initiate tripleList with first triple
-        tripleList = [ascendingQId[0]]
-        for x, t in enumerate(ascendingQId[0:-1], start=1):
-
-            # Add the triple to the questionList if the next triple has a
-            # different question id
-            if t['q_id'] != ascendingQId[x]['q_id']:
-                questionList.append(tripleList)
-                tripleList = [ascendingQId[x]]
-
-            # Add the triple to the tripleList if it pertains to the same
-            # question as the next triple
-            else:
-                tripleList.append(ascendingQId[x])
-
-        # Finally add the last triple_list to the question_list
-        questionList.append(tripleList)
+        questionList = get_question_sets(added_triples)
 
         notes = [self.noteFromQuestionList(q) for q in questionList]
         self.addNew(notes=notes)
