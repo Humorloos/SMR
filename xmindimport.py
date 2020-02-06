@@ -22,7 +22,7 @@ class XmindImporter(NoteImporter):
 
     def __init__(self, col, file):
         NoteImporter.__init__(self, col, file)
-        self.storids_added_relations = []
+        self.added_relations = {'storids': [], 'q_ids': []}
         self.model = col.models.byName(X_MODEL_NAME)
         self.mw = aqt.mw
         self.mediaDir = os.path.join(os.path.dirname(col.path),
@@ -163,7 +163,8 @@ class XmindImporter(NoteImporter):
                 bridges.append(answerDict)
             answerDicts.append(answerDict)
         if rel_prop:
-            self.storids_added_relations.append(rel_prop.storid)
+            self.added_relations['storids'].append(rel_prop.storid)
+            self.added_relations['q_ids'].append(x_id)
         return bridges, children
 
     def get_file_dict(self, path):
