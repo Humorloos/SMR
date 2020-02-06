@@ -236,10 +236,17 @@ class XSyncer:
                 importer.importMap(sheet=sheet, deck_id=deck_id)
                 importer.finish_import()
             elif sheet not in remote:
-                self.remove_sheet(sheet)
-                print('remove whole sheet')
+                if not self.onto:
+                    self.onto = XOntology(deck_id)
+                self.remove_sheet(sheet, status)
             elif remote[sheet]['xMod'] != status[sheet]['xMod']:
+                if not self.onto:
+                    self.onto = XOntology(deck_id)
                 print('process_remote_questions')
+                remote_questions = self.map_manager.get_remote_questions(sheet)
+                self.process_remote_questions(
+                    status=status[sheet]['questions'], remote=remote_questions,
+                    deck_id=deck_id)
 
     def remove_sheet(self, sheet, status):
         self.note_manager.remove_sheet(sheet)
