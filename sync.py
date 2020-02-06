@@ -231,5 +231,9 @@ class XSyncer:
 
     def process_remote_changes(self, status, remote):
         for sheet in {**remote, **status}:
-            # if remote:
-            pass
+            if sheet not in status:
+                print('import whole sheet')
+            if sheet not in remote:
+                print('remove whole sheet')
+            if remote[sheet]['xMod'] != status[sheet]['xMod']:
+                print('process_remote_questions')
