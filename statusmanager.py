@@ -18,7 +18,12 @@ class StatusManager:
             self.status = []
 
     def add_new(self, status):
-        self.status.append(status)
+        status_index = [self.status.index(s) for s in self.status if
+                        s['file'] == status['file']]
+        if not status_index:
+            self.status.append(status)
+        else:
+            self.status[status_index[0]] = status
 
     def save(self):
         with open(self.status_file, 'w') as status_file:
