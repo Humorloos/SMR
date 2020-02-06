@@ -235,7 +235,7 @@ class XSyncer:
                                          self.map_manager.file)
                 importer.importMap(sheet=sheet, deck_id=deck_id)
                 importer.finish_import()
-            if sheet not in remote:
+            elif sheet not in remote:
                 print('remove whole sheet')
-            if remote[sheet]['xMod'] != status[sheet]['xMod']:
+            elif remote[sheet]['xMod'] != status[sheet]['xMod']:
                 print('process_remote_questions')
