@@ -3,6 +3,7 @@ from .statusmanager import StatusManager
 from .xmanager import XManager, get_os_mod
 from .xnotemanager import *
 from .xontology import XOntology
+from .xmindimport import XmindImporter
 
 
 def raise_sync_error(content, question_note, text_pre, text_post):
@@ -129,7 +130,9 @@ class XSyncer:
             for f in self.xmind_files:
                 self.change_list = {}
                 if f not in status:
-                    pass
+                    importer = XmindImporter(col=self.note_manager.col, file=f)
+                    importer.init_import(deck_id=d, repair=False)
+                    continue
                 local_change = status[f]['ankiMod'] != local[f]['ankiMod']
                 if status[f]['osMod'] != os_file_mods[f]:
                     self.map_manager = XManager(f)
