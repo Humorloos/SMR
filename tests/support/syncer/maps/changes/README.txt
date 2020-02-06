@@ -1,5 +1,6 @@
 Changes made to the original version:
 
+New questions in biologicalpsychology:
 biological psychology
     investigates
         information transfer and processing
