@@ -353,7 +353,6 @@ class XManager:
             zf.writestr(zinfo_or_arcname='META-INF/manifest.xml',
                         data=str(self.manifest))
 
-
     def content_sheets(self):
         return [k for k in self.sheets.keys() if k != 'ref']
 
