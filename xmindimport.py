@@ -285,16 +285,7 @@ class XmindImporter(NoteImporter):
             the map import by calling getQuestions
         """
         if sheet:
-            self.currentSheetImport = next(
-                s for m in self.xManagers for
-                s in m.sheets if m.sheets[s]['tag']['id'] == sheet)
-            self.activeManager = next(
-                m for m in self.xManagers for
-                s in m.sheets if s == self.currentSheetImport)
-        if deck_id:
-            self.deckId = deck_id
-            self.onto = XOntology(deck_id)
-            self.deckName = self.col.decks.get(self.deckId)['name']
+            self.set_up_import(deck_id, sheet)
         manager = self.activeManager
         rootTopic = manager.sheets[self.currentSheetImport]['tag'].topic
 
@@ -383,6 +374,17 @@ class XmindImporter(NoteImporter):
             return
         self.init_import(deck_id=userInputs['deckId'],
                          repair=userInputs['repair'])
+
+    def set_up_import(self, deck_id, sheet):
+        self.currentSheetImport = next(
+            s for m in self.xManagers for
+            s in m.sheets if m.sheets[s]['tag']['id'] == sheet)
+        self.activeManager = next(
+            m for m in self.xManagers for
+            s in m.sheets if s == self.currentSheetImport)
+        self.deckId = deck_id
+        self.onto = XOntology(deck_id)
+        self.deckName = self.col.decks.get(self.deckId)['name']
 
     def stop_or_add_cross_question(self, content, crosslink, manager, parents,
                                    question, ref, sortId):
