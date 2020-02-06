@@ -78,6 +78,15 @@ def remove_answer_concept(answer_concept, q_id):
         destroy_entity(answer_concept)
 
 
+def remove_question(question_elements, q_id):
+    answers = set(t['o'] for t in question_elements)
+    parents = set(t['s'] for t in question_elements)
+    remove_relations(answers=answers, parents=parents,
+                     question_triples=question_elements)
+    for answer in answers:
+        remove_answer_concept(answer_concept=answer, q_id=q_id)
+
+
 def remove_relations(answers, parents, question_triples):
     """
     Removes relations from parents to answers
