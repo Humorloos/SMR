@@ -99,6 +99,31 @@ class XmindImporter(NoteImporter):
 
         return answerDicts
 
+    def finish_import(self):
+        # Add all notes to the collection
+        if not self.running:
+            return
+        self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
+                    ['removed', 0, 'notes']]
+        self.importOntology()
+        self.update_status()
+        self.onto.save(
+            file=os.path.join(USER_PATH, str(
+                self.statusManager.status[-1]['deck']) + '.rdf'),
+            format="rdfxml")
+        for logId, log in enumerate(self.log, start=0):
+            if log[1] == 1:
+                self.log[logId][2] = 'note'
+            self.log[logId][1] = str(self.log[logId][1])
+
+        self.log = [
+            ", ".join(list(map(lambda l: " ".join(l), self.log)))]
+        if self.mw:
+            self.mw.progress.finish()
+        # Remove temp dir and its files
+        shutil.rmtree(self.srcDir)
+        print("fertig")
+
     def getAnswerDict(self, nodeTag, question=None, root=False):
         """
         :param nodeTag: The answer node to get the dict for
@@ -335,30 +360,7 @@ class XmindImporter(NoteImporter):
                                             maybeShow=False)
                     self.mw.app.processEvents()
                 self.importMap()
-
-        # Add all notes to the collection
-        if not self.running:
-            return
-        self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
-                    ['removed', 0, 'notes']]
-        self.importOntology()
-        self.update_status()
-        self.onto.save(
-            file=os.path.join(USER_PATH, str(
-                self.statusManager.status[-1]['deck']) + '.rdf'),
-            format="rdfxml")
-        for logId, log in enumerate(self.log, start=0):
-            if log[1] == 1:
-                self.log[logId][2] = 'note'
-            self.log[logId][1] = str(self.log[logId][1])
-
-        self.log = [
-            ", ".join(list(map(lambda l: " ".join(l), self.log)))]
-        if self.mw:
-            self.mw.progress.finish()
-        # Remove temp dir and its files
-        shutil.rmtree(self.srcDir)
-        print("fertig")
+        self.finish_import()
 
     def init_import(self, deck_id, repair):
         sheets = self.getValidSheets()
