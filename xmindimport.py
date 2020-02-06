@@ -324,7 +324,8 @@ class XmindImporter(NoteImporter):
                                             maybeShow=False)
                     self.mw.app.processEvents()
                 self.importMap()
-        # add all notes to the collection
+
+        # Add all notes to the collection
         if not self.running:
             return
         self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
