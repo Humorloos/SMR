@@ -361,6 +361,9 @@ class XOntology(Ontology):
             'tag': self.getNoteTag(question_elements)
         }
 
+    def get_note_elements(self):
+        return [self.getElements(t) for t in self.getNoteTriples()]
+
     def getNoteTriples(self):
         noNoteRels = ['Parent', 'Child']
         questionsStorids = [p.storid for p in self.object_properties() if
