@@ -241,8 +241,7 @@ class XSyncer:
             elif remote[sheet]['xMod'] != status[sheet]['xMod']:
                 print('process_remote_questions')
 
-    def remove_sheet(self, sheet):
+    def remove_sheet(self, sheet, status):
         self.note_manager.remove_sheet(sheet)
-        print('Remove notes and tag pertaining to this sheet from anki')
-        print('remove sheet from status')
-        print('remove all nodes pertaining to this sheet from ontology')
+        del status[sheet]
+        self.onto.remove_sheet(sheet)
