@@ -147,6 +147,13 @@ class XManager:
         except AttributeError:
             return ''
 
+    def get_parent_question_topic(self, tag):
+        parent_relation_topic = tag.parent.parent.parent.parent.parent.parent
+        if self.is_anki_question(parent_relation_topic):
+            return parent_relation_topic
+        else:
+            return self.get_parent_question_topic(parent_relation_topic)
+
     def get_ref_files(self):
         ref_files = []
         for key in self.sheets:
