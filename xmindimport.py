@@ -294,6 +294,7 @@ class XmindImporter(NoteImporter):
         if deck_id:
             self.deckId = deck_id
             self.onto = XOntology(deck_id)
+            self.deckName = self.col.decks.get(self.deckId)['name']
         manager = self.activeManager
         rootTopic = manager.sheets[self.currentSheetImport]['tag'].topic
 
