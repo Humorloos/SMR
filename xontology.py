@@ -192,8 +192,8 @@ class XOntology(Ontology):
 
         remove_relations(answers, parents, question_triples)
 
+        # Add new relationship
         class_text = classify(content_from_field(new_question))
-        # add new relationship
         for parent in parents:
             for child in answers:
                 self.relation_from_triple(
