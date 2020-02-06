@@ -310,8 +310,7 @@ class XmindImporter(NoteImporter):
         triples = [self.onto.getElements(t) for t in
                    self.onto.getNoteTriples() if t[1] in
                    self.added_relations['storids']]
-        triples_with_q_ids = [{'triple': t, 'q_id': self.onto.get_trpl_x_id(t)}
-                              for t in triples]
+        triples_with_q_ids = [self.onto.q_id_elements(t) for t in triples]
         added_triples = [t for t in triples_with_q_ids if t['q_id'] in
                          self.added_relations['q_ids']]
         questionList = get_question_sets(added_triples)

@@ -437,6 +437,9 @@ class XOntology(Ontology):
     def get_trpl_x_id(self, elements):
         return self.Xid[elements['s'], elements['p'], elements['o']][0]
 
+    def q_id_elements(self, elements):
+        return {'triple': elements, 'q_id': self.get_trpl_x_id(elements)}
+
     def remove_answer(self, q_id, a_id):
         question_triples = self.get_question(q_id)
         parents = set(t['s'] for t in question_triples)
