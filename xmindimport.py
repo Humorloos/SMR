@@ -273,26 +273,35 @@ class XmindImporter(NoteImporter):
                           ref=manager.getNodeTitle(rootTopic))
 
     def importOntology(self):
-        triples = self.onto.getNoteTriples()
+        triples = [self.onto.getElements(t) for t in
+                   self.onto.getNoteTriples() if t[1] in
+                   self.added_relations['storids']]
+        triples_with_q_ids = [{'triple': t, 'q_id': self.onto.get_trpl_x_id(t)}
+                              for t in triples]
+        added_triples = [t for t in triples_with_q_ids if t['q_id'] in
+                         self.added_relations['q_ids']]
+
         # Sort triples by question id for Triples pertaining to the same
         # question to appear next to each other
-        ascendingQId = sorted(triples, key=lambda t: self.onto.get_trpl_x_id(
-            self.onto.getElements(t)))
-        qIds = [self.onto.get_trpl_x_id(self.onto.getElements(t)) for t in
-                ascendingQId]
-
+        ascendingQId = sorted(added_triples, key=lambda t: t['q_id'])
         questionList = []
-        tripleList = [ascendingQId[0]]  # Initiate tripleList with first triple
-        for x, qId in enumerate(qIds[0:-1], start=1):
+
+        # Initiate tripleList with first triple
+        tripleList = [ascendingQId[0]['triple']]
+        for x, t in enumerate(ascendingQId[0:-1], start=1):
+
             # Add the triple to the questionList if the next triple has a
             # different question id
-            if qId != qIds[x]:
+            if t['q_id'] != ascendingQId[x]['q_id']:
                 questionList.append(tripleList)
-                tripleList = [ascendingQId[x]]
+                tripleList = [ascendingQId[x]['triple']]
+
             # Add the triple to the tripleList if it pertains to the same
             # question as the next triple
             else:
-                tripleList.append(ascendingQId[x])
+                tripleList.append(ascendingQId[x]['triple'])
+
+        # Finally add the last triple_list to the question_list
         questionList.append(tripleList)
 
         notes = [self.noteFromQuestionList(q) for q in questionList]
