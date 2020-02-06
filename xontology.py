@@ -64,9 +64,9 @@ class XOntology(Ontology):
             base_iri = os.path.join(ADDON_PATH, 'resources', 'onto.owl#')
         else:
             base_iri = iri + '#'
-        # owlready2.get_ontology(iri)
+
         Ontology.__init__(self, world=World(), base_iri=base_iri)
-        if iri:
+        if iri and os.path.exists(iri):
             self.load()
         self.setUpClasses()
         self.parentStorid = self.Parent.storid
