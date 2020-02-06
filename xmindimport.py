@@ -362,7 +362,7 @@ class XmindImporter(NoteImporter):
         self.deckId = deck_id
         self.deckName = self.col.decks.get(self.deckId)['name']
         self.repair = repair
-        self.onto = XOntology(os.path.join(USER_PATH, str(deck_id) + '.rdf'))
+        self.onto = XOntology(deck_id)
         if self.mw:
             self.mw.progress.start(immediate=True, label='importing...')
             self.mw.app.processEvents()

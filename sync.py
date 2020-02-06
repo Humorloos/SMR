@@ -148,8 +148,7 @@ class XSyncer:
                     continue
                 elif local_change and not remote_change:
                     if not self.onto:
-                        self.onto = XOntology(os.path.join(USER_PATH,
-                                                           str(d) + '.rdf'))
+                        self.onto = XOntology(d)
                     self.map_manager = XManager(f)
                     self.process_local_changes(status=status[f]['sheets'],
                                                local=local[f]['sheets'])

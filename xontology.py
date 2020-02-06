@@ -4,7 +4,7 @@ import types
 from owlready2.namespace import Ontology, World
 from owlready2.prop import destroy_entity
 
-from .consts import ADDON_PATH, X_MAX_ANSWERS
+from .consts import ADDON_PATH, X_MAX_ANSWERS, USER_PATH
 from .xnotemanager import *
 
 
@@ -59,14 +59,16 @@ def remove_relations(answers, parents, question_triples):
 
 
 class XOntology(Ontology):
-    def __init__(self, iri=None):
-        if not iri:
+    def __init__(self, deck_id=None):
+        onto_path = None
+        if not deck_id:
             base_iri = os.path.join(ADDON_PATH, 'resources', 'onto.owl#')
         else:
-            base_iri = iri + '#'
+            onto_path = os.path.join(USER_PATH, str(deck_id) + '.rdf')
+            base_iri = onto_path + '#'
 
         Ontology.__init__(self, world=World(), base_iri=base_iri)
-        if iri and os.path.exists(iri):
+        if onto_path and os.path.exists(onto_path):
             self.load()
         self.setUpClasses()
         self.parentStorid = self.Parent.storid
