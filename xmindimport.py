@@ -287,19 +287,19 @@ class XmindImporter(NoteImporter):
         questionList = []
 
         # Initiate tripleList with first triple
-        tripleList = [ascendingQId[0]['triple']]
+        tripleList = [ascendingQId[0]]
         for x, t in enumerate(ascendingQId[0:-1], start=1):
 
             # Add the triple to the questionList if the next triple has a
             # different question id
             if t['q_id'] != ascendingQId[x]['q_id']:
                 questionList.append(tripleList)
-                tripleList = [ascendingQId[x]['triple']]
+                tripleList = [ascendingQId[x]]
 
             # Add the triple to the tripleList if it pertains to the same
             # question as the next triple
             else:
-                tripleList.append(ascendingQId[x]['triple'])
+                tripleList.append(ascendingQId[x])
 
         # Finally add the last triple_list to the question_list
         questionList.append(tripleList)

@@ -303,62 +303,60 @@ class XOntology(Ontology):
         return question_elements
 
     def getNoteData(self, questionList):
-        elements = self.getElements(questionList[0])
-        q_id = self.get_trpl_x_id(elements)
-        answerDids = set(t[2] for t in questionList)
-        # Sort answerDids by answer index to get the answers' order right
-        answerDids = sorted(answerDids, key=lambda d: self.get_trpl_a_index(
-            self.getElements(next(t for t in questionList if t[2] == d))))
+        question_elements = next(l['triple'] for l in questionList)
+        q_id = self.get_trpl_x_id(question_elements)
+        answers = set(l['triple']['o'] for l in questionList)
+
+        # Sort answers by answer index to get the answers' order right
+        answers = sorted(answers, key=lambda d: self.get_trpl_a_index(
+            next(t['triple'] for t in questionList if t['triple']['o'] == d)))
         answerDicts = [dict() for _ in range(X_MAX_ANSWERS)]
         images = []
         media = []
-        for i, answerDict in enumerate(answerDicts[0:len(answerDids)]):
-            concept = self.world._get_by_storid(answerDids[i])
+        for i, answerDict in enumerate(answerDicts[0:len(answers)]):
             answerDict['text'] = self.field_translator.field_from_class(
-                concept.name)
-            id_dict = json.loads(concept.Xid[0])
+                answers[i].name)
+            id_dict = json.loads(answers[i].Xid[0])
             answerDict['src'] = id_dict[q_id]['src']
             answerDict['crosslink'] = id_dict[q_id]['crosslink']
-            if concept.Image:
-                images.append(file_dict(identifier=concept.Image[0],
-                                        doc=concept.Doc[0]))
-            if concept.Media:
-                media.append(file_dict(identifier=concept.Media[0],
-                                       doc=concept.Doc[0]))
-            childTriples = self.getChildTriples(s=answerDids[i])
-            childElements = [self.getElements(t) for t in childTriples]
+            if answers[i].Image:
+                images.append(file_dict(identifier=answers[i].Image[0],
+                                        doc=answers[i].Doc[0]))
+            if answers[i].Media:
+                media.append(file_dict(identifier=answers[i].Media[0],
+                                       doc=answers[i].Doc[0]))
+            childElements = self.get_child_elements(answers[i].storid)
             answerDict['children'] = self.getChildQuestionIds(childElements)
 
-        parentDids = list(set(t[0] for t in questionList))
+        parents = list(set(t['triple']['s'] for t in questionList))
         parentDicts = []
-        for did in parentDids:
+        for parent in parents:
             parentDict = dict()
-            concept = self.world._get_by_storid(did)
-            parentDict['text'] = concept.name
-            parentDict['id'] = concept.Xid[0]
-            parentTriples = self.getParentTriples(o=did)
+            parentDict['text'] = parent.name
+            parentDict['id'] = parent.Xid[0]
+            parentTriples = self.getParentTriples(o=parent.storid)
             parentElements = [self.getElements(t) for t in parentTriples]
             parentDict['parents'] = self.getParentQuestionIds(parentElements)
             parentDicts.append(parentDict)
 
-        files = self.getFiles(elements)
+        files = self.getFiles(question_elements)
         if files[0]:
             images.append(files[0])
         if files[1]:
             media.append(files[1])
         return {
-            'reference': self.get_trpl_ref(elements),
+            'reference': self.get_trpl_ref(question_elements),
             'question': self.field_translator.field_from_class(
-                elements['p'].name),
+                question_elements['p'].name),
             'answers': answerDicts,
-            'sortId': self.get_trpl_sort_id(elements),
-            'document': self.get_trpl_doc(elements),
-            'sheetId': self.get_trpl_sheet(elements),
+            'sortId': self.get_trpl_sort_id(question_elements),
+            'document': self.get_trpl_doc(question_elements),
+            'sheetId': self.get_trpl_sheet(question_elements),
             'questionId': q_id,
             'subjects': parentDicts,
             'images': images,
             'media': media,
-            'tag': self.getNoteTag(elements)
+            'tag': self.getNoteTag(question_elements)
         }
 
     def getNoteTriples(self):
