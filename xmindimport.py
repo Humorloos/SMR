@@ -257,7 +257,7 @@ class XmindImporter(NoteImporter):
         xMindMeta['subjects'] = noteData['subjects']
         return json.dumps(xMindMeta)
 
-    def importMap(self, sheet=None):
+    def importMap(self, sheet=None, deck_id=None):
         """
         :return: adds the roottopic of the active sheet to self.onto and starts
             the map import by calling getQuestions
@@ -269,6 +269,9 @@ class XmindImporter(NoteImporter):
             self.activeManager = next(
                 m for m in self.xManagers for
                 s in m.sheets if s == self.currentSheetImport)
+        if deck_id:
+            self.deckId = deck_id
+            self.onto = XOntology(deck_id)
         manager = self.activeManager
         rootTopic = manager.sheets[self.currentSheetImport]['tag'].topic
 
