@@ -160,7 +160,7 @@ class XSyncer:
                     remote_sheets = self.map_manager.get_remote_sheets()
                     # noinspection PyUnboundLocalVariable
                     self.process_remote_changes(status=status[f]['sheets'],
-                                                remote=remote_sheets)
+                                                remote=remote_sheets, deck_id=d)
                 else:
                     print('')
             if self.onto:
@@ -228,10 +228,13 @@ class XSyncer:
                                        question=question)
             print()
 
-    def process_remote_changes(self, status, remote):
+    def process_remote_changes(self, status, remote, deck_id):
         for sheet in {**remote, **status}:
             if sheet not in status:
-                print('import whole sheet')
+                importer = XmindImporter(self.note_manager.col,
+                                         self.map_manager.file)
+                importer.importMap(sheet=sheet, deck_id=deck_id)
+                importer.finish_import()
             if sheet not in remote:
                 print('remove whole sheet')
             if remote[sheet]['xMod'] != status[sheet]['xMod']:
