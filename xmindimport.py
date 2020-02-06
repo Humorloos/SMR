@@ -359,6 +359,14 @@ class XmindImporter(NoteImporter):
         note.tags.append(noteData['tag'])
         return note
 
+    def partial_import(self, seed_topic, sheet_id, deck_id, ref):
+        self.set_up_import(deck_id=deck_id, sheet=sheet_id)
+        self.col.decks.select(self.deckId)
+        self.col.decks.current()['mid'] = self.col.models.byName(
+            X_MODEL_NAME)['id']
+        rootDict = self.getAnswerDict(nodeTag=seed_topic, root=False)
+        self.getQuestions(parentAnswerDict=rootDict, ref=ref)
+
     def run(self):
         """
         :return: starts sheetselector dialog and runs import sheets with
