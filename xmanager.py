@@ -239,6 +239,13 @@ class XManager:
         return self.isQuestionNode(tag.parent.parent.parent, level + 1)
 
     def is_anki_question(self, tag):
+        """
+        Returns true if the tag would be represented as a question in anki,
+        that is, it is a relation, not empty and has at least one answer that is
+        not an empty topic
+        :param tag: The tag to check whether it is an anki question tag
+        :return: True if the tag is an anki question, false if it is not
+        """
         if not self.isQuestionNode(tag):
             return False
         if self.isEmptyNode(tag):
