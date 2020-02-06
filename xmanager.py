@@ -165,8 +165,9 @@ class XManager:
 
         for s in remote_sheets:
             questions = dict()
-            s['questions'] = questions
-            for t in s['nodes']:
+            remote_sheets[s]['questions'] = questions
+            for t in next(v for v in self.sheets.values() if
+                          v['tag']['id'] == s)['nodes']:
                 if self.is_anki_question(t):
                     answers = dict()
                     questions[t['id']] = {'xMod': t['timestamp'],
