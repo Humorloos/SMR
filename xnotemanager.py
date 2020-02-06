@@ -234,6 +234,14 @@ class XNoteManager:
             "select id from notes where flds like '%\"sheetId\": \"" +
             sheet_id + "\"%'")
 
+    def get_sheet_notes(self, sheet_id):
+        """
+        Gets all notes belonging to the sheet with the given id
+        :param sheet_id: Xmind id of the sheet to get the notes for
+        :return: All notes that belong to the sheet with the given id
+        """
+        return [self.col.getNote(n) for n in self.get_sheet_nids(sheet_id)]
+
     def save_col(self):
         self.col.save()
 
