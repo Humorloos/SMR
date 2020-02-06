@@ -252,3 +252,14 @@ class XSyncer:
         self.note_manager.remove_sheet(sheet)
         del status[sheet]
         self.onto.remove_sheet(sheet)
+
+    def process_remote_questions(self, status, remote, deck_id):
+        for question in {**status, **remote}:
+            if question not in status:
+                print('importiere die map ausgehend von der Frage')
+            elif question not in remote:
+                print('lösche die Frage und alle Fragen, die darauf aufbauen')
+            elif not status[question]['xMod'] == remote[question]['xMod']:
+                print('ändere die Frage in anki, ontologie, status und nimm '
+                      'sie in self.change_list auf')
+            pass
