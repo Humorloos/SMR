@@ -257,13 +257,21 @@ class XmindImporter(NoteImporter):
         xMindMeta['subjects'] = noteData['subjects']
         return json.dumps(xMindMeta)
 
-    def importMap(self):
+    def importMap(self, sheet=None):
         """
         :return: adds the roottopic of the active sheet to self.onto and starts
             the map import by calling getQuestions
         """
+        if sheet:
+            self.currentSheetImport = next(
+                s for m in self.xManagers for
+                s in m.sheets if m.sheets[s]['tag']['id'] == sheet)
+            self.activeManager = next(
+                m for m in self.xManagers for
+                s in m.sheets if s == self.currentSheetImport)
         manager = self.activeManager
         rootTopic = manager.sheets[self.currentSheetImport]['tag'].topic
+
         # Set model to Stepwise map retrieval model
         xModel = self.col.models.byName(X_MODEL_NAME)
         self.col.decks.select(self.deckId)
