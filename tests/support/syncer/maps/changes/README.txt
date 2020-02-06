@@ -12,6 +12,19 @@ biological psychology
                         answer 3.1
                 answer 2
 
+Added new file new_psychology.xmind:
+New psychology
+	investigates
+		new topics
+			are
+				incredibly new
+				astonishingly new
+				really very new
+
+				not so new topics
+					why
+						I don't know
+
 Added sheet New Sheet:
 New sheet
 	new sheet topics
