@@ -198,8 +198,8 @@ class XManager:
         :return: the tag containing the Id
         """
         try:
-            return tuple(filter(lambda t: t['id'] == tagId, self.get_tag_list()))[0]
-        except IndexError:
+            return next(t for t in self.get_tag_list() if t['id'] == tagId)
+        except StopIteration:
             # TODO: Warn if the node is not found
             return None
 
