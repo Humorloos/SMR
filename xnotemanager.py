@@ -270,6 +270,16 @@ class XNoteManager:
             print()
         self.set_ref(note=note, ref=new_ref)
 
+    def remove_sheet(self, sheet):
+
+        # Remove notes from this sheet from collection
+        sheet_nids = self.get_sheet_nids(sheet)
+        tag = self.col.getNote(sheet_nids[0]).tags[0]
+        self.col.remNotes(sheet_nids)
+
+        # Remove tag
+        del self.col.tags.tags[tag]
+
 
 class FieldTranslator:
     def __init__(self):
