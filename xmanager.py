@@ -25,6 +25,10 @@ def get_os_mod(file):
     return os_mod
 
 
+def get_parent_topic(tag):
+    return tag.parent.parent.parent
+
+
 def setNodeTitle(tag, title):
     tag.find('title', recursive=False).string = title
 
@@ -148,7 +152,7 @@ class XManager:
             return ''
 
     def get_parent_question_topic(self, tag):
-        parent_relation_topic = tag.parent.parent.parent.parent.parent.parent
+        parent_relation_topic = get_parent_topic(get_parent_topic(tag))
         if self.is_anki_question(parent_relation_topic):
             return parent_relation_topic
         else:
