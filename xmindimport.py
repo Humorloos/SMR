@@ -107,10 +107,7 @@ class XmindImporter(NoteImporter):
                     ['removed', 0, 'notes']]
         self.importOntology()
         self.update_status()
-        self.onto.save(
-            file=os.path.join(USER_PATH, str(
-                self.statusManager.status[-1]['deck']) + '.rdf'),
-            format="rdfxml")
+        self.onto.save_changes()
         for logId, log in enumerate(self.log, start=0):
             if log[1] == 1:
                 self.log[logId][2] = 'note'
