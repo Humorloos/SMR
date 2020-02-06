@@ -20,6 +20,16 @@ def clean_ref_path(path):
     return clean_path
 
 
+def get_ancestry(topic, descendants):
+    if topic.parent.name == 'sheet':
+        descendants.reverse()
+        return descendants
+    else:
+        parent_topic = get_parent_topic(topic)
+        descendants.append(parent_topic)
+        return get_ancestry(topic=parent_topic, descendants=descendants)
+
+
 def get_os_mod(file):
     os_mod = os.stat(file).st_mtime
     return os_mod
