@@ -63,19 +63,19 @@ def get_rel_dict(aIndex, image, media, x_id, ref, sortId, doc, sheet, tag):
         'tag': tag}
 
 
-   def remove_answer_concept(answer_concept, q_id):
-        """
-        Removes the answer's x_id from concept or destroy the concept if no
-        x_ids are left
-        :param answer_concept: Concept of the answer to remove
-        :param q_id: Xmind ID of the question that belongs to this answer
-        """
-        id_dict = json.loads(answer_concept.Xid[0])
-        del id_dict[q_id]
-        if id_dict:
-            answer_concept.Xid[0] = json.dumps(id_dict)
-        else:
-            destroy_entity(answer_concept)
+def remove_answer_concept(answer_concept, q_id):
+    """
+    Removes the answer's x_id from concept or destroy the concept if no
+    x_ids are left
+    :param answer_concept: Concept of the answer to remove
+    :param q_id: Xmind ID of the question that belongs to this answer
+    """
+    id_dict = json.loads(answer_concept.Xid[0])
+    del id_dict[q_id]
+    if id_dict:
+        answer_concept.Xid[0] = json.dumps(id_dict)
+    else:
+        destroy_entity(answer_concept)
 
 
 def remove_relations(answers, parents, question_triples):
@@ -312,9 +312,9 @@ class XOntology(Ontology):
     def get_inverse(self, x_id):
         triples = self.get_all_parent_triples()
         elements = [self.getElements(t) for t in triples]
-        inverse_elements = [e for e in elements if self.get_trpl_x_id(e) == x_id]
+        inverse_elements = [e for e in elements if
+                            self.get_trpl_x_id(e) == x_id]
         return inverse_elements
-
 
     def getNoteTag(self, elements):
         return self.NoteTag[elements['s'], elements['p'], elements['o']][0]
@@ -343,7 +343,8 @@ class XOntology(Ontology):
     def get_question(self, x_id):
         triples = self.getNoteTriples()
         elements = [self.getElements(t) for t in triples]
-        question_elements = [e for e in elements if self.get_trpl_x_id(e) == x_id]
+        question_elements = [e for e in elements if
+                             self.get_trpl_x_id(e) == x_id]
         return question_elements
 
     def getNoteData(self, questionList):
