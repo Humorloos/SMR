@@ -9,6 +9,7 @@ import zipfile
 from bs4 import BeautifulSoup
 
 from .consts import X_MEDIA_EXTENSIONS
+from .xnotemanager import ref_plus_question, ref_plus_answer, field_from_content
 
 
 def clean_ref_path(path):
@@ -395,3 +396,21 @@ class XManager:
         # Nested list comprehension explained:
         # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
         return self.tag_list
+
+    def ref_from_q_topic(self, q_topic):
+        ancestry = get_ancestry(topic=q_topic, descendants=[])
+        ref = self.getNodeTitle(ancestry.pop(0))
+        mult_subjects = False
+        follows_bridge = False
+        for i, ancestor in enumerate(ancestry):
+            field = field_from_content(self.getNodeContent(ancestor))
+            if i % 2:
+                ref = ref_plus_answer(field=field, followsBridge=follows_bridge,
+                                      ref=ref, mult_subjects=mult_subjects)
+                follows_bridge = False
+                mult_subjects = self.isEmptyNode(ancestor)
+            else:
+                ref = ref_plus_question(field=field, ref=ref)
+                if not self.is_anki_question(ancestor):
+                    follows_bridge = True
+        return ref
