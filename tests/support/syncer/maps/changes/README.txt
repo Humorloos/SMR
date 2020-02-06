@@ -36,3 +36,5 @@ New sheet
 
 			question following these multiple answers
 				yet another answer
+
+Removed sheet clinical psychology
