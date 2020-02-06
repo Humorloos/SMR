@@ -375,6 +375,10 @@ class XOntology(Ontology):
                             p.name != 'Parent']
         return [t for t in self.get_triples(o=o) if t[1] in questionsStorids]
 
+    def get_sheet_elements(self, sheet_id):
+        note_elements = self.get_note_elements()
+        return [e for e in note_elements if self.get_trpl_sheet(e) == sheet_id]
+
     def get_trpl_a_index(self, elements):
         return self.AIndex[elements['s'], elements['p'], elements['o']][0]
 
