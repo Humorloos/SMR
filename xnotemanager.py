@@ -224,6 +224,16 @@ class XNoteManager:
             'like ? and length(sfld) > ?', tag, sort_id + '%', len(sort_id))
         return [self.col.getNote(n) for n in all_child_nids]
 
+    def get_sheet_nids(self, sheet_id):
+        """
+        Gets the nids of the notes belonging to the sheet with the given id
+        :param sheet_id: Xmind id of the sheet to get the nids for
+        :return: Ids of the notes belonging to this sheet
+        """
+        return self.col.db.list(
+            "select id from notes where flds like '%\"sheetId\": \"" +
+            sheet_id + "\"%'")
+
     def save_col(self):
         self.col.save()
 
