@@ -477,6 +477,26 @@ class XOntology(Ontology):
 
         remove_answer_concept(answer_concept=answer, q_id=q_id)
 
+    def remove_sheet(self, sheet_id):
+        sheet_elements = self.get_sheet_elements(sheet_id)
+        q_id_elements = [self.q_id_elements(e) for e in sheet_elements]
+
+        # Sort questions in descending order by sort_id to first remove
+        # questions whose answers are leaves and continue removing in
+        # hierarchical order
+        question_sets = sorted(
+            get_question_sets(q_id_elements),
+            key=lambda s: self.get_trpl_sort_id(s[0]['triple']),
+            reverse=True)
+        for question_set in question_sets:
+            remove_question(
+                question_elements=[s['triple'] for s in question_set],
+                q_id=next(s['q_id'] for s in question_set))
+        else:
+            # Remove root
+            remove_answer_concept(
+                answer_concept=question_sets[-1][0]['triple']['s'], q_id='root')
+
     def save_changes(self):
         self.save(file=self.name + '.rdf', format='rdfxml')
 
