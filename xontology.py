@@ -63,6 +63,21 @@ def get_rel_dict(aIndex, image, media, x_id, ref, sortId, doc, sheet, tag):
         'tag': tag}
 
 
+   def remove_answer_concept(answer_concept, q_id):
+        """
+        Removes the answer's x_id from concept or destroy the concept if no
+        x_ids are left
+        :param answer_concept: Concept of the answer to remove
+        :param q_id: Xmind ID of the question that belongs to this answer
+        """
+        id_dict = json.loads(answer_concept.Xid[0])
+        del id_dict[q_id]
+        if id_dict:
+            answer_concept.Xid[0] = json.dumps(id_dict)
+        else:
+            destroy_entity(answer_concept)
+
+
 def remove_relations(answers, parents, question_triples):
     """
     Removes relations from parents to answers
@@ -450,14 +465,7 @@ class XOntology(Ontology):
         remove_relations(answers=[answer], parents=parents,
                          question_triples=question_triples)
 
-        # Remove answer's x_id from concept or destroy concept if no x_ids
-        # are left
-        id_dict = json.loads(answer.Xid[0])
-        del id_dict[q_id]
-        if id_dict:
-            answer.Xid[0] = json.dumps(id_dict)
-        else:
-            destroy_entity(answer)
+        remove_answer_concept(answer_concept=answer, q_id=q_id)
 
     def save_changes(self):
         self.save(file=self.name + '.rdf', format='rdfxml')
