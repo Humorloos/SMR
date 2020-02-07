@@ -93,10 +93,6 @@ class XmindImporter(NoteImporter):
                         followsBridge=not isQuestion)
 
     def findAnswerDicts(self, parents, question, sortId, ref, content):
-        """
-        :param question: question tag to get the answers for
-        :return: list of dictionaries created with getAnswerDict()
-        """
         answerDicts = list()
         manager = self.activeManager
         crosslink = manager.getNodeCrosslink(question)
