@@ -356,13 +356,24 @@ class XmindImporter(NoteImporter):
         note.tags.append(noteData['tag'])
         return note
 
-    def partial_import(self, seed_topic, sheet_id, deck_id, ref):
+    def partial_import(self, seed_topic, sheet_id, deck_id):
         self.set_up_import(deck_id=deck_id, sheet=sheet_id)
         self.col.decks.select(self.deckId)
         self.col.decks.current()['mid'] = self.col.models.byName(
             X_MODEL_NAME)['id']
-        rootDict = self.getAnswerDict(nodeTag=seed_topic, root=False)
-        self.getQuestions(parentAnswerDict=rootDict, ref=ref)
+        parent_answer = get_parent_topic(seed_topic)
+        parent_q = self.activeManager.get_parent_question_topic(
+            seed_topic)
+        parent_a_concept = self.onto.get_answer_by_a_id(
+            a_id=parent_answer['id'], q_id=parent_q['id'])
+        parent_a_dict = self.getAnswerDict(
+            nodeTag=parent_answer, question=parent_q['id'], root=False,
+            a_concept=parent_a_concept)
+        ref, sort_id = self.activeManager.ref_and_sort_id(q_topic=seed_topic)
+        q_index = sum(1 for _ in seed_topic.previous_siblings)+1
+        self.add_question(
+            sort_id=sort_id, q_index=q_index, q_tag=seed_topic,
+            parent_a_dict=parent_a_dict, ref=ref)
 
     def run(self):
         """
