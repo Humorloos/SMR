@@ -38,3 +38,21 @@ New sheet
 				yet another answer
 
 Removed sheet clinical psychology
+
+Removed questions:
+biological psychology
+	investigates
+		information transfer and processing
+			modulated by
+-->             enzymes
+					example
+						MAO
+							stands for
+								monoamine oxidase
+							splits up
+
+								dopamine
+								adrenaline
+								noradrenaline
+
+									are
