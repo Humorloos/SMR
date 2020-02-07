@@ -256,9 +256,9 @@ class XSyncer:
     def process_remote_questions(self, status, remote, deck_id, sheet_id):
         not_in_status = [q for q in remote if q not in status]
         tags_to_add = []
-        for q in not_in_status:
-            tags_to_add.append(self.map_manager.getTagById(q))
-            del remote[q]
+        for q_id in not_in_status:
+            tags_to_add.append(self.map_manager.getTagById(q_id))
+            del remote[q_id]
         if tags_to_add:
             seeds = [t for t in tags_to_add if
                      self.map_manager.get_parent_question_topic(t)['id'] in
