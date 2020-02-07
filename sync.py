@@ -246,20 +246,23 @@ class XSyncer:
                 remote_questions = self.map_manager.get_remote_questions(sheet)
                 self.process_remote_questions(
                     status=status[sheet]['questions'], remote=remote_questions,
-                    deck_id=deck_id)
+                    deck_id=deck_id, sheet_id=sheet)
 
     def remove_sheet(self, sheet, status):
         self.note_manager.remove_sheet(sheet)
         del status[sheet]
         self.onto.remove_sheet(sheet)
 
-    def process_remote_questions(self, status, remote, deck_id):
-        for question in {**status, **remote}:
-            if question not in status:
-                print('importiere die map ausgehend von der Frage')
-            elif question not in remote:
-                print('lösche die Frage und alle Fragen, die darauf aufbauen')
-            elif not status[question]['xMod'] == remote[question]['xMod']:
-                print('ändere die Frage in anki, ontologie, status und nimm '
-                      'sie in self.change_list auf')
-            pass
+    def process_remote_questions(self, status, remote, deck_id, sheet_id):
+        not_in_status = [self.map_manager.getTagById(q) for q in remote if
+                         q not in status]
+        if not_in_status:
+            seeds = [t for t in not_in_status if
+                     self.map_manager.get_parent_question_topic(t)['id'] in
+                     status]
+            importer = XmindImporter(col=self.note_manager.col,
+                                     file=self.map_manager.file)
+            for seed in seeds:
+                importer.partial_import(seed_topic=seed, sheet_id=sheet_id,
+                                        deck_id=deck_id)
+            importer.finish_import()
