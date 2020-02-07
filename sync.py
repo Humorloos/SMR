@@ -269,3 +269,9 @@ class XSyncer:
                 importer.partial_import(seed_topic=seed, sheet_id=sheet_id,
                                         deck_id=deck_id)
             importer.finish_import()
+
+        not_in_remote = [q for q in status if q not in remote]
+        for q_id in not_in_remote:
+            self.remove_question(q_id)
+            del status[q_id]
+        print()
