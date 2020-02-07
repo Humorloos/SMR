@@ -62,9 +62,9 @@ class XmindImporter(NoteImporter):
         for note in notes:
             self.col.addNote(note)
 
-    def add_question(self, sort_id, q_id, q_tag, parent_a_dict, ref):
+    def add_question(self, sort_id, q_index, q_tag, parent_a_dict, ref):
         # Update the sorting ID
-        nextSortId = update_sort_id(previousId=sort_id, idToAppend=q_id)
+        nextSortId = update_sort_id(previousId=sort_id, idToAppend=q_index)
         content = self.activeManager.getNodeContent(q_tag)
         answerDicts = self.findAnswerDicts(
             parents=parent_a_dict['concepts'], question=q_tag,
