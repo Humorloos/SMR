@@ -62,6 +62,36 @@ class XmindImporter(NoteImporter):
         for note in notes:
             self.col.addNote(note)
 
+    def add_question(self, sort_id, q_id, q_tag, parent_a_dict, ref):
+        # Update the sorting ID
+        nextSortId = update_sort_id(previousId=sort_id, idToAppend=q_id)
+        content = self.activeManager.getNodeContent(q_tag)
+        answerDicts = self.findAnswerDicts(
+            parents=parent_a_dict['concepts'], question=q_tag,
+            sortId=nextSortId, ref=ref, content=content)
+        if answerDicts:
+            actualAnswers = [a for a in answerDicts if a['isAnswer']]
+            isQuestion = not self.activeManager.isEmptyNode(q_tag)
+
+            # If the current relation is a question and has too many
+            # answers give a warning and stop running
+            if isQuestion and len(actualAnswers) > X_MAX_ANSWERS:
+                self.running = False
+                self.log = ["""Warning:
+                        A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
+                            (self.activeManager.getNodeTitle(q_tag),
+                             X_MAX_ANSWERS, X_MAX_ANSWERS)]
+                return
+            nextRef = ref_plus_question(
+                field=field_from_content(content), ref=ref)
+            for aId, answerDict in enumerate(answerDicts, start=1):
+                if getChildnodes(parent_a_dict['nodeTag']):
+                    self.getQuestions(
+                        parentAnswerDict=answerDict, ref=nextRef,
+                        sortId=update_sort_id(
+                            previousId=nextSortId, idToAppend=aId),
+                        followsBridge=not isQuestion)
+
     def findAnswerDicts(self, parents, question, sortId, ref, content):
         """
         :param question: question tag to get the answers for
@@ -212,37 +242,7 @@ class XmindImporter(NoteImporter):
                 ref=ref, mult_subjects=not parentAnswerDict['isAnswer'])
         followRels = getChildnodes(parentAnswerDict['nodeTag'])
         for qId, followRel in enumerate(followRels, start=1):
-
-            # Update the sorting ID
-            nextSortId = update_sort_id(previousId=sortId, idToAppend=qId)
-            content = manager.getNodeContent(followRel)
-            answerDicts = self.findAnswerDicts(
-                parents=parentAnswerDict['concepts'], question=followRel,
-                sortId=nextSortId, ref=ref, content=content)
-            if answerDicts:
-                actualAnswers = [a for a in answerDicts if a['isAnswer']]
-                isQuestion = not manager.isEmptyNode(followRel)
-
-                # If the current relation is a question and has too many
-                # answers give a warning and stop running
-                if isQuestion and len(actualAnswers) > X_MAX_ANSWERS:
-                    self.running = False
-                    self.log = ["""Warning:
-                A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
-                                (manager.getNodeTitle(followRel),
-                                 X_MAX_ANSWERS, X_MAX_ANSWERS)]
-                    return
-
-                nextRef = ref_plus_question(
-                    field=field_from_content(content), ref=ref)
-
-                for aId, answerDict in enumerate(answerDicts, start=1):
-                    if getChildnodes(parentAnswerDict['nodeTag']):
-                        self.getQuestions(
-                            parentAnswerDict=answerDict, ref=nextRef,
-                            sortId=update_sort_id(
-                                previousId=nextSortId, idToAppend=aId),
-                            followsBridge=not isQuestion)
+            self.add_question(sort_id=sortId, q_id=qId)
 
     def getValidSheets(self):
         """
