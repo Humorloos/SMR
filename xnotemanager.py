@@ -242,6 +242,10 @@ class XNoteManager:
         """
         return [self.col.getNote(n) for n in self.get_sheet_nids(sheet_id)]
 
+    def remove_notes_by_q_ids(self, q_ids):
+        nids_2_remove = [self.get_nid_from_q_id(q) for q in q_ids]
+        self.col.remNotes(nids_2_remove)
+
     def save_col(self):
         self.col.save()
 
