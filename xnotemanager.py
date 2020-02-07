@@ -246,6 +246,15 @@ class XNoteManager:
         nids_2_remove = [self.get_nid_from_q_id(q) for q in q_ids]
         self.col.remNotes(nids_2_remove)
 
+    def remove_sheet(self, sheet):
+        # Remove notes from this sheet from collection
+        sheet_nids = self.get_sheet_nids(sheet)
+        tag = self.col.getNote(sheet_nids[0]).tags[0]
+        self.col.remNotes(sheet_nids)
+
+        # Remove tag
+        del self.col.tags.tags[tag]
+
     def save_col(self):
         self.col.save()
 
@@ -273,16 +282,6 @@ class XNoteManager:
         if new_ref == old_ref:
             print()
         self.set_ref(note=note, ref=new_ref)
-
-    def remove_sheet(self, sheet):
-
-        # Remove notes from this sheet from collection
-        sheet_nids = self.get_sheet_nids(sheet)
-        tag = self.col.getNote(sheet_nids[0]).tags[0]
-        self.col.remNotes(sheet_nids)
-
-        # Remove tag
-        del self.col.tags.tags[tag]
 
 
 class FieldTranslator:
