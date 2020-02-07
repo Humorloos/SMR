@@ -477,6 +477,13 @@ class XOntology(Ontology):
 
         remove_answer_concept(answer_concept=answer, q_id=q_id)
 
+    def remove_questions(self, q_ids):
+        question_elements = {q: self.get_question(q) for q in q_ids}
+        for q_id in question_elements:
+            remove_question(question_elements=question_elements[q_id],
+                            q_id=q_id)
+        print()
+
     def remove_sheet(self, sheet_id):
         sheet_elements = self.get_sheet_elements(sheet_id)
         q_id_elements = [self.q_id_elements(e) for e in sheet_elements]
