@@ -254,10 +254,13 @@ class XSyncer:
         self.onto.remove_sheet(sheet)
 
     def process_remote_questions(self, status, remote, deck_id, sheet_id):
-        not_in_status = [self.map_manager.getTagById(q) for q in remote if
-                         q not in status]
-        if not_in_status:
-            seeds = [t for t in not_in_status if
+        not_in_status = [q for q in remote if q not in status]
+        tags_to_add = []
+        for q in not_in_status:
+            tags_to_add.append(self.map_manager.getTagById(q))
+            del remote[q]
+        if tags_to_add:
+            seeds = [t for t in tags_to_add if
                      self.map_manager.get_parent_question_topic(t)['id'] in
                      status]
             importer = XmindImporter(col=self.note_manager.col,
