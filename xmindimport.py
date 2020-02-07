@@ -147,8 +147,9 @@ class XmindImporter(NoteImporter):
         shutil.rmtree(self.srcDir)
         print("fertig")
 
-    def getAnswerDict(self, nodeTag, question=None, root=False):
+    def getAnswerDict(self, nodeTag, question=None, root=False, a_concept=None):
         """
+        :param question: Xmind id of the question the answer refers to
         :param nodeTag: The answer node to get the dict for
         :param root: whether the node is the root or not
         :return: dictionary containing information for creating a note from
@@ -156,7 +157,6 @@ class XmindImporter(NoteImporter):
         """
         manager = self.activeManager
         isAnswer = True
-        concept = None
 
         # Check whether subtopic contains a crosslink
         crosslink = manager.getNodeCrosslink(nodeTag)
@@ -164,19 +164,21 @@ class XmindImporter(NoteImporter):
         # If the node is empty do not create a concept
         if manager.isEmptyNode(nodeTag):
             isAnswer = False
+        elif a_concept:
+            pass
         else:
             nodeContent = manager.getNodeContent(nodeTag)
             x_id = nodeTag['id']
-            concept = self.onto.add_concept(
+            a_concept = self.onto.add_concept(
                 crosslink=crosslink, nodeContent=nodeContent, a_id=x_id,
                 root=root, file=self.activeManager.file, q_id=question)
 
             # Assign a list to concept since concept may also contain
             # multiple concepts in case of bridges
-            concept = [concept]
+            a_concept = [a_concept]
         # Todo: check whether aID is really necessary
         return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
-                    crosslink=crosslink, concepts=concept)
+                    crosslink=crosslink, concepts=a_concept)
 
     def get_children_and_bridges(self, answerDicts, childNotes, image, media,
                                  parents, question, ref, question_class,
