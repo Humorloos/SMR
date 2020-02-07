@@ -9,7 +9,8 @@ import zipfile
 from bs4 import BeautifulSoup
 
 from .consts import X_MEDIA_EXTENSIONS
-from .xnotemanager import ref_plus_question, ref_plus_answer, field_from_content
+from .xnotemanager import ref_plus_question, ref_plus_answer, \
+    field_from_content, update_sort_id
 
 
 def clean_ref_path(path):
@@ -397,13 +398,16 @@ class XManager:
         # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
         return self.tag_list
 
-    def ref_from_q_topic(self, q_topic):
+    def ref_and_sort_id(self, q_topic):
         ancestry = get_ancestry(topic=q_topic, descendants=[])
         ref = self.getNodeTitle(ancestry.pop(0))
+        sort_id = ''
         mult_subjects = False
         follows_bridge = False
         for i, ancestor in enumerate(ancestry):
             field = field_from_content(self.getNodeContent(ancestor))
+            sort_id = update_sort_id(sort_id, sum(
+                1 for _ in ancestor.previous_siblings) + 1)
             if i % 2:
                 ref = ref_plus_answer(field=field, followsBridge=follows_bridge,
                                       ref=ref, mult_subjects=mult_subjects)
@@ -413,4 +417,6 @@ class XManager:
                 ref = ref_plus_question(field=field, ref=ref)
                 if not self.is_anki_question(ancestor):
                     follows_bridge = True
-        return ref
+        sort_id = update_sort_id(sort_id, sum(
+            1 for _ in q_topic.previous_siblings) + 1)
+        return ref, sort_id
