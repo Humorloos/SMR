@@ -227,9 +227,8 @@ class XmindImporter(NoteImporter):
         :param followsBridge: ???
         :return: creates notes for each question following the answerDict
         """
-        manager = self.activeManager
-        answerContent = manager.getNodeContent(parentAnswerDict['nodeTag'])[
-            'content']
+        answerContent = self.activeManager.getNodeContent(
+            parentAnswerDict['nodeTag'])['content']
 
         # The reference doesn't have to be edited at the roottopic
         if not isinstance(parentAnswerDict['concepts'][0], self.onto.Root):
