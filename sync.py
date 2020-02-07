@@ -275,3 +275,8 @@ class XSyncer:
             self.remove_question(q_id)
             del status[q_id]
         print()
+
+    def remove_question(self, q_id):
+        print('remove question from anki')
+        print('remove question from ontology')
+        print('remove question from status')
