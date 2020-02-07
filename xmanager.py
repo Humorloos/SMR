@@ -418,6 +418,4 @@ class XManager:
                 ref = ref_plus_question(field=field, ref=ref)
                 if not self.is_anki_question(ancestor):
                     follows_bridge = True
-        sort_id = update_sort_id(sort_id, sum(
-            1 for _ in q_topic.previous_siblings) + 1)
         return ref, sort_id
