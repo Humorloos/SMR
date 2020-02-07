@@ -238,7 +238,8 @@ class XmindImporter(NoteImporter):
                 ref=ref, mult_subjects=not parentAnswerDict['isAnswer'])
         followRels = getChildnodes(parentAnswerDict['nodeTag'])
         for qId, followRel in enumerate(followRels, start=1):
-            self.add_question(sort_id=sortId, q_id=qId)
+            self.add_question(sort_id=sortId, q_index=qId, q_tag=followRel,
+                              parent_a_dict=parentAnswerDict, ref=ref)
 
     def getValidSheets(self):
         """
