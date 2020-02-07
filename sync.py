@@ -271,12 +271,11 @@ class XSyncer:
             importer.finish_import()
 
         not_in_remote = [q for q in status if q not in remote]
-        for q_id in not_in_remote:
-            self.remove_question(q_id)
-            del status[q_id]
+        self.remove_questions(q_ids=not_in_remote, status=status)
         print()
 
-    def remove_question(self, q_id):
-        print('remove question from anki')
-        print('remove question from ontology')
-        print('remove question from status')
+    def remove_questions(self, q_ids, status):
+        self.note_manager.remove_notes_by_q_ids(q_ids)
+        self.onto.remove_questions(q_ids)
+        for q_id in q_ids:
+            del status[q_id]
