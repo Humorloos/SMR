@@ -164,17 +164,16 @@ class XmindImporter(NoteImporter):
         # If the node is empty do not create a concept
         if manager.isEmptyNode(nodeTag):
             isAnswer = False
-        elif a_concept:
-            pass
         else:
-            nodeContent = manager.getNodeContent(nodeTag)
-            x_id = nodeTag['id']
-            a_concept = self.onto.add_concept(
-                crosslink=crosslink, nodeContent=nodeContent, a_id=x_id,
-                root=root, file=self.activeManager.file, q_id=question)
+            if not a_concept:
+                nodeContent = manager.getNodeContent(nodeTag)
+                x_id = nodeTag['id']
+                a_concept = self.onto.add_concept(
+                    crosslink=crosslink, nodeContent=nodeContent, a_id=x_id,
+                    root=root, file=self.activeManager.file, q_id=question)
 
-            # Assign a list to concept since concept may also contain
-            # multiple concepts in case of bridges
+                # Assign a list to concept since concept may also contain
+                # multiple concepts in case of bridges
             a_concept = [a_concept]
         # Todo: check whether aID is really necessary
         return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
