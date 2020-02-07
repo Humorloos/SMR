@@ -393,7 +393,8 @@ class XManager:
 
     def get_tag_list(self):
         if not self.tag_list:
-            self.tag_list = [t for s in self.sheets for t in self.sheets[s]['nodes']]
+            self.tag_list = [t for s in self.sheets for
+                             t in self.sheets[s]['nodes']]
         # Nested list comprehension explained:
         # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
         return self.tag_list
