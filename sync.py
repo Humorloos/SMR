@@ -244,10 +244,9 @@ class XSyncer:
             del remote[q_id]
         if tags_to_add:
 
-            tags_and_parent_qs = [{
-                'tag': t,
-                'parent_q': get_parent_question_topic(t)}
-                for t in tags_to_add]
+            tags_and_parent_qs = [{'tag': t,
+                                   'parent_q': get_parent_question_topic(t)} for
+                                  t in tags_to_add]
 
             # Get all questions whose parent question is already in status,
             # since they are the starting points for the imports
