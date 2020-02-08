@@ -6,6 +6,10 @@ from .utils import *
 from .consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS, X_MAX_ANSWERS
 
 
+def change_dict(old, new):
+    return {'old': old, 'new': new}
+
+
 def field_by_name(fields, name):
     return fields[get_index_by_field_name(name)]
 

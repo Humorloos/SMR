@@ -63,9 +63,9 @@ class XSyncer:
         # Remember this change for final note adjustments
         self.change_list[self.current_sheet_sync].update(
             deep_merge(self.change_list[self.current_sheet_sync],
-                       {question: {answer: {
-                           'old': status[answer]['content'],
-                           'new': local[answer]['content']}}}))
+                       {question: {answer: change_dict(
+                           old=status[answer]['content'],
+                           new=local[answer]['content'])}}))
 
         # Change answer in status
         status[answer].update(local[answer])
@@ -85,9 +85,9 @@ class XSyncer:
 
         # Remember this change for final note adjustments
         self.change_list[self.current_sheet_sync][question] = {
-            'question': {
-                'old': status[question]['content'],
-                'new': local[question]['content']}}
+            'question': change_dict(
+                old=status[question]['content'],
+                new=local[question]['content'])}
 
         # Change question in status
         status[question]['ankiMod'] = local[question]['ankiMod']
