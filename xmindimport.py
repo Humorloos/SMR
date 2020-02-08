@@ -292,7 +292,7 @@ class XmindImporter(NoteImporter):
         self.col.decks.current()['mid'] = xModel['id']
         rootDict = self.getAnswerDict(nodeTag=rootTopic, root=True)
         self.getQuestions(parentAnswerDict=rootDict,
-                          ref=manager.getNodeTitle(rootTopic))
+                          ref=getNodeTitle(rootTopic))
 
     def importOntology(self):
         triples = [self.onto.getElements(t) for t in
