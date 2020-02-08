@@ -70,7 +70,7 @@ class XSyncer:
         # Change answer in status
         status[answer].update(local[answer])
 
-    def change_question(self, question, status, local):
+    def change_remote_question(self, question, status, local):
         # Change question in map
         title = title_from_field(local[question]['content'])
         img = img_from_field(local[question]['content'])
@@ -80,8 +80,8 @@ class XSyncer:
         )
 
         # Change question in ontology
-        self.onto.change_question(x_id=question,
-                                  new_question=local[question]['content'])
+        self.onto.change_remote_question(x_id=question,
+                                         new_question=local[question]['content'])
 
         # Remember this change for final note adjustments
         self.change_list[self.current_sheet_sync][question] = {
@@ -222,7 +222,7 @@ class XSyncer:
     def process_local_questions(self, status, local):
         for question in {**local, **status}:
             if local[question]['content'] != status[question]['content']:
-                self.change_question(question, status, local)
+                self.change_remote_question(question, status, local)
             self.process_local_answers(status=status[question]['answers'],
                                        local=local[question]['answers'],
                                        question=question)
