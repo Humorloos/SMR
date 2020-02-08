@@ -32,6 +32,18 @@ def get_ancestry(topic, descendants):
         return get_ancestry(topic=parent_topic, descendants=descendants)
 
 
+def getNodeCrosslink(tag):
+    """
+    :param tag: tag to get the crosslink from
+    :return: node id of the node the crosslink refers to
+    """
+    href = getNodeHyperlink(tag)
+    if href and href.startswith('xmind:#'):
+        return href[7:]
+    else:
+        return None
+
+
 def getNodeHyperlink(tag):
     """
     :param tag: tag to get the hyperlink from
@@ -113,7 +125,7 @@ class XManager:
 
     def get_answer_nodes(self, tag):
         return [{'src': n, 'crosslink': '' if not self.is_crosslink_node(n)
-                else self.getTagById(self.getNodeCrosslink(n))} for n in
+                else self.getTagById(getNodeCrosslink(n))} for n in
                 getChildnodes(tag) if not self.isEmptyNode(n)]
 
     def getAttachment(self, identifier, dir):
@@ -158,19 +170,6 @@ class XManager:
                 mediaPath = href[4:]
                 media['media'] = mediaPath
         return {'content': content, 'media': media}
-
-    def getNodeCrosslink(self, tag):
-        """
-        :param tag: tag to get the crosslink from
-        :return: node id of the node the crosslink refers to
-        """
-        href = getNodeHyperlink(tag)
-        if href and href.startswith('xmind:#'):
-            return href[7:]
-        else:
-            return None
-
-
 
     def get_parent_question_topic(self, tag):
         parent_relation_topic = get_parent_topic(get_parent_topic(tag))
@@ -317,7 +316,7 @@ class XManager:
             setNodeTitle(tag=tag, title=title)
 
         # Remove crosslink if the tag has one
-        if self.getNodeCrosslink(tag):
+        if getNodeCrosslink(tag):
             del tag['xlink:href']
 
         nodeImg = getNodeImg(tag)
