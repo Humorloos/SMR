@@ -361,14 +361,22 @@ class XmindImporter(NoteImporter):
         self.col.decks.select(self.deckId)
         self.col.decks.current()['mid'] = self.col.models.byName(
             X_MODEL_NAME)['id']
-        parent_answer = get_parent_topic(seed_topic)
         parent_q = self.activeManager.get_parent_question_topic(
             seed_topic)
+        parent_q_as = self.activeManager.get_answer_nodes(parent_q)
+        parent_a = next(
+            t['src'] for t in parent_q_as if seed_topic.text in t['src'].text)
         parent_a_concept = self.onto.get_answer_by_a_id(
-            a_id=parent_answer['id'], q_id=parent_q['id'])
+            a_id=parent_a['id'], q_id=parent_q['id'])
         parent_a_dict = self.getAnswerDict(
-            nodeTag=parent_answer, question=parent_q['id'], root=False,
+            nodeTag=parent_a, question=parent_q['id'], root=False,
             a_concept=parent_a_concept)
+
+        # If the seed_topic's parent follows a bridge, start importing at the
+        # bridge instead
+        if not parent_a == get_parent_topic(seed_topic):
+            seed_topic = next(t for t in getChildnodes(parent_a) if
+                              seed_topic.text in t.text)
         ref, sort_id = self.activeManager.ref_and_sort_id(q_topic=seed_topic)
         q_index = sum(1 for _ in seed_topic.previous_siblings)+1
         self.add_question(
