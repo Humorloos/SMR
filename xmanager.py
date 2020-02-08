@@ -106,6 +106,14 @@ def is_crosslink(href):
     return href.startswith('xmind:#')
 
 
+def is_crosslink_node(tag):
+    href = getNodeHyperlink(tag)
+    if getNodeTitle(tag) or getNodeImg(tag) or \
+            (href and not is_crosslink(href)):
+        return False
+    return True
+
+
 def isEmptyNode(tag):
     """
     :param tag: tag to check for
@@ -142,7 +150,7 @@ class XManager:
         return self.getNodeContent(topic)
 
     def get_answer_nodes(self, tag):
-        return [{'src': n, 'crosslink': '' if not self.is_crosslink_node(n)
+        return [{'src': n, 'crosslink': '' if not is_crosslink_node(n)
                 else self.getTagById(getNodeCrosslink(n))} for n in
                 getChildnodes(tag) if not isEmptyNode(n)]
 
@@ -255,13 +263,6 @@ class XManager:
         except StopIteration:
             # TODO: Warn if the node is not found
             return None
-
-    def is_crosslink_node(self, tag):
-        href = getNodeHyperlink(tag)
-        if getNodeTitle(tag) or getNodeImg(tag) or \
-                (href and not is_crosslink(href)):
-            return False
-        return True
 
     def isQuestionNode(self, tag, level=0):
         # If the Tag is the root topic, return true if the length of the path is odd
