@@ -102,6 +102,20 @@ def getChildnodes(tag):
         return []
 
 
+def isEmptyNode(tag):
+    """
+    :param tag: tag to check for
+    :return: True if node does not contain any title, image or hyperlink
+    """
+    if getNodeTitle(tag):
+        return False
+    if getNodeImg(tag):
+        return False
+    if getNodeHyperlink(tag):
+        return False
+    return True
+
+
 class XManager:
     def __init__(self, file):
         self.xZip = zipfile.ZipFile(file, 'r')
@@ -126,7 +140,7 @@ class XManager:
     def get_answer_nodes(self, tag):
         return [{'src': n, 'crosslink': '' if not self.is_crosslink_node(n)
                 else self.getTagById(getNodeCrosslink(n))} for n in
-                getChildnodes(tag) if not self.isEmptyNode(n)]
+                getChildnodes(tag) if not isEmptyNode(n)]
 
     def getAttachment(self, identifier, dir):
         # extract attachment to anki media directory
@@ -248,19 +262,6 @@ class XManager:
             return False
         return True
 
-    def isEmptyNode(self, tag):
-        """
-        :param tag: tag to check for
-        :return: True if node does not contain any title, image or hyperlink
-        """
-        if getNodeTitle(tag):
-            return False
-        if getNodeImg(tag):
-            return False
-        if getNodeHyperlink(tag):
-            return False
-        return True
-
     def isQuestionNode(self, tag, level=0):
         # If the Tag is the root topic, return true if the length of the path is odd
         if tag.parent.name == 'sheet':
@@ -278,13 +279,13 @@ class XManager:
         """
         if not self.isQuestionNode(tag):
             return False
-        if self.isEmptyNode(tag):
+        if isEmptyNode(tag):
             return False
         children = getChildnodes(tag)
         if len(children) == 0:
             return False
         for child in children:
-            if not self.isEmptyNode(child):
+            if not isEmptyNode(child):
                 return True
         return False
 
@@ -420,7 +421,7 @@ class XManager:
                 ref = ref_plus_answer(field=field, followsBridge=follows_bridge,
                                       ref=ref, mult_subjects=mult_subjects)
                 follows_bridge = False
-                mult_subjects = self.isEmptyNode(ancestor)
+                mult_subjects = isEmptyNode(ancestor)
             else:
                 ref = ref_plus_question(field=field, ref=ref)
                 if not self.is_anki_question(ancestor):
