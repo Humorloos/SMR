@@ -278,10 +278,12 @@ class XManager:
             if is_anki_question(t):
                 answers = dict()
                 remote_questions[t['id']] = {'xMod': t['timestamp'],
+                                             'index': get_topic_index(t),
                                              'answers': answers}
                 for a in self.get_answer_nodes(self.getTagById(t['id'])):
                     answers[a['src']['id']] = {
                         'xMod': a['src']['timestamp'],
+                        'index': get_topic_index(a['src']),
                         'crosslink': {}}
                     if a['crosslink']:
                         answers[a['src']['id']]['crosslink'] = {
