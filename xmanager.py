@@ -104,6 +104,10 @@ def get_parent_topic(tag):
     return tag.parent.parent.parent
 
 
+def get_topic_index(tag):
+    return sum(1 for _ in tag.previous_siblings) + 1
+
+
 def isQuestionNode(tag, level=0):
     # If the Tag is the root topic, return true if the length of the path is odd
     if tag.parent.name == 'sheet':
@@ -430,8 +434,7 @@ class XManager:
         follows_bridge = False
         for i, ancestor in enumerate(ancestry):
             field = field_from_content(self.getNodeContent(ancestor))
-            sort_id = update_sort_id(sort_id, sum(
-                1 for _ in ancestor.previous_siblings) + 1)
+            sort_id = update_sort_id(sort_id, get_topic_index(ancestor))
             if i % 2:
                 ref = ref_plus_answer(field=field, followsBridge=follows_bridge,
                                       ref=ref, mult_subjects=mult_subjects)
