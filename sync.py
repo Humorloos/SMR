@@ -80,7 +80,7 @@ class XSyncer:
         )
 
         # Change question in ontology
-        self.onto.change_remote_question(x_id=question,
+        self.onto.change_question(x_id=question,
                                          new_question=local[question]['content'])
 
         # Remember this change for final note adjustments
