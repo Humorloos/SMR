@@ -315,8 +315,6 @@ class XNoteManager:
                         ref=old_ref, question_dict=question_dict)
                 if answer_dict:
                     new_ref = replace_ref_answer(ref=new_ref, answer_dict=answer_dict)
-                if new_ref == old_ref:
-                    print()
                 self.set_ref(note=sheet_child_note, ref=new_ref)
 
 
