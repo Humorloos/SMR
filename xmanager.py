@@ -32,6 +32,17 @@ def get_ancestry(topic, descendants):
         return get_ancestry(topic=parent_topic, descendants=descendants)
 
 
+def getNodeImg(tag):
+    """
+    :param tag: Tag to get the image from
+    :return: node's raw image string
+    """
+    try:
+        return tag.find('xhtml:img', recursive=False)['xhtml:src']
+    except (TypeError, AttributeError):
+        return None
+
+
 def getNodeTitle(tag):
     """
     :param tag: Tag to get the title from
@@ -115,7 +126,7 @@ class XManager:
             content += title
 
         # if necessary add image
-        attachment = self.getNodeImg(tag=tag)
+        attachment = getNodeImg(tag=tag)
         if attachment:
             media['image'] = attachment[4:]
 
@@ -158,15 +169,6 @@ class XManager:
         except (KeyError, TypeError):
             return None
 
-    def getNodeImg(self, tag):
-        """
-        :param tag: Tag to get the image from
-        :return: node's raw image string
-        """
-        try:
-            return tag.find('xhtml:img', recursive=False)['xhtml:src']
-        except (TypeError, AttributeError):
-            return None
 
 
     def get_parent_question_topic(self, tag):
@@ -241,7 +243,7 @@ class XManager:
 
     def is_crosslink_node(self, tag):
         href = self.getNodeHyperlink(tag)
-        if getNodeTitle(tag) or self.getNodeImg(tag) or \
+        if getNodeTitle(tag) or getNodeImg(tag) or \
                 (href and not self.is_crosslink(href)):
             return False
         return True
@@ -253,7 +255,7 @@ class XManager:
         """
         if getNodeTitle(tag):
             return False
-        if self.getNodeImg(tag):
+        if getNodeImg(tag):
             return False
         if self.getNodeHyperlink(tag):
             return False
@@ -317,7 +319,7 @@ class XManager:
         if self.getNodeCrosslink(tag):
             del tag['xlink:href']
 
-        nodeImg = self.getNodeImg(tag)
+        nodeImg = getNodeImg(tag)
 
         # If the note has an image and the tag not or the image is different
         # or the image was deleted, change it
