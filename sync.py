@@ -183,7 +183,7 @@ class XSyncer:
                 'question']['new']
         for i in range(1, get_n_answers(note) + 1):
             sheet_child_notes = self.note_manager.get_sheet_child_notes(
-                note=note, answer=i)
+                note=note, a_index=i)
             a_id = meta['answers'][i - 1]['answerId']
             answer_dict = {}
             if a_id in changes:

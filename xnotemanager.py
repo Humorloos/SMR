@@ -215,10 +215,18 @@ class XNoteManager:
         return self.col.db.all('select mod, id from cards where nid = %s' %
                                nid)
 
-    def get_sheet_child_notes(self, note, answer):
+    def get_sheet_child_notes(self, note, a_index):
+        """
+        Returns all notes for a given note that are children of that note,
+        that is, their sort_id contains the sort_id of the given note +
+        answer and they belong to the same sheet
+        :param note: The note to get the child_notes for
+        :param a_index: The index of the answer in the note that is parent to
+        the child note (1 is first answer)
+        :return: All notes that are children of the given note
+        """
         tag = ' ' + note.tags[0] + ' '
-        sort_id = field_by_name(note.fields, 'id') + sort_id_from_index(
-            answer)
+        sort_id = field_by_name(note.fields, 'id') + sort_id_from_index(a_index)
         all_child_nids = self.col.db.list(
             'select id from notes where tags is ? and sfld '
             'like ? and length(sfld) > ?', tag, sort_id + '%', len(sort_id))
