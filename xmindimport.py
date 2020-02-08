@@ -160,7 +160,7 @@ class XmindImporter(NoteImporter):
         crosslink = None
 
         # If the node is empty do not create a concept
-        if manager.isEmptyNode(nodeTag):
+        if not nodeTag or isEmptyNode(nodeTag):
             isAnswer = False
         else:
             # Check whether subtopic contains a crosslink
@@ -356,22 +356,35 @@ class XmindImporter(NoteImporter):
         note.tags.append(noteData['tag'])
         return note
 
-    def partial_import(self, seed_topic, sheet_id, deck_id, parent_q, parent_a):
+    def partial_import(self, seed_topic, sheet_id, deck_id, parent_q,
+                       parent_as):
         self.set_up_import(deck_id=deck_id, sheet=sheet_id)
         self.col.decks.select(self.deckId)
         self.col.decks.current()['mid'] = self.col.models.byName(
             X_MODEL_NAME)['id']
-        parent_a_concept = self.onto.get_answer_by_a_id(
-            a_id=parent_a['id'], q_id=parent_q['id'])
+        parent_a_concepts = [self.onto.get_answer_by_a_id(
+            a_id=a['id'], q_id=parent_q['id']) for a in parent_as]
+        if len(parent_as) > 1:
+            node_tag = None
+            a_concept = parent_a_concepts
+        else:
+            node_tag = parent_as[0]
+            a_concept = parent_a_concepts[0]
         parent_a_dict = self.getAnswerDict(
-            nodeTag=parent_a, question=parent_q['id'], root=False,
-            a_concept=parent_a_concept)
+            nodeTag=node_tag, question=parent_q['id'], root=False,
+            a_concept=a_concept)
 
         # If the seed_topic's parent follows a bridge, start importing at the
         # bridge instead
-        if not parent_a == get_parent_topic(seed_topic):
-            seed_topic = next(t for t in getChildnodes(parent_a) if
-                              seed_topic.text in t.text)
+        parent_q_children = getChildnodes(parent_q)
+        if get_parent_topic(seed_topic) not in parent_q_children:
+            if len(parent_as) > 1:
+                seed_topic = next(
+                    g for c in parent_q_children if isEmptyNode(c) for
+                    g in getChildnodes(c) if seed_topic.text in g.text)
+            else:
+                seed_topic = next(t for t in getChildnodes(parent_as[0]) if
+                                  seed_topic.text in t.text)
         ref, sort_id = self.activeManager.ref_and_sort_id(q_topic=seed_topic)
         q_index = sum(1 for _ in seed_topic.previous_siblings) + 1
         self.add_question(
