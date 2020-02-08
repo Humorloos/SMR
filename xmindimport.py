@@ -378,7 +378,7 @@ class XmindImporter(NoteImporter):
             seed_topic = next(t for t in getChildnodes(parent_a) if
                               seed_topic.text in t.text)
         ref, sort_id = self.activeManager.ref_and_sort_id(q_topic=seed_topic)
-        q_index = sum(1 for _ in seed_topic.previous_siblings)+1
+        q_index = sum(1 for _ in seed_topic.previous_siblings) + 1
         self.add_question(
             sort_id=sort_id, q_index=q_index, q_tag=seed_topic,
             parent_a_dict=parent_a_dict, ref=ref)
