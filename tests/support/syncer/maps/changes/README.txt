@@ -102,3 +102,24 @@ biological psychology
 
 					new question following multiple answers
 						answer following mult answers
+
+Added question following multiple answers, with all answers being old:
+biological psychology
+
+
+	investigates
+		information transfer and processing
+			requires
+				neurotransmitters
+					types
+						biogenic amines
+							example (former image)
+								Serotonin
+									affects
+										Sleep
+
+
+
+-->											new question following multiple
+answers all there
+												all there answer
