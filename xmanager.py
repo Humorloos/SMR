@@ -32,6 +32,17 @@ def get_ancestry(topic, descendants):
         return get_ancestry(topic=parent_topic, descendants=descendants)
 
 
+def getNodeHyperlink(tag):
+    """
+    :param tag: tag to get the hyperlink from
+    :return: node's raw hyperlink string
+    """
+    try:
+        return tag['xlink:href']
+    except (KeyError, TypeError):
+        return None
+
+
 def getNodeImg(tag):
     """
     :param tag: Tag to get the image from
@@ -119,7 +130,7 @@ class XManager:
         """
         content = ''
         media = dict(image=None, media=None)
-        href = self.getNodeHyperlink(tag)
+        href = getNodeHyperlink(tag)
         title = getNodeTitle(tag)
 
         if title:
@@ -153,20 +164,10 @@ class XManager:
         :param tag: tag to get the crosslink from
         :return: node id of the node the crosslink refers to
         """
-        href = self.getNodeHyperlink(tag)
+        href = getNodeHyperlink(tag)
         if href and href.startswith('xmind:#'):
             return href[7:]
         else:
-            return None
-
-    def getNodeHyperlink(self, tag):
-        """
-        :param tag: tag to get the hyperlink from
-        :return: node's raw hyperlink string
-        """
-        try:
-            return tag['xlink:href']
-        except (KeyError, TypeError):
             return None
 
 
@@ -186,7 +187,7 @@ class XManager:
             # Get reference sheets
             if sheet['tag']('title', recursive=False)[0].text == 'ref':
                 ref_tags = getChildnodes(sheet['tag'].topic)
-                ref_paths = (self.getNodeHyperlink(t) for t in ref_tags)
+                ref_paths = (getNodeHyperlink(t) for t in ref_tags)
                 ref_files = [clean_ref_path(p) for p in ref_paths if p is not
                              None]
         return ref_files
@@ -242,7 +243,7 @@ class XManager:
         return href.startswith('xmind:#')
 
     def is_crosslink_node(self, tag):
-        href = self.getNodeHyperlink(tag)
+        href = getNodeHyperlink(tag)
         if getNodeTitle(tag) or getNodeImg(tag) or \
                 (href and not self.is_crosslink(href)):
             return False
@@ -257,7 +258,7 @@ class XManager:
             return False
         if getNodeImg(tag):
             return False
-        if self.getNodeHyperlink(tag):
+        if getNodeHyperlink(tag):
             return False
         return True
 
