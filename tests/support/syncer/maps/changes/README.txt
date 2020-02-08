@@ -67,3 +67,16 @@ biological psychology
 						biogenic amines
 -->							example (former image)
 -->			modulated by (changed question)
+
+Added answer with following questions:
+biological psychology
+	investigates
+		information transfer and processing
+			modulated by (changed question)
+-->				new answer
+					question to new answer
+						answer to new answer
+						second new answer answer
+							deeper question after answer
+								After this there is only one answer
+						and so on after answer
