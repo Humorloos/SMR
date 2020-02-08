@@ -57,6 +57,17 @@ def getChildnodes(tag):
         return []
 
 
+def getNodeTitle(tag):
+    """
+    :param tag: Tag to get the title from
+    :return: node's title, empty string if it has none
+    """
+    try:
+        return tag.find('title', recursive=False).text
+    except AttributeError:
+        return ''
+
+
 class XManager:
     def __init__(self, file):
         self.xZip = zipfile.ZipFile(file, 'r')
@@ -98,7 +109,7 @@ class XManager:
         content = ''
         media = dict(image=None, media=None)
         href = self.getNodeHyperlink(tag)
-        title = self.getNodeTitle(tag)
+        title = getNodeTitle(tag)
 
         if title:
             content += title
@@ -112,7 +123,7 @@ class XManager:
         # node.
         if href and self.is_crosslink(href):
             crosslinkTag = self.getTagById(tagId=href[7:])
-            crosslinkTitle = self.getNodeTitle(crosslinkTag)
+            crosslinkTitle = getNodeTitle(crosslinkTag)
             if not content:
                 content = crosslinkTitle
 
@@ -239,7 +250,7 @@ class XManager:
 
     def is_crosslink_node(self, tag):
         href = self.getNodeHyperlink(tag)
-        if self.getNodeTitle(tag) or self.getNodeImg(tag) or \
+        if getNodeTitle(tag) or self.getNodeImg(tag) or \
                 (href and not self.is_crosslink(href)):
             return False
         return True
@@ -249,7 +260,7 @@ class XManager:
         :param tag: tag to check for
         :return: True if node does not contain any title, image or hyperlink
         """
-        if self.getNodeTitle(tag):
+        if getNodeTitle(tag):
             return False
         if self.getNodeImg(tag):
             return False
@@ -308,7 +319,7 @@ class XManager:
 
     def set_node_content(self, x_id, title, img, media_dir):
         tag = self.getTagById(x_id)
-        if title != self.getNodeTitle(tag):
+        if title != getNodeTitle(tag):
             setNodeTitle(tag=tag, title=title)
 
         # Remove crosslink if the tag has one
@@ -404,7 +415,7 @@ class XManager:
 
     def ref_and_sort_id(self, q_topic):
         ancestry = get_ancestry(topic=q_topic, descendants=[])
-        ref = self.getNodeTitle(ancestry.pop(0))
+        ref = getNodeTitle(ancestry.pop(0))
         sort_id = ''
         mult_subjects = False
         follows_bridge = False
