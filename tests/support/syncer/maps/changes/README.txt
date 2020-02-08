@@ -105,8 +105,6 @@ biological psychology
 
 Added question following multiple answers, with all answers being old:
 biological psychology
-
-
 	investigates
 		information transfer and processing
 			requires
@@ -123,3 +121,23 @@ biological psychology
 -->											new question following multiple
 answers all there
 												all there answer
+
+Added bridge following multiple answers:
+biological psychology
+	investigates
+		information transfer and processing
+			requires
+				neurotransmitters
+					types
+						biogenic amines
+							example (former image)
+								Serotonin
+									affects
+										Sleep
+
+										psychological disorders
+
+
+												mult bridge
+													mult bridge question
+														mult bridge answer
