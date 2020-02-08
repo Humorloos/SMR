@@ -39,7 +39,7 @@ class TestGetNodeTitle(TestXManager):
         with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
                                'sheet_biological_psychology.xml'), 'r') as file:
             tag = BeautifulSoup(file.read(), features='html.parser').topic
-        act = self.xManager.getNodeTitle(tag)
+        act = getNodeTitle(tag)
         self.assertEqual(act, 'biological psychology')
 
 
@@ -48,7 +48,7 @@ class TestGetNodeImg(TestXManager):
         with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
                                'sheet_biological_psychology.xml'), 'r') as file:
             tag = BeautifulSoup(file.read(), features='html.parser').topic
-        act = self.xManager.getNodeImg(tag)
+        act = getNodeImg(tag)
         self.assertEqual(act, None)
 
 
@@ -57,7 +57,7 @@ class TestGetNodeHyperlink(TestXManager):
         with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
                                'sheet_biological_psychology.xml'), 'r') as file:
             tag = BeautifulSoup(file.read(), features='html.parser').topic
-        act = self.xManager.getNodeHyperlink(tag)
+        act = getNodeHyperlink(tag)
         self.assertEqual(act, None)
 
 
@@ -73,7 +73,7 @@ class TestIsEmptyNode(TestXManager):
         with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
                                'sheet_biological_psychology.xml'), 'r') as file:
             tag = BeautifulSoup(file.read(), features='html.parser').topic
-        act = self.xManager.isEmptyNode(tag)
+        act = isEmptyNode(tag)
         self.assertEqual(act, False)
 
 
