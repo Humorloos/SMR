@@ -71,7 +71,7 @@ class XmindImporter(NoteImporter):
             sortId=nextSortId, ref=ref, content=content)
         if answerDicts:
             actualAnswers = [a for a in answerDicts if a['isAnswer']]
-            isQuestion = not self.activeManager.isEmptyNode(q_tag)
+            isQuestion = not isEmptyNode(q_tag)
 
             # If the current relation is a question and has too many
             # answers give a warning and stop running
@@ -95,7 +95,7 @@ class XmindImporter(NoteImporter):
     def findAnswerDicts(self, parents, question, sortId, ref, content):
         answerDicts = list()
         manager = self.activeManager
-        crosslink = manager.getNodeCrosslink(question)
+        crosslink = getNodeCrosslink(question)
         childNotes = getChildnodes(question)
 
         if len(childNotes) == 0:
