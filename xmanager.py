@@ -189,17 +189,6 @@ class XManager:
         for s in remote_sheets:
             remote_questions = self.get_remote_questions(s)
             remote_sheets[s]['questions'] = remote_questions
-            for q in remote_questions:
-                answers = dict()
-                remote_questions[q]['answers'] = answers
-                for a in self.get_answer_nodes(self.getTagById(q)):
-                    answers[a['src']['id']] = {
-                        'xMod': a['src']['timestamp'],
-                        'crosslink': {}}
-                    if a['crosslink']:
-                        answers[a['src']['id']]['crosslink'] = {
-                            'xMod': a['crosslink']['timestamp'],
-                            'x_id': a['crosslink']['id']}
 
         remote = self.remote_file(remote_sheets)
         return remote
@@ -209,7 +198,17 @@ class XManager:
         for t in next(v for v in self.sheets.values() if
                       v['tag']['id'] == sheet_id)['nodes']:
             if self.is_anki_question(t):
-                remote_questions[t['id']] = {'xMod': t['timestamp']}
+                answers = dict()
+                remote_questions[t['id']] = {'xMod': t['timestamp'],
+                                             'answers': answers}
+                for a in self.get_answer_nodes(self.getTagById(t['id'])):
+                    answers[a['src']['id']] = {
+                        'xMod': a['src']['timestamp'],
+                        'crosslink': {}}
+                    if a['crosslink']:
+                        answers[a['src']['id']]['crosslink'] = {
+                            'xMod': a['crosslink']['timestamp'],
+                            'x_id': a['crosslink']['id']}
         return remote_questions
 
     def get_remote_sheets(self):
