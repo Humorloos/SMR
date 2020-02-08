@@ -1,6 +1,6 @@
 from .consts import USER_PATH
 from .statusmanager import StatusManager
-from .xmanager import XManager, get_os_mod
+from .xmanager import XManager, get_os_mod, get_parent_question_topic
 from .xnotemanager import *
 from .xontology import XOntology
 from .xmindimport import XmindImporter
@@ -246,7 +246,7 @@ class XSyncer:
 
             tags_and_parent_qs = [{
                 'tag': t,
-                'parent_q': self.map_manager.get_parent_question_topic(t)}
+                'parent_q': get_parent_question_topic(t)}
                 for t in tags_to_add]
 
             # Get all questions whose parent question is already in status,

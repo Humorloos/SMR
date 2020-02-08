@@ -86,6 +86,14 @@ def get_parent_topic(tag):
     return tag.parent.parent.parent
 
 
+def get_parent_question_topic(tag):
+    parent_relation_topic = get_parent_topic(get_parent_topic(tag))
+    if is_anki_question(parent_relation_topic):
+        return parent_relation_topic
+    else:
+        return get_parent_question_topic(parent_relation_topic)
+
+
 def isQuestionNode(tag, level=0):
     # If the Tag is the root topic, return true if the length of the path is odd
     if tag.parent.name == 'sheet':
@@ -225,13 +233,6 @@ class XManager:
                 mediaPath = href[4:]
                 media['media'] = mediaPath
         return {'content': content, 'media': media}
-
-    def get_parent_question_topic(self, tag):
-        parent_relation_topic = get_parent_topic(get_parent_topic(tag))
-        if is_anki_question(parent_relation_topic):
-            return parent_relation_topic
-        else:
-            return self.get_parent_question_topic(parent_relation_topic)
 
     def get_ref_files(self):
         ref_files = []
