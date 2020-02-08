@@ -110,6 +110,27 @@ def getChildnodes(tag):
         return []
 
 
+def is_anki_question(tag):
+    """
+    Returns true if the tag would be represented as a question in anki,
+    that is, it is a relation, not empty and has at least one answer that is
+    not an empty topic
+    :param tag: The tag to check whether it is an anki question tag
+    :return: True if the tag is an anki question, false if it is not
+    """
+    if not isQuestionNode(tag):
+        return False
+    if isEmptyNode(tag):
+        return False
+    children = getChildnodes(tag)
+    if len(children) == 0:
+        return False
+    for child in children:
+        if not isEmptyNode(child):
+            return True
+    return False
+
+
 def is_crosslink(href):
     return href.startswith('xmind:#')
 
@@ -207,7 +228,7 @@ class XManager:
 
     def get_parent_question_topic(self, tag):
         parent_relation_topic = get_parent_topic(get_parent_topic(tag))
-        if self.is_anki_question(parent_relation_topic):
+        if is_anki_question(parent_relation_topic):
             return parent_relation_topic
         else:
             return self.get_parent_question_topic(parent_relation_topic)
@@ -239,7 +260,7 @@ class XManager:
         remote_questions = dict()
         for t in next(v for v in self.sheets.values() if
                       v['tag']['id'] == sheet_id)['nodes']:
-            if self.is_anki_question(t):
+            if is_anki_question(t):
                 answers = dict()
                 remote_questions[t['id']] = {'xMod': t['timestamp'],
                                              'answers': answers}
@@ -271,26 +292,6 @@ class XManager:
         except StopIteration:
             # TODO: Warn if the node is not found
             return None
-
-    def is_anki_question(self, tag):
-        """
-        Returns true if the tag would be represented as a question in anki,
-        that is, it is a relation, not empty and has at least one answer that is
-        not an empty topic
-        :param tag: The tag to check whether it is an anki question tag
-        :return: True if the tag is an anki question, false if it is not
-        """
-        if not isQuestionNode(tag):
-            return False
-        if isEmptyNode(tag):
-            return False
-        children = getChildnodes(tag)
-        if len(children) == 0:
-            return False
-        for child in children:
-            if not isEmptyNode(child):
-                return True
-        return False
 
     def remote_file(self, sheets=None):
         docMod = self.soup.find('xmap-content')['timestamp']
@@ -427,6 +428,6 @@ class XManager:
                 mult_subjects = isEmptyNode(ancestor)
             else:
                 ref = ref_plus_question(field=field, ref=ref)
-                if not self.is_anki_question(ancestor):
+                if not is_anki_question(ancestor):
                     follows_bridge = True
         return ref, sort_id
