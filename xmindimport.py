@@ -157,14 +157,14 @@ class XmindImporter(NoteImporter):
         """
         manager = self.activeManager
         isAnswer = True
-
-        # Check whether subtopic contains a crosslink
-        crosslink = manager.getNodeCrosslink(nodeTag)
+        crosslink = None
 
         # If the node is empty do not create a concept
         if manager.isEmptyNode(nodeTag):
             isAnswer = False
         else:
+            # Check whether subtopic contains a crosslink
+            crosslink = getNodeCrosslink(nodeTag)
             if not a_concept:
                 nodeContent = manager.getNodeContent(nodeTag)
                 x_id = nodeTag['id']
