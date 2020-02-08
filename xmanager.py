@@ -82,16 +82,16 @@ def get_os_mod(file):
     return os_mod
 
 
-def get_parent_topic(tag):
-    return tag.parent.parent.parent
-
-
 def get_parent_question_topic(tag):
     parent_relation_topic = get_parent_topic(get_parent_topic(tag))
     if is_anki_question(parent_relation_topic):
         return parent_relation_topic
     else:
         return get_parent_question_topic(parent_relation_topic)
+
+
+def get_parent_topic(tag):
+    return tag.parent.parent.parent
 
 
 def isQuestionNode(tag, level=0):
