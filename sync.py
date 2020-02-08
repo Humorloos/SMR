@@ -243,14 +243,34 @@ class XSyncer:
             tags_to_add.append(self.map_manager.getTagById(q_id))
             del remote[q_id]
         if tags_to_add:
-            seeds = [t for t in tags_to_add if
-                     self.map_manager.get_parent_question_topic(t)['id'] in
-                     status]
+
+            tags_and_parent_qs = [{
+                'tag': t,
+                'parent_q': self.map_manager.get_parent_question_topic(t)}
+                for t in tags_to_add]
+
+            # Get all questions whose parent question is already in status,
+            # since they are the starting points for the imports
+            seed_dicts = [d for d in tags_and_parent_qs if
+                          d['parent_q']['id'] in status]
             importer = XmindImporter(col=self.note_manager.col,
                                      file=self.map_manager.file)
-            for seed in seeds:
-                importer.partial_import(seed_topic=seed, sheet_id=sheet_id,
-                                        deck_id=deck_id)
+            for seed_dict in seed_dicts:
+                parent_q_as = self.map_manager.get_answer_nodes(
+                    seed_dict['parent_q'])
+                parent_a = next(t['src'] for t in parent_q_as if
+                                seed_dict['tag'].text in t['src'].text)
+
+                # If the parent answer of this new question is not yet in
+                # status, skip this question (will be imported later in
+                # process_note)
+                if parent_a['id'] not in \
+                        status[seed_dict['parent_q']['id']]['answers']:
+                    continue
+                importer.partial_import(
+                    seed_topic=seed_dict['tag'], sheet_id=sheet_id,
+                    deck_id=deck_id, parent_q=seed_dict['parent_q'],
+                    parent_a=parent_a)
             importer.finish_import()
 
         not_in_remote = [q for q in status if q not in remote]
