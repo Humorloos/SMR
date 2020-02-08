@@ -32,6 +32,17 @@ def get_ancestry(topic, descendants):
         return get_ancestry(topic=parent_topic, descendants=descendants)
 
 
+def getNodeTitle(tag):
+    """
+    :param tag: Tag to get the title from
+    :return: node's title, empty string if it has none
+    """
+    try:
+        return tag.find('title', recursive=False).text
+    except AttributeError:
+        return ''
+
+
 def get_os_mod(file):
     os_mod = os.stat(file).st_mtime
     return os_mod
@@ -55,17 +66,6 @@ def getChildnodes(tag):
             'topics', recursive=False)('topic', recursive=False)
     except AttributeError:
         return []
-
-
-def getNodeTitle(tag):
-    """
-    :param tag: Tag to get the title from
-    :return: node's title, empty string if it has none
-    """
-    try:
-        return tag.find('title', recursive=False).text
-    except AttributeError:
-        return ''
 
 
 class XManager:
@@ -168,15 +168,6 @@ class XManager:
         except (TypeError, AttributeError):
             return None
 
-    def getNodeTitle(self, tag):
-        """
-        :param tag: Tag to get the title from
-        :return: node's title, empty string if it has none
-        """
-        try:
-            return tag.find('title', recursive=False).text
-        except AttributeError:
-            return ''
 
     def get_parent_question_topic(self, tag):
         parent_relation_topic = get_parent_topic(get_parent_topic(tag))
