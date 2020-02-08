@@ -82,6 +82,16 @@ def get_os_mod(file):
     return os_mod
 
 
+def get_parent_a_topics(q_topic, parent_q):
+    parent_q_children = getChildnodes(parent_q)
+    parent_topic = next(t for t in parent_q_children if
+                        q_topic.text in t.text)
+    if isEmptyNode(parent_topic):
+        return [t for t in parent_q_children if not isEmptyNode(t)]
+    else:
+        return [parent_topic]
+
+
 def get_parent_question_topic(tag):
     parent_relation_topic = get_parent_topic(get_parent_topic(tag))
     if is_anki_question(parent_relation_topic):
