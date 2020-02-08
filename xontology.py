@@ -127,6 +127,17 @@ class XOntology(Ontology):
 
     def add_answer(self, parents, q_id, a_id, answer_field, file, rel_dict,
                    question_class):
+        """
+        Adds an answer to a given question to the ontology
+        :param parents: Set of parent concepts of the question for the answer
+        :param q_id: Xmind id of the question topic
+        :param a_id: Xmind id of the answer topic
+        :param answer_field: Anki note field of the answer
+        :param file: Xmind file that contains the question
+        :param rel_dict: Relationship dictionary, as created by get_rel_dict()
+        :param question_class: Class name of the question
+        :return: The answer concept
+        """
         answer_content = content_from_field(answer_field)
         answer_concept = self.add_concept(nodeContent=answer_content, q_id=q_id,
                                           a_id=a_id, file=file)
