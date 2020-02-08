@@ -56,3 +56,14 @@ biological psychology
 								noradrenaline
 
 									are
+
+changed questions:
+biological psychology
+	investigates
+		information transfer and processing
+			requires
+				neurotransmitters
+					types
+						biogenic amines
+-->							example (former image)
+-->			modulated by (changed question)
