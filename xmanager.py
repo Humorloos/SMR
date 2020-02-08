@@ -86,6 +86,14 @@ def get_parent_topic(tag):
     return tag.parent.parent.parent
 
 
+def isQuestionNode(tag, level=0):
+    # If the Tag is the root topic, return true if the length of the path is odd
+    if tag.parent.name == 'sheet':
+        return level % 2 == 1
+    # Else add one to the path length and test again
+    return isQuestionNode(tag.parent.parent.parent, level + 1)
+
+
 def setNodeTitle(tag, title):
     tag.find('title', recursive=False).string = title
 
@@ -264,13 +272,6 @@ class XManager:
             # TODO: Warn if the node is not found
             return None
 
-    def isQuestionNode(self, tag, level=0):
-        # If the Tag is the root topic, return true if the length of the path is odd
-        if tag.parent.name == 'sheet':
-            return level % 2 == 1
-        # Else add one to the path length and test again
-        return self.isQuestionNode(tag.parent.parent.parent, level + 1)
-
     def is_anki_question(self, tag):
         """
         Returns true if the tag would be represented as a question in anki,
@@ -279,7 +280,7 @@ class XManager:
         :param tag: The tag to check whether it is an anki question tag
         :return: True if the tag is an anki question, false if it is not
         """
-        if not self.isQuestionNode(tag):
+        if not isQuestionNode(tag):
             return False
         if isEmptyNode(tag):
             return False
