@@ -80,3 +80,25 @@ biological psychology
 							deeper question after answer
 								After this there is only one answer
 						and so on after answer
+
+Added answer following bridge with following question:
+biological psychology
+	investigates
+		information transfer and processing
+			modulated by (changed question)
+				enzymes
+-->
+						other enzymes
+							question to new bridge answer
+								answer to that question
+
+Added question following multiple answers, with one of the answers being new:
+biological psychology
+	investigates
+		information transfer and processing
+			modulated by (changed question)
+				enzymes
+				new answer
+
+					new question following multiple answers
+						answer following mult answers
