@@ -237,6 +237,11 @@ class XOntology(Ontology):
                               parent=new_answer, rel_dict=o['rel_dict'])
 
     def change_question(self, x_id, new_question):
+        """
+        Changes a question in the ontology
+        :param x_id: Xmind id of the question
+        :param new_question: Field string of the new question
+        """
         question_triples = self.get_question(x_id)
         answers = set(t['o'] for t in question_triples)
         parents = set(t['s'] for t in question_triples)
