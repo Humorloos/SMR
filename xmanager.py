@@ -102,6 +102,10 @@ def getChildnodes(tag):
         return []
 
 
+def is_crosslink(href):
+    return href.startswith('xmind:#')
+
+
 def isEmptyNode(tag):
     """
     :param tag: tag to check for
@@ -169,7 +173,7 @@ class XManager:
 
         # If the node contains a link to another node, add the text of that
         # node.
-        if href and self.is_crosslink(href):
+        if href and is_crosslink(href):
             crosslinkTag = self.getTagById(tagId=href[7:])
             crosslinkTitle = getNodeTitle(crosslinkTag)
             if not content:
@@ -252,13 +256,10 @@ class XManager:
             # TODO: Warn if the node is not found
             return None
 
-    def is_crosslink(self, href):
-        return href.startswith('xmind:#')
-
     def is_crosslink_node(self, tag):
         href = getNodeHyperlink(tag)
         if getNodeTitle(tag) or getNodeImg(tag) or \
-                (href and not self.is_crosslink(href)):
+                (href and not is_crosslink(href)):
             return False
         return True
 
