@@ -49,13 +49,13 @@ class XmindImporter(NoteImporter):
             for file in [f for f in self.media if f['doc'] == manager.file]:
                 if file['identifier'].startswith(('attachments', 'resources')):
                     file_path = manager.getAttachment(identifier=file[
-                        'identifier'], dir=self.srcDir)
+                        'identifier'], directory=self.srcDir)
                     self.col.media.addFile(file_path)
                 else:
                     self.col.media.addFile(file['identifier'])
             for image in [i for i in self.images if i['doc'] == manager.file]:
                 file_path = manager.getAttachment(identifier=image[
-                    'identifier'], dir=self.srcDir)
+                    'identifier'], directory=self.srcDir)
                 self.col.media.addFile(file_path)
 
     def addNew(self, notes):

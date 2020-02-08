@@ -162,11 +162,11 @@ class XManager:
                 else self.getTagById(getNodeCrosslink(n))} for n in
                 getChildnodes(tag) if not isEmptyNode(n)]
 
-    def getAttachment(self, identifier, dir):
+    def getAttachment(self, identifier, directory):
         # extract attachment to anki media directory
-        self.xZip.extract(identifier, dir)
+        self.xZip.extract(identifier, directory)
         # get image from subdirectory attachments in mediaDir
-        return os.path.join(dir, identifier)
+        return os.path.join(directory, identifier)
 
     def getNodeContent(self, tag):
         """
