@@ -74,6 +74,10 @@ class XManager:
         self.changes = False
         self.tag_list = None
 
+    def content_by_id(self, x_id):
+        topic = self.getTagById(x_id)
+        return self.getNodeContent(topic)
+
     def get_answer_nodes(self, tag):
         return [{'src': n, 'crosslink': '' if not self.is_crosslink_node(n)
                 else self.getTagById(self.getNodeCrosslink(n))} for n in
