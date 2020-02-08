@@ -81,7 +81,7 @@ class XSyncer:
 
         # Change question in ontology
         self.onto.change_question(x_id=question,
-                                         new_question=local[question]['content'])
+                                  new_question=local[question]['content'])
 
         # Remember this change for final note adjustments
         self.change_list[self.current_sheet_sync][question] = {
