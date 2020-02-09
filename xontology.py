@@ -125,14 +125,13 @@ class XOntology(Ontology):
         self.parentStorid = self.Parent.storid
         self.field_translator = FieldTranslator()
 
-    def add_answer(self, a_id, answer_field, file, rel_dict, question_class,
+    def add_answer(self, a_id, answer_field, rel_dict, question_class,
                    parents=None):
         """
         Adds an answer to a given question to the ontology
         :param parents: Set of parent concepts of the question for the answer
         :param a_id: Xmind id of the answer topic
         :param answer_field: Anki note field of the answer
-        :param file: Xmind file that contains the question
         :param rel_dict: Relationship dictionary, as created by get_rel_dict()
         :param question_class: Class name of the question
         :return: The answer concept
@@ -140,7 +139,7 @@ class XOntology(Ontology):
         answer_content = content_from_field(answer_field)
         answer_concept = self.add_concept(nodeContent=answer_content,
                                           q_id=rel_dict['x_id'],
-                                          a_id=a_id, file=file)
+                                          a_id=a_id, file=rel_dict['doc'])
         if not parents:
             parents = set(q['s'] for q in self.get_question(rel_dict['x_id']))
         for parent in parents:
@@ -237,12 +236,11 @@ class XOntology(Ontology):
             'class_text': t['p'].name} for t in questions_2_answer]
         question_class = answer_triples[0]['p'].name
         parents = set(t['s'] for t in answer_triples)
-        file = answer.Doc[0]
         rel_dict = self.rel_dict_from_triple(answer_triples[0])
         self.remove_answer(q_id=q_id, a_id=a_id)
 
         new_answer = self.add_answer(
-            parents=parents, a_id=a_id, answer_field=new_answer, file=file,
+            parents=parents, a_id=a_id, answer_field=new_answer,
             rel_dict=rel_dict, question_class=question_class)
 
         for o in objects_2_answer:
