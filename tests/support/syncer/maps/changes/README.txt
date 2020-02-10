@@ -149,3 +149,16 @@ biological psychology
 	investigates
 		information transfer and processing
 -->			modulated by (changed question)
+
+Removed answer (no more Sleep):
+biological psychology
+	investigates
+			requires
+				neurotransmitters
+					types
+						biogenic amines
+							example (former image)
+								Serotonin
+-->									affects
+
+										psychological disorders
