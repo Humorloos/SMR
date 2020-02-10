@@ -85,12 +85,11 @@ class XmindImporter(NoteImporter):
             nextRef = ref_plus_question(
                 field=field_from_content(content), ref=ref)
             for aId, answerDict in enumerate(answerDicts, start=1):
-                if getChildnodes(parent_a_dict['nodeTag']):
-                    self.getQuestions(
-                        parentAnswerDict=answerDict, ref=nextRef,
-                        sortId=update_sort_id(
-                            previousId=nextSortId, idToAppend=aId),
-                        followsBridge=not isQuestion)
+                self.getQuestions(
+                    parentAnswerDict=answerDict, ref=nextRef,
+                    sortId=update_sort_id(
+                        previousId=nextSortId, idToAppend=aId),
+                    followsBridge=not isQuestion)
 
     def findAnswerDicts(self, parents, question, sortId, ref, content):
         answerDicts = list()
