@@ -136,6 +136,11 @@ def content_from_field(field):
             }}
 
 
+def local_answer_dict(anki_mod, answers, field, a_id):
+    answers[a_id] = {'ankiMod': anki_mod,
+                     'content': field}
+
+
 class XNoteManager:
     def __init__(self, col):
         self.col = col
@@ -197,15 +202,16 @@ class XNoteManager:
                     'content': field_by_name(question['flds'], 'qt'),
                     'answers': answers}
                 for x, a in enumerate(self.get_answer_cards(question['id'])):
+                    field = field_by_name(question['flds'], 'a' + str(x + 1))
                     try:
                         a_id = question['meta']['answers'][x]['answerId']
+
                     # If this answer does not yet exist in meta, use the
                     # answer's card id as id instead
                     except IndexError:
                         a_id = a[1]
-                    answers[a_id] = {'ankiMod': a[0],
-                                     'content': field_by_name(
-                                         question['flds'], 'a' + str(x + 1))}
+                    local_answer_dict(
+                        anki_mod=a[0], answers=answers, field=field, a_id=a_id)
         docMod = max([n['ankiMod'] for n in doc_notes])
         deck = self.col.db.first(
             'select did from cards where nid = %s' % doc_notes[0]['id'])[0]
