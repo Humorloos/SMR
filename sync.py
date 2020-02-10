@@ -276,6 +276,9 @@ class XSyncer:
 
         not_in_remote = [q for q in status if q not in remote]
         self.remove_questions(q_ids=not_in_remote, status=status)
+        for question in {**status, **remote}:
+            self.process_note(q_id=question, status=status[question],
+                              remote=remote[question])
         print()
 
     def remove_questions(self, q_ids, status):
