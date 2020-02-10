@@ -357,9 +357,10 @@ class XmindImporter(NoteImporter):
         return note
 
     def partial_import(self, seed_topic, sheet_id, deck_id, parent_q,
-                       parent_as):
+                       parent_as, onto=None):
         """
         Imports questions starting at a given point
+        :param onto: Optional, Ontology to set as importer's ontology:
         :param seed_topic: Tag of the topic of the question to start at
         :param sheet_id: Xmind id of the sheet the question belongs to
         :param deck_id: Deck-id of the deck to import to
@@ -367,7 +368,7 @@ class XmindImporter(NoteImporter):
         import starts at
         :param parent_as: List of tags of the answers to the parent-question
         """
-        self.set_up_import(deck_id=deck_id, sheet=sheet_id)
+        self.set_up_import(deck_id=deck_id, sheet=sheet_id, onto=onto)
         self.col.decks.select(self.deckId)
         self.col.decks.current()['mid'] = self.col.models.byName(
             X_MODEL_NAME)['id']
@@ -416,7 +417,7 @@ class XmindImporter(NoteImporter):
         self.init_import(deck_id=userInputs['deckId'],
                          repair=userInputs['repair'])
 
-    def set_up_import(self, deck_id, sheet):
+    def set_up_import(self, deck_id, sheet, onto=None):
         self.currentSheetImport = next(
             s for m in self.xManagers for
             s in m.sheets if m.sheets[s]['tag']['id'] == sheet)
@@ -424,7 +425,10 @@ class XmindImporter(NoteImporter):
             m for m in self.xManagers for
             s in m.sheets if s == self.currentSheetImport)
         self.deckId = deck_id
-        self.onto = XOntology(deck_id)
+        if onto:
+            self.onto=onto
+        else:
+            self.onto = XOntology(deck_id)
         self.deckName = self.col.decks.get(self.deckId)['name']
 
     def stop_or_add_cross_question(self, content, crosslink, manager, parents,
