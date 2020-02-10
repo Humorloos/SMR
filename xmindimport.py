@@ -57,6 +57,8 @@ class XmindImporter(NoteImporter):
                 file_path = manager.getAttachment(identifier=image[
                     'identifier'], directory=self.srcDir)
                 self.col.media.addFile(file_path)
+        self.media = []
+        self.images = []
 
     def addNew(self, notes):
         for note in notes:
