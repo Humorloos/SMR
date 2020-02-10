@@ -358,6 +358,15 @@ class XmindImporter(NoteImporter):
 
     def partial_import(self, seed_topic, sheet_id, deck_id, parent_q,
                        parent_as):
+        """
+        Imports questions starting at a given point
+        :param seed_topic: Tag of the topic of the question to start at
+        :param sheet_id: Xmind id of the sheet the question belongs to
+        :param deck_id: Deck-id of the deck to import to
+        :param parent_q: Tag of the parent-question of the question the
+        import starts at
+        :param parent_as: List of tags of the answers to the parent-question
+        """
         self.set_up_import(deck_id=deck_id, sheet=sheet_id)
         self.col.decks.select(self.deckId)
         self.col.decks.current()['mid'] = self.col.models.byName(
