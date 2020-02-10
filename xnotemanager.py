@@ -344,3 +344,17 @@ class FieldTranslator:
                             ')', '.\\2]', class_name)
         class_name = class_name.replace("_", " ")
         return class_name
+
+    def classify(self, content):
+        classified = content['content'].replace(" ", "_")
+        if content['media']['image']:
+            classified += "ximage_" + re.sub(
+                'attachments/', '', content['media']['image'])
+            classified = re.sub('(\\.)(' + '|'.join(X_IMG_EXTENSIONS) + ')',
+                                '_extension_\\2', classified)
+        if content['media']['media']:
+            classified += "xmedia_" + re.sub(
+                'attachments/', '', content['media']['media'])
+            classified = re.sub('(\\.)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')',
+                                '_extension_\\2', classified)
+        return classified

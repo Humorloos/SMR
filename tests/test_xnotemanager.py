@@ -74,6 +74,30 @@ class FieldFromClass(TestFieldTranslator):
         self.assertEqual(exp, act)
 
 
+class TestClassify(TestFieldTranslator):
+    def test_only_text(self):
+        content = {"content": "biological psychology",
+                   "media": {"image": None, "media": None}}
+        act = self.field_translator.classify(content)
+        self.fail()
+
+    def test_only_image(self):
+        content = {"content": "", "media": {
+            "image": "attachments/09r2e442o8lppjfeblf7il2rmd.png",
+            "media": None}}
+        act = self.field_translator.classify(content)
+        exp = 'ximage_09r2e442o8lppjfeblf7il2rmd_extension_png'
+        self.assertEqual(exp, act)
+
+    def test_only_media(self):
+        content = {"content": "", "media": {
+            "image": None,
+            "media": "attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3"}}
+        act = self.field_translator.classify(content)
+        exp = 'xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3'
+        self.assertEqual(exp, act)
+
+
 class TestContentFromField(TestCase):
     def test_content_from_field(self):
         field = 'MAO is not a neurotransmitter[sound:3lv2k1fhghfb9ghfb8depnqvdt.mp3]<br><img src="09r2e442o8lppjfeblf7il2rmd.png">'

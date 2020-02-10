@@ -1,7 +1,7 @@
 from .statusmanager import StatusManager
 from .xmanager import *
 from .xnotemanager import *
-from .xontology import XOntology, classify, get_rel_dict
+from .xontology import XOntology, get_rel_dict
 from .xmindimport import XmindImporter
 
 
@@ -30,6 +30,7 @@ class XSyncer:
         self.change_list = None
         self.current_sheet_sync = None
         self.warnings = []
+        self.translator = FieldTranslator()
 
     # TODO: implement add_answer()
     def add_answer(self, a_id, q_id, local):
@@ -70,7 +71,7 @@ class XSyncer:
             q_content = content_from_field(field_by_name(note.fields, 'qt'))
         if not meta:
             meta = meta_from_fields(note.fields)
-        q_class = classify(q_content)
+        q_class = self.translator.classify(q_content)
         rel_dict = get_rel_dict(
             aIndex=a_index,
             image=q_content['media']['image'],

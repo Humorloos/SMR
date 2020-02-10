@@ -8,21 +8,6 @@ from .consts import ADDON_PATH, X_MAX_ANSWERS, USER_PATH
 from .xnotemanager import *
 
 
-def classify(content):
-    classified = content['content'].replace(" ", "_")
-    if content['media']['image']:
-        classified += "ximage_" + re.sub(
-            'attachments/', '', content['media']['image'])
-        classified = re.sub('(\\.)(' + '|'.join(X_IMG_EXTENSIONS) + ')',
-                            '_extension_\\2', classified)
-    if content['media']['media']:
-        classified += "xmedia_" + re.sub(
-            'attachments/', '', content['media']['media'])
-        classified = re.sub('(\\.)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')',
-                            '_extension_\\2', classified)
-    return classified
-
-
 def get_question_sets(q_id_elements):
 
     # Sort triples by question id for Triples pertaining to the same
@@ -161,13 +146,14 @@ class XOntology(Ontology):
         :return: Answer Concept
         """
         if root:
-            concept = self.Root(classify(nodeContent))
+            concept = self.Root(self.field_translator.classify(nodeContent))
             q_id = 'root'
         else:
             # Some concept names (e.g. 'are') can lead to errors, catch
             # them
             try:
-                concept = self.Concept(classify(nodeContent))
+                concept = self.Concept(self.field_translator.classify(
+                    nodeContent))
             except TypeError:
                 raise NameError('Invalid concept name')
         if nodeContent['media']['image']:
@@ -260,7 +246,8 @@ class XOntology(Ontology):
         remove_relations(answers, parents, question_triples)
 
         # Add new relationship
-        class_text = classify(content_from_field(new_question))
+        class_text = self.field_translator.classify(content_from_field(
+            new_question))
         for parent in parents:
             for child in answers:
                 self.relation_from_triple(

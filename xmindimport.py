@@ -6,6 +6,7 @@ from .statusmanager import StatusManager
 from .xmanager import *
 from .xontology import *
 from .utils import deep_merge
+from .xnotemanager import *
 
 
 # TODO: adjust sheet selection windows to adjust to the window size
@@ -41,6 +42,7 @@ class XmindImporter(NoteImporter):
         self.noteManager = XNoteManager(col=self.col)
         self.currentSheetImport = ''
         self.onto = None
+        self.translator = FieldTranslator()
         if not status_manager:
             self.statusManager = StatusManager()
         else:
@@ -109,7 +111,7 @@ class XmindImporter(NoteImporter):
 
         # Convert the node content into a string that can be used as a
         # class-name
-        question_class = classify(content)
+        question_class = self.translator.classify(content)
 
         # Add a Child relation if the node is a bridge
         if not question_class:
