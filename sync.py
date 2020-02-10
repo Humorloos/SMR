@@ -70,11 +70,12 @@ class XSyncer:
         # Change answer in status
         status[answer].update(local[answer])
 
-    def process_note(self, q_id, status, remote):
+    def process_note(self, q_id, status, remote, deck_id, sheet_id):
         # TODO: add case of changed answers' order
         note = None
         meta = None
         q_content = None
+        importer = None
         ref_changes = {}
         sort_id_changes = {}
         if not status['xMod'] == remote['xMod']:
@@ -144,6 +145,21 @@ class XSyncer:
 
             # Add answer to status
             status['answers'][a_id] = remote['answers'][a_id]
+
+            # If necessary add questions following this answer
+            childnodes = getChildnodes(a_tag)
+            if childnodes:
+                parent_q = get_parent_question_topic(childnodes[0])
+                parent_as = get_parent_a_topics(q_topic=childnodes[0],
+                                                parent_q=parent_q)
+                if not importer:
+                    importer = XmindImporter(col=self.note_manager.col,
+                                             file=self.map_manager.file)
+                for node in childnodes:
+                    importer.partial_import(
+                        seed_topic=node, sheet_id=sheet_id, deck_id=deck_id,
+                        parent_q=parent_q, parent_as=parent_as,
+                        onto=self.onto)
 
     def change_remote_question(self, question, status, local):
         # Change question in map
@@ -353,7 +369,8 @@ class XSyncer:
         self.remove_questions(q_ids=not_in_remote, status=status)
         for question in {**status, **remote}:
             self.process_note(q_id=question, status=status[question],
-                              remote=remote[question])
+                              remote=remote[question], deck_id=deck_id,
+                              sheet_id=sheet_id)
         print()
 
     def remove_questions(self, q_ids, status):
