@@ -139,6 +139,7 @@ class XmindImporter(NoteImporter):
         self.importOntology()
         self.update_status()
         self.onto.save_changes()
+        self.added_relations = {'storids': [], 'q_ids': []}
         for logId, log in enumerate(self.log, start=0):
             if log[1] == 1:
                 self.log[logId][2] = 'note'
