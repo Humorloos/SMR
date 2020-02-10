@@ -181,10 +181,10 @@ class XSyncer:
             status['index'] = remote['index']
 
         # Add new answers if there are any
-        note, importer = self.add_remote_a(
+        note, importer = self.add_remote_as(
             deck_id=deck_id, note=note, q_content=q_content, q_id=q_id,
-            remote=remote['answers'], sheet_id=sheet_id,
-            status=status['answers'], importer=importer)
+            remote=remote, sheet_id=sheet_id,
+            status=status, importer=importer)
 
         # Remove old answers if there are any
         note = self.remove_remote_as(
