@@ -94,6 +94,8 @@ class XSyncer:
 
             # Adjust question in status
             status['xMod'] = remote['xMod']
+
+        # Adjust index if it has changed
         if not status['index'] == remote['index']:
             q_topic = self.map_manager.getTagById(q_id)
             level = len(self.map_manager.ref_and_sort_id(q_topic)[1])
@@ -371,6 +373,8 @@ class XSyncer:
         # Add questions to status
         for q_id in not_in_status:
             status[q_id] = remote[q_id]
+
+        # Remove questions that were removed in map
         not_in_remote = [q for q in status if q not in remote]
         self.remove_questions(q_ids=not_in_remote, status=status)
         for question in {**status, **remote}:
