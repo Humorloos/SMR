@@ -344,11 +344,6 @@ class XSyncer:
                     status=status[sheet]['questions'], remote=remote_questions,
                     deck_id=deck_id, sheet_id=sheet)
 
-    def remove_sheet(self, sheet, status):
-        self.note_manager.remove_sheet(sheet)
-        del status[sheet]
-        self.onto.remove_sheet(sheet)
-
     def process_remote_questions(self, status, remote, deck_id, sheet_id):
         not_in_status = [q for q in remote if q not in status]
         tags_to_add = [self.map_manager.getTagById(q) for q in not_in_status]
@@ -418,3 +413,8 @@ class XSyncer:
             # Remove answer from status
             del status[a_id]
         return note
+
+    def remove_sheet(self, sheet, status):
+        self.note_manager.remove_sheet(sheet)
+        del status[sheet]
+        self.onto.remove_sheet(sheet)
