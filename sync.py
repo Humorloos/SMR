@@ -71,11 +71,11 @@ class XSyncer:
         status[answer].update(local[answer])
 
     def process_note(self, q_id, status, remote, deck_id, sheet_id):
-        # TODO: add case of changed answers' order
         note = None
         q_content = None
         ref_changes = {}
         sort_id_changes = {}
+        importer = None
         if not status['xMod'] == remote['xMod']:
             note = self.note_manager.get_note_from_q_id(q_id)
             q_content = self.map_manager.content_by_id(q_id)
@@ -109,10 +109,10 @@ class XSyncer:
             status['index'] = remote['index']
 
         # Add new answers if there are any
-        note = self.add_remote_a(
+        note, importer = self.add_remote_a(
             deck_id=deck_id, note=note, q_content=q_content, q_id=q_id,
             remote=remote['answers'], sheet_id=sheet_id,
-            status=status['answers'])
+            status=status['answers'], importer=importer)
 
         # Remove old answers if there are any
         note = self.remove_remote_as(
@@ -120,9 +120,8 @@ class XSyncer:
             q_id=q_id)
 
     def add_remote_a(self, deck_id, note, q_content, q_id, remote, sheet_id,
-                     status):
+                     status, importer):
         meta = None
-        importer = None
         not_in_status = [a for a in remote if a not in status]
         for a_id in not_in_status:
             a_tag = self.map_manager.getTagById(a_id)
@@ -134,6 +133,15 @@ class XSyncer:
             if not note:
                 note = self.note_manager.get_note_from_q_id(q_id)
             note.fields[get_index_by_field_name('a' + str(a_index))] = a_field
+            a_media = a_content['media']
+            if a_media['image'] or a_media['media']:
+                if not importer:
+                    importer = XmindImporter(col=self.note_manager.col,
+                                             file=self.map_manager.file)
+                if a_media['image']:
+                    importer.images.append(a_media['image'])
+                if a_media['media']:
+                    importer.media.append(a_media['media'])
 
             # Add answer to ontology
             if not q_content:
@@ -173,7 +181,7 @@ class XSyncer:
                         seed_topic=node, sheet_id=sheet_id, deck_id=deck_id,
                         parent_q=parent_q, parent_as=parent_as,
                         onto=self.onto)
-        return note
+        return note, importer
 
     def change_remote_question(self, question, status, local):
         # Change question in map
