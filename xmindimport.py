@@ -130,6 +130,7 @@ class XmindImporter(NoteImporter):
         return answerDicts
 
     def finish_import(self):
+
         # Add all notes to the collection
         if not self.running:
             return
@@ -147,9 +148,9 @@ class XmindImporter(NoteImporter):
             ", ".join(list(map(lambda l: " ".join(l), self.log)))]
         if self.mw:
             self.mw.progress.finish()
+
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
-        print("fertig")
 
     def getAnswerDict(self, nodeTag, question=None, root=False, a_concept=None):
         """
