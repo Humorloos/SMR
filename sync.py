@@ -190,15 +190,19 @@ class XSyncer:
         status[question]['ankiMod'] = local[question]['ankiMod']
         status[question]['content'] = local[question]['content']
 
-    def maybe_add_media(self, content, importer):
+    def maybe_add_media(self, content, importer, old_content=None):
         a_media = content['media']
+        if old_content:
+            old_media = old_content['media']
+        else:
+            old_media = a_media
         if a_media['image'] or a_media['media']:
             if not importer:
                 importer = XmindImporter(col=self.note_manager.col,
                                          file=self.map_manager.file)
-            if a_media['image']:
+            if a_media['image'] and not a_media['image'] == old_media['image']:
                 importer.images.append(a_media['image'])
-            if a_media['media']:
+            if a_media['media'] and not a_media['media'] == old_media['media']:
                 importer.media.append(a_media['media'])
         return importer
 
