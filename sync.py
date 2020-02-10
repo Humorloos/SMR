@@ -95,7 +95,18 @@ class XSyncer:
 
             # Adjust question in status
             status['xMod'] = remote['xMod']
-        
+        if not status['index'] == remote['index']:
+            q_topic = self.map_manager.getTagById(q_id)
+            level = len(self.map_manager.ref_and_sort_id(q_topic)[1])
+            new_sort_id = sort_id_from_index(remote['index'])
+
+            # Add change to changes dict
+            sort_id_changes['question'] = change_dict(
+                old=level, new=new_sort_id)
+
+            # Adjust index in status
+            status['index'] = remote['index']
+
     def change_remote_question(self, question, status, local):
         # Change question in map
         title = title_from_field(local[question]['content'])
