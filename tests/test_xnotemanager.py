@@ -73,6 +73,13 @@ class FieldFromClass(TestFieldTranslator):
         exp = 'MAO is not a neurotransmitter[sound:3lv2k1fhghfb9ghfb8depnqvdt.mp3]<br><img src="09r2e442o8lppjfeblf7il2rmd.png">'
         self.assertEqual(exp, act)
 
+    def test_parentheses(self):
+        translator = self.field_translator
+        class_name = 'biological_psychology_xlparenthesis_text_in_parenthses_xrparenthesis'
+        act = translator.field_from_class(class_name)
+        exp = 'biological psychology (text in parenthses)'
+        self.assertEqual(exp, act)
+
 
 class TestClassify(TestFieldTranslator):
     def test_only_text(self):
@@ -95,6 +102,13 @@ class TestClassify(TestFieldTranslator):
             "media": "attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3"}}
         act = self.field_translator.class_from_content(content)
         exp = 'xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3'
+        self.assertEqual(exp, act)
+
+    def test_parentheses(self):
+        content = {"content": "biological psychology (text in parenthses)",
+                   "media": {"image": None, "media": None}}
+        act = self.field_translator.class_from_content(content)
+        exp = 'biological_psychology_xlparenthesis_text_in_parenthses_xrparenthesis'
         self.assertEqual(exp, act)
 
 

@@ -329,9 +329,15 @@ class FieldTranslator:
         self.field_re_dict = {
             'ximage_': '<img src="',
             'xmedia_': '[sound:',
+            'xlparenthesis_': '(',
+            '_xrparenthesis': ')'
         }
         self.field_regex = re.compile("(%s)" % "|".join(
             self.field_re_dict.keys()))
+        self.inverse_dict = {re.escape(self.field_re_dict[k]): k for k in
+                             self.field_re_dict}
+        self.inverse_regex = re.compile("(%s)" % "|".join(
+            self.inverse_dict.keys()))
 
     def field_from_class(self, class_name):
         class_name = re.sub('(.)(ximage_)', '\\1<br>\\2', class_name)
@@ -357,4 +363,6 @@ class FieldTranslator:
                 'attachments/', '', content['media']['media'])
             classified = re.sub('(\\.)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')',
                                 '_extension_\\2', classified)
+        classified = self.inverse_regex.sub(lambda mo: self.inverse_dict[
+            re.escape(mo.string[mo.start():mo.end()])], classified)
         return classified
