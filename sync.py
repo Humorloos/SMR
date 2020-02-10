@@ -371,7 +371,8 @@ class XSyncer:
             seed_dicts = [d for d in tags_and_parent_qs if
                           d['parent_q']['id'] in status]
             importer = XmindImporter(col=self.note_manager.col,
-                                     file=self.map_manager.file)
+                                     file=self.map_manager.file,
+                                     status_manager=self.status_manager)
             for seed_dict in seed_dicts:
                 parent_as = get_parent_a_topics(
                     q_topic=seed_dict['tag'], parent_q=seed_dict['parent_q'])
