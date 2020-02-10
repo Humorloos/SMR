@@ -14,6 +14,8 @@ from .consts import X_MODEL_NAME
 def deep_merge(remote, local, path=None):
     if path is None:
         path = []
+    if path and path[-1] == 'questions' and not remote.keys() == local.keys():
+        raise Exception('Error: Local and remote are not equal')
     for key in remote:
         if key in local:
             if isinstance(local[key], dict) and isinstance(remote[key],
