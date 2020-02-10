@@ -345,7 +345,7 @@ class FieldTranslator:
         class_name = class_name.replace("_", " ")
         return class_name
 
-    def classify(self, content):
+    def class_from_content(self, content):
         classified = content['content'].replace(" ", "_")
         if content['media']['image']:
             classified += "ximage_" + re.sub(

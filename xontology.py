@@ -146,13 +146,13 @@ class XOntology(Ontology):
         :return: Answer Concept
         """
         if root:
-            concept = self.Root(self.field_translator.classify(nodeContent))
+            concept = self.Root(self.field_translator.class_from_content(nodeContent))
             q_id = 'root'
         else:
             # Some concept names (e.g. 'are') can lead to errors, catch
             # them
             try:
-                concept = self.Concept(self.field_translator.classify(
+                concept = self.Concept(self.field_translator.class_from_content(
                     nodeContent))
             except TypeError:
                 raise NameError('Invalid concept name')
@@ -246,7 +246,7 @@ class XOntology(Ontology):
         remove_relations(answers, parents, question_triples)
 
         # Add new relationship
-        class_text = self.field_translator.classify(content_from_field(
+        class_text = self.field_translator.class_from_content(content_from_field(
             new_question))
         for parent in parents:
             for child in answers:

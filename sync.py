@@ -71,7 +71,7 @@ class XSyncer:
             q_content = content_from_field(field_by_name(note.fields, 'qt'))
         if not meta:
             meta = meta_from_fields(note.fields)
-        q_class = self.translator.classify(q_content)
+        q_class = self.translator.class_from_content(q_content)
         rel_dict = get_rel_dict(
             aIndex=a_index,
             image=q_content['media']['image'],

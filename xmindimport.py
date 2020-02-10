@@ -111,7 +111,7 @@ class XmindImporter(NoteImporter):
 
         # Convert the node content into a string that can be used as a
         # class-name
-        question_class = self.translator.classify(content)
+        question_class = self.translator.class_from_content(content)
 
         # Add a Child relation if the node is a bridge
         if not question_class:
