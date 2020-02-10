@@ -73,9 +73,7 @@ class XSyncer:
     def process_note(self, q_id, status, remote, deck_id, sheet_id):
         # TODO: add case of changed answers' order
         note = None
-        meta = None
         q_content = None
-        importer = None
         ref_changes = {}
         sort_id_changes = {}
         if not status['xMod'] == remote['xMod']:
@@ -109,8 +107,16 @@ class XSyncer:
             status['index'] = remote['index']
 
         # Add new answers if there are any
-        not_in_status = [a for a in remote['answers'] if
-                         a not in status['answers']]
+        note = self.add_remote_a(
+            deck_id=deck_id, note=note, q_content=q_content, q_id=q_id,
+            remote=remote['answers'], sheet_id=sheet_id,
+            status=status['answers'])
+
+    def add_remote_a(self, deck_id, note, q_content, q_id, remote, sheet_id,
+                     status):
+        meta = None
+        importer = None
+        not_in_status = [a for a in remote if a not in status]
         for a_id in not_in_status:
             a_tag = self.map_manager.getTagById(a_id)
             a_content = self.map_manager.getNodeContent(a_tag)
@@ -144,7 +150,7 @@ class XSyncer:
                 question_class=q_class)
 
             # Add answer to status
-            status['answers'][a_id] = remote['answers'][a_id]
+            status[a_id] = remote[a_id]
 
             # If necessary add questions following this answer
             childnodes = getChildnodes(a_tag)
@@ -160,6 +166,7 @@ class XSyncer:
                         seed_topic=node, sheet_id=sheet_id, deck_id=deck_id,
                         parent_q=parent_q, parent_as=parent_as,
                         onto=self.onto)
+        return note
 
     def change_remote_question(self, question, status, local):
         # Change question in map
