@@ -329,12 +329,8 @@ class XSyncer:
 
     def process_remote_questions(self, status, remote, deck_id, sheet_id):
         not_in_status = [q for q in remote if q not in status]
-        tags_to_add = []
-        for q_id in not_in_status:
-            tags_to_add.append(self.map_manager.getTagById(q_id))
-            del remote[q_id]
+        tags_to_add = [self.map_manager.getTagById(q) for q in not_in_status]
         if tags_to_add:
-
             tags_and_parent_qs = [{'tag': t,
                                    'parent_q': get_parent_question_topic(t)} for
                                   t in tags_to_add]
@@ -365,6 +361,9 @@ class XSyncer:
                     parent_as=parent_as)
             importer.finish_import()
 
+        # Add questions to status
+        for q_id in not_in_status:
+            status[q_id] = remote[q_id]
         not_in_remote = [q for q in status if q not in remote]
         self.remove_questions(q_ids=not_in_remote, status=status)
         for question in {**status, **remote}:
