@@ -119,7 +119,7 @@ class XSyncer:
         # Change answer in status
         status[answer].update(local[answer])
 
-    def process_note(self, q_id, status, remote, deck_id, sheet_id):
+    def process_note(self, q_id, status, remote):
         note = None
         q_content = None
         ref_changes = {}
