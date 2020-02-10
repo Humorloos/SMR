@@ -353,6 +353,12 @@ class XSyncer:
                     deck_id=deck_id, sheet_id=sheet)
 
     def process_remote_questions(self, status, remote, deck_id, sheet_id):
+
+        # Remove questions that were removed in map
+        not_in_remote = [q for q in status if q not in remote]
+        self.remove_questions(q_ids=not_in_remote, status=status)
+
+        # Add questions that were added in map
         not_in_status = [q for q in remote if q not in status]
         tags_to_add = [self.map_manager.getTagById(q) for q in not_in_status]
         if tags_to_add:
@@ -390,9 +396,6 @@ class XSyncer:
         for q_id in not_in_status:
             status[q_id] = remote[q_id]
 
-        # Remove questions that were removed in map
-        not_in_remote = [q for q in status if q not in remote]
-        self.remove_questions(q_ids=not_in_remote, status=status)
         for question in {**status, **remote}:
             self.process_note(q_id=question, status=status[question],
                               remote=remote[question], deck_id=deck_id,
