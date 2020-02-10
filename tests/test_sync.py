@@ -5,14 +5,14 @@ from unittest import TestCase
 from anki import Collection
 
 from XmindImport.sync import XSyncer
-from XmindImport.consts import ADDON_PATH
+from XmindImport.consts import ADDON_PATH, USER_PATH
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support', 'syncer')
 
 
 class TestRun(TestCase):
     def setUp(self):
-        self.status_file = os.path.join(SUPPORT_PATH, 'status.json')
+        self.status_file = os.path.join(USER_PATH, 'status.json')
 
     def test_no_changes(self):
         colPath = os.path.join(SUPPORT_PATH, 'cols', 'no_changes',
@@ -58,9 +58,20 @@ class TestRun(TestCase):
             'change': os.path.join(SUPPORT_PATH, 'maps', 'changes', f),
             'resource': os.path.join(ADDON_PATH, 'resources', f),
             'temp': os.path.join(temp_dir, f)} for f in files_2_conserve]
+        paths.append({'resource': os.path.join(
+            SUPPORT_PATH, 'cols', 'no_changes', 'collection.anki2'),
+                      'temp': os.path.join(temp_dir, 'collection.anki2'),
+                      'change': None})
+        paths.append({'resource': os.path.join(USER_PATH, 'status.json'),
+                      'temp': os.path.join(temp_dir, 'status.json'),
+                      'change': None})
+        paths.append({'resource': os.path.join(USER_PATH, '1579442668731.rdf'),
+                      'temp': os.path.join(temp_dir, '1579442668731.rdf'),
+                      'change': None})
         for path in paths:
             shutil.copy2(path['resource'], path['temp'])
-            shutil.copy2(path['change'], path['resource'])
+            if path['change']:
+                shutil.copy2(path['change'], path['resource'])
 
         col_path = os.path.join(SUPPORT_PATH, 'cols', 'no_changes',
                                 'collection.anki2')
@@ -72,7 +83,7 @@ class TestRun(TestCase):
 
         # Restore original version and remove temp file
         for path in paths:
-            shutil.copy(path['temp'], path['map'])
+            shutil.copy(path['temp'], path['resource'])
             os.remove(path['temp'])
 
     def test_non_leaf_answer_deletion_error(self):
