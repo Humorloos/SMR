@@ -353,6 +353,7 @@ class XSyncer:
                     deck_id=deck_id, sheet_id=sheet)
 
     def process_remote_questions(self, status, remote, deck_id, sheet_id):
+        note = None
 
         # Remove questions that were removed in map
         not_in_remote = [q for q in status if q not in remote]
@@ -378,24 +379,36 @@ class XSyncer:
                     q_topic=seed_dict['tag'], parent_q=seed_dict['parent_q'])
 
                 # If the parent answer of this new question is not yet in
-                # status, skip this question (will be imported later in
-                # process_note)
-                stop = False
+                # status, add the answer before importing from the question
                 for a in parent_as:
                     if a['id'] not in \
                             status[seed_dict['parent_q']['id']]['answers']:
-                        stop = True
-                if stop:
-                    continue
+                        if not note:
+                            note = self.note_manager.get_note_from_q_id(
+                                seed_dict['parent_q']['id'])
+                        q_content = self.map_manager.getNodeContent(
+                            seed_dict['parent_q'])
+                        meta = meta_from_fields(note.fields)
+                        self.add_remote_a(
+                            importer=importer, meta=meta, note=note,
+                            q_content=q_content,
+                            q_id=seed_dict['parent_q']['id'],
+                            remote=remote[seed_dict['parent_q']['id']],
+                            status=status[seed_dict['parent_q']['id']],
+                            a_tag=a)
+                        self.note_manager.save_note(note)
                 importer.partial_import(
                     seed_topic=seed_dict['tag'], sheet_id=sheet_id,
                     deck_id=deck_id, parent_q=seed_dict['parent_q'],
-                    parent_as=parent_as)
+                    parent_as=parent_as, onto=self.onto)
             importer.finish_import()
 
-        # Add questions to status
-        for q_id in not_in_status:
-            status[q_id] = remote[q_id]
+            # Add questions to status
+            importer_status = next(
+                f for f in importer.statusManager.status if
+                f['file'] == self.map_manager.file)['sheets'][sheet_id][
+                'questions']
+            status = importer_status
 
         for question in {**status, **remote}:
             self.process_note(q_id=question, status=status[question],
