@@ -46,6 +46,73 @@ class XSyncer:
                       'add answers directly in the xmind file. Remove the '
                       'answer and try synchronizing again.')
 
+    def add_remote_as(self, deck_id, note, q_content, q_id, remote, sheet_id,
+                      status, importer):
+        meta = None
+        not_in_status = [a for a in remote['answers'] if a not in status[
+            'answers']]
+        for a_id in not_in_status:
+            a_tag = self.map_manager.getTagById(a_id)
+            a_content = self.map_manager.getNodeContent(a_tag)
+            a_field = field_from_content(a_content)
+
+            # Add answer to note fields
+            a_index = get_topic_index(a_tag)
+            if not note:
+                note = self.note_manager.get_note_from_q_id(q_id)
+            note.fields[get_index_by_field_name('a' + str(a_index))] = a_field
+            a_media = a_content['media']
+            if a_media['image'] or a_media['media']:
+                if not importer:
+                    importer = XmindImporter(col=self.note_manager.col,
+                                             file=self.map_manager.file)
+                if a_media['image']:
+                    importer.images.append(a_media['image'])
+                if a_media['media']:
+                    importer.media.append(a_media['media'])
+
+            # Add answer to ontology
+            if not q_content:
+                q_content = content_from_field(field_by_name(note.fields, 'qt'))
+            if not meta:
+                meta = meta_from_fields(note.fields)
+            q_class = classify(q_content)
+            rel_dict = get_rel_dict(
+                aIndex=a_index,
+                image=q_content['media']['image'],
+                media=q_content['media']['media'],
+                x_id=q_id,
+                ref=field_by_name(note.fields, 'rf'),
+                sortId=field_by_name(note.fields, 'id'),
+                doc=self.map_manager.file,
+                sheet=meta['sheetId'],
+                tag=note.tags[0]
+            )
+            a_concept = self.onto.add_answer(
+                a_id=a_id, answer_field=a_field, rel_dict=rel_dict,
+                question_class=q_class)
+
+            # Add answer to status
+            # a_cards = self.note_manager.get_answer_cards(note.id)
+            # local_a_dict = local_answer_dict(anki_mod = a_card[])
+            status['answers'][a_id] = remote['answers'][a_id]
+
+            # If necessary add questions following this answer
+            childnodes = getChildnodes(a_tag)
+            if childnodes:
+                parent_q = get_parent_question_topic(childnodes[0])
+                parent_as = get_parent_a_topics(q_topic=childnodes[0],
+                                                parent_q=parent_q)
+                if not importer:
+                    importer = XmindImporter(col=self.note_manager.col,
+                                             file=self.map_manager.file)
+                for node in childnodes:
+                    importer.partial_import(
+                        seed_topic=node, sheet_id=sheet_id, deck_id=deck_id,
+                        parent_q=parent_q, parent_as=parent_as,
+                        onto=self.onto)
+        return note, importer
+
     def change_answer(self, answer, question, local, status):
 
         # Change answer in map
@@ -118,70 +185,6 @@ class XSyncer:
         note = self.remove_remote_as(
             status=status['answers'], remote=remote['answers'], note=note,
             q_id=q_id)
-
-    def add_remote_a(self, deck_id, note, q_content, q_id, remote, sheet_id,
-                     status, importer):
-        meta = None
-        not_in_status = [a for a in remote if a not in status]
-        for a_id in not_in_status:
-            a_tag = self.map_manager.getTagById(a_id)
-            a_content = self.map_manager.getNodeContent(a_tag)
-            a_field = field_from_content(a_content)
-
-            # Add answer to note fields
-            a_index = get_topic_index(a_tag)
-            if not note:
-                note = self.note_manager.get_note_from_q_id(q_id)
-            note.fields[get_index_by_field_name('a' + str(a_index))] = a_field
-            a_media = a_content['media']
-            if a_media['image'] or a_media['media']:
-                if not importer:
-                    importer = XmindImporter(col=self.note_manager.col,
-                                             file=self.map_manager.file)
-                if a_media['image']:
-                    importer.images.append(a_media['image'])
-                if a_media['media']:
-                    importer.media.append(a_media['media'])
-
-            # Add answer to ontology
-            if not q_content:
-                q_content = content_from_field(field_by_name(note.fields, 'qt'))
-            if not meta:
-                meta = meta_from_fields(note.fields)
-            q_class = classify(q_content)
-            rel_dict = get_rel_dict(
-                aIndex=a_index,
-                image=q_content['media']['image'],
-                media=q_content['media']['media'],
-                x_id=q_id,
-                ref=field_by_name(note.fields, 'rf'),
-                sortId=field_by_name(note.fields, 'id'),
-                doc=self.map_manager.file,
-                sheet=meta['sheetId'],
-                tag=note.tags[0]
-            )
-            a_concept = self.onto.add_answer(
-                a_id=a_id, answer_field=a_field, rel_dict=rel_dict,
-                question_class=q_class)
-
-            # Add answer to status
-            status[a_id] = remote[a_id]
-
-            # If necessary add questions following this answer
-            childnodes = getChildnodes(a_tag)
-            if childnodes:
-                parent_q = get_parent_question_topic(childnodes[0])
-                parent_as = get_parent_a_topics(q_topic=childnodes[0],
-                                                parent_q=parent_q)
-                if not importer:
-                    importer = XmindImporter(col=self.note_manager.col,
-                                             file=self.map_manager.file)
-                for node in childnodes:
-                    importer.partial_import(
-                        seed_topic=node, sheet_id=sheet_id, deck_id=deck_id,
-                        parent_q=parent_q, parent_as=parent_as,
-                        onto=self.onto)
-        return note, importer
 
     def change_remote_question(self, question, status, local):
         # Change question in map
