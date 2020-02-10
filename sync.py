@@ -107,6 +107,44 @@ class XSyncer:
             # Adjust index in status
             status['index'] = remote['index']
 
+        # Add new answers if there are any
+        not_in_status = [a for a in remote['answers'] if
+                         a not in status['answers']]
+        for a_id in not_in_status:
+            a_tag = self.map_manager.getTagById(a_id)
+            a_content = self.map_manager.getNodeContent(a_tag)
+            a_field = field_from_content(a_content)
+
+            # Add answer to note fields
+            a_index = get_topic_index(a_tag)
+            if not note:
+                note = self.note_manager.get_note_from_q_id(q_id)
+            note.fields[get_index_by_field_name('a' + str(a_index))] = a_field
+
+            # Add answer to ontology
+            if not q_content:
+                q_content = content_from_field(field_by_name(note.fields, 'qt'))
+            if not meta:
+                meta = meta_from_fields(note.fields)
+            q_class = classify(q_content)
+            rel_dict = get_rel_dict(
+                aIndex=a_index,
+                image=q_content['media']['image'],
+                media=q_content['media']['media'],
+                x_id=q_id,
+                ref=field_by_name(note.fields, 'rf'),
+                sortId=field_by_name(note.fields, 'id'),
+                doc=self.map_manager.file,
+                sheet=meta['sheetId'],
+                tag=note.tags[0]
+            )
+            a_concept = self.onto.add_answer(
+                a_id=a_id, answer_field=a_field, rel_dict=rel_dict,
+                question_class=q_class)
+
+            # Add answer to status
+            status['answers'][a_id] = remote['answers'][a_id]
+
     def change_remote_question(self, question, status, local):
         # Change question in map
         title = title_from_field(local[question]['content'])
