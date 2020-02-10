@@ -91,8 +91,7 @@ class XSyncer:
         status['answers'][a_tag['id']] = remote['answers'][a_tag['id']]
         return importer, note, meta
 
-    def add_remote_as(self, deck_id, note, q_content, q_id, remote, sheet_id,
-                      status, importer):
+    def add_remote_as(self, note, q_content, q_id, remote, status, importer):
         meta = None
         not_in_status = [a for a in remote['answers'] if a not in status[
             'answers']]
@@ -101,21 +100,6 @@ class XSyncer:
             importer, note, meta = self.add_remote_a(
                 importer=importer, meta=meta, note=note, q_content=q_content,
                 q_id=q_id, remote=remote, status=status, a_tag=a_tag)
-
-            # If necessary add questions following this answer
-            childnodes = getChildnodes(a_tag)
-            if childnodes:
-                parent_q = get_parent_question_topic(childnodes[0])
-                parent_as = get_parent_a_topics(q_topic=childnodes[0],
-                                                parent_q=parent_q)
-                if not importer:
-                    importer = XmindImporter(col=self.note_manager.col,
-                                             file=self.map_manager.file)
-                for node in childnodes:
-                    importer.partial_import(
-                        seed_topic=node, sheet_id=sheet_id, deck_id=deck_id,
-                        parent_q=parent_q, parent_as=parent_as,
-                        onto=self.onto)
         return note, importer
 
     def change_answer(self, answer, question, local, status):
@@ -182,8 +166,7 @@ class XSyncer:
 
         # Add new answers if there are any
         note, importer = self.add_remote_as(
-            deck_id=deck_id, note=note, q_content=q_content, q_id=q_id,
-            remote=remote, sheet_id=sheet_id,
+            note=note, q_content=q_content, q_id=q_id, remote=remote,
             status=status, importer=importer)
 
         # Remove old answers if there are any
@@ -412,8 +395,7 @@ class XSyncer:
 
         for question in {**status, **remote}:
             self.process_note(q_id=question, status=status[question],
-                              remote=remote[question], deck_id=deck_id,
-                              sheet_id=sheet_id)
+                              remote=remote[question])
         print()
 
     def remove_questions(self, q_ids, status):
