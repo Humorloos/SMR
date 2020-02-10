@@ -162,3 +162,10 @@ biological psychology
 -->									affects
 
 										psychological disorders
+
+Changed answer:
+biological psychology
+	investigates
+		information transfer and processing
+			requires
+-->				neurotransmitters changed text
