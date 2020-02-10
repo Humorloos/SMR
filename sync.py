@@ -119,6 +119,36 @@ class XSyncer:
         # Change answer in status
         status[answer].update(local[answer])
 
+    def change_remote_as(self, status, remote, note, importer, q_id,
+                         ref_changes):
+        for a_id in {**status, **remote}:
+            if not status[a_id]['xMod'] == remote[a_id]['xMod']:
+                if not note:
+                    note = self.note_manager.get_note_from_q_id(q_id)
+
+                # Change answer in note
+                a_content = self.map_manager.content_by_id(a_id)
+                a_field = field_from_content(a_content)
+                old_field = note.fields[get_index_by_a_id(note=note, a_id=a_id)]
+                if not a_field == old_field:
+                    note.fields[get_index_by_field_name('a' + str(
+                        remote[a_id]['index']))] = a_field
+                    old_content = content_from_field(old_field)
+                    self.maybe_add_media(content=a_content,
+                                         old_content=old_content,
+                                         importer=importer)
+
+                    # Change answer in ontology
+                    self.onto.change_answer(q_id=q_id, a_id=a_id,
+                                            a_field=a_field)
+
+                    # Change answer content in status and xmod
+                    status[a_id]['content'] = a_field
+
+                    # Add change to ref_change_list
+                    ref_changes[a_id] = change_dict(old=old_field, new=a_field)
+                status[a_id]['xMod'] = remote[a_id]['xMod']
+
     def process_note(self, q_id, status, remote):
         note = None
         q_content = None
