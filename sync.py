@@ -2,7 +2,7 @@ from .consts import USER_PATH
 from .statusmanager import StatusManager
 from .xmanager import *
 from .xnotemanager import *
-from .xontology import XOntology
+from .xontology import XOntology, classify, get_rel_dict
 from .xmindimport import XmindImporter
 
 
@@ -70,6 +70,32 @@ class XSyncer:
         # Change answer in status
         status[answer].update(local[answer])
 
+    def process_note(self, q_id, status, remote):
+        # TODO: add case of changed answers' order
+        note = None
+        meta = None
+        q_content = None
+        ref_changes = {}
+        sort_id_changes = {}
+        if not status['xMod'] == remote['xMod']:
+            note = self.note_manager.get_note_from_q_id(q_id)
+            q_content = self.map_manager.content_by_id(q_id)
+            new_q_field = field_from_content(q_content)
+            q_index = get_index_by_field_name('qt')
+
+            # Add change to changes dict
+            ref_changes['question'] = change_dict(
+                old=note.fields[q_index], new=new_q_field)
+
+            # Change question field to new question
+            note.fields[q_index] = new_q_field
+
+            # Change question in ontology
+            self.onto.change_question(x_id=q_id, new_question=new_q_field)
+
+            # Adjust question in status
+            status['xMod'] = remote['xMod']
+        
     def change_remote_question(self, question, status, local):
         # Change question in map
         title = title_from_field(local[question]['content'])
