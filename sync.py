@@ -56,15 +56,7 @@ class XSyncer:
         if not note:
             note = self.note_manager.get_note_from_q_id(q_id)
         note.fields[get_index_by_field_name('a' + str(a_index))] = a_field
-        a_media = a_content['media']
-        if a_media['image'] or a_media['media']:
-            if not importer:
-                importer = XmindImporter(col=self.note_manager.col,
-                                         file=self.map_manager.file)
-            if a_media['image']:
-                importer.images.append(a_media['image'])
-            if a_media['media']:
-                importer.media.append(a_media['media'])
+        importer = self.maybe_add_media(a_content, importer)
 
         # Add answer to ontology
         if not q_content:
@@ -197,6 +189,18 @@ class XSyncer:
         # Change question in status
         status[question]['ankiMod'] = local[question]['ankiMod']
         status[question]['content'] = local[question]['content']
+
+    def maybe_add_media(self, content, importer):
+        a_media = content['media']
+        if a_media['image'] or a_media['media']:
+            if not importer:
+                importer = XmindImporter(col=self.note_manager.col,
+                                         file=self.map_manager.file)
+            if a_media['image']:
+                importer.images.append(a_media['image'])
+            if a_media['media']:
+                importer.media.append(a_media['media'])
+        return importer
 
     def maybe_remove_answer(self, answer, question, status):
         question_note = self.note_manager.get_note_from_q_id(question)
