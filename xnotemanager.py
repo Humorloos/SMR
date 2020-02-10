@@ -41,6 +41,13 @@ def get_index_by_field_name(name):
     return list(X_FLDS.keys()).index(name)
 
 
+def get_index_by_a_id(note, a_id):
+    a_metas = meta_from_fields(note.fields)['answers']
+    a_index = next(a_metas.index(d) for d in a_metas if d['answerId'] ==
+                   a_id) + 1
+    return get_index_by_field_name('a' + str(a_index))
+
+
 def get_n_answers(note):
     answers = [field_by_name(note.fields, 'a' + str(i)) != '' for i in
                range(1, X_MAX_ANSWERS + 1)]
