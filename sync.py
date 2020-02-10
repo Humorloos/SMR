@@ -1,4 +1,3 @@
-from .consts import USER_PATH
 from .statusmanager import StatusManager
 from .xmanager import *
 from .xnotemanager import *
@@ -50,6 +49,7 @@ class XSyncer:
                      status, a_tag):
         a_content = self.map_manager.getNodeContent(a_tag)
         a_field = field_from_content(a_content)
+
         # Add answer to note fields
         a_index = get_topic_index(a_tag)
         if not note:
@@ -64,6 +64,7 @@ class XSyncer:
                 importer.images.append(a_media['image'])
             if a_media['media']:
                 importer.media.append(a_media['media'])
+
         # Add answer to ontology
         if not q_content:
             q_content = content_from_field(field_by_name(note.fields, 'qt'))
