@@ -20,7 +20,7 @@ from .utils import deep_merge
 class XmindImporter(NoteImporter):
     needMapper = False
 
-    def __init__(self, col, file):
+    def __init__(self, col, file, status_manager=None):
         NoteImporter.__init__(self, col, file)
         self.added_relations = {'storids': [], 'q_ids': []}
         self.model = col.models.byName(X_MODEL_NAME)
@@ -41,7 +41,10 @@ class XmindImporter(NoteImporter):
         self.noteManager = XNoteManager(col=self.col)
         self.currentSheetImport = ''
         self.onto = None
-        self.statusManager = StatusManager()
+        if not status_manager:
+            self.statusManager = StatusManager()
+        else:
+            self.statusManager = status_manager
         self.lastNid = 0
 
     def addMedia(self):
