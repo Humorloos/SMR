@@ -114,6 +114,11 @@ class XSyncer:
             remote=remote['answers'], sheet_id=sheet_id,
             status=status['answers'])
 
+        # Remove old answers if there are any
+        note = self.remove_remote_as(
+            status=status['answers'], remote=remote['answers'], note=note,
+            q_id=q_id)
+
     def add_remote_a(self, deck_id, note, q_content, q_id, remote, sheet_id,
                      status):
         meta = None
@@ -388,3 +393,20 @@ class XSyncer:
         self.onto.remove_questions(q_ids)
         for q_id in q_ids:
             del status[q_id]
+
+    def remove_remote_as(self, status, remote, note, q_id):
+        not_in_remote = [a for a in status if a not in remote]
+        for a_id in not_in_remote:
+
+            # Remove answer from note fields
+            if not note:
+                note = self.note_manager.get_note_from_q_id(q_id)
+            note.fields[get_index_by_field_name(
+                'a' + str(status[a_id]['index']))] = ''
+
+            # Remove answer from ontology
+            self.onto.remove_answer(q_id=q_id, a_id=a_id)
+
+            # Remove answer from status
+            del status[a_id]
+        return note
