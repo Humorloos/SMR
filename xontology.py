@@ -209,7 +209,7 @@ class XOntology(Ontology):
 
         return relProp
 
-    def change_answer(self, q_id, a_id, new_answer):
+    def change_answer(self, q_id, a_id, a_field):
         answer = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
         answer_triples = [t for t in self.get_question(q_id) if t['o'] ==
                           answer]
@@ -226,7 +226,7 @@ class XOntology(Ontology):
         self.remove_answer(q_id=q_id, a_id=a_id)
 
         new_answer = self.add_answer(
-            parents=parents, a_id=a_id, answer_field=new_answer,
+            parents=parents, a_id=a_id, answer_field=a_field,
             rel_dict=rel_dict, question_class=question_class)
 
         for o in objects_2_answer:

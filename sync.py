@@ -107,7 +107,7 @@ class XSyncer:
 
         # Change answer in Ontology
         self.onto.change_answer(q_id=question, a_id=answer,
-                                new_answer=local[answer]['content'])
+                                a_field=local[answer]['content'])
 
         # Remember this change for final note adjustments
         self.change_list[self.current_sheet_sync].update(
