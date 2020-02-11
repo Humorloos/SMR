@@ -510,6 +510,13 @@ class XOntology(Ontology):
     def save_changes(self):
         self.save(file=self.name + '.rdf', format='rdfxml')
 
+    def set_trpl_a_index(self, a_id, q_id, a_index):
+        q_trpls = self.get_question(q_id)
+        a_concept = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
+        a_trpls = [t for t in q_trpls if t['o'] == a_concept]
+        for trpl in a_trpls:
+            self.AIndex[trpl['s'], trpl['p'], trpl['o']] = a_index
+
     def setUpClasses(self):
         with self:
             class Concept(owlready2.Thing):
