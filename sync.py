@@ -430,7 +430,9 @@ class XSyncer:
                 f for f in importer.statusManager.status if
                 f['file'] == self.map_manager.file)['sheets'][sheet_id][
                 'questions']
-            status = importer_status
+            for q_id in importer_status:
+                if q_id not in status:
+                    status[q_id] = importer_status[q_id]
 
         for question in {**status, **remote}:
             self.process_note(q_id=question, status=status[question],
