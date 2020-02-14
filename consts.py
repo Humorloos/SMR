@@ -1,6 +1,11 @@
 import os
 from collections import OrderedDict
 
+# SMR Version
+SMR_CONFIG = {
+    'version': '0.0.1'
+}
+
 # SMR Template information
 X_MODEL_VERSION = '0.1.1'
 X_MODEL_NAME = 'Stepwise Map Retrieval'
