@@ -3,6 +3,7 @@ from .ximports.xversion import LooseVersion
 from aqt import mw
 
 from .template import *
+from owlready2.namespace import World
 
 
 def get_or_create_model():
@@ -26,4 +27,6 @@ def look_up_version():
 
 
 def set_up_ontology():
+    world = World(filename=os.path.join(USER_PATH, 'onto.sqlite3'))
+    world.save()
     pass
