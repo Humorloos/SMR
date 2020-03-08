@@ -318,6 +318,7 @@ class XManager:
         if not getChildnodes(tag):
             tag.decompose()
             self.tag_list.remove(tag)
+            self.changes = True
         else:
             raise AttributeError('Topic has subtopics, can not remove.')
 
