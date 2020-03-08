@@ -116,10 +116,6 @@ def isQuestionNode(tag, level=0):
     return isQuestionNode(tag.parent.parent.parent, level + 1)
 
 
-def setNodeTitle(tag, title):
-    tag.find('title', recursive=False).string = title
-
-
 def getChildnodes(tag):
     """
     :param tag: the tag to get the childnodes for
@@ -335,7 +331,7 @@ class XManager:
     def set_node_content(self, x_id, title, img, media_dir):
         tag = self.getTagById(x_id)
         if title != getNodeTitle(tag):
-            setNodeTitle(tag=tag, title=title)
+            self.setNodeTitle(tag=tag, title=title)
 
         # Remove crosslink if the tag has one
         if getNodeCrosslink(tag):
@@ -386,6 +382,14 @@ class XManager:
         fileEntry['media-type'] = newMediaType
         imgTag = tag.find('xhtml:img')
         imgTag['xhtml:src'] = 'xap:' + newFullPath
+
+    def setNodeTitle(self, tag, title):
+        try:
+            tag.find('title', recursive=False).string = title
+        except AttributeError:
+            title_tag = self.soup.new_tag(name='title')
+            title_tag.string = title
+            tag.append(title_tag)
 
     def updateZip(self):
         """ taken from https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file-using-python, replaces one file in a zipfile"""
