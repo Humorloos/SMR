@@ -155,8 +155,8 @@ def is_crosslink(href):
 
 def is_crosslink_node(tag):
     href = getNodeHyperlink(tag)
-    if getNodeTitle(tag) or getNodeImg(tag) or \
-            (href and not is_crosslink(href)):
+    if not href or getNodeTitle(tag) or getNodeImg(tag) or not is_crosslink(
+            href):
         return False
     return True
 
