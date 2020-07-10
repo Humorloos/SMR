@@ -1,7 +1,7 @@
 import os
 
 from consts import X_MODEL_NAME, X_MODEL_VERSION, SMR_CONFIG, USER_PATH
-from owlready2.namespace import World
+from smrworld import SmrWorld
 from template import update_x_model, add_x_model
 from ximports.xversion import LooseVersion
 
@@ -22,16 +22,21 @@ def get_or_create_model():
     return model
 
 
-def look_up_version():
-    if 'smr' not in mw.col.conf:
-        set_up_ontology()
-    if 'smr' not in mw.col.conf or \
-            LooseVersion(mw.col.conf['smr']['version']) < \
-            LooseVersion(SMR_CONFIG['version']):
-        mw.col.conf['smr'] = SMR_CONFIG
+def update_smr_version():
+    """
+    Updates the Addon Version
+    """
+    mw.col.conf['smr'] = SMR_CONFIG
 
 
-def set_up_ontology():
-    world = World(filename=os.path.join(USER_PATH, 'onto.sqlite3'))
-    world.save()
-    pass
+def get_or_create_smr_world():
+    """
+    Sets up the smr world when the addon is first installed or updated to the first version that implements it.
+    :return: the smr world
+    """
+    if not os.path.isfile(os.path.join(USER_PATH, SmrWorld.FILE_NAME)):
+        smr_world = SmrWorld()
+        smr_world.set_up()
+    else:
+        smr_world = SmrWorld()
+    return smr_world
