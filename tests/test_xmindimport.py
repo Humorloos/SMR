@@ -4,11 +4,11 @@ from unittest import TestCase
 
 import pytest
 import xmindimport
+from XmindImport.tests.constants import SUPPORT_PATH, EMPTY_COLLECTION_PATH
 from XmindImport.xmanager import XManager
 from XmindImport.xmindimport import XmindImporter
 from bs4 import BeautifulSoup
 from consts import ADDON_PATH
-from XmindImport.tests.constants import SUPPORT_PATH
 
 from anki import Collection
 
@@ -299,8 +299,7 @@ class TestUpdateStatus(TestImportOntology):
 
 @pytest.fixture
 def xmind_importer():
-    collection_path = os.path.join(SUPPORT_PATH, 'empty_smr_col.anki2')
-    collection = Collection(collection_path)
+    collection = Collection(EMPTY_COLLECTION_PATH)
     test_map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
     yield xmindimport.XmindImporter(col=collection, file=test_map)
 

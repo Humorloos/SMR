@@ -21,7 +21,7 @@ def on_profile_loaded():
     # If necessary creates smr model and smr world and updates the Addon version after loading the profile
     """
     get_or_create_model()
-    mw.smr_world = get_or_create_smr_world()
+    mw.smr_world = get_or_create_smr_world(anki_collection=mw.col)
     if 'smr' not in mw.col.conf or LooseVersion(mw.col.conf['smr']['version']) < LooseVersion(SMR_CONFIG['version']):
         update_smr_version()
 
