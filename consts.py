@@ -15,8 +15,7 @@ X_CARD_NAMES = list(map(lambda aswid: 'Answer ' + str(aswid),
 X_MEDIA_EXTENSIONS = ('mp3', 'wav', 'mp4')
 X_IMG_EXTENSIONS = ('jpeg', 'jpg', 'png')
 
-# Fields, use orderedDict to be able to access flds field in notes objects by
-# postition of dictionary key
+# Fields, use orderedDict to be able to access flds field in notes objects by postition of dictionary key
 X_FLDS = OrderedDict((('rf', 'Reference'), ('qt', 'Question')))
 for i in range(1, X_MAX_ANSWERS + 1):
     X_FLDS['a' + str(i)] = 'Answer ' + str(i)
@@ -30,6 +29,8 @@ X_FLDS_IDS = ['rf', 'qt'] + \
              list(map(lambda aswid: 'a' + str(aswid),
                       list(range(1, X_MAX_ANSWERS + 1)))) + \
              ['id', 'mt']
+
+X_SORT_FIELD = 'id'
 
 # Elements for creating Card-Fronts and Backs
 
