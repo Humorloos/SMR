@@ -7,7 +7,7 @@ from consts import X_MODEL_NAME, X_MAX_ANSWERS, X_FLDS
 from utils import getCoordsFromId, getNotesFromSheet
 
 import aqt
-from sheetselectors import DeckSelectionDialog
+from deckselectiondialog import DeckSelectionDialog
 
 from anki.importing.noteimp import NoteImporter
 from anki.utils import intTime, guid64, timestampID, splitFields, joinFields

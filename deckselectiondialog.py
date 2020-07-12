@@ -33,14 +33,16 @@ class SheetSelector(QDialog):
         return
 
     def get_deck_id(self):
-        if self.deck:
-            return self.deck.selectedId()
-        else:
-            return 'nodeck'
+        return self.deck.selectedId()
 
     def reject(self):
         self.running = False
         super().reject()
+
+    def accept(self):
+        self.deckId = self.get_deck_id()
+        self.repair = self.repair_checkbox.isChecked()
+        super().accept()
 
     def add_repair_check(self, layout, sheet_layout):
         repair_checkbox = QtWidgets.QCheckBox(layout)
@@ -105,10 +107,5 @@ class DeckSelectionDialog(SheetSelector):
         frame.moveCenter(window_center)
         self.move(frame.topLeft())
 
-        buttons.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.on_ok)
+        buttons.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.accept)
         buttons.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reject)
-
-    def on_ok(self):
-        self.deckId = self.get_deck_id()
-        self.repair = self.repair_checkbox.isChecked()
-        self.accept()
