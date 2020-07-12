@@ -1,9 +1,9 @@
 import pytest
-from XmindImport.tests.constants import EMPTY_COLLECTION_PATH
-
-from anki import Collection
+from XmindImport.tests.constants import EMPTY_COLLECTION
 
 
 @pytest.fixture()
 def empty_anki_collection():
-    yield Collection(EMPTY_COLLECTION_PATH)
+    collection = EMPTY_COLLECTION
+    yield collection
+    collection.close(save=False)

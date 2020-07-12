@@ -1,5 +1,6 @@
 import os
 
+import smrworld
 from consts import X_MODEL_NAME, X_MODEL_VERSION, SMR_CONFIG, USER_PATH
 from smrworld import SmrWorld
 from template import update_x_model, add_x_model
@@ -17,7 +18,7 @@ def get_or_create_model():
     if not model:
         # create model
         model = add_x_model(mw.col)
-    if len(model['vers']) == 0 or LooseVersion(model['vers'][-1]) < LooseVersion(X_MODEL_VERSION):
+    elif len(model['vers']) == 0 or LooseVersion(model['vers'][-1]) < LooseVersion(X_MODEL_VERSION):
         update_x_model(mw.col)
     return model
 
@@ -34,7 +35,7 @@ def get_or_create_smr_world(anki_collection):
     Sets up the smr world when the addon is first installed or updated to the first version that implements it.
     :return: the smr world
     """
-    if not os.path.isfile(os.path.join(USER_PATH, SmrWorld.FILE_NAME)):
+    if not os.path.isfile(os.path.join(USER_PATH, smrworld.FILE_NAME)):
         smr_world = SmrWorld(anki_collection=anki_collection)
         smr_world.set_up()
     else:

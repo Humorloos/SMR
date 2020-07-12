@@ -34,9 +34,10 @@ def test_get_or_create_model_no_model(mocker):
     mocker.patch("config.mw")
     config.mw.col.models.byName.side_effect = models.get
     mocker.patch("config.update_x_model")
+    mocker.patch("config.add_x_model")
     # when
-    act = config.get_or_create_model()
+    config.get_or_create_model()
     # then
-    assert act == models[X_MODEL_NAME]
     assert config.mw.col.models.byName.call_count == 1
-    assert config.update_x_model.call_count == 1
+    assert config.add_x_model.call_count == 1
+    assert not config.update_x_model.called
