@@ -1,11 +1,13 @@
 # Qt Dialogs for selecting and naming sheets to import
+import os
+
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QDialog, QDesktopWidget
+from consts import ICONS_PATH
 
-from aqt.qt import *
-from aqt.deckchooser import DeckChooser
 import aqt
-
-from .consts import ICONS_PATH
+from aqt.deckchooser import DeckChooser
 
 
 class SheetSelector(QDialog):

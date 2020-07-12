@@ -1,14 +1,8 @@
 import re
-import urllib.parse
-import os
-import zipfile
-import tempfile
-import shutil
-from bs4 import BeautifulSoup
+
+from consts import X_MODEL_NAME
 
 from anki.utils import ids2str
-
-from .consts import X_MODEL_NAME
 
 
 def deep_merge(remote, local, path=None):

@@ -1,24 +1,25 @@
 """monkey patches"""
+import json
 import random
 import time
-import json
 
-from aqt.qt import *
-from aqt.utils import askUserDialog
-from aqt.deckbrowser import DeckBrowser
-from aqt.main import AnkiQt
+from PyQt5.QtWidgets import QMessageBox
+from consts import X_FLDS
+from sync import XSyncer
+from utils import getDueAnswersToNote, isSMRDeck
+
+import anki.sched as scheduler
 import aqt.reviewer as reviewer
-
 # noinspection PyProtectedMember
 from anki.lang import _, ngettext
 from anki.sound import clearAudioQueue
-import anki.sched as scheduler
+from anki.utils import ids2str
+from aqt.deckbrowser import DeckBrowser
+from aqt.main import AnkiQt
+from aqt.utils import askUserDialog
 
-from .utils import *
-from .consts import *
-from .sync import XSyncer
 
-
+# noinspection PyPep8Naming
 def showReviewer(self):
     self.mw.col.reset()
     self.web.resetHandlers()

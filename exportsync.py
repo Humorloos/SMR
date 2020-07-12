@@ -1,12 +1,20 @@
 import json
+import os
+import re
+import shutil
+import tempfile
+import zipfile
+
+from bs4 import BeautifulSoup
 
 import aqt.main as sync
 from aqt.utils import tooltip
 
 from anki.utils import splitFields
 
-from .utils import *
-from .xmindimport import XmindImporter
+from utils import xModelId
+from xmindimport import XmindImporter
+from xmanager import XManager, getNodeTitle, getNodeImg
 
 
 class MapSyncer:

@@ -1,12 +1,21 @@
+import json
+import os
+import shutil
+import tempfile
+
+from consts import X_MODEL_NAME, X_MAX_ANSWERS, X_FLDS
+from utils import getCoordsFromId, getNotesFromSheet
+
+import aqt
+from sheetselectors import SingleSheetSelector
+
 from anki.importing.noteimp import NoteImporter
-from anki.utils import joinFields, intTime, guid64, timestampID
-from .consts import *
-from .sheetselectors import *
-from .statusmanager import StatusManager
-from .xmanager import *
-from .xontology import *
-from .utils import deep_merge
-from .xnotemanager import *
+from anki.utils import intTime, guid64, timestampID, splitFields, joinFields
+from statusmanager import StatusManager
+from xmanager import getNodeCrosslink, getChildnodes, isEmptyNode, XManager, get_parent_topic, getNodeTitle
+from xontology import get_rel_dict, get_question_sets, XOntology
+from xnotemanager import XNoteManager, FieldTranslator, update_sort_id, ref_plus_question, field_from_content, \
+    ref_plus_answer
 
 
 # TODO: adjust sheet selection windows to adjust to the window size

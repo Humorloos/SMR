@@ -7,10 +7,8 @@ import urllib.parse
 import zipfile
 
 from bs4 import BeautifulSoup
-
-from .consts import X_MEDIA_EXTENSIONS
-from .xnotemanager import ref_plus_question, ref_plus_answer, \
-    field_from_content, update_sort_id
+from consts import X_MEDIA_EXTENSIONS
+from xnotemanager import ref_plus_question, ref_plus_answer, field_from_content, update_sort_id
 
 
 def clean_ref_path(path):

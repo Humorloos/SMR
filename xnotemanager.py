@@ -1,9 +1,10 @@
 import json
+import re
+
+from consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS, X_MAX_ANSWERS
+from utils import replaceSound, xModelId
 
 from anki.utils import splitFields, joinFields
-
-from .utils import *
-from .consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS, X_MAX_ANSWERS
 
 
 def change_dict(old, new):

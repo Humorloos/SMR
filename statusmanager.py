@@ -1,7 +1,7 @@
 import json
 import os
 
-from .consts import ADDON_PATH
+from consts import ADDON_PATH
 
 
 class StatusManager:

@@ -1,11 +1,13 @@
-import owlready2
+import json
+import os
 import types
 
+import owlready2
+from consts import ADDON_PATH, X_MAX_ANSWERS, USER_PATH
 from owlready2.namespace import Ontology, World
 from owlready2.prop import destroy_entity
-
-from .consts import ADDON_PATH, X_MAX_ANSWERS, USER_PATH
-from .xnotemanager import *
+from utils import file_dict
+from xnotemanager import FieldTranslator, content_from_field
 
 
 def get_question_sets(q_id_elements):

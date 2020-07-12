@@ -1,8 +1,11 @@
-from .statusmanager import StatusManager
-from .xmanager import *
-from .xnotemanager import *
-from .xontology import XOntology, get_rel_dict
-from .xmindimport import XmindImporter
+from statusmanager import StatusManager
+from utils import deep_merge
+from xmanager import get_topic_index, get_os_mod, XManager, get_parent_question_topic, get_parent_a_topics
+from xmindimport import XmindImporter
+from xnotemanager import field_by_name, XNoteManager, FieldTranslator, field_from_content, meta_from_fields, \
+    content_from_field, title_from_field, img_from_field, change_dict, get_index_by_a_id, get_index_by_field_name, \
+    sort_id_from_index
+from xontology import XOntology, get_rel_dict
 
 
 def raise_sync_error(content, question_note, text_pre, text_post):

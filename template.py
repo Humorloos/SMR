@@ -1,4 +1,5 @@
-from .consts import *
+from consts import X_FLDS, X_FLDS_IDS, X_CARD_HD, X_CARD_SR1, X_CARD_QT, X_CARD_BT1, X_CARD_HT, X_CARD_SRN, X_CARD_BTN, \
+    X_MODEL_NAME, X_CARD_NAMES, X_CARD_CSS, X_MODEL_VERSION
 
 
 # receives an id that represents the card to be created and returns a list with
@@ -44,6 +45,7 @@ def add_x_model(col):
     models.add(x_model)
     return x_model
 
+
 def update_x_model(col):
     x_model = col.models.byName(X_MODEL_NAME)
     for cid, name in enumerate(X_CARD_NAMES, start=1):
@@ -52,6 +54,7 @@ def update_x_model(col):
         x_model['tmpls'][cid - 1]['afmt'] = card[1]
     set_x_model_fields(x_model)
     col.models.save()
+
 
 def set_x_model_fields(x_model):
     x_model['css'] = X_CARD_CSS
