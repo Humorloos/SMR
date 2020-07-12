@@ -24,13 +24,13 @@ class TestXmindImporter(TestCase):
 
 class TestGetRefManagers(TestXmindImporter):
     def test_example_sheets(self):
-        self.xmindImporter.getRefManagers(self.xmindImporter.xManagers[0])
-        self.assertEqual(len(self.xmindImporter.xManagers), 2)
+        self.xmindImporter.get_ref_managers(self.xmindImporter.x_managers[0])
+        self.assertEqual(len(self.xmindImporter.x_managers), 2)
 
 
 class TestGetValidSheets(TestXmindImporter):
     def test_example_sheets(self):
-        act = self.xmindImporter.getValidSheets()
+        act = self.xmindImporter.get_valid_sheets()
         self.assertEqual(act, ['biological psychology', 'clinical psychology'])
 
 
@@ -41,23 +41,23 @@ class TestImportMap(TestXmindImporter):
         importer.deckId = '1'
         importer.deckName = self.col.decks.get(importer.deckId)['name']
         importer.currentSheetImport = 'biological psychology'
-        importer.activeManager = self.xmindImporter.xManagers[0]
+        importer.activeManager = self.xmindImporter.x_managers[0]
 
     def test_import_biological_psychology(self):
-        self.xmindImporter.importMap()
+        self.xmindImporter.import_map()
         self.fail()
 
     def test_whole_example(self):
         importer = self.xmindImporter
-        importer.xManagers.append(
+        importer.x_managers.append(
             XManager(os.path.join(
                 ADDON_PATH, 'resources', 'example_general_psychology.xmind')))
-        importer.importMap()
+        importer.import_map()
         importer.currentSheetImport = 'clinical psychology'
-        importer.importMap()
-        importer.activeManager = importer.xManagers[1]
+        importer.import_map()
+        importer.activeManager = importer.x_managers[1]
         importer.currentSheetImport = 'general psychology'
-        importer.importMap()
+        importer.import_map()
         self.assertEqual(1076, len(importer.onto.graph))
 
 
@@ -66,21 +66,21 @@ class TestGetAnswerDict(TestImportMap):
         with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
                                'sheet_biological_psychology.xml'), 'r') as file:
             root = BeautifulSoup(file.read(), features='html.parser').topic
-        act = self.xmindImporter.getAnswerDict(root)
+        act = self.xmindImporter.get_answer_dict(root)
         self.fail()
 
     def test_empty_node(self):
         importer = self.xmindImporter
         xid = '6b0ho6vvcs4pcacchhsgju7513'
         nodeTag = importer.activeManager.getTagById(xid)
-        act = self.xmindImporter.getAnswerDict(nodeTag)
+        act = self.xmindImporter.get_answer_dict(nodeTag)
         self.fail()
 
     def test_crosslink_and_text(self):
         importer = self.xmindImporter
         xid = '2koenah8ebavhq2bl2u6u1lh4h'
         nodeTag = importer.activeManager.getTagById(xid)
-        act = self.xmindImporter.getAnswerDict(nodeTag)
+        act = self.xmindImporter.get_answer_dict(nodeTag)
         self.fail()
 
 
@@ -96,8 +96,8 @@ class TestGetQuestions(TestImportMap):
         concept = [concept]
         answerDict = {'nodeTag': nodeTag, 'isAnswer': True, 'aId': str(0),
                       'crosslink': None, 'concepts': concept}
-        act = importer.getQuestions(parentAnswerDict=answerDict,
-                                    ref='biological psychology')
+        act = importer.get_questions(parent_answer_dict=answerDict,
+                                     ref='biological psychology')
         self.fail()
 
     def test_questions_following_multiple_answers(self):
@@ -119,9 +119,9 @@ class TestGetQuestions(TestImportMap):
         answerDict = {'nodeTag': nodeTag, 'isAnswer': False, 'aId': str(0),
                       'crosslink': None, 'concepts': concepts}
         ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up'
-        act = self.xmindImporter.getQuestions(parentAnswerDict=answerDict,
-                                              sortId='|{|{{{|',
-                                              ref=ref)
+        act = self.xmindImporter.get_questions(parent_answer_dict=answerDict,
+                                               sort_id='|{|{{{|',
+                                               ref=ref)
         self.fail()
 
 
@@ -137,8 +137,8 @@ class TestFindAnswerDicts(TestImportMap):
         parent.Xid = xid
         parents = [parent]
         content = {'content': '', 'media': {'image': None, 'media': None}}
-        act = importer.findAnswerDicts(parents=parents, question=question,
-                                       sortId='{', ref=ref, content=content)
+        act = importer.find_answer_dicts(parents=parents, question=question,
+                                         sort_id='{', ref=ref, content=content)
         self.fail()
 
     def test_two_answers_no_media(self):
@@ -153,8 +153,8 @@ class TestFindAnswerDicts(TestImportMap):
         parents = [parent]
         content = {'content': 'investigates', 'media': {'image': None,
                                                         'media': None}}
-        act = importer.findAnswerDicts(parents=parents, question=question,
-                                       sortId='{', ref=ref, content=content)
+        act = importer.find_answer_dicts(parents=parents, question=question,
+                                         sort_id='{', ref=ref, content=content)
         self.fail()
 
     def test_question_with_spaces(self):
@@ -169,8 +169,8 @@ class TestFindAnswerDicts(TestImportMap):
         parents = [parent]
         content = {'content': 'difference to MAO', 'media': {'image': None,
                                                              'media': None}}
-        act = importer.findAnswerDicts(parents=parents, question=question,
-                                       sortId='{', ref=ref, content=content)
+        act = importer.find_answer_dicts(parents=parents, question=question,
+                                         sort_id='{', ref=ref, content=content)
         self.assertIn('difference_to_MAO', map(lambda p: p.name,
                                                act[0]['concept'].Parent[
                                                    0].get_properties()))
@@ -187,8 +187,8 @@ class TestFindAnswerDicts(TestImportMap):
         parents = [parent]
         content = {'content': 'splits up', 'media': {'image': None,
                                                      'media': None}}
-        act = importer.findAnswerDicts(parents=parents, question=question,
-                                       sortId='{', ref=ref, content=content)
+        act = importer.find_answer_dicts(parents=parents, question=question,
+                                         sort_id='{', ref=ref, content=content)
         self.assertIn('difference_to_MAO', map(lambda p: p.name,
                                                act[0]['concept'].Parent[
                                                    0].get_properties()))
@@ -211,8 +211,8 @@ class TestFindAnswerDicts(TestImportMap):
         parents[3].Xid = '73mo29opsuegqobtttlt2vbaqj'
         ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up</li>'
         content = {'content': 'are', 'media': {'image': None, 'media': None}}
-        act = importer.findAnswerDicts(
-            parents=parents, question=question, sortId='{', ref=ref,
+        act = importer.find_answer_dicts(
+            parents=parents, question=question, sort_id='{', ref=ref,
             content=content)
         self.assertEqual(4, len(act[0]['concepts'][0].Parent))
 
@@ -229,8 +229,8 @@ class TestFindAnswerDicts(TestImportMap):
         content = {'content': 'difference to MAO', 'media': {'image': None,
                                                              'media': None}}
         sortId = '|{|{{{}'
-        act = importer.findAnswerDicts(
-            parents=parents, question=question, sortId=sortId, ref=ref,
+        act = importer.find_answer_dicts(
+            parents=parents, question=question, sort_id=sortId, ref=ref,
             content=content)
         self.assertIsNone(act)
         self.assertEqual(
@@ -242,19 +242,19 @@ class TestImportOntology(TestImportMap):
     def setUp(self):
         super().setUp()
         importer = self.xmindImporter
-        importer.xManagers.append(
+        importer.x_managers.append(
             XManager(os.path.join(
                 ADDON_PATH, 'resources', 'example_general_psychology.xmind')))
-        importer.importMap()
+        importer.import_map()
         importer.currentSheetImport = 'clinical psychology'
-        importer.importMap()
-        importer.activeManager = importer.xManagers[1]
+        importer.import_map()
+        importer.activeManager = importer.x_managers[1]
         importer.currentSheetImport = 'general psychology'
-        importer.importMap()
+        importer.import_map()
 
     def test_example(self):
         importer = self.xmindImporter
-        importer.importOntology()
+        importer.import_ontology()
         self.fail()
 
 
@@ -263,13 +263,13 @@ class TestNoteFromQuestionList(TestImportOntology):
     def test_multiple_answers(self):
         importer = self.xmindImporter
         questionList = [(315, 317, 318), (315, 317, 319)]
-        act = importer.noteFromQuestionList(questionList)
+        act = importer.note_from_question_list(questionList)
         self.fail()
 
     def test_bridge_parent(self):
         importer = self.xmindImporter
         questionList = [(328, 346, 325)]
-        act = importer.noteFromQuestionList(questionList)
+        act = importer.note_from_question_list(questionList)
         self.fail()
 
 
@@ -279,14 +279,14 @@ class TestGetXMindMeta(TestImportOntology):
         noteData = pickle.load(
             open(os.path.join(SUPPORT_PATH, 'xmindImporter', 'noteData.p'),
                  'rb'))
-        act = importer.getXMindMeta(noteData)
+        act = importer.get_xmind_meta(noteData)
         self.fail()
 
 
 class TestUpdateStatus(TestImportOntology):
     def setUp(self):
         super().setUp()
-        self.xmindImporter.importOntology()
+        self.xmindImporter.import_ontology()
 
     def test_update_status(self):
         importer = self.xmindImporter

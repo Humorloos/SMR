@@ -27,7 +27,24 @@ from xnotemanager import XNoteManager, FieldTranslator, update_sort_id, ref_plus
 # TODO: Check for performance issues:
 #  https://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
 #  https://docs.python.org/3.6/library/profile.html
+def get_xmind_meta(note_data):
+    xmind_meta = dict()
+    xmind_meta['path'] = note_data['document']
+    xmind_meta['sheetId'] = note_data['sheetId']
+    xmind_meta['questionId'] = note_data['questionId']
+    answers = [a for a in note_data['answers'] if len(a) != 0]
+    xmind_meta['answers'] = [{'answerId': a['src'],
+                              'crosslink': a['crosslink'],
+                              'children': a['children']} for a in answers]
+    xmind_meta['nAnswers'] = len(answers)
+    xmind_meta['subjects'] = note_data['subjects']
+    return json.dumps(xmind_meta)
+
+
 class XmindImporter(NoteImporter):
+    """
+    Importer for Xmind files. You can add this class to anki.importing.Importers list to add it to ankis importers.
+    """
     needMapper = False
 
     def __init__(self, col, file, status_manager=None):
@@ -46,7 +63,7 @@ class XmindImporter(NoteImporter):
         self.media = []
         self.running = True
         self.repair = False
-        self.xManagers = [XManager(os.path.normpath(file))]
+        self.x_managers = [XManager(os.path.normpath(file))]
         self.activeManager = None
         self.noteManager = XNoteManager(col=self.col)
         self.currentSheetImport = ''
@@ -58,8 +75,8 @@ class XmindImporter(NoteImporter):
             self.statusManager = status_manager
         self.lastNid = 0
 
-    def addMedia(self):
-        for manager in self.xManagers:
+    def add_media(self):
+        for manager in self.x_managers:
             for file in [f for f in self.media if f['doc'] == manager.file]:
                 if file['identifier'].startswith(('attachments', 'resources')):
                     file_path = manager.getAttachment(identifier=file[
@@ -80,43 +97,44 @@ class XmindImporter(NoteImporter):
 
     def add_question(self, sort_id, q_index, q_tag, parent_a_dict, ref):
         # Update the sorting ID
-        nextSortId = update_sort_id(previousId=sort_id, idToAppend=q_index)
+        next_sort_id = update_sort_id(previousId=sort_id, idToAppend=q_index)
         content = self.activeManager.getNodeContent(q_tag)
-        answerDicts = self.findAnswerDicts(
+        answer_dicts = self.find_answer_dicts(
             parents=parent_a_dict['concepts'], question=q_tag,
-            sortId=nextSortId, ref=ref, content=content)
-        if answerDicts:
-            actualAnswers = [a for a in answerDicts if a['isAnswer']]
-            isQuestion = not isEmptyNode(q_tag)
+            sort_id=next_sort_id, ref=ref, content=content)
+        if answer_dicts:
+            actual_answers = [a for a in answer_dicts if a['isAnswer']]
+            is_question = not isEmptyNode(q_tag)
 
             # If the current relation is a question and has too many
             # answers give a warning and stop running
-            if isQuestion and len(actualAnswers) > X_MAX_ANSWERS:
+            if is_question and len(actual_answers) > X_MAX_ANSWERS:
                 self.running = False
                 self.log = ["""Warning:
-                        A Question titled "%s" has more than %s answers. Make sure every Question in your Map is followed by no more than %s Answers and try again.""" %
+                        A Question titled "%s" has more than %s answers. Make sure every Question in your Map is 
+                        followed by no more than %s Answers and try again.""" %
                             (self.activeManager.getNodeTitle(q_tag),
                              X_MAX_ANSWERS, X_MAX_ANSWERS)]
                 return
-            nextRef = ref_plus_question(
+            next_ref = ref_plus_question(
                 field=field_from_content(content), ref=ref)
-            for aId, answerDict in enumerate(answerDicts, start=1):
-                self.getQuestions(
-                    parentAnswerDict=answerDict, ref=nextRef,
-                    sortId=update_sort_id(
-                        previousId=nextSortId, idToAppend=aId),
-                    followsBridge=not isQuestion)
+            for aId, answerDict in enumerate(answer_dicts, start=1):
+                self.get_questions(
+                    parent_answer_dict=answerDict, ref=next_ref,
+                    sort_id=update_sort_id(
+                        previousId=next_sort_id, idToAppend=aId),
+                    follows_bridge=not is_question)
 
-    def findAnswerDicts(self, parents, question, sortId, ref, content):
-        answerDicts = list()
+    def find_answer_dicts(self, parents, question, sort_id, ref, content):
+        answer_dicts = list()
         manager = self.activeManager
         crosslink = getNodeCrosslink(question)
-        childNotes = getChildnodes(question)
+        child_notes = getChildnodes(question)
 
-        if len(childNotes) == 0:
+        if len(child_notes) == 0:
             return self.stop_or_add_cross_question(
                 content=content, crosslink=crosslink, manager=manager,
-                parents=parents, question=question, ref=ref, sortId=sortId)
+                parents=parents, question=question, ref=ref, sort_id=sort_id)
 
         # Convert the node content into a string that can be used as a
         # class-name
@@ -129,8 +147,8 @@ class XmindImporter(NoteImporter):
         image = content['media']['image']
         media = content['media']['media']
         bridges, children = self.get_children_and_bridges(
-            answerDicts, childNotes, image, media, parents, question, ref,
-            question_class, sortId)
+            answer_dicts, child_notes, image, media, parents, question, ref,
+            question_class, sort_id)
         if len(children) > 0:
 
             # Assign all children to bridge concepts because they are the
@@ -138,7 +156,7 @@ class XmindImporter(NoteImporter):
             for bridge in bridges:
                 bridge['concepts'] = children
 
-        return answerDicts
+        return answer_dicts
 
     def finish_import(self):
 
@@ -147,7 +165,7 @@ class XmindImporter(NoteImporter):
             return
         self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
                     ['removed', 0, 'notes']]
-        self.importOntology()
+        self.import_ontology()
         self.update_status()
         self.onto.save_changes()
         self.added_relations = {'storids': [], 'q_ids': []}
@@ -164,70 +182,71 @@ class XmindImporter(NoteImporter):
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
 
-    def getAnswerDict(self, nodeTag, question=None, root=False, a_concept=None):
+    def get_answer_dict(self, node_tag, question=None, root=False, a_concept=None):
         """
+        :param a_concept:
         :param question: Xmind id of the question the answer refers to
-        :param nodeTag: The answer node to get the dict for
+        :param node_tag: The answer node to get the dict for
         :param root: whether the node is the root or not
         :return: dictionary containing information for creating a note from
         this answer node, furthermore adds a Concept to onto for this node
         """
         manager = self.activeManager
-        isAnswer = True
+        is_answer = True
         crosslink = None
 
         # If the node is empty do not create a concept
-        if not nodeTag or isEmptyNode(nodeTag):
-            isAnswer = False
+        if not node_tag or isEmptyNode(node_tag):
+            is_answer = False
         else:
             # Check whether subtopic contains a crosslink
-            crosslink = getNodeCrosslink(nodeTag)
+            crosslink = getNodeCrosslink(node_tag)
             if not a_concept:
-                nodeContent = manager.getNodeContent(nodeTag)
-                x_id = nodeTag['id']
+                node_content = manager.getNodeContent(node_tag)
+                x_id = node_tag['id']
                 a_concept = self.onto.add_concept(
-                    crosslink=crosslink, nodeContent=nodeContent, a_id=x_id,
+                    crosslink=crosslink, nodeContent=node_content, a_id=x_id,
                     root=root, file=self.activeManager.file, q_id=question)
 
                 # Assign a list to concept since concept may also contain
                 # multiple concepts in case of bridges
             a_concept = [a_concept]
         # Todo: check whether aID is really necessary
-        return dict(nodeTag=nodeTag, isAnswer=isAnswer, aId=str(0),
+        return dict(nodeTag=node_tag, isAnswer=is_answer, aId=str(0),
                     crosslink=crosslink, concepts=a_concept)
 
-    def get_children_and_bridges(self, answerDicts, childNotes, image, media,
+    def get_children_and_bridges(self, answer_dicts, child_notes, image, media,
                                  parents, question, ref, question_class,
-                                 sortId):
+                                 sort_id):
         children = list()
         bridges = list()
-        aIndex = 1
+        a_index = 1
         sheet = self.activeManager.sheets[
             self.currentSheetImport]['tag']['id']
         doc = self.activeManager.file
-        tag = self.getTag()
+        tag = self.get_tag()
         x_id = question['id']
         rel_prop = None
-        for childNode in childNotes:
-            answerDict = self.getAnswerDict(nodeTag=childNode, question=x_id)
+        for childNode in child_notes:
+            answer_dict = self.get_answer_dict(node_tag=childNode, question=x_id)
 
             # Only add relations to answers that are concepts (not to empty
             # answers that serve as bridges for questions following multiple
             # answers)
-            if answerDict['isAnswer']:
-                child = answerDict['concepts'][0]
+            if answer_dict['isAnswer']:
+                child = answer_dict['concepts'][0]
                 children.append(child)
                 for parent in parents:
                     rel_dict = get_rel_dict(
-                        aIndex=aIndex, image=image, media=media, x_id=x_id,
-                        ref=ref, sortId=sortId, doc=doc, sheet=sheet, tag=tag)
+                        aIndex=a_index, image=image, media=media, x_id=x_id,
+                        ref=ref, sortId=sort_id, doc=doc, sheet=sheet, tag=tag)
                     rel_prop = self.onto.add_relation(
                         child=child, class_text=question_class, parent=parent,
                         rel_dict=rel_dict)
-                aIndex += 1
+                a_index += 1
             else:
-                bridges.append(answerDict)
-            answerDicts.append(answerDict)
+                bridges.append(answer_dict)
+            answer_dicts.append(answer_dict)
         if rel_prop:
             self.added_relations['storids'].append(rel_prop.storid)
             self.added_relations['q_ids'].append(x_id)
@@ -236,64 +255,51 @@ class XmindImporter(NoteImporter):
     def get_file_dict(self, path):
         return [path, self.activeManager.file]
 
-    def getQuestions(self, parentAnswerDict: dict, sortId='', ref="",
-                     followsBridge=False):
+    def get_questions(self, parent_answer_dict: dict, sort_id='', ref="",
+                      follows_bridge=False):
         """
-        :param parentAnswerDict: parent answer node of the questions to get
-        :param sortId: current id for sortId field
+        :param parent_answer_dict: parent answer node of the questions to get
+        :param sort_id: current id for sortId field
         :param ref: current text for reference field
-        :param followsBridge: ???
+        :param follows_bridge: ???
         :return: creates notes for each question following the answerDict
         """
-        answerContent = self.activeManager.getNodeContent(
-            parentAnswerDict['nodeTag'])['content']
+        answer_content = self.activeManager.getNodeContent(
+            parent_answer_dict['nodeTag'])['content']
 
         # The reference doesn't have to be edited at the roottopic
-        if not isinstance(parentAnswerDict['concepts'][0], self.onto.Root):
+        if not isinstance(parent_answer_dict['concepts'][0], self.onto.Root):
             ref = ref_plus_answer(
-                field=answerContent, followsBridge=followsBridge,
-                ref=ref, mult_subjects=not parentAnswerDict['isAnswer'])
-        followRels = getChildnodes(parentAnswerDict['nodeTag'])
-        for qId, followRel in enumerate(followRels, start=1):
-            self.add_question(sort_id=sortId, q_index=qId, q_tag=followRel,
-                              parent_a_dict=parentAnswerDict, ref=ref)
+                field=answer_content, followsBridge=follows_bridge,
+                ref=ref, mult_subjects=not parent_answer_dict['isAnswer'])
+        follow_rels = getChildnodes(parent_answer_dict['nodeTag'])
+        for qId, followRel in enumerate(follow_rels, start=1):
+            self.add_question(sort_id=sort_id, q_index=qId, q_tag=followRel,
+                              parent_a_dict=parent_answer_dict, ref=ref)
 
-    def getValidSheets(self):
+    def get_valid_sheets(self):
         """
         :return: sheets of all xManagers with concept maps to import
         """
         sheets = list()
-        for manager in self.xManagers:
+        for manager in self.x_managers:
             sheets.extend(manager.content_sheets())
         return sheets
 
-    def getRefManagers(self, xManager):
+    def get_ref_managers(self, x_manager):
         """
-        :param xManager: the xManager to get References from
+        :param x_manager: the xManager to get References from
         :return: adds xManagers referenced by ref sheet to xManagers list
         """
-        ref_managers = [XManager(f) for f in xManager.get_ref_files()]
-        self.xManagers.extend(ref_managers)
+        ref_managers = [XManager(f) for f in x_manager.get_ref_files()]
+        self.x_managers.extend(ref_managers)
         for manager in ref_managers:
-            self.getRefManagers(manager)
+            self.get_ref_managers(manager)
 
-    def getTag(self):
+    def get_tag(self):
         return (self.deckName + '_' + self.currentSheetImport).replace(" ", "_")
 
-    def getXMindMeta(self, noteData):
-        xMindMeta = dict()
-        xMindMeta['path'] = noteData['document']
-        xMindMeta['sheetId'] = noteData['sheetId']
-        xMindMeta['questionId'] = noteData['questionId']
-        answers = [a for a in noteData['answers'] if len(a) != 0]
-        xMindMeta['answers'] = [{'answerId': a['src'],
-                                 'crosslink': a['crosslink'],
-                                 'children': a['children']} for a in answers]
-        xMindMeta['nAnswers'] = len(answers)
-        xMindMeta['subjects'] = noteData['subjects']
-        return json.dumps(xMindMeta)
-
-    def importMap(self, sheet=None, deck_id=None):
+    def import_map(self, sheet=None, deck_id=None):
         """
         :return: adds the roottopic of the active sheet to self.onto and starts
             the map import by calling getQuestions
@@ -301,49 +307,49 @@ class XmindImporter(NoteImporter):
         if sheet:
             self.set_up_import(deck_id, sheet)
         manager = self.activeManager
-        rootTopic = manager.sheets[self.currentSheetImport]['tag'].topic
+        root_topic = manager.sheets[self.currentSheetImport]['tag'].topic
 
         # Set model to Stepwise map retrieval model
-        xModel = self.col.models.byName(X_MODEL_NAME)
+        x_model = self.col.models.byName(X_MODEL_NAME)
         self.col.decks.select(self.deckId)
-        self.col.decks.current()['mid'] = xModel['id']
-        rootDict = self.getAnswerDict(nodeTag=rootTopic, root=True)
-        self.getQuestions(parentAnswerDict=rootDict,
-                          ref=getNodeTitle(rootTopic))
+        self.col.decks.current()['mid'] = x_model['id']
+        root_dict = self.get_answer_dict(node_tag=root_topic, root=True)
+        self.get_questions(parent_answer_dict=root_dict,
+                           ref=getNodeTitle(root_topic))
 
-    def importOntology(self):
+    def import_ontology(self):
         triples = [self.onto.getElements(t) for t in
                    self.onto.getNoteTriples() if t[1] in
                    self.added_relations['storids']]
         triples_with_q_ids = [self.onto.q_id_elements(t) for t in triples]
         added_triples = [t for t in triples_with_q_ids if t['q_id'] in
                          self.added_relations['q_ids']]
-        questionList = get_question_sets(added_triples)
+        question_list = get_question_sets(added_triples)
 
-        notes = [self.noteFromQuestionList(q) for q in questionList]
+        notes = [self.note_from_question_list(q) for q in question_list]
         self.addNew(notes=notes)
-        self.addMedia()
+        self.add_media()
 
-    def importSheets(self, selectedSheets):
+    def import_sheets(self, selected_sheets):
         """
-        :param selectedSheets: sheets that were selected by the user in
+        :param selected_sheets: sheets that were selected by the user in
             Selector Dialog
         :return: Imports maps in all sheets contained in selectedSheets
         """
-        for manager in self.xManagers:
+        for manager in self.x_managers:
             self.activeManager = manager
-            validSheets = [s for s in selectedSheets if s in manager.sheets]
-            for sheet in validSheets:
+            valid_sheets = [s for s in selected_sheets if s in manager.sheets]
+            for sheet in valid_sheets:
                 self.currentSheetImport = sheet
                 if self.mw:
                     self.mw.progress.update(label='importing %s' % sheet,
                                             maybeShow=False)
                     self.mw.app.processEvents()
-                self.importMap()
+                self.import_map()
         self.finish_import()
 
     def init_import(self, deck_id, repair):
-        sheets = self.getValidSheets()
+        sheets = self.get_valid_sheets()
         self.deckId = deck_id
         self.deckName = self.col.decks.get(self.deckId)['name']
         self.repair = repair
@@ -352,25 +358,25 @@ class XmindImporter(NoteImporter):
             self.mw.progress.start(immediate=True, label='importing...')
             self.mw.app.processEvents()
             self.mw.checkpoint("Import")
-        self.importSheets(sheets)
+        self.import_sheets(sheets)
 
-    def noteFromQuestionList(self, questionList):
+    def note_from_question_list(self, question_list):
         note = self.col.newNote()
         if note.id <= self.lastNid:
             note.id = self.lastNid + 1
         self.lastNid = note.id
         note.model()['did'] = self.deckId
-        noteData = self.onto.getNoteData(questionList)
-        self.images.extend(noteData['images'])
-        self.media.extend(noteData['media'])
-        meta = self.getXMindMeta(noteData)
-        fields = [noteData['reference'],
-                  noteData['question']]
+        note_data = self.onto.getNoteData(question_list)
+        self.images.extend(note_data['images'])
+        self.media.extend(note_data['media'])
+        meta = get_xmind_meta(note_data)
+        fields = [note_data['reference'],
+                  note_data['question']]
         fields.extend([a['text'] if len(a) != 0 else '' for
-                       a in noteData['answers']])
-        fields.extend([noteData['sortId'], meta])
+                       a in note_data['answers']])
+        fields.extend([note_data['sortId'], meta])
         note.fields = fields
-        note.tags.append(noteData['tag'])
+        note.tags.append(note_data['tag'])
         return note
 
     def partial_import(self, seed_topic, sheet_id, deck_id, parent_q,
@@ -397,8 +403,8 @@ class XmindImporter(NoteImporter):
         else:
             node_tag = parent_as[0]
             a_concept = parent_a_concepts[0]
-        parent_a_dict = self.getAnswerDict(
-            nodeTag=node_tag, question=parent_q['id'], root=False,
+        parent_a_dict = self.get_answer_dict(
+            node_tag=node_tag, question=parent_q['id'], root=False,
             a_concept=a_concept)
 
         # If the seed_topic's parent follows a bridge, start importing at the
@@ -422,33 +428,33 @@ class XmindImporter(NoteImporter):
         """
         Starts deck selection dialog and runs import sheets with selected sheets
         """
-        self.getRefManagers(self.xManagers[0])
-        selector = DeckSelectionDialog(os.path.basename(self.xManagers[0].file))
+        self.get_ref_managers(self.x_managers[0])
+        deck_selection_dialog = DeckSelectionDialog(os.path.basename(self.x_managers[0].file))
         self.mw.progress.finish()
-        selector.exec_()
-        userInputs = selector.get_inputs()
-        if not userInputs['running']:
+        deck_selection_dialog.exec_()
+        user_inputs = deck_selection_dialog.get_inputs()
+        if not user_inputs['running']:
             self.log = ['Import canceled']
             return
-        self.init_import(deck_id=userInputs['deckId'],
-                         repair=userInputs['repair'])
+        self.init_import(deck_id=user_inputs['deckId'],
+                         repair=user_inputs['repair'])
 
     def set_up_import(self, deck_id, sheet, onto=None):
         self.currentSheetImport = next(
-            s for m in self.xManagers for
+            s for m in self.x_managers for
             s in m.sheets if m.sheets[s]['tag']['id'] == sheet)
         self.activeManager = next(
-            m for m in self.xManagers for
+            m for m in self.x_managers for
             s in m.sheets if s == self.currentSheetImport)
         self.deckId = deck_id
         if onto:
-            self.onto=onto
+            self.onto = onto
         else:
             self.onto = XOntology(deck_id)
         self.deckName = self.col.decks.get(self.deckId)['name']
 
     def stop_or_add_cross_question(self, content, crosslink, manager, parents,
-                                   question, ref, sortId):
+                                   question, ref, sort_id):
 
         # Stop and warn if no nodes follow the question
         if not crosslink:
@@ -457,71 +463,71 @@ class XmindImporter(NoteImporter):
                         A Question titled "%s" (Path %s) is missing answers. Please adjust your 
                         Concept Map and try again.""" % (
                 manager.getNodeContent(tag=question)[0],
-                getCoordsFromId(sortId))]
+                getCoordsFromId(sort_id))]
             return
 
         # If the question contains a crosslink, add another relation
         # from the parents of this question to the answers to the original
         # question
         else:
-            originalQuestion = manager.getTagById(crosslink)
-            self.findAnswerDicts(parents=parents, question=originalQuestion,
-                                 sortId=sortId, ref=ref, content=content)
+            original_question = manager.getTagById(crosslink)
+            self.find_answer_dicts(parents=parents, question=original_question,
+                                   sort_id=sort_id, ref=ref, content=content)
             return
 
-    def noteFromNoteData(self, noteData):
+    def note_from_note_data(self, note_data):
         note = self.col.newNote()
         note.model()['did'] = self.deckId
-        fields = splitFields(noteData[6])
+        fields = splitFields(note_data[6])
         note.fields = fields
-        note.tags.append(noteData[5].replace(" ", ""))
+        note.tags.append(note_data[5].replace(" ", ""))
         return note
 
-    def maybeSync(self, sheetId, noteList):
+    def maybe_sync(self, sheet_id, note_list):
         if self.repair:
-            existingNotes = list(self.col.db.execute(
+            # noinspection PyTypeChecker
+            existing_notes = list(self.col.db.execute(
                 "select id, flds from notes where tags like '%" +
                 self.currentSheetImport['tag'].replace(" ", "") + "%'"))
         else:
-            existingNotes = getNotesFromSheet(sheetId=sheetId, col=self.col)
-        if existingNotes:
-            notesToAdd = []
-            notesToUpdate = []
-            oldQIdList = list(map(lambda n: json.loads(
+            existing_notes = getNotesFromSheet(sheetId=sheet_id, col=self.col)
+        if existing_notes:
+            notes_2_add = []
+            notes_2_update = []
+            old_q_id_list = list(map(lambda n: json.loads(
                 splitFields(n[1])[list(X_FLDS.keys()).index('mt')])[
-                'questionId'], existingNotes))
-            for newNote in noteList:
-                newFields = splitFields(newNote[6])
-                newMeta = json.loads(newFields[list(X_FLDS.keys()).index('mt')])
-                newQId = newMeta['questionId']
+                'questionId'], existing_notes))
+            for newNote in note_list:
+                new_fields = splitFields(newNote[6])
+                new_meta = json.loads(new_fields[list(X_FLDS.keys()).index('mt')])
+                new_q_id = new_meta['questionId']
                 try:
                     if self.repair:
-                        newQtxAw = joinFields(newFields[1:22])
-                        oldTpl = tuple(
-                            filter(lambda n: newQtxAw in n[1], existingNotes))[
-                            0]
-                        noteId = existingNotes.index(oldTpl)
+                        new_qt_x_aw = joinFields(new_fields[1:22])
+                        old_tpl = tuple(
+                            filter(lambda n: new_qt_x_aw in n[1], existing_notes))[0]
+                        note_id = existing_notes.index(old_tpl)
                     else:
-                        noteId = oldQIdList.index(newQId)
+                        note_id = old_q_id_list.index(new_q_id)
                         # if the fields are different, add it to notes to be updated
-                    if not existingNotes[noteId][1] == newNote[6]:
-                        notesToUpdate.append(
-                            [existingNotes[noteId], newNote])
-                    del existingNotes[noteId]
-                    del oldQIdList[noteId]
+                    if not existing_notes[note_id][1] == newNote[6]:
+                        notes_2_update.append(
+                            [existing_notes[note_id], newNote])
+                    del existing_notes[note_id]
+                    del old_q_id_list[note_id]
                 except (ValueError, IndexError):
-                    notesToAdd.append(newNote)
-            self.addNew(notesToAdd)
-            self.log[0][1] += len(notesToAdd)
-            self.addUpdates(notesToUpdate)
-            self.log[1][1] += len(notesToUpdate)
-            self.removeOld(existingNotes)
-            self.log[2][1] += len(existingNotes)
+                    notes_2_add.append(newNote)
+            self.addNew(notes_2_add)
+            self.log[0][1] += len(notes_2_add)
+            self.addUpdates(notes_2_update)
+            self.log[1][1] += len(notes_2_update)
+            self.removeOld(existing_notes)
+            self.log[2][1] += len(existing_notes)
             self.col.save()
         else:
-            notesToAdd = noteList
-            self.addNew(notesToAdd)
-            self.log[0][1] += len(notesToAdd)
+            notes_2_add = note_list
+            self.addNew(notes_2_add)
+            self.log[0][1] += len(notes_2_add)
 
     def removeOld(self, existingNotes):
         oldIds = list(map(lambda nt: nt[0], existingNotes))
@@ -558,7 +564,8 @@ class XmindImporter(NoteImporter):
                 for CUId, cardUpdate in enumerate(cardUpdates, start=0):
                     if cardUpdate != '':
                         self.col.db.executemany("""
-    update cards set type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?, lapses = ?, left = ?, odue = ?, flags = ? where nid = ? and ord = ?""",
+    update cards set type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?, lapses = ?, left = ?, odue = ?, 
+    flags = ? where nid = ? and ord = ?""",
                                                 [list(cardUpdate) + [
                                                     str(noteTpl[0][0]),
                                                     str(CUId)]])
@@ -593,7 +600,7 @@ class XmindImporter(NoteImporter):
         return cardUpdates
 
     def update_status(self):
-        for manager in self.xManagers:
+        for manager in self.x_managers:
             remote = manager.get_remote()
             local = self.noteManager.get_local(manager.file)
             status = deep_merge(remote=remote, local=local)
@@ -636,8 +643,8 @@ class XmindImporter(NoteImporter):
         noteList.append(sortId)
 
         # set field Meta
-        meta = self.getXMindMeta(question=question, answerDicts=answerDicts,
-                                 siblings=siblings, connections=connections)
+        meta = get_xmind_meta(question=question, answerDicts=answerDicts,
+                                   siblings=siblings, connections=connections)
         noteList.append(meta)
 
         nId = timestampID(self.col.db, "notes")

@@ -98,7 +98,7 @@ class MapSyncer:
             sheetImport = dict(sheet=sheet, tag=tag4Sheet, deckId=did4Sheet,
                                repair=False)
             sheetImports.append(sheetImport)
-        importer.importSheets(sheetImports)
+        importer.import_sheets(sheetImports)
 
     def syncNote(self, note):
         print('synchronizing note')
