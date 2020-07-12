@@ -39,7 +39,7 @@ def getSelectedSheets():
     Dialog = MultiSheetSelector(sheetImports)
     Dialog.show()
     app.exec_()
-    selectedSheets = Dialog.getInputs()['sheetImports']
+    selectedSheets = Dialog.get_inputs()['sheetImports']
     pickle.dump(selectedSheets, open(
         os.path.join(SUPPORT_PATH, 'xmindImporter', 'selectedSheets.p'), 'wb'))
     return pickle.load(

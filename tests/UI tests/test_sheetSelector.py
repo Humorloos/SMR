@@ -24,5 +24,5 @@ class TestInitSingle(TestSingleSheetSelector):
         """
         self.singleSheetSelector.show()
         self.app.exec_()
-        act = self.singleSheetSelector.getInputs()
+        act = self.singleSheetSelector.get_inputs()
         print('done')

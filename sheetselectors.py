@@ -12,16 +12,13 @@ from aqt.deckchooser import DeckChooser
 
 class SheetSelector(QDialog):
     def __init__(self, filename):
-        try:
-            self.parent = aqt.mw.app.activeWindow() or aqt.mw
-        except:
-            self.parent = None
+        self.parent = aqt.mw.app.activeWindow() or aqt.mw
         super().__init__(parent=self.parent)
         self.width = 600
         self.height = 100
         self.deck_text = 'Choose Deck for map "%s":' % filename
         self.deck = None
-        self.repairCheckbox = None
+        self.repair_checkbox = None
         self.running = True
         self.deckId = None
         self.repair = False
@@ -45,13 +42,13 @@ class SheetSelector(QDialog):
         self.running = False
         super().reject()
 
-    def addRepairCheck(self, layout, sheetLayout):
-        repairCheckbox = QtWidgets.QCheckBox(layout)
-        repairCheckbox.setText('Repair')
-        self.repairCheckbox = repairCheckbox
-        sheetLayout.addWidget(repairCheckbox)
+    def add_repair_check(self, layout, sheet_layout):
+        repair_checkbox = QtWidgets.QCheckBox(layout)
+        repair_checkbox.setText('Repair')
+        self.repair_checkbox = repair_checkbox
+        sheet_layout.addWidget(repair_checkbox)
 
-    def getInputs(self):
+    def get_inputs(self):
         return {'repair': self.repair, 'deckId': self.deckId,
                 'running': self.running}
 
@@ -85,18 +82,15 @@ class DeckSelectionDialog(SheetSelector):
 
         v_layout_3 = QtWidgets.QVBoxLayout()
         deckarea = QtWidgets.QWidget(layout)
-        try:
-            self.deck = aqt.deckchooser.DeckChooser(
-                self.parent, deckarea, label=False)
-        except:
-            self.deck = None
+
+        self.deck = aqt.deckchooser.DeckChooser(self.parent, deckarea, label=False)
         v_layout_3.addWidget(deckarea)
 
         h_layout_1.addLayout(v_layout_2)
         h_layout_1.addLayout(v_layout_3)
 
         h_layout_3 = QtWidgets.QHBoxLayout()
-        self.addRepairCheck(layout, h_layout_3)
+        self.add_repair_check(layout, h_layout_3)
 
         buttons = QtWidgets.QDialogButtonBox(layout)
         buttons.setStandardButtons(
@@ -111,12 +105,10 @@ class DeckSelectionDialog(SheetSelector):
         frame.moveCenter(window_center)
         self.move(frame.topLeft())
 
-        buttons.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(
-            self.on_ok)
-        buttons.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(
-            self.reject)
+        buttons.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.on_ok)
+        buttons.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reject)
 
     def on_ok(self):
         self.deckId = self.get_deck_id()
-        self.repair = self.repairCheckbox.isChecked()
+        self.repair = self.repair_checkbox.isChecked()
         self.accept()

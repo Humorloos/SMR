@@ -7,7 +7,7 @@ from consts import X_MODEL_NAME, X_MAX_ANSWERS, X_FLDS
 from utils import getCoordsFromId, getNotesFromSheet
 
 import aqt
-from sheetselectors import SingleSheetSelector
+from sheetselectors import DeckSelectionDialog
 
 from anki.importing.noteimp import NoteImporter
 from anki.utils import intTime, guid64, timestampID, splitFields, joinFields
@@ -426,7 +426,7 @@ class XmindImporter(NoteImporter):
         selector = DeckSelectionDialog(os.path.basename(self.xManagers[0].file))
         self.mw.progress.finish()
         selector.exec_()
-        userInputs = selector.getInputs()
+        userInputs = selector.get_inputs()
         if not userInputs['running']:
             self.log = ['Import canceled']
             return
