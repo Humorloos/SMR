@@ -4,14 +4,13 @@ from unittest import TestCase
 
 import pytest
 import xmindimport
-from XmindImport.consts import ADDON_PATH
 from XmindImport.xmanager import XManager
 from XmindImport.xmindimport import XmindImporter
 from bs4 import BeautifulSoup
+from consts import ADDON_PATH
+from XmindImport.tests.constants import SUPPORT_PATH
 
 from anki import Collection
-
-SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 
 
 class TestXmindImporter(TestCase):
@@ -314,14 +313,14 @@ def test_run(mocker, xmind_importer):
     cut = xmind_importer
     mocker.patch("xmindimport.DeckSelectionDialog")
     mocker.patch.object(cut, "mw")
-    mocker.patch.object(cut, "init_import")
+    mocker.patch.object(cut, "initialize_import")
 
     # when
     cut.run()
 
     # then
     assert cut.mw.progress.finish.call_count == 1
-    assert cut.init_import.call_count == 1
+    assert cut.initialize_import.call_count == 1
 
 
 def test_run_aborts_when_canceling_import(mocker, xmind_importer):
@@ -335,7 +334,7 @@ def test_run_aborts_when_canceling_import(mocker, xmind_importer):
     xmindimport.DeckSelectionDialog.exec.return_value = None
     xmindimport.DeckSelectionDialog.get_inputs.return_value = {'running': False}
     mocker.patch.object(cut, "mw")
-    mocker.patch.object(cut, "init_import")
+    mocker.patch.object(cut, "initialize_import")
 
     # when
     cut.run()
@@ -343,4 +342,4 @@ def test_run_aborts_when_canceling_import(mocker, xmind_importer):
     # then
     assert cut.log == [xmindimport.IMPORT_CANCELED_MESSAGE]
     assert cut.mw.progress.finish.call_count == 1
-    assert not cut.init_import.called
+    assert not cut.initialize_import.called
