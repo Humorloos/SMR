@@ -420,11 +420,10 @@ class XmindImporter(NoteImporter):
 
     def run(self):
         """
-        :return: starts sheetselector dialog and runs import sheets with
-            selected sheets
+        Starts deck selection dialog and runs import sheets with selected sheets
         """
         self.getRefManagers(self.xManagers[0])
-        selector = SingleSheetSelector(os.path.basename(self.xManagers[0].file))
+        selector = DeckSelectionDialog(os.path.basename(self.xManagers[0].file))
         self.mw.progress.finish()
         selector.exec_()
         userInputs = selector.getInputs()

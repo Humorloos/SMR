@@ -2,7 +2,7 @@ import sys
 from unittest import TestCase
 
 from PyQt5 import QtWidgets
-from XmindImport.sheetselectors import SingleSheetSelector
+from XmindImport.sheetselectors import DeckSelectionDialog
 
 
 class TestSheetSelector(TestCase):
@@ -14,7 +14,7 @@ class TestSingleSheetSelector(TestSheetSelector):
     def setUp(self):
         super().setUp()
         self.filename = 'example_map.xmind'
-        self.singleSheetSelector = SingleSheetSelector(self.filename)
+        self.singleSheetSelector = DeckSelectionDialog(self.filename)
 
 
 class TestInitSingle(TestSingleSheetSelector):
