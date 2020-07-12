@@ -27,6 +27,9 @@ from xnotemanager import XNoteManager, FieldTranslator, update_sort_id, ref_plus
 # TODO: Check for performance issues:
 #  https://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
 #  https://docs.python.org/3.6/library/profile.html
+IMPORT_CANCELED_MESSAGE = 'Import canceled'
+
+
 def get_xmind_meta(note_data):
     xmind_meta = dict()
     xmind_meta['path'] = note_data['document']
@@ -434,7 +437,7 @@ class XmindImporter(NoteImporter):
         deck_selection_dialog.exec_()
         user_inputs = deck_selection_dialog.get_inputs()
         if not user_inputs['running']:
-            self.log = ['Import canceled']
+            self.log = [IMPORT_CANCELED_MESSAGE]
             return
         self.init_import(deck_id=user_inputs['deckId'],
                          repair=user_inputs['repair'])

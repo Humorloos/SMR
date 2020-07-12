@@ -1,15 +1,15 @@
 import os
 import pickle
-
 from unittest import TestCase
 
+import pytest
+import xmindimport
+from XmindImport.consts import ADDON_PATH
+from XmindImport.xmanager import XManager
+from XmindImport.xmindimport import XmindImporter
 from bs4 import BeautifulSoup
 
 from anki import Collection
-
-from XmindImport.consts import ADDON_PATH
-from XmindImport.xmindimport import XmindImporter
-from XmindImport.xmanager import XManager
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 
@@ -118,7 +118,8 @@ class TestGetQuestions(TestImportMap):
         concepts[3].Xid = '73mo29opsuegqobtttlt2vbaqj'
         answerDict = {'nodeTag': nodeTag, 'isAnswer': False, 'aId': str(0),
                       'crosslink': None, 'concepts': concepts}
-        ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up'
+        ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: ' \
+              'enzymes</li><li>example: MAO</li><li>splits up'
         act = self.xmindImporter.get_questions(parent_answer_dict=answerDict,
                                                sort_id='|{|{{{|',
                                                ref=ref)
@@ -209,7 +210,8 @@ class TestFindAnswerDicts(TestImportMap):
         parents[1].Xid = '03eokjlomuockpeaqn2923nvvp'
         parents[2].Xid = '3f5lmmd8mjhe3gkbnaih1m9q8j'
         parents[3].Xid = '73mo29opsuegqobtttlt2vbaqj'
-        ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up</li>'
+        ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: ' \
+              'enzymes</li><li>example: MAO</li><li>splits up</li>'
         content = {'content': 'are', 'media': {'image': None, 'media': None}}
         act = importer.find_answer_dicts(
             parents=parents, question=question, sort_id='{', ref=ref,
@@ -221,7 +223,8 @@ class TestFindAnswerDicts(TestImportMap):
         xid = '49a1au2r1i2mvpkufnrs18lb2h'
         question = importer.activeManager.getTagById(xid)
         parent = importer.onto.Concept('MAO')
-        ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li><li>example: MAO</li>'
+        ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: ' \
+              'enzymes</li><li>example: MAO</li>'
         parent.Image = None
         parent.Media = None
         parent.Xid = '7blr5ubl6uf6c9beflm85jte19'
@@ -293,3 +296,51 @@ class TestUpdateStatus(TestImportOntology):
         importer.update_status()
         os.remove(importer.statusManager.status_file)
         self.fail()
+
+
+@pytest.fixture
+def xmind_importer():
+    collection_path = os.path.join(SUPPORT_PATH, 'empty_smr_col.anki2')
+    collection = Collection(collection_path)
+    test_map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
+    yield xmindimport.XmindImporter(col=collection, file=test_map)
+
+
+def test_run(mocker, xmind_importer):
+    """
+    Test for general functionality
+    """
+    # given
+    cut = xmind_importer
+    mocker.patch("xmindimport.DeckSelectionDialog")
+    mocker.patch.object(cut, "mw")
+    mocker.patch.object(cut, "init_import")
+
+    # when
+    cut.run()
+
+    # then
+    assert cut.mw.progress.finish.call_count == 1
+    assert cut.init_import.call_count == 1
+
+
+def test_run_aborts_when_canceling_import(mocker, xmind_importer):
+    """
+    Test that run is aborted when user clicks cancel in deck selection dialog
+    """
+    # given
+    cut = xmind_importer
+    mocker.patch("xmindimport.DeckSelectionDialog")
+    xmindimport.DeckSelectionDialog.return_value = xmindimport.DeckSelectionDialog
+    xmindimport.DeckSelectionDialog.exec.return_value = None
+    xmindimport.DeckSelectionDialog.get_inputs.return_value = {'running': False}
+    mocker.patch.object(cut, "mw")
+    mocker.patch.object(cut, "init_import")
+
+    # when
+    cut.run()
+
+    # then
+    assert cut.log == [xmindimport.IMPORT_CANCELED_MESSAGE]
+    assert cut.mw.progress.finish.call_count == 1
+    assert not cut.init_import.called
