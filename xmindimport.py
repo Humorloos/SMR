@@ -351,16 +351,21 @@ class XmindImporter(NoteImporter):
                 self.import_map()
         self.finish_import()
 
-    def init_import(self, deck_id, repair):
+    def initialize_import(self, deck_id, repair):
+        """
+        Sets up the required fields for the import and initializes the import
+        :param deck_id: ID of the deck where we want to save the notes
+        :param repair: Whether or not the import is supposed to repair already once imported notes after the xmind
+        node ids have changed, e.g. due to opening the map in a different program like xmind zen
+        """
         sheets = self.get_valid_sheets()
         self.deckId = deck_id
         self.deckName = self.col.decks.get(self.deckId)['name']
         self.repair = repair
         self.onto = XOntology(deck_id)
-        if self.mw:
-            self.mw.progress.start(immediate=True, label='importing...')
-            self.mw.app.processEvents()
-            self.mw.checkpoint("Import")
+        self.mw.progress.start(immediate=True, label='importing...')
+        self.mw.app.processEvents()
+        self.mw.checkpoint("Import")
         self.import_sheets(sheets)
 
     def note_from_question_list(self, question_list):
@@ -439,8 +444,8 @@ class XmindImporter(NoteImporter):
         if not user_inputs['running']:
             self.log = [IMPORT_CANCELED_MESSAGE]
             return
-        self.init_import(deck_id=user_inputs['deckId'],
-                         repair=user_inputs['repair'])
+        self.initialize_import(deck_id=user_inputs['deckId'],
+                               repair=user_inputs['repair'])
 
     def set_up_import(self, deck_id, sheet, onto=None):
         self.currentSheetImport = next(

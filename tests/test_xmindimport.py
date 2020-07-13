@@ -49,3 +49,22 @@ def test_run_aborts_when_canceling_import(mocker, xmind_importer):
     assert cut.log == [xmindimport.IMPORT_CANCELED_MESSAGE]
     assert cut.mw.progress.finish.call_count == 1
     assert not cut.initialize_import.called
+
+
+def test_initialize_import(mocker, xmind_importer):
+    # given
+    cut = xmind_importer
+    deck_name = 'my deck'
+    deck_id = 'my deck_id'
+    valid_sheet = 'valid sheet'
+    mocker.patch.object(cut, 'get_valid_sheets', return_value=valid_sheet)
+    mocker.patch.object(cut.col.decks, 'get', return_value={'name': deck_name})
+    mocker.patch.object(cut, 'mw')
+    mocker.patch('xmindimport.XOntology')
+    mocker.patch.object(cut, 'import_sheets')
+    # when
+    xmind_importer.initialize_import(deck_id=deck_id, repair=False)
+    # then
+    cut.get_valid_sheets.assert_called_once()
+    cut.mw.progress.start.assert_called_once()
+    cut.import_sheets.assert_called_with(valid_sheet)
