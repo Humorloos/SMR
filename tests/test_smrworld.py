@@ -14,8 +14,9 @@ def clean_up():
 
 def test_set_up(empty_anki_collection, clean_up):
     # given
-    expected_tables = ["store", "objs", "datas", "ontologies", "ontology_alias", "prop_fts", "resources", "xmind_files",
-                       "xmind_sheets", "xmind_edges", "smr_notes", "xmind_nodes", "smr_triples"]
+    expected_tables = ["store", "objs", "datas", "ontologies", "ontology_alias", "prop_fts", "resources",
+                       "ontology_to_deck", "xmind_files", "xmind_sheets", "xmind_edges", "smr_notes", "xmind_nodes",
+                       "smr_triples"]
     expected_databases = [0, 2]
     smrworld.FILE_NAME = test_collection
     cut = smrworld.SmrWorld(anki_collection=empty_anki_collection)
