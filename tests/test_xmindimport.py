@@ -11,7 +11,7 @@ def xmind_importer(empty_anki_collection):
     yield xmindimport.XmindImporter(col=empty_anki_collection, file=test_map)
 
 
-def test_run(mocker, xmind_importer):
+def test_run(mocker, xmind_importer, empty_smr_world):
     """
     Test for general functionality
     """
@@ -20,6 +20,7 @@ def test_run(mocker, xmind_importer):
     mocker.patch("xmindimport.DeckSelectionDialog")
     mocker.patch.object(cut, "mw")
     mocker.patch.object(cut, "initialize_import")
+    cut.mw.smr_world = empty_smr_world
 
     # when
     cut.run()
@@ -27,6 +28,29 @@ def test_run(mocker, xmind_importer):
     # then
     assert cut.mw.progress.finish.call_count == 1
     assert cut.initialize_import.call_count == 1
+
+
+def test_run_aborts_if_file_already_exists(mocker, xmind_importer, empty_smr_world):
+    """
+    Test whether the import stops when the file to be imported is already in the world
+    """
+    # given
+    example_map_path = "C:\\Users\\lloos\\OneDrive - bwedu\\Projects\\AnkiAddon\\anki-addon-dev\\addons21" \
+                       "\\XmindImport\\resources\\example map.xmind"
+    cut = xmind_importer
+    mocker.patch.object(cut, "mw")
+    cut.mw.smr_world.graph.execute.side_effect = None
+    mocker.patch.object(cut, "initialize_import")
+
+    # when
+    cut.run()
+
+    # then
+    assert cut.log == [
+        "It seems like {seed_path} is already in your collection. Please choose a different file.".format(
+            seed_path=example_map_path)]
+    cut.mw.progress.finish.assert_called()
+    cut.initialize_import.assert_not_called()
 
 
 def test_run_aborts_when_canceling_import(mocker, xmind_importer):

@@ -4,19 +4,17 @@ import shutil
 import tempfile
 
 from consts import X_MODEL_NAME, X_MAX_ANSWERS, X_FLDS
-from utils import getCoordsFromId, getNotesFromSheet
-
-import aqt
 from deckselectiondialog import DeckSelectionDialog
-
-from anki.importing.noteimp import NoteImporter
-from anki.utils import intTime, guid64, timestampID, splitFields, joinFields
 from statusmanager import StatusManager
+from utils import getCoordsFromId, getNotesFromSheet
 from xmanager import getNodeCrosslink, getChildnodes, isEmptyNode, XManager, get_parent_topic, getNodeTitle
-from xontology import get_rel_dict, get_question_sets, XOntology
 from xnotemanager import XNoteManager, FieldTranslator, update_sort_id, ref_plus_question, field_from_content, \
     ref_plus_answer
+from xontology import get_rel_dict, get_question_sets, XOntology
 
+import aqt
+from anki.importing.noteimp import NoteImporter
+from anki.utils import intTime, guid64, timestampID, splitFields, joinFields
 
 # TODO: adjust sheet selection windows to adjust to the window size
 # TODO: check out hierarchical tags, may be useful
@@ -437,9 +435,15 @@ class XmindImporter(NoteImporter):
         """
         Starts deck selection dialog and runs import sheets with selected sheets
         """
+        self.mw.progress.finish()
+        # check whether the file has already been imported before
+        if self.mw.smr_world.graph.execute("select * from xmind_files where path = '{seed_path}'".format(
+                seed_path=self.file)).fetchone():
+            self.log = ["It seems like {seed_path} is already in your collection. Please choose a different "
+                        "file.".format(seed_path=self.file)]
+            return
         self.get_ref_managers(self.x_managers[0])
         deck_selection_dialog = DeckSelectionDialog(os.path.basename(self.x_managers[0].file))
-        self.mw.progress.finish()
         deck_selection_dialog.exec_()
         user_inputs = deck_selection_dialog.get_inputs()
         if not user_inputs['running']:
