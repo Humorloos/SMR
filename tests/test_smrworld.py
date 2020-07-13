@@ -3,22 +3,23 @@ import os
 import pytest
 import smrworld
 
-test_collection = "testworld.sqlite3"
-
 
 @pytest.fixture
-def clean_up():
+def world_for_test():
+    test_world = "testworld.sqlite3"
+    standard_world = smrworld.FILE_NAME
+    smrworld.FILE_NAME = test_world
     yield
-    os.unlink(os.path.join(smrworld.USER_PATH, test_collection))
+    smrworld.FILE_NAME = standard_world
+    os.unlink(os.path.join(smrworld.USER_PATH, test_world))
 
 
-def test_set_up(empty_anki_collection, clean_up):
+def test_set_up(world_for_test, empty_anki_collection):
     # given
     expected_tables = ["store", "objs", "datas", "ontologies", "ontology_alias", "prop_fts", "resources",
                        "ontology_to_deck", "xmind_files", "xmind_sheets", "xmind_edges", "smr_notes", "xmind_nodes",
                        "smr_triples"]
     expected_databases = [0, 2]
-    smrworld.FILE_NAME = test_collection
     cut = smrworld.SmrWorld(anki_collection=empty_anki_collection)
     # when
     cut.set_up()

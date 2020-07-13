@@ -64,6 +64,7 @@ def test_run_aborts_when_canceling_import(mocker, xmind_importer):
     xmindimport.DeckSelectionDialog.exec.return_value = None
     xmindimport.DeckSelectionDialog.get_inputs.return_value = {'running': False}
     mocker.patch.object(cut, "mw")
+    cut.mw.smr_world.graph.execute.return_value.fetchone.return_value = False
     mocker.patch.object(cut, "initialize_import")
 
     # when
