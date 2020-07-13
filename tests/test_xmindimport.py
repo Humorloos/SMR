@@ -57,7 +57,7 @@ def test_initialize_import(mocker, xmind_importer):
     deck_name = 'my deck'
     deck_id = 'my deck_id'
     valid_sheet = 'valid sheet'
-    mocker.patch.object(cut, 'get_valid_sheets', return_value=valid_sheet)
+    mocker.patch.object(cut, 'acquire_sheets_containing_concept_maps', return_value=valid_sheet)
     mocker.patch.object(cut.col.decks, 'get', return_value={'name': deck_name})
     mocker.patch.object(cut, 'mw')
     mocker.patch('xmindimport.XOntology')
@@ -65,6 +65,15 @@ def test_initialize_import(mocker, xmind_importer):
     # when
     xmind_importer.initialize_import(deck_id=deck_id, repair=False)
     # then
-    cut.get_valid_sheets.assert_called_once()
+    cut.acquire_sheets_containing_concept_maps.assert_called_once()
     cut.mw.progress.start.assert_called_once()
     cut.import_sheets.assert_called_with(valid_sheet)
+
+
+def test_acquire_sheets_containing_concept_maps(xmind_importer):
+    # given
+    cut = xmind_importer
+    # when
+    act = cut.acquire_sheets_containing_concept_maps()
+    # then
+    assert act == ['biological psychology', 'clinical psychology']

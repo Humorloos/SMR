@@ -280,9 +280,10 @@ class XmindImporter(NoteImporter):
             self.add_question(sort_id=sort_id, q_index=qId, q_tag=followRel,
                               parent_a_dict=parent_answer_dict, ref=ref)
 
-    def get_valid_sheets(self):
+    def acquire_sheets_containing_concept_maps(self):
         """
-        :return: sheets of all xManagers with concept maps to import
+        Acquires a list that contains all from xmind managers that are not reference sheets
+        :return: list of xManagers' sheets with concept maps to import
         """
         sheets = list()
         for manager in self.x_managers:
@@ -358,7 +359,7 @@ class XmindImporter(NoteImporter):
         :param repair: Whether or not the import is supposed to repair already once imported notes after the xmind
         node ids have changed, e.g. due to opening the map in a different program like xmind zen
         """
-        sheets = self.get_valid_sheets()
+        sheets = self.acquire_sheets_containing_concept_maps()
         self.deckId = deck_id
         self.deckName = self.col.decks.get(self.deckId)['name']
         self.repair = repair
