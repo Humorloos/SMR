@@ -328,8 +328,16 @@ class XNoteManager:
                     new_ref = replace_ref_question(
                         ref=old_ref, question_dict=question_dict)
                 if answer_dict:
-                    new_ref = replace_ref_answer(ref=new_ref, answer_dict=answer_dict)
+                    new_ref = replace_ref_answer(ref=new_ref,
+                                                 answer_dict=answer_dict)
                 self.set_ref(note=sheet_child_note, ref=new_ref)
+
+    def rearrange_answers(self, note, index_dict):
+        # TODO: complete this
+        meta = meta_from_fields(note.fields)
+        for index in index_dict:
+            print()
+        print()
 
 
 class FieldTranslator:

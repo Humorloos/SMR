@@ -355,6 +355,31 @@ class XOntology(Ontology):
         return parents
 
     def get_question(self, x_id):
+        # much faster:
+        # with rels as (select s, objs.o as o, objs.p as p
+        #               from datas
+        #                        join objs using (s)
+        #               where datas.o = '4lrqok8ac9hec8u2c2ul4mpo4k')
+        # select source, property, target
+        # from (select s, o as source
+        #       from rels
+        #       where p = (select storid
+        #                  from resources
+        #                  where iri like '%annotatedSource'))
+        #          join (select s, o as property
+        #                from rels
+        #                         join resources on o = storid
+        #                where p = (select storid
+        #                           from resources
+        #                           where iri like '%annotatedProperty')
+        #                  /*Do not include parent relationships*/
+        #                  and iri not like '%Parent') using (s)
+        #          join (select s, o as target
+        #                from rels
+        #                where p = (select storid
+        #                           from resources
+        #                           where iri like '%annotatedTarget'
+        #                )) using (s);
         triples = self.getNoteTriples()
         elements = [self.getElements(t) for t in triples]
         question_elements = [e for e in elements if

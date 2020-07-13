@@ -49,56 +49,59 @@ class XSyncer:
                       'add answers directly in the xmind file. Remove the '
                       'answer and try synchronizing again.')
 
-    def add_remote_a(self, importer, meta, note, q_content, q_id, remote,
-                     status, a_tag):
+    def add_remote_a(self, q_content, q_id, remote, status, a_tag, import_dict):
         a_content = self.map_manager.getNodeContent(a_tag)
         a_field = field_from_content(a_content)
 
         # Add answer to note fields
         a_index = get_topic_index(a_tag)
-        if not note:
-            note = self.note_manager.get_note_from_q_id(q_id)
-        note.fields[get_index_by_field_name('a' + str(a_index))] = a_field
-        importer = self.maybe_add_media(a_content, importer)
+        if not import_dict['note']:
+            import_dict['note'] = self.note_manager.get_note_from_q_id(q_id)
+        if not import_dict['meta']:
+            import_dict['meta'] = meta_from_fields(import_dict['note'].fields)
+        import_dict['index_dict'][a_index] = {
+            'a_id': a_tag['id'], 'field': a_field}
+        import_dict['importer'] = self.maybe_add_media(
+            a_content, import_dict['importer'])
 
         # Add answer to ontology
         if not q_content:
-            q_content = content_from_field(field_by_name(note.fields, 'qt'))
-        if not meta:
-            meta = meta_from_fields(note.fields)
+            q_content = content_from_field(field_by_name(
+                import_dict['note'].fields, 'qt'))
         q_class = self.translator.class_from_content(q_content)
         rel_dict = get_rel_dict(
             aIndex=a_index,
             image=q_content['media']['image'],
             media=q_content['media']['media'],
             x_id=q_id,
-            ref=field_by_name(note.fields, 'rf'),
-            sortId=field_by_name(note.fields, 'id'),
+            ref=field_by_name(import_dict['note'].fields, 'rf'),
+            sortId=field_by_name(import_dict['note'].fields, 'id'),
             doc=self.map_manager.file,
-            sheet=meta['sheetId'],
-            tag=note.tags[0]
+            sheet=import_dict['meta']['sheetId'],
+            tag=import_dict['note'].tags[0]
         )
         a_concept = self.onto.add_answer(
             a_id=a_tag['id'], answer_field=a_field, rel_dict=rel_dict,
             question_class=q_class)
+
         # Add answer to status
         # a_cards = self.note_manager.get_answer_cards(note.id)
         # local_a_dict = local_answer_dict(anki_mod = a_card[])
         status['answers'][a_tag['id']] = remote['answers'][a_tag['id']]
-        return importer, note, meta
+        return import_dict
 
-    def add_remote_as(self, note, q_content, q_id, remote, status, importer):
-        meta = None
+    def add_remote_as(self, q_content, q_id, remote, status, import_dict):
         not_in_status = [a for a in remote['answers'] if a not in status[
             'answers']]
         for a_id in not_in_status:
             a_tag = self.map_manager.getTagById(a_id)
-            importer, note, meta = self.add_remote_a(
-                importer=importer, meta=meta, note=note, q_content=q_content,
+            import_dict = self.add_remote_a(
+                import_dict=import_dict,
+                q_content=q_content,
                 q_id=q_id, remote=remote, status=status, a_tag=a_tag)
-        return note, importer
+        return import_dict
 
-    def change_answer(self, answer, question, local, status):
+    def change_answer(self, answer, question, local, status, import_dict):
 
         # Change answer in map
         title = title_from_field(local[answer]['content'])
@@ -122,24 +125,25 @@ class XSyncer:
         # Change answer in status
         status[answer].update(local[answer])
 
-    def change_remote_as(self, status, remote, note, importer, q_id,
-                         ref_changes):
+    def change_remote_as(self, status, remote, q_id, level, import_dict):
         for a_id in {**status, **remote}:
             if not status[a_id]['xMod'] == remote[a_id]['xMod']:
-                if not note:
+                if not import_dict['note']:
                     note = self.note_manager.get_note_from_q_id(q_id)
 
                 # Change answer in note
                 a_content = self.map_manager.content_by_id(a_id)
                 a_field = field_from_content(a_content)
-                old_field = note.fields[get_index_by_a_id(note=note, a_id=a_id)]
+                old_field = import_dict['note'].fields[get_index_by_a_id(
+                    note=import_dict['note'], a_id=a_id)]
                 if not a_field == old_field:
-                    note.fields[get_index_by_field_name('a' + str(
-                        remote[a_id]['index']))] = a_field
+                    import_dict['note'].fields[
+                        get_index_by_field_name('a' + str(
+                            remote[a_id]['index']))] = a_field
                     old_content = content_from_field(old_field)
                     self.maybe_add_media(content=a_content,
                                          old_content=old_content,
-                                         importer=importer)
+                                         importer=import_dict['importer'])
 
                     # Change answer in ontology
                     self.onto.change_answer(q_id=q_id, a_id=a_id,
@@ -149,15 +153,48 @@ class XSyncer:
                     status[a_id]['content'] = a_field
 
                     # Add change to ref_change_list
-                    ref_changes[a_id] = change_dict(old=old_field, new=a_field)
+                    import_dict['ref_changes'][a_id] = change_dict(
+                        old=old_field, new=a_field)
                 status[a_id]['xMod'] = remote[a_id]['xMod']
 
-    def process_note(self, q_id, status, remote):
-        note = None
+                # If index has changed:
+            if not status[a_id]['index'] == remote[a_id]['index']:
+
+                # Change index in note
+                if not import_dict['note']:
+                    import_dict['note'] = \
+                        self.note_manager.get_note_from_q_id(q_id)
+                a_field = import_dict['note'].fields[get_index_by_a_id(
+                    note=import_dict['note'], a_id=a_id)]
+                a_content = content_from_field(a_field)
+                a_class = self.translator.class_from_content(a_content)
+                import_dict['index_dict'][remote[a_id]['index']] = a_field
+
+                # Change index in ontology
+                self.onto.set_trpl_a_index(a_id=a_id, q_id=q_id,
+                                           a_index=remote[a_id]['index'])
+
+                # Change index in status
+                status[a_id]['index'] = remote[a_id]['index']
+
+                # Add change to sort_id_changes
+                new_sort_id = sort_id_from_index(remote[a_id]['index'])
+                if not level:
+                    q_topic = self.map_manager.getTagById(q_id)
+                    level = len(self.map_manager.ref_and_sort_id(q_topic)[1])
+                import_dict['sort_id_changes'][a_id] = change_dict(
+                    old=level, new=new_sort_id)
+
+        # Assign answer fields with new indices to note fields
+        if import_dict['index_dict']:
+            self.note_manager.rearrange_answers(
+                note=import_dict['note'], index_dict=import_dict['index_dict'])
+
+        return import_dict
+
+    def process_note(self, q_id, status, remote, import_dict):
         q_content = None
-        ref_changes = {}
-        sort_id_changes = {}
-        importer = None
+        level = None
         if not status['xMod'] == remote['xMod']:
             note = self.note_manager.get_note_from_q_id(q_id)
             q_content = self.map_manager.content_by_id(q_id)
@@ -165,7 +202,7 @@ class XSyncer:
             q_index = get_index_by_field_name('qt')
 
             # Add change to changes dict
-            ref_changes['question'] = change_dict(
+            import_dict['ref_changes']['question'] = change_dict(
                 old=note.fields[q_index], new=new_q_field)
 
             # Change question field to new question
@@ -184,21 +221,50 @@ class XSyncer:
             new_sort_id = sort_id_from_index(remote['index'])
 
             # Add change to changes dict
-            sort_id_changes['question'] = change_dict(
+            import_dict['sort_id_changes']['question'] = change_dict(
                 old=level, new=new_sort_id)
 
             # Adjust index in status
             status['index'] = remote['index']
 
         # Add new answers if there are any
-        note, importer = self.add_remote_as(
-            note=note, q_content=q_content, q_id=q_id, remote=remote,
-            status=status, importer=importer)
+        # TODO: check whether answers meta is adjusted correctly
+        import_dict = self.add_remote_as(
+            q_content=q_content, q_id=q_id, remote=remote,
+            status=status, import_dict=import_dict)
 
         # Remove old answers if there are any
-        note = self.remove_remote_as(
-            status=status['answers'], remote=remote['answers'], note=note,
-            q_id=q_id)
+        # TODO: check whether answers meta is adjusted correctly
+        import_dict = self.remove_remote_as(
+            status=status['answers'], remote=remote['answers'], q_id=q_id,
+            import_dict=import_dict)
+
+        # Change answers that have changed content
+        import_dict = self.change_remote_as(
+            status=status['answers'], remote=remote['answers'], q_id=q_id,
+            level=level, import_dict=import_dict)
+
+        # Change answer in note fields
+        # Change answer in ontology
+        # Change answer in status
+
+        # Adjust answer index for answers that have changed position
+        # TODO: do not forget to adjust AIndex field of ontology, sortid
+        #  field does not have to be adjusted, neither ref, they are rather
+        #  useless anyways and are only used once when importing. At some
+        #  point in time I should remove them...
+        # TODO: here we also want to register the change in sort_id_changes
+        # Adjust ref of all following notes and set new fields
+        # if note:
+        #     if ref_changes:
+        #         self.note_manager.update_ref(note=note, changes=ref_changes)
+        #     if sort_id_changes:
+        #         self.note_manager.update_sort_id(note=note,
+        #                                          changes=sort_id_changes)
+        #     # self.note_manager.set_fields(...)
+        # if importer:
+        #     importer.finish_import()
+        # print('change note in anki and status and put changes in change_list')
 
     def change_remote_question(self, question, status, local):
         # Change question in map
@@ -277,7 +343,7 @@ class XSyncer:
                 self.change_list = {}
                 if f not in status:
                     importer = XmindImporter(col=self.note_manager.col, file=f)
-                    importer.init_import(deck_id=d, repair=False)
+                    importer.initialize_import(deck_id=d, repair=False)
                     continue
                 local_change = status[f]['ankiMod'] != local[f]['ankiMod']
                 if status[f]['osMod'] != os_file_mods[f]:
@@ -362,7 +428,7 @@ class XSyncer:
             if sheet not in status:
                 importer = XmindImporter(self.note_manager.col,
                                          self.map_manager.file)
-                importer.importMap(sheet=sheet, deck_id=deck_id)
+                importer.import_map(sheet=sheet, deck_id=deck_id)
                 importer.finish_import()
             elif sheet not in remote:
                 if not self.onto:
@@ -379,6 +445,9 @@ class XSyncer:
 
     def process_remote_questions(self, status, remote, deck_id, sheet_id):
         note = None
+        import_dicts = {}
+        importer = None
+        meta = None
 
         # Remove questions that were removed in map
         not_in_remote = [q for q in status if q not in remote]
@@ -413,14 +482,20 @@ class XSyncer:
                                 seed_dict['parent_q']['id'])
                         q_content = self.map_manager.getNodeContent(
                             seed_dict['parent_q'])
-                        meta = meta_from_fields(note.fields)
-                        self.add_remote_a(
-                            importer=importer, meta=meta, note=note,
+                        import_dict = {
+                            'meta': meta_from_fields(note.fields),
+                            'note': note,
+                            'importer': importer,
+                            'index_dict': {},
+                            'ref_changes': {},
+                            'sort_id_changes': {}}
+                        import_dicts[seed_dict['parent_q'][
+                            'id']] = self.add_remote_a(
                             q_content=q_content,
                             q_id=seed_dict['parent_q']['id'],
                             remote=remote[seed_dict['parent_q']['id']],
                             status=status[seed_dict['parent_q']['id']],
-                            a_tag=a)
+                            a_tag=a, import_dict=import_dict)['index_dict']
                         self.note_manager.save_note(note)
                 importer.partial_import(
                     seed_topic=seed_dict['tag'], sheet_id=sheet_id,
@@ -438,8 +513,18 @@ class XSyncer:
                     status[q_id] = importer_status[q_id]
 
         for question in {**status, **remote}:
+            if question in import_dicts:
+                import_dict = import_dicts[question]
+            else:
+                import_dict = {'note': note,
+                               'meta': meta,
+                               'importer': importer,
+                               'index_dict': {},
+                               'ref_changes': {},
+                               'sort_id_changes': {}}
             self.process_note(q_id=question, status=status[question],
-                              remote=remote[question])
+                              remote=remote[question],
+                              import_dict=import_dict)
         print()
 
     def remove_questions(self, q_ids, status):
@@ -448,14 +533,14 @@ class XSyncer:
         for q_id in q_ids:
             del status[q_id]
 
-    def remove_remote_as(self, status, remote, note, q_id):
+    def remove_remote_as(self, status, remote, q_id, import_dict):
         not_in_remote = [a for a in status if a not in remote]
         for a_id in not_in_remote:
 
             # Remove answer from note fields
-            if not note:
-                note = self.note_manager.get_note_from_q_id(q_id)
-            note.fields[get_index_by_field_name(
+            if not import_dict['note']:
+                import_dict['note'] = self.note_manager.get_note_from_q_id(q_id)
+            import_dict['note'].fields[get_index_by_field_name(
                 'a' + str(status[a_id]['index']))] = ''
 
             # Remove answer from ontology
@@ -463,7 +548,7 @@ class XSyncer:
 
             # Remove answer from status
             del status[a_id]
-        return note
+        return import_dict
 
     def remove_sheet(self, sheet, status):
         self.note_manager.remove_sheet(sheet)

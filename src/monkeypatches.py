@@ -259,6 +259,10 @@ def schedRescheduleLapse(self, card):
 scheduler.Scheduler._rescheduleLapse = schedRescheduleLapse
 
 
+def getNotesFromQIds(qIds, col):
+    pass
+
+
 def getNextSMRCard(self, learnHistory):
     self._lrnQueue = self.col.db.list("""
     select id from cards where did in %s and queue = 1 and due < ?""" %
@@ -331,8 +335,7 @@ def getNextSMRCard(self, learnHistory):
     lstNtMt = json.loads(lastNote.fields[list(X_FLDS.keys()).index('mt')])
     lstCrds = list(map(lambda o: dict(ord=o), self.col.db.list(
         "select ord from cards where id in " + ids2str(lastNoteLst[1]))))
-    nextNotes = self.getCardData(dueAnswers=dueAnswers, cards=lstCrds,
-                                 ntMt=lstNtMt)
+    nextNotes = self.getCardData(dueAnswers=dueAnswers, cards=lstCrds, ntMt=lstNtMt)
 
     # if any of these children have due answers, return their first due answer
     if len(nextNotes) > 0:

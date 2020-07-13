@@ -120,7 +120,7 @@ X_CARD_CSS = """.card {
 
 
 # Path constants:
-ADDON_PATH = os.path.dirname(__file__)
+ADDON_PATH = os.path.split(os.path.dirname(__file__))[0]
 
 USER_PATH = os.path.join(ADDON_PATH, 'user_files')
 

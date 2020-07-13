@@ -1,6 +1,6 @@
 import os
 
-from XmindImport.consts import ADDON_PATH
+from consts import ADDON_PATH
 
 from anki import Collection
 

@@ -11,10 +11,10 @@ from PyQt5 import QtWidgets
 from tests.shared import getEmptyCol
 from anki import Collection
 
-from XmindImport.consts import ADDON_PATH
-from XmindImport.xmindimport import XmindImporter
+from consts import ADDON_PATH
+from xmindimport import XmindImporter
 from XmindImport.sheetselectors import MultiSheetSelector
-from XmindImport.xmanager import XManager
+from xmanager import XManager
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 
