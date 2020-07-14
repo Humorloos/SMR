@@ -3,11 +3,13 @@ import os
 import types
 
 import owlready2
-from consts import ADDON_PATH, X_MAX_ANSWERS, USER_PATH
-from owlready2.namespace import Ontology, World
+from consts import X_MAX_ANSWERS, USER_PATH
+from owlready2.namespace import Ontology
 from owlready2.prop import destroy_entity
 from utils import file_dict
 from xnotemanager import FieldTranslator, content_from_field
+
+from aqt import mw
 
 
 def get_question_sets(q_id_elements):
@@ -97,19 +99,14 @@ def remove_relations(answers, parents, question_triples):
 
 
 class XOntology(Ontology):
-    def __init__(self, deck_id=None):
-        onto_path = None
-        if not deck_id:
-            base_iri = os.path.join(ADDON_PATH, 'resources', 'onto.owl#')
-        else:
-            onto_path = os.path.join(USER_PATH, str(deck_id) + '.rdf')
-            base_iri = onto_path + '#'
-
-        Ontology.__init__(self, world=World(), base_iri=base_iri)
-        if onto_path and os.path.exists(onto_path):
-            self.load()
-        self.setUpClasses()
-        self.parentStorid = self.Parent.storid
+    def __init__(self, deck_id):
+        base_iri = os.path.join(USER_PATH, str(deck_id) + '#')
+        Ontology.__init__(self, world=mw.smr_world, base_iri=base_iri)
+        # set up classes only if the ontology has not been set up before
+        try:
+            next(self.classes())
+        except StopIteration:
+            self.set_up_classes()
         self.field_translator = FieldTranslator()
 
     def add_answer(self, a_id, answer_field, rel_dict, question_class,
@@ -544,8 +541,12 @@ class XOntology(Ontology):
         for trpl in a_trpls:
             self.AIndex[trpl['s'], trpl['p'], trpl['o']] = a_index
 
-    def setUpClasses(self):
+    def set_up_classes(self):
+        """
+        Sets up all necessary classes and relationships for representing concept maps as ontologies.
+        """
         with self:
+            # every thing is a concept, the central concept of a concept map is a root
             class Concept(owlready2.Thing):
                 pass
 
@@ -557,48 +558,4 @@ class XOntology(Ontology):
                 pass
 
             class Child(Concept >> Concept):
-                pass
-
-            # Annotation properties for Concepts
-
-            # For Image String from Xmind file
-            class Image(owlready2.AnnotationProperty):
-                pass
-
-            # For Media String from Xmind file
-            class Media(owlready2.AnnotationProperty):
-                pass
-
-            # For Node Id in Xmind file
-            class Xid(owlready2.AnnotationProperty):
-                pass
-
-            # For Id of crosslink pointing to this concept in Xmind file
-            class Crosslink(owlready2.AnnotationProperty):
-                pass
-
-            # Xmind file that contains the node
-            class Doc(owlready2.AnnotationProperty):
-                pass
-
-            # Annotation properties for relation triples
-
-            # For reference field
-            class Reference(owlready2.AnnotationProperty):
-                pass
-
-            # For sortId field
-            class SortId(owlready2.AnnotationProperty):
-                pass
-
-            # Sheet that contains the node
-            class Sheet(owlready2.AnnotationProperty):
-                pass
-
-            # Tag that will identify the note
-            class NoteTag(owlready2.AnnotationProperty):
-                pass
-
-            # Answer Index for getting the right order of answers
-            class AIndex(owlready2.AnnotationProperty):
                 pass
