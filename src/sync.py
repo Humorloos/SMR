@@ -348,7 +348,7 @@ class XSyncer:
                 local_change = status[f]['ankiMod'] != local[f]['ankiMod']
                 if status[f]['osMod'] != os_file_mods[f]:
                     self.map_manager = XManager(f)
-                    for file in self.map_manager.get_ref_files():
+                    for file in self.map_manager.get_referenced_files():
                         if file not in self.xmind_files:
                             self.xmind_files.append(file)
                     remote_file = self.map_manager.remote_file()

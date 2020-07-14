@@ -175,20 +175,29 @@ def isEmptyNode(tag):
 
 class XManager:
     def __init__(self, file):
-        self.xZip = zipfile.ZipFile(file, 'r')
         self.file = file
-        self.soup = BeautifulSoup(self.xZip.read('content.xml'),
-                                  features='html.parser')
-        self.sheets = dict()
-        manifestContent = self.xZip.read("META-INF/manifest.xml")
-        self.manifest = BeautifulSoup(manifestContent, features='html.parser')
-        self.fileBin = []
+        self.xZip = zipfile.ZipFile(file, 'r')
+        self.soup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
+        self.manifest = BeautifulSoup(self.xZip.read("META-INF/manifest.xml"), features='html.parser')
         self.srcDir = tempfile.mkdtemp()
-        for sheet in self.soup('sheet'):
-            sheetTitle = sheet('title', recursive=False)[0].text
-            self.sheets[sheetTitle] = {'tag': sheet, 'nodes': sheet('topic')}
-        self.changes = False
+        self.sheets = dict()
+        self._register_sheets()
+        self.referenced_files = []
+        self._register_referenced_files()
+        self.fileBin = []
+        self.did_introduce_changes = False
         self.tag_list = None
+
+    def get_referenced_files(self):
+        return self.referenced_files
+
+    def get_sheets(self):
+        return self.sheets
+
+    def _register_sheets(self):
+        for sheet in self.soup('sheet'):
+            sheet_title = sheet('title', recursive=False)[0].text
+            self.sheets[sheet_title] = {'tag': sheet, 'nodes': sheet('topic')}
 
     def content_by_id(self, x_id):
         topic = self.getTagById(x_id)
@@ -242,19 +251,6 @@ class XManager:
                 media['media'] = mediaPath
         return {'content': content, 'media': media}
 
-    def get_ref_files(self):
-        ref_files = []
-        for key in self.sheets:
-            sheet = self.sheets[key]
-
-            # Get reference sheets
-            if sheet['tag']('title', recursive=False)[0].text == 'ref':
-                ref_tags = getChildnodes(sheet['tag'].topic)
-                ref_paths = (getNodeHyperlink(t) for t in ref_tags)
-                ref_files = [clean_ref_path(p) for p in ref_paths if p is not
-                             None]
-        return ref_files
-
     def get_remote(self):
         remote_sheets = self.get_remote_sheets()
 
@@ -286,7 +282,7 @@ class XManager:
         return remote_questions
 
     def get_remote_sheets(self):
-        content_keys = self.content_sheets()
+        content_keys = self.get_content_sheets()
         content_sheets = [self.sheets[s] for s in content_keys]
         sheets = dict()
         for s in content_sheets:
@@ -316,13 +312,13 @@ class XManager:
         if not getChildnodes(tag):
             tag.decompose()
             self.tag_list.remove(tag)
-            self.changes = True
+            self.did_introduce_changes = True
         else:
             raise AttributeError('Topic has subtopics, can not remove.')
 
     def save_changes(self):
         self.xZip.close()
-        if self.changes:
+        if self.did_introduce_changes:
             self.updateZip()
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
@@ -344,7 +340,7 @@ class XManager:
                 nodeImg and not img:
             self.set_node_img(tag=tag, noteImg=img, nodeImg=nodeImg,
                               media_dir=media_dir)
-        self.changes = True
+        self.did_introduce_changes = True
 
     def set_node_img(self, tag, noteImg, nodeImg, media_dir):
         if not noteImg:
@@ -420,7 +416,7 @@ class XManager:
             zf.writestr(zinfo_or_arcname='META-INF/manifest.xml',
                         data=str(self.manifest))
 
-    def content_sheets(self):
+    def get_content_sheets(self):
         return [k for k in self.sheets.keys() if k != 'ref']
 
     def get_tag_list(self):
@@ -450,3 +446,14 @@ class XManager:
                 if not is_anki_question(ancestor):
                     follows_bridge = True
         return ref, sort_id
+
+    def _register_referenced_files(self):
+        """
+        Finds the names of files to which the XManager has references to. Files are referenced in a sheet titled "ref"
+        """
+        for sheet in self.sheets.values():
+            # Get reference sheets
+            if sheet['tag']('title', recursive=False)[0].text == 'ref':
+                ref_tags = getChildnodes(sheet['tag'].topic)
+                ref_paths = (getNodeHyperlink(t) for t in ref_tags)
+                self.referenced_files = [clean_ref_path(p) for p in ref_paths if p is not None]
