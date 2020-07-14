@@ -19,8 +19,8 @@ def test_set_up(world_for_test, empty_anki_collection):
     expected_tables = ["store", "objs", "datas", "ontologies", "ontology_alias", "prop_fts", "resources",
                        "ontology_to_deck", "xmind_files", "xmind_sheets", "xmind_edges", "smr_notes", "xmind_nodes",
                        "smr_triples"]
-    expected_databases = [0, 2]
-    cut = smrworld.SmrWorld(anki_collection=empty_anki_collection)
+    expected_databases = [0]
+    cut = smrworld.SmrWorld()
     # when
     cut.set_up()
     smrworld_tables = [r[0] for r in

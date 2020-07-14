@@ -30,14 +30,14 @@ def update_smr_version():
     mw.col.conf['smr'] = SMR_CONFIG
 
 
-def get_or_create_smr_world(anki_collection):
+def get_or_create_smr_world():
     """
     Sets up the smr world when the addon is first installed or updated to the first version that implements it.
     :return: the smr world
     """
     if not os.path.isfile(os.path.join(USER_PATH, smrworld.FILE_NAME)):
-        smr_world = SmrWorld(anki_collection=anki_collection)
+        smr_world = SmrWorld()
         smr_world.set_up()
     else:
-        smr_world = SmrWorld(anki_collection=anki_collection)
+        smr_world = SmrWorld()
     return smr_world

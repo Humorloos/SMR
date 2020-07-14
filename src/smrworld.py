@@ -13,11 +13,9 @@ class SmrWorld(World):
     Class for managing all the data required by SMR
     """
 
-    def __init__(self, anki_collection):
+    def __init__(self):
         super().__init__()
         self.set_backend(filename=os.path.join(USER_PATH, FILE_NAME))
-        self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(
-            anki_collection_path=anki_collection.path, anki_collection_db_name=ANKI_COLLECTION_DB_NAME))
 
     def set_up(self):
         """
@@ -29,3 +27,7 @@ class SmrWorld(World):
         for statement in sql_code:
             self.graph.execute(statement)
         self.save()
+
+    def attach_anki_collection(self, anki_collection):
+        self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(
+            anki_collection_path=anki_collection.path, anki_collection_db_name=ANKI_COLLECTION_DB_NAME))

@@ -12,6 +12,6 @@ def empty_anki_collection():
 
 @pytest.fixture(scope="session")
 def empty_smr_world(empty_anki_collection):
-    smr_world = SmrWorld(anki_collection=empty_anki_collection)
+    smr_world = SmrWorld()
     yield smr_world
     smr_world.close()
