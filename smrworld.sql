@@ -10,8 +10,8 @@ CREATE TABLE ontology_lives_in_deck
 CREATE TABLE xmind_files
 (
     path               TEXT PRIMARY KEY,
-    map_last_modified  REAL,
-    file_last_modified INTEGER,
+    map_last_modified  INTEGER,
+    file_last_modified REAL,
     deck_id            INTEGER,
     FOREIGN KEY (deck_id) REFERENCES ontology_lives_in_deck (deck_id)
         ON DELETE CASCADE

@@ -301,11 +301,17 @@ class XManager:
             return None
 
     def remote_file(self, sheets=None):
-        docMod = self.soup.find('xmap-content')['timestamp']
-        os_mod = get_os_mod(self.file)
-        remote = {'file': self.file, 'xMod': docMod, 'osMod': os_mod,
+        doc_mod = self.get_map_last_modified()
+        os_mod = self.get_file_last_modified()
+        remote = {'file': self.file, 'xMod': doc_mod, 'osMod': os_mod,
                   'sheets': sheets}
         return remote
+
+    def get_file_last_modified(self):
+        return get_os_mod(self.file)
+
+    def get_map_last_modified(self):
+        return self.soup.find('xmap-content')['timestamp']
 
     def remove_node(self, a_id):
         tag = self.getTagById(a_id)

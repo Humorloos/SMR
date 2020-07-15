@@ -35,7 +35,14 @@ class SmrWorld(World):
         :param deck_id: anki's id of the deck
         """
         c = self.graph.execute("SELECT c FROM ontologies WHERE iri = '{}'".format(ontology_base_iri)).fetchone()[0]
-        self.graph.execute("INSERT INTO ontology_lives_in_deck VALUES ({deck_id}, {c})".format(deck_id=int(deck_id), c=c))
+        self.graph.execute(
+            "INSERT INTO ontology_lives_in_deck VALUES ({deck_id}, {c})".format(deck_id=int(deck_id), c=c))
+
+    def add_xmind_file(self, x_manager, deck_id):
+        self.graph.execute(
+            "INSERT INTO xmind_files VALUES ('{path}', {map_last_modified}, {file_last_modified}, {deck_id})".format(
+                path=x_manager.file, map_last_modified=x_manager.get_map_last_modified(),
+                file_last_modified=x_manager.get_file_last_modified(), deck_id=int(deck_id)))
 
     def attach_anki_collection(self, anki_collection):
         self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(

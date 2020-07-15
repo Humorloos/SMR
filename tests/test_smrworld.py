@@ -2,6 +2,7 @@ import os
 
 import pytest
 import smrworld
+from XmindImport.tests.constants import TEST_DECK_ID, EXAMPLE_MAP_PATH
 
 
 @pytest.fixture
@@ -31,3 +32,13 @@ def test_set_up(smr_world, empty_anki_collection):
     # then
     assert smrworld_tables == expected_tables
     assert smrworld_databases == expected_databases
+
+
+def test_add_xmind_file(smr_world_for_tests, x_manager):
+    expected_entry = (EXAMPLE_MAP_PATH, 1579197475503, 1583751104.0, int(TEST_DECK_ID))
+    # given
+    cut = smr_world_for_tests
+    # when
+    cut.add_xmind_file(x_manager=x_manager, deck_id=TEST_DECK_ID)
+    # then
+    assert list(cut.graph.execute("SELECT * FROM main.xmind_files").fetchall())[0] == expected_entry

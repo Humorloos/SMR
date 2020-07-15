@@ -95,11 +95,6 @@ from consts import ADDON_PATH
 #
 
 
-@pytest.fixture
-def x_manager():
-    yield xmanager.XManager(os.path.join(ADDON_PATH, 'resources', 'example map.xmind'))
-
-
 def test_xmanager(x_manager):
     # given
     expected_sheets = ['biological psychology', 'clinical psychology', 'ref']
