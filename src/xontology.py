@@ -106,8 +106,8 @@ class XOntology(Ontology):
         try:
             next(self.classes())
         except StopIteration:
-            self.set_up_classes()
-            mw.smr_world.add_ontology_to_deck(ontology_base_iri=base_iri, deck_id=deck_id)
+            self._set_up_classes()
+            mw.smr_world.add_ontology_lives_in_deck(ontology_base_iri=base_iri, deck_id=deck_id)
         self.field_translator = FieldTranslator()
 
     def add_answer(self, a_id, answer_field, rel_dict, question_class,
@@ -542,7 +542,7 @@ class XOntology(Ontology):
         for trpl in a_trpls:
             self.AIndex[trpl['s'], trpl['p'], trpl['o']] = a_index
 
-    def set_up_classes(self):
+    def _set_up_classes(self):
         """
         Sets up all necessary classes and relationships for representing concept maps as ontologies.
         """

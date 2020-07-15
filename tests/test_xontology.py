@@ -41,7 +41,7 @@ import xontology
 def x_ontology(mocker, empty_smr_world):
     mocker.patch('xontology.mw')
     xontology.mw.smr_world = empty_smr_world
-    mocker.spy(xontology.XOntology, "set_up_classes")
+    mocker.spy(xontology.XOntology, "_set_up_classes")
     yield xontology.XOntology("12345")
 
 
@@ -49,6 +49,6 @@ def test_xontology(x_ontology):
     # when
     cut = x_ontology
     # then
-    cut.set_up_classes.assert_called()
+    cut._set_up_classes.assert_called()
     assert cut.field_translator is not None
-    assert list(cut.graph.execute("SELECT * FROM ontology_to_deck").fetchall())[0] == (12345, 1)
+    assert list(cut.graph.execute("SELECT * FROM ontology_lives_in_deck").fetchall())[0] == (12345, 1)

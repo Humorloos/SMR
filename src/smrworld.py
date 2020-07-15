@@ -28,6 +28,15 @@ class SmrWorld(World):
             self.graph.execute(statement)
         self.save()
 
+    def add_ontology_lives_in_deck(self, ontology_base_iri, deck_id):
+        """
+        Registers a deck for an imported ontology
+        :param ontology_base_iri: base_iri of the imported ontology
+        :param deck_id: anki's id of the deck
+        """
+        c = self.graph.execute("SELECT c FROM ontologies WHERE iri = '{}'".format(ontology_base_iri)).fetchone()[0]
+        self.graph.execute("INSERT INTO ontology_lives_in_deck VALUES ({deck_id}, {c})".format(deck_id=int(deck_id), c=c))
+
     def attach_anki_collection(self, anki_collection):
         self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(
             anki_collection_path=anki_collection.path, anki_collection_db_name=ANKI_COLLECTION_DB_NAME))

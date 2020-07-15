@@ -1,5 +1,5 @@
 BEGIN TRANSACTION;
-CREATE TABLE ontology_to_deck
+CREATE TABLE ontology_lives_in_deck
 (
     deck_id  INTEGER PRIMARY KEY,
     ontology INT,
@@ -13,7 +13,7 @@ CREATE TABLE xmind_files
     map_last_modified  REAL,
     file_last_modified INTEGER,
     deck_id            INTEGER,
-    FOREIGN KEY (deck_id) REFERENCES ontology_to_deck (deck_id)
+    FOREIGN KEY (deck_id) REFERENCES ontology_lives_in_deck (deck_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
