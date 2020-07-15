@@ -102,11 +102,12 @@ class XOntology(Ontology):
     def __init__(self, deck_id):
         base_iri = os.path.join(USER_PATH, str(deck_id) + '#')
         Ontology.__init__(self, world=mw.smr_world, base_iri=base_iri)
-        # set up classes only if the ontology has not been set up before
+        # set up classes and register ontology only if the ontology has not been set up before
         try:
             next(self.classes())
         except StopIteration:
             self.set_up_classes()
+            mw.smr_world.add_ontology_to_deck(ontology_base_iri=base_iri, deck_id=deck_id)
         self.field_translator = FieldTranslator()
 
     def add_answer(self, a_id, answer_field, rel_dict, question_class,
