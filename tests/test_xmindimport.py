@@ -278,11 +278,27 @@ from consts import ADDON_PATH
 
 @pytest.fixture
 def xmind_importer(empty_anki_collection):
+    """
+    XmindImporter instance for file example map.xmind
+    """
     test_map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
     yield xmindimport.XmindImporter(col=empty_anki_collection, file=test_map)
 
 
-def test_run(mocker, xmind_importer, empty_smr_world):
+def test_xmind_importer(xmind_importer):
+    # given
+    expected_x_manager_files = [
+        'C:\\Users\\lloos\\OneDrive - bwedu\\Projects\\AnkiAddon\\anki-addon-dev\\addons21\\XmindImport\\resources'
+        '\\example map.xmind',
+        'C:\\Users\\lloos\\OneDrive - bwedu\\Projects\\AnkiAddon\\anki-addon-dev\\addons21\\XmindImport\\resources'
+        '\\example_general_psychology.xmind']
+    # when
+    cut = xmind_importer
+    # then
+    assert [x.file for x in cut.x_managers] == expected_x_manager_files
+
+
+def test_run(mocker, xmind_importer, smr_world_for_tests):
     """
     Test for general functionality
     """
@@ -362,10 +378,27 @@ def test_initialize_import(mocker, xmind_importer):
     cut.import_files.assert_called_once()
 
 
-def test_acquire_sheets_containing_concept_maps(xmind_importer):
+def test_import_files(xmind_importer, mocker):
     # given
     cut = xmind_importer
+    mocker.patch.object(cut, "import_sheets")
+    mocker.patch.object(cut, "finish_import")
+    mocker.patch.object(cut, "mw")
     # when
-    act = cut.acquire_sheets_containing_concept_maps()
+    cut.import_files()
     # then
-    assert act == ['biological psychology', 'clinical psychology']
+    assert cut.import_sheets.call_count == 2
+    assert cut.mw.smr_world.add_xmind_file.call_count == 2
+    cut.finish_import.assert_called_once()
+
+
+def test_import_sheets(xmind_importer, mocker):
+    # given
+    sheets_2_import = ['biological psychology', 'clinical psychology']
+    cut = xmind_importer
+    mocker.patch.object(cut, "mw")
+    mocker.patch.object(cut, "import_map")
+    # when
+    cut.import_sheets(sheets_2_import)
+    # then
+    assert cut.import_map.call_count == 2

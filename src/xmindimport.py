@@ -81,13 +81,13 @@ class XmindImporter(NoteImporter):
             for file in [f for f in self.media if f['doc'] == manager.file]:
                 if file['identifier'].startswith(('attachments', 'resources')):
                     file_path = manager.getAttachment(identifier=file[
-                        'identifier'], directory=self.srcDir)
+                        'identifier'], directory=self.source_dir)
                     self.col.media.addFile(file_path)
                 else:
                     self.col.media.addFile(file['identifier'])
             for image in [i for i in self.images if i['doc'] == manager.file]:
                 file_path = manager.getAttachment(identifier=image[
-                    'identifier'], directory=self.srcDir)
+                    'identifier'], directory=self.source_dir)
                 self.col.media.addFile(file_path)
         self.media = []
         self.images = []
@@ -99,7 +99,7 @@ class XmindImporter(NoteImporter):
     def add_question(self, sort_id, q_index, q_tag, parent_a_dict, ref):
         # Update the sorting ID
         next_sort_id = update_sort_id(previousId=sort_id, idToAppend=q_index)
-        content = self.activeManager.getNodeContent(q_tag)
+        content = self.active_manager.getNodeContent(q_tag)
         answer_dicts = self.find_answer_dicts(
             parents=parent_a_dict['concepts'], question=q_tag,
             sort_id=next_sort_id, ref=ref, content=content)
@@ -114,7 +114,7 @@ class XmindImporter(NoteImporter):
                 self.log = ["""Warning:
                         A Question titled "%s" has more than %s answers. Make sure every Question in your Map is 
                         followed by no more than %s Answers and try again.""" %
-                            (self.activeManager.getNodeTitle(q_tag),
+                            (self.active_manager.getNodeTitle(q_tag),
                              X_MAX_ANSWERS, X_MAX_ANSWERS)]
                 return
             next_ref = ref_plus_question(
@@ -128,7 +128,7 @@ class XmindImporter(NoteImporter):
 
     def find_answer_dicts(self, parents, question, sort_id, ref, content):
         answer_dicts = list()
-        manager = self.activeManager
+        manager = self.active_manager
         crosslink = getNodeCrosslink(question)
         child_notes = getChildnodes(question)
 
@@ -160,7 +160,6 @@ class XmindImporter(NoteImporter):
         return answer_dicts
 
     def finish_import(self):
-
         # Add all notes to the collection
         if not self.running:
             return
@@ -181,7 +180,7 @@ class XmindImporter(NoteImporter):
             self.mw.progress.finish()
 
         # Remove temp dir and its files
-        shutil.rmtree(self.srcDir)
+        shutil.rmtree(self.source_dir)
 
     def get_answer_dict(self, node_tag, question=None, root=False, a_concept=None):
         """
@@ -192,7 +191,7 @@ class XmindImporter(NoteImporter):
         :return: dictionary containing information for creating a note from
         this answer node, furthermore adds a Concept to onto for this node
         """
-        manager = self.activeManager
+        manager = self.active_manager
         is_answer = True
         crosslink = None
 
@@ -207,7 +206,7 @@ class XmindImporter(NoteImporter):
                 x_id = node_tag['id']
                 a_concept = self.onto.add_concept(
                     crosslink=crosslink, nodeContent=node_content, a_id=x_id,
-                    root=root, file=self.activeManager.file, q_id=question)
+                    root=root, file=self.active_manager.file, q_id=question)
 
                 # Assign a list to concept since concept may also contain
                 # multiple concepts in case of bridges
@@ -222,9 +221,9 @@ class XmindImporter(NoteImporter):
         children = list()
         bridges = list()
         a_index = 1
-        sheet = self.activeManager.sheets[
-            self.currentSheetImport]['tag']['id']
-        doc = self.activeManager.file
+        sheet = self.active_manager.sheets[
+            self.current_sheet_import]['tag']['id']
+        doc = self.active_manager.file
         tag = self.get_tag()
         x_id = question['id']
         rel_prop = None
@@ -254,7 +253,7 @@ class XmindImporter(NoteImporter):
         return bridges, children
 
     def get_file_dict(self, path):
-        return [path, self.activeManager.file]
+        return [path, self.active_manager.file]
 
     def get_questions(self, parent_answer_dict: dict, sort_id='', ref="",
                       follows_bridge=False):
@@ -265,7 +264,7 @@ class XmindImporter(NoteImporter):
         :param follows_bridge: ???
         :return: creates notes for each question following the answerDict
         """
-        answer_content = self.activeManager.getNodeContent(
+        answer_content = self.active_manager.getNodeContent(
             parent_answer_dict['nodeTag'])['content']
 
         # The reference doesn't have to be edited at the roottopic
@@ -278,101 +277,65 @@ class XmindImporter(NoteImporter):
             self.add_question(sort_id=sort_id, q_index=qId, q_tag=followRel,
                               parent_a_dict=parent_answer_dict, ref=ref)
 
-    def acquire_sheets_containing_concept_maps(self):
+    def _register_referenced_x_managers(self, x_manager):
         """
-        Acquires a list that contains all from xmind managers that are not reference sheets
-        :return: list of xManagers' sheets with concept maps to import
+        Adds XManagers referenced by ref sheet to xManagers list
+        :param x_manager: the XManager to get References from
         """
-        sheets = list()
-        for manager in self.x_managers:
-            sheets.extend(manager.content_sheets())
-        return sheets
-
-    def get_ref_managers(self, x_manager):
-        """
-        :param x_manager: the xManager to get References from
-        :return: adds xManagers referenced by ref sheet to xManagers list
-        """
-        ref_managers = [XManager(f) for f in x_manager.get_ref_files()]
+        ref_managers = [XManager(f) for f in x_manager.get_referenced_files()]
         self.x_managers.extend(ref_managers)
         for manager in ref_managers:
-            self.get_ref_managers(manager)
+            self._register_referenced_x_managers(manager)
 
     def get_tag(self):
-        return (self.deckName + '_' + self.currentSheetImport).replace(" ", "_")
+        return (self.deck_name + '_' + self.current_sheet_import).replace(" ", "_")
 
-    def import_map(self, sheet=None, deck_id=None):
+    def import_map(self):
         """
         :return: adds the roottopic of the active sheet to self.onto and starts
             the map import by calling getQuestions
         """
-        if sheet:
-            self.set_up_import(deck_id, sheet)
-        manager = self.activeManager
-        root_topic = manager.sheets[self.currentSheetImport]['tag'].topic
+        manager = self.active_manager
+        root_topic = manager.sheets[self.current_sheet_import]['tag'].topic
 
         # Set model to Stepwise map retrieval model
         x_model = self.col.models.byName(X_MODEL_NAME)
-        self.col.decks.select(self.deckId)
+        self.col.decks.select(self.deck_id)
         self.col.decks.current()['mid'] = x_model['id']
         root_dict = self.get_answer_dict(node_tag=root_topic, root=True)
         self.get_questions(parent_answer_dict=root_dict,
                            ref=getNodeTitle(root_topic))
 
     def import_ontology(self):
-        triples = [self.onto.getElements(t) for t in
-                   self.onto.getNoteTriples() if t[1] in
-                   self.added_relations['storids']]
+        triples = [self.onto.getElements(t) for t in self.onto.getNoteTriples() if
+                   t[1] in self.added_relations['storids']]
         triples_with_q_ids = [self.onto.q_id_elements(t) for t in triples]
-        added_triples = [t for t in triples_with_q_ids if t['q_id'] in
-                         self.added_relations['q_ids']]
+        added_triples = [t for t in triples_with_q_ids if t['q_id'] in self.added_relations['q_ids']]
         question_list = get_question_sets(added_triples)
-
         notes = [self.note_from_question_list(q) for q in question_list]
         self.addNew(notes=notes)
         self.add_media()
 
-    def import_sheets(self, selected_sheets):
-        """
-        :param selected_sheets: sheets that were selected by the user in
-            Selector Dialog
-        :return: Imports maps in all sheets contained in selectedSheets
-        """
-        for manager in self.x_managers:
-            self.activeManager = manager
-            valid_sheets = [s for s in selected_sheets if s in manager.sheets]
-            for sheet in valid_sheets:
-                self.currentSheetImport = sheet
-                if self.mw:
-                    self.mw.progress.update(label='importing %s' % sheet,
-                                            maybeShow=False)
-                    self.mw.app.processEvents()
-                self.import_map()
-        self.finish_import()
-
-    def initialize_import(self, deck_id, repair):
+    def initialize_import(self, repair):
         """
         Sets up the required fields for the import and initializes the import
-        :param deck_id: ID of the deck where we want to save the notes
         :param repair: Whether or not the import is supposed to repair already once imported notes after the xmind
         node ids have changed, e.g. due to opening the map in a different program like xmind zen
         """
-        sheets = self.acquire_sheets_containing_concept_maps()
-        self.deckId = deck_id
-        self.deckName = self.col.decks.get(self.deckId)['name']
+        self.deck_name = self.col.decks.get(self.deck_id)['name']
         self.repair = repair
-        self.onto = XOntology(deck_id)
+        self.onto = XOntology(self.deck_id)
         self.mw.progress.start(immediate=True, label='importing...')
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
-        self.import_sheets(sheets)
+        self.import_files()
 
     def note_from_question_list(self, question_list):
         note = self.col.newNote()
-        if note.id <= self.lastNid:
-            note.id = self.lastNid + 1
-        self.lastNid = note.id
-        note.model()['did'] = self.deckId
+        if note.id <= self.last_nid:
+            note.id = self.last_nid + 1
+        self.last_nid = note.id
+        note.model()['did'] = self.deck_id
         note_data = self.onto.getNoteData(question_list)
         self.images.extend(note_data['images'])
         self.media.extend(note_data['media'])
@@ -399,7 +362,7 @@ class XmindImporter(NoteImporter):
         :param parent_as: List of tags of the answers to the parent-question
         """
         self.set_up_import(deck_id=deck_id, sheet=sheet_id, onto=onto)
-        self.col.decks.select(self.deckId)
+        self.col.decks.select(self.deck_id)
         self.col.decks.current()['mid'] = self.col.models.byName(
             X_MODEL_NAME)['id']
         parent_a_concepts = [self.onto.get_answer_by_a_id(
@@ -425,7 +388,7 @@ class XmindImporter(NoteImporter):
             else:
                 seed_topic = next(t for t in getChildnodes(parent_as[0]) if
                                   seed_topic.text in t.text)
-        ref, sort_id = self.activeManager.ref_and_sort_id(q_topic=seed_topic)
+        ref, sort_id = self.active_manager.ref_and_sort_id(q_topic=seed_topic)
         q_index = sum(1 for _ in seed_topic.previous_siblings) + 1
         self.add_question(
             sort_id=sort_id, q_index=q_index, q_tag=seed_topic,
@@ -442,29 +405,28 @@ class XmindImporter(NoteImporter):
             self.log = ["It seems like {seed_path} is already in your collection. Please choose a different "
                         "file.".format(seed_path=self.file)]
             return
-        self.get_ref_managers(self.x_managers[0])
         deck_selection_dialog = DeckSelectionDialog(os.path.basename(self.x_managers[0].file))
         deck_selection_dialog.exec_()
         user_inputs = deck_selection_dialog.get_inputs()
         if not user_inputs['running']:
             self.log = [IMPORT_CANCELED_MESSAGE]
             return
-        self.initialize_import(deck_id=user_inputs['deckId'],
-                               repair=user_inputs['repair'])
+        self.deck_id = user_inputs['deckId']
+        self.initialize_import(repair=user_inputs['repair'])
 
     def set_up_import(self, deck_id, sheet, onto=None):
-        self.currentSheetImport = next(
+        self.current_sheet_import = next(
             s for m in self.x_managers for
             s in m.sheets if m.sheets[s]['tag']['id'] == sheet)
-        self.activeManager = next(
+        self.active_manager = next(
             m for m in self.x_managers for
-            s in m.sheets if s == self.currentSheetImport)
-        self.deckId = deck_id
+            s in m.sheets if s == self.current_sheet_import)
+        self.deck_id = deck_id
         if onto:
             self.onto = onto
         else:
             self.onto = XOntology(deck_id)
-        self.deckName = self.col.decks.get(self.deckId)['name']
+        self.deck_name = self.col.decks.get(self.deck_id)['name']
 
     def stop_or_add_cross_question(self, content, crosslink, manager, parents,
                                    question, ref, sort_id):
@@ -490,7 +452,7 @@ class XmindImporter(NoteImporter):
 
     def note_from_note_data(self, note_data):
         note = self.col.newNote()
-        note.model()['did'] = self.deckId
+        note.model()['did'] = self.deck_id
         fields = splitFields(note_data[6])
         note.fields = fields
         note.tags.append(note_data[5].replace(" ", ""))
@@ -501,7 +463,7 @@ class XmindImporter(NoteImporter):
             # noinspection PyTypeChecker
             existing_notes = list(self.col.db.execute(
                 "select id, flds from notes where tags like '%" +
-                self.currentSheetImport['tag'].replace(" ", "") + "%'"))
+                self.current_sheet_import['tag'].replace(" ", "") + "%'"))
         else:
             existing_notes = getNotesFromSheet(sheetId=sheet_id, col=self.col)
         if existing_notes:
@@ -615,10 +577,10 @@ class XmindImporter(NoteImporter):
     def update_status(self):
         for manager in self.x_managers:
             remote = manager.get_remote()
-            local = self.noteManager.get_local(manager.file)
+            local = self.note_manager.get_local(manager.file)
             status = deep_merge(remote=remote, local=local)
-            self.statusManager.add_new(status)
-        self.statusManager.save()
+            self.status_manager.add_new(status)
+        self.status_manager.save()
 
     def getNoteData(self, sortId, question, answerDicts, ref, siblings,
                     connections):
@@ -657,12 +619,33 @@ class XmindImporter(NoteImporter):
 
         # set field Meta
         meta = get_xmind_meta(question=question, answerDicts=answerDicts,
-                                   siblings=siblings, connections=connections)
+                              siblings=siblings, connections=connections)
         noteList.append(meta)
 
         nId = timestampID(self.col.db, "notes")
         noteData = [nId, guid64(), self.model['id'], intTime(), self.col.usn(),
-                    self.currentSheetImport['tag'], joinFields(noteList), "",
+                    self.current_sheet_import['tag'], joinFields(noteList), "",
                     "", 0, ""]
 
         return noteData, media
+
+    def import_files(self):
+        """
+        Starts an import of all sheets for each x_manager and finally finishes the import
+        """
+        for manager in self.x_managers:
+            self.active_manager = manager
+            self.mw.smr_world.add_xmind_file(x_manager=manager, deck_id=self.deck_id)
+            self.import_sheets(manager.get_content_sheets())
+        self.finish_import()
+
+    def import_sheets(self, sheets):
+        """
+        Imports the concept maps from the specified sheets
+        :param sheets: list of names of the sheets to be imported
+        """
+        for sheet in sheets:
+            self.current_sheet_import = sheet
+            self.mw.progress.update(label='importing %s' % sheet, maybeShow=False)
+            self.mw.app.processEvents()
+            self.import_map()
