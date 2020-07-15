@@ -53,28 +53,28 @@ class XmindImporter(NoteImporter):
         self.added_relations = {'storids': [], 'q_ids': []}
         self.model = col.models.byName(X_MODEL_NAME)
         self.mw = aqt.mw
-        self.mediaDir = os.path.join(os.path.dirname(col.path),
-                                     'collection.media')
-        self.srcDir = tempfile.mkdtemp()
+        self.media_dir = os.path.join(os.path.dirname(col.path), 'collection.media')
+        self.source_dir = tempfile.mkdtemp()
         self.warnings = []
-        self.deckId = ''
-        self.deckName = ''
+        self.deck_id = ''
+        self.deck_name = ''
         self.tags = dict()
         self.images = []
         self.media = []
         self.running = True
         self.repair = False
-        self.x_managers = [XManager(os.path.normpath(file))]
-        self.activeManager = None
-        self.noteManager = XNoteManager(col=self.col)
-        self.currentSheetImport = ''
+        self.active_manager = None
+        self.note_manager = XNoteManager(col=self.col)
+        self.current_sheet_import = ''
         self.onto = None
         self.translator = FieldTranslator()
         if not status_manager:
-            self.statusManager = StatusManager()
+            self.status_manager = StatusManager()
         else:
-            self.statusManager = status_manager
-        self.lastNid = 0
+            self.status_manager = status_manager
+        self.last_nid = 0
+        self.x_managers = [XManager(os.path.normpath(file))]
+        self._register_referenced_x_managers(self.x_managers[0])
 
     def add_media(self):
         for manager in self.x_managers:
