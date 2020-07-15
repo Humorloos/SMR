@@ -1,8 +1,4 @@
-import os
-
-import pytest
-import xmanager
-from consts import ADDON_PATH
+import bs4
 
 
 # class TestGetNodeContent(TestXManager):
@@ -27,7 +23,7 @@ from consts import ADDON_PATH
 #         with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
 #                                'sheet_biological_psychology.xml'), 'r') as file:
 #             tag = BeautifulSoup(file.read(), features='html.parser').topic
-#         act = getNodeTitle(tag)
+#         act = get_node_title(tag)
 #         self.assertEqual(act, 'biological psychology')
 #
 #
@@ -105,3 +101,12 @@ def test_xmanager(x_manager):
     # then
     assert list(cut.get_sheets().keys()) == expected_sheets
     assert cut.get_referenced_files() == expected_referenced_file
+
+
+def test_get_root_topic(x_manager):
+    # given
+    cut = x_manager
+    # when
+    root_topic = cut.get_root_node(sheet="biological psychology")
+    # then
+    assert isinstance(root_topic, bs4.element.Tag)

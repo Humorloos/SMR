@@ -311,22 +311,22 @@ class XManager:
     def get_file_last_modified(self):
         """
         Gets the timestamp of the last time the XManagers file was edited according to the file system
-        :return: The timestamp (Real value)
+        :return: the timestamp (Real value)
         """
         return get_os_mod(self.file)
 
     def get_map_last_modified(self):
         """
         Gets the internally saved timestamp of the last time the file was saved
-        :return:
+        :return: the timestamp (integer value)
         """
         return self.soup.find('xmap-content')['timestamp']
 
-    def get_root_topic(self, sheet: str):
+    def get_root_node(self, sheet: str):
         """
         Returns the root topic of the specified sheet
-        :param sheet:
-        :return:
+        :param sheet: the sheet to get the root topic for
+        :return: the tag representing the root node
         """
         return self.sheets[sheet]['tag'].topic
 
