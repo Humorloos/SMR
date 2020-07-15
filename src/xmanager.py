@@ -85,8 +85,8 @@ def get_parent_a_topics(q_topic, parent_q):
     parent_q_children = getChildnodes(parent_q)
     parent_topic = next(t for t in parent_q_children if
                         q_topic.text in t.text)
-    if isEmptyNode(parent_topic):
-        return [t for t in parent_q_children if not isEmptyNode(t)]
+    if is_empty_node(parent_topic):
+        return [t for t in parent_q_children if not is_empty_node(t)]
     else:
         return [parent_topic]
 
@@ -137,13 +137,13 @@ def is_anki_question(tag):
     """
     if not isQuestionNode(tag):
         return False
-    if isEmptyNode(tag):
+    if is_empty_node(tag):
         return False
     children = getChildnodes(tag)
     if len(children) == 0:
         return False
     for child in children:
-        if not isEmptyNode(child):
+        if not is_empty_node(child):
             return True
     return False
 
@@ -160,8 +160,9 @@ def is_crosslink_node(tag):
     return True
 
 
-def isEmptyNode(tag):
+def is_empty_node(tag: Tag):
     """
+    Checks whether the node represented by the specified tag does not contain any title, image or media
     :param tag: tag to check for
     :return: True if node does not contain any title, image or hyperlink
     """
@@ -201,13 +202,13 @@ class XManager:
             self.sheets[sheet_title] = {'tag': sheet, 'nodes': sheet('topic')}
 
     def content_by_id(self, x_id):
-        topic = self.getTagById(x_id)
-        return self.getNodeContent(topic)
+        topic = self.get_tag_by_id(x_id)
+        return self.get_node_content(topic)
 
     def get_answer_nodes(self, tag):
         return [{'src': n, 'crosslink': '' if not is_crosslink_node(n)
-                else self.getTagById(getNodeCrosslink(n))} for n in
-                getChildnodes(tag) if not isEmptyNode(n)]
+                else self.get_tag_by_id(getNodeCrosslink(n))} for n in
+                getChildnodes(tag) if not is_empty_node(n)]
 
     def getAttachment(self, identifier, directory):
         # extract attachment to anki media directory
@@ -215,8 +216,9 @@ class XManager:
         # get image from subdirectory attachments in mediaDir
         return os.path.join(directory, identifier)
 
-    def getNodeContent(self, tag):
+    def get_node_content(self, tag: Tag):
         """
+        Gets the content of the node represented by the specified Tag in a dictionary
         :param tag: the tag to get the content for
         :return: dictionary containing the content of the node as a string,
             an optional url to an image and a media file
@@ -237,7 +239,7 @@ class XManager:
         # If the node contains a link to another node, add the text of that
         # node.
         if href and is_crosslink(href):
-            crosslinkTag = self.getTagById(tagId=href[7:])
+            crosslinkTag = self.get_tag_by_id(tag_id=href[7:])
             crosslinkTitle = get_node_title(crosslinkTag)
             if not content:
                 content = crosslinkTitle
@@ -271,7 +273,7 @@ class XManager:
                 remote_questions[t['id']] = {'xMod': t['timestamp'],
                                              'index': get_topic_index(t),
                                              'answers': answers}
-                for a in self.get_answer_nodes(self.getTagById(t['id'])):
+                for a in self.get_answer_nodes(self.get_tag_by_id(t['id'])):
                     answers[a['src']['id']] = {
                         'xMod': a['src']['timestamp'],
                         'index': get_topic_index(a['src']),
@@ -290,16 +292,13 @@ class XManager:
             sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
         return sheets
 
-    def getTagById(self, tagId):
+    def get_tag_by_id(self, tag_id: str):
         """
-        :param tagId: the id property of the tag
+        Gets the tag that
+        :param tag_id: the id property of the tag
         :return: the tag containing the Id
         """
-        try:
-            return next(t for t in self.get_tag_list() if t['id'] == tagId)
-        except StopIteration:
-            # TODO: Warn if the node is not found
-            return None
+        return next(t for t in self.get_or_compute_tag_list() if t['id'] == tag_id)
 
     def remote_file(self, sheets=None):
         doc_mod = self.get_map_last_modified()
@@ -331,7 +330,7 @@ class XManager:
         return self.sheets[sheet]['tag'].topic
 
     def remove_node(self, a_id):
-        tag = self.getTagById(a_id)
+        tag = self.get_tag_by_id(a_id)
         if not getChildnodes(tag):
             tag.decompose()
             self.tag_list.remove(tag)
@@ -347,7 +346,7 @@ class XManager:
         shutil.rmtree(self.srcDir)
 
     def set_node_content(self, x_id, title, img, media_dir):
-        tag = self.getTagById(x_id)
+        tag = self.get_tag_by_id(x_id)
         if title != get_node_title(tag):
             self.setNodeTitle(tag=tag, title=title)
 
@@ -442,12 +441,16 @@ class XManager:
     def get_content_sheets(self):
         return [k for k in self.sheets.keys() if k != 'ref']
 
-    def get_tag_list(self):
+    def get_or_compute_tag_list(self):
+        """
+        If the tag_list has not been computed yet computes it and returns it. The tag_list is a list of all tags
+        contained in all sheets managed by this XManager
+        :return: the tag_list
+        """
         if not self.tag_list:
-            self.tag_list = [t for s in self.sheets for
-                             t in self.sheets[s]['nodes']]
-        # Nested list comprehension explained:
-        # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
+            # Nested list comprehension explained:
+            # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
+            self.tag_list = [t for s in self.sheets.values() for t in s['nodes']]
         return self.tag_list
 
     def ref_and_sort_id(self, q_topic):
@@ -457,13 +460,13 @@ class XManager:
         mult_subjects = False
         follows_bridge = False
         for i, ancestor in enumerate(ancestry):
-            field = field_from_content(self.getNodeContent(ancestor))
+            field = field_from_content(self.get_node_content(ancestor))
             sort_id = update_sort_id(sort_id, get_topic_index(ancestor))
             if i % 2:
                 ref = ref_plus_answer(field=field, followsBridge=follows_bridge,
                                       ref=ref, mult_subjects=mult_subjects)
                 follows_bridge = False
-                mult_subjects = isEmptyNode(ancestor)
+                mult_subjects = is_empty_node(ancestor)
             else:
                 ref = ref_plus_question(field=field, ref=ref)
                 if not is_anki_question(ancestor):
