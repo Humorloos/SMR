@@ -48,13 +48,13 @@ import bs4
 #         self.assertFalse(act)
 #
 import pytest
-from XmindImport.tests.constants import SUPPORT_PATH
+import XmindImport.tests.constants as cts
 from xmanager import is_empty_node, get_node_title
 
 
 @pytest.fixture
 def tag_for_tests():
-    with open(os.path.join(SUPPORT_PATH, 'xmindImporter', 'content.xml'), 'r') as file:
+    with open(os.path.join(cts.SUPPORT_PATH, 'xmindImporter', 'content.xml'), 'r') as file:
         tag = bs4.BeautifulSoup(file.read(), features='html.parser').topic
         file.close()
     yield tag
@@ -116,12 +116,11 @@ def test_get_tag_by_id(tag_for_tests, x_manager):
 def test_get_node_content_with_image(x_manager):
     # given
     cut = x_manager
-    tag = cut.get_tag_by_id('08eq1rdricsp1nt1b7aa181sq4')
+    tag = cut.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID)
     # when
     node_content = cut.get_node_content(tag=tag)
     # then
-    assert node_content == {'content': '', 'media': {'image': 'attachments/09r2e442o8lppjfeblf7il2rmd.png',
-                                                     'media': None}}
+    assert node_content == cts.NEUROTRANSMITTERS_NODE_CONTENT
 
 
 def test_get_node_content_with_media(x_manager):
@@ -133,3 +132,10 @@ def test_get_node_content_with_media(x_manager):
     # then
     assert node_content == {'content': '',
                             'media': {'image': None, 'media': 'attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3'}}
+
+
+def test_get_sheet_id(x_manager):
+    # when
+    sheet_id = x_manager.get_sheet_id('biological psychology')
+    # then
+    assert sheet_id == '2485j5qgetfevlt00vhrn53961'

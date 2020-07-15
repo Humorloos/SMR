@@ -182,24 +182,35 @@ class XManager:
         self.soup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
         self.manifest = BeautifulSoup(self.xZip.read("META-INF/manifest.xml"), features='html.parser')
         self.srcDir = tempfile.mkdtemp()
-        self.sheets = dict()
-        self._register_sheets()
-        self.referenced_files = []
-        self._register_referenced_files()
+        self._sheets = None
+        self._referenced_files = None
         self.fileBin = []
         self.did_introduce_changes = False
         self.tag_list = None
 
     def get_referenced_files(self):
-        return self.referenced_files
+        if not self._referenced_files:
+            self._register_referenced_files()
+        return self._referenced_files
 
     def get_sheets(self):
-        return self.sheets
+        if not self._sheets:
+            self._register_sheets()
+        return self._sheets
+
+    def get_sheet_id(self, sheet: str):
+        """
+        Gets the xmind sheet id for the specified sheet
+        :param sheet: the name of the sheet to get the id for
+        :return: the sheet's id
+        """
+        return self.get_sheets()[sheet]['tag']['id']
 
     def _register_sheets(self):
+        self._sheets = dict()
         for sheet in self.soup('sheet'):
             sheet_title = sheet('title', recursive=False)[0].text
-            self.sheets[sheet_title] = {'tag': sheet, 'nodes': sheet('topic')}
+            self._sheets[sheet_title] = {'tag': sheet, 'nodes': sheet('topic')}
 
     def content_by_id(self, x_id):
         topic = self.get_tag_by_id(x_id)
@@ -266,7 +277,7 @@ class XManager:
 
     def get_remote_questions(self, sheet_id):
         remote_questions = dict()
-        for t in next(v for v in self.sheets.values() if
+        for t in next(v for v in self._sheets.values() if
                       v['tag']['id'] == sheet_id)['nodes']:
             if is_anki_question(t):
                 answers = dict()
@@ -286,7 +297,7 @@ class XManager:
 
     def get_remote_sheets(self):
         content_keys = self.get_content_sheets()
-        content_sheets = [self.sheets[s] for s in content_keys]
+        content_sheets = [self._sheets[s] for s in content_keys]
         sheets = dict()
         for s in content_sheets:
             sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
@@ -327,7 +338,7 @@ class XManager:
         :param sheet: the sheet to get the root topic for
         :return: the tag representing the root node
         """
-        return self.sheets[sheet]['tag'].topic
+        return self._sheets[sheet]['tag'].topic
 
     def remove_node(self, a_id):
         tag = self.get_tag_by_id(a_id)
@@ -439,7 +450,7 @@ class XManager:
                         data=str(self.manifest))
 
     def get_content_sheets(self):
-        return [k for k in self.sheets.keys() if k != 'ref']
+        return [k for k in self._sheets.keys() if k != 'ref']
 
     def get_or_compute_tag_list(self):
         """
@@ -450,7 +461,7 @@ class XManager:
         if not self.tag_list:
             # Nested list comprehension explained:
             # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
-            self.tag_list = [t for s in self.sheets.values() for t in s['nodes']]
+            self.tag_list = [t for s in self._sheets.values() for t in s['nodes']]
         return self.tag_list
 
     def ref_and_sort_id(self, q_topic):
@@ -477,9 +488,10 @@ class XManager:
         """
         Finds the names of files to which the XManager has references to. Files are referenced in a sheet titled "ref"
         """
-        for sheet in self.sheets.values():
+        self._referenced_files = []
+        for sheet in self._sheets.values():
             # Get reference sheets
             if sheet['tag']('title', recursive=False)[0].text == 'ref':
                 ref_tags = getChildnodes(sheet['tag'].topic)
                 ref_paths = (getNodeHyperlink(t) for t in ref_tags)
-                self.referenced_files = [clean_ref_path(p) for p in ref_paths if p is not None]
+                self._referenced_files = [clean_ref_path(p) for p in ref_paths if p is not None]
