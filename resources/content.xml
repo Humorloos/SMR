@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0"
-              xmlns:fo="http://www.w3.org/1999/XSL/Format"
-              xmlns:svg="http://www.w3.org/2000/svg"
-              xmlns:xhtml="http://www.w3.org/1999/xhtml"
-              xmlns:xlink="http://www.w3.org/1999/xlink" modified-by="lloos"
-              timestamp="1573043030527" version="2.0">
-    <sheet id="2485j5qgetfevlt00vhrn53961" modified-by="lloos"
-           theme="3f1a763c722hdcr8bnodk70uco" timestamp="1573043030527">
-        <topic id="0pbme7b9sg9en8qqmmn9jj06od" modified-by="lloos"
-               structure-class="org.xmind.ui.logic.right"
+<xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" xmlns:fo="http://www.w3.org/1999/XSL/Format"
+              xmlns:svg="http://www.w3.org/2000/svg" xmlns:xhtml="http://www.w3.org/1999/xhtml"
+              xmlns:xlink="http://www.w3.org/1999/xlink" modified-by="lloos" timestamp="1594823958217" version="2.0">
+    <sheet id="2485j5qgetfevlt00vhrn53961" modified-by="lloos" style-id="6r800am66oqdk93hlqqb9iku7u"
+           theme="3f1a763c722hdcr8bnodk70uco" timestamp="1594823927933">
+        <topic id="0pbme7b9sg9en8qqmmn9jj06od" modified-by="lloos" structure-class="org.xmind.ui.logic.right"
                timestamp="1573037764522">
             <title>biological psychology</title>
             <extensions>
@@ -20,85 +16,59 @@
             </extensions>
             <children>
                 <topics type="attached">
-                    <topic id="32dt8d2dflh4lr5oqc2oqqad28" modified-by="lloos"
-                           style-id="4hpte0h6pn5hii04feijjp2mph"
-                           timestamp="1573037764464">
+                    <topic id="32dt8d2dflh4lr5oqc2oqqad28" modified-by="lloos" style-id="4hpte0h6pn5hii04feijjp2mph"
+                           timestamp="1578066262451">
                         <title/>
                         <children>
                             <topics type="attached">
-                                <topic id="29qkib9g6gqsfqqmcqk2495kgc"
-                                       modified-by="lloos"
-                                       timestamp="1573032369029"
-                                       xlink:href="xmind:#5eaalsdnfrg772ka2j6pmupnkh">
-                                    <title/>
-                                </topic>
-                                <topic id="23taa6acrfqb9vec2epjjnhueb"
-                                       modified-by="lloos"
-                                       timestamp="1573032387253"
-                                       xlink:href="xmind:#6uucivj306fi6u07m9i9bv57d5">
-                                    <title/>
+                                <topic id="29qkib9g6gqsfqqmcqk2495kgc" modified-by="lloos" timestamp="1594823806851">
+                                    <title>clinical psychology</title>
                                 </topic>
                             </topics>
                         </children>
                     </topic>
                     <topic id="4kdqkutdha46uns1j8jndi43ht" modified-by="lloos"
-                           structure-class="org.xmind.ui.logic.right"
-                           timestamp="1573037764464">
+                           structure-class="org.xmind.ui.logic.right" timestamp="1573037764464">
                         <title>investigates</title>
                         <children>
                             <topics type="attached">
-                                <topic id="4okvq29odoin406qmiq86vv1i1"
-                                       modified-by="lloos"
-                                       timestamp="1573030612793">
-                                    <title>information transfer and processing
-                                    </title>
+                                <topic id="4okvq29odoin406qmiq86vv1i1" modified-by="lloos" timestamp="1573030612793">
+                                    <title>information transfer and processing</title>
                                     <children>
                                         <topics type="attached">
-                                            <topic id="730ahk5oc4himfrdvkqc5ci1o2"
-                                                   modified-by="lloos"
-                                                   style-id="4hpte0h6pn5hii04feijjp2mph"
-                                                   timestamp="1573030439017">
+                                            <topic id="730ahk5oc4himfrdvkqc5ci1o2" modified-by="lloos"
+                                                   style-id="4hpte0h6pn5hii04feijjp2mph" timestamp="1579189044076">
                                                 <title>requires</title>
                                                 <children>
                                                     <topics type="attached">
-                                                        <topic id="4r6avbt0pbuam4fg07jod0ubec"
-                                                               modified-by="lloos"
-                                                               timestamp="1573032287783">
-                                                            <title>
-                                                                neurotransmitters
-                                                            </title>
+                                                        <topic id="4r6avbt0pbuam4fg07jod0ubec" modified-by="lloos"
+                                                               timestamp="1578314907411">
+                                                            <title>neurotransmitters</title>
                                                             <children>
                                                                 <topics type="attached">
                                                                     <topic id="485fcs7jl72gtqesace4v8igf0"
                                                                            modified-by="lloos"
                                                                            style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                            timestamp="1573032291149">
-                                                                        <title>
-                                                                            types
-                                                                        </title>
+                                                                        <title>types</title>
                                                                         <children>
                                                                             <topics type="attached">
                                                                                 <topic id="78k8nsh3vfibpmq73kangacbll"
                                                                                        modified-by="lloos"
                                                                                        timestamp="1573032316683">
-                                                                                    <title>
-                                                                                        biogenic
-                                                                                        amines
-                                                                                    </title>
+                                                                                    <title>biogenic amines</title>
                                                                                     <children>
                                                                                         <topics type="attached">
                                                                                             <topic id="08eq1rdricsp1nt1b7aa181sq4"
                                                                                                    modified-by="lloos"
                                                                                                    style-id="4hpte0h6pn5hii04feijjp2mph"
-                                                                                                   timestamp="1573030459740">
-                                                                                                <title>
-                                                                                                    example
-                                                                                                </title>
+                                                                                                   timestamp="1579197475503">
+                                                                                                <title/>
                                                                                                 <children>
                                                                                                     <topics type="attached">
                                                                                                         <topic id="122vli15fp65smkg4v6pq54gi3"
                                                                                                                modified-by="lloos"
-                                                                                                               timestamp="1573042892156">
+                                                                                                               timestamp="1594823898598">
                                                                                                             <title>
                                                                                                                 Serotonin
                                                                                                             </title>
@@ -122,15 +92,18 @@
                                                                                                                                 </topic>
                                                                                                                                 <topic id="3nb97928e68dcu5512pft7gkcg"
                                                                                                                                        modified-by="lloos"
-                                                                                                                                       timestamp="1573030835742"
-                                                                                                                                       xlink:href="xmind:#5asru7kdmre8059cemi8p5lm3v">
-                                                                                                                                    <title/>
+                                                                                                                                       timestamp="1594823859671">
+                                                                                                                                    <title>
+                                                                                                                                        Pain
+                                                                                                                                    </title>
                                                                                                                                 </topic>
                                                                                                                                 <topic id="0oh5dkl1rtd8qrv7sv6p67fl57"
                                                                                                                                        modified-by="lloos"
-                                                                                                                                       timestamp="1573030587560"
-                                                                                                                                       xlink:href="xmind:#1ijitnvjhg1b0lglikd7dknp0h">
-                                                                                                                                    <title/>
+                                                                                                                                       timestamp="1594823927933">
+                                                                                                                                    <title>
+                                                                                                                                        psychological
+                                                                                                                                        disorders
+                                                                                                                                    </title>
                                                                                                                                 </topic>
                                                                                                                             </topics>
                                                                                                                         </children>
@@ -138,42 +111,61 @@
                                                                                                                     <topic id="4s27e1mvsb5jqoiuaqmnlo8m71"
                                                                                                                            modified-by="lloos"
                                                                                                                            style-id="4hpte0h6pn5hii04feijjp2mph"
-                                                                                                                           timestamp="1573031775729">
+                                                                                                                           timestamp="1578315976621">
                                                                                                                         <title>
                                                                                                                             pronounciation
                                                                                                                         </title>
                                                                                                                         <children>
                                                                                                                             <topics type="attached">
-                                                                                                                                <topic id="25p5ecdjmrjkt8od2iffi9rppb"
+                                                                                                                                <topic id="1s7h0rvsclrnvs8qq9u71acml5"
                                                                                                                                        modified-by="lloos"
-                                                                                                                                       timestamp="1573031779506"
-                                                                                                                                       xlink:href="xap:attachments/03r4n99fke1cgn026p8669rqav.mp3">
+                                                                                                                                       timestamp="1578315979641"
+                                                                                                                                       xlink:href="xap:attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3">
                                                                                                                                     <title/>
                                                                                                                                 </topic>
                                                                                                                             </topics>
                                                                                                                         </children>
                                                                                                                     </topic>
-                                                                                                                    <topic id="077tf3ovn4gc1j1dqte7or33fl"
+                                                                                                                    <topic id="68381mk1p7p5ko95bg7eh4trbh"
                                                                                                                            modified-by="lloos"
                                                                                                                            style-id="4hpte0h6pn5hii04feijjp2mph"
-                                                                                                                           timestamp="1573042889642">
-                                                                                                                        <title>
-                                                                                                                            difference
-                                                                                                                            to
-                                                                                                                            MAO
-                                                                                                                        </title>
+                                                                                                                           timestamp="1594823900185">
+                                                                                                                        <title/>
                                                                                                                         <children>
                                                                                                                             <topics type="attached">
-                                                                                                                                <topic id="2kcf3k5g09u9ukv2m8qli363qj"
+                                                                                                                                <topic id="7qb9l39bs8p1b0ivvausne94q4"
                                                                                                                                        modified-by="lloos"
-                                                                                                                                       timestamp="1573043030527">
+                                                                                                                                       timestamp="1594823903522">
                                                                                                                                     <title>
                                                                                                                                         MAO
-                                                                                                                                        is
-                                                                                                                                        not
-                                                                                                                                        a
-                                                                                                                                        neurotransmitter
                                                                                                                                     </title>
+                                                                                                                                    <children>
+                                                                                                                                        <topics type="attached">
+                                                                                                                                            <topic id="077tf3ovn4gc1j1dqte7or33fl"
+                                                                                                                                                   modified-by="lloos"
+                                                                                                                                                   style-id="4hpte0h6pn5hii04feijjp2mph"
+                                                                                                                                                   timestamp="1594823905839">
+                                                                                                                                                <title>
+                                                                                                                                                    difference
+                                                                                                                                                </title>
+                                                                                                                                                <children>
+                                                                                                                                                    <topics type="attached">
+                                                                                                                                                        <topic id="2kcf3k5g09u9ukv2m8qli363qj"
+                                                                                                                                                               modified-by="lloos"
+                                                                                                                                                               timestamp="1573043030527">
+                                                                                                                                                            <title>
+                                                                                                                                                                MAO
+                                                                                                                                                                is
+                                                                                                                                                                not
+                                                                                                                                                                a
+                                                                                                                                                                neurotransmitter
+                                                                                                                                                            </title>
+                                                                                                                                                        </topic>
+                                                                                                                                                    </topics>
+                                                                                                                                                </children>
+                                                                                                                                            </topic>
+                                                                                                                                        </topics>
+                                                                                                                                    </children>
                                                                                                                                 </topic>
                                                                                                                             </topics>
                                                                                                                         </children>
@@ -183,6 +175,11 @@
                                                                                                         </topic>
                                                                                                     </topics>
                                                                                                 </children>
+                                                                                                <xhtml:img
+                                                                                                        align="bottom"
+                                                                                                        svg:height="65"
+                                                                                                        svg:width="120"
+                                                                                                        xhtml:src="xap:attachments/09r2e442o8lppjfeblf7il2rmd.png"/>
                                                                                             </topic>
                                                                                         </topics>
                                                                                     </children>
@@ -192,48 +189,40 @@
                                                                     </topic>
                                                                 </topics>
                                                             </children>
+                                                            <xhtml:img align="bottom" svg:height="238" svg:width="400"
+                                                                       xhtml:src="xap:attachments/629d18n2i73im903jkrjmr98fg.png"/>
                                                         </topic>
                                                     </topics>
                                                 </children>
                                             </topic>
-                                            <topic id="7avqd95hi5tvj0kjcg2lne603g"
-                                                   modified-by="lloos"
-                                                   style-id="4hpte0h6pn5hii04feijjp2mph"
-                                                   timestamp="1573030618811">
+                                            <topic id="7avqd95hi5tvj0kjcg2lne603g" modified-by="lloos"
+                                                   style-id="4hpte0h6pn5hii04feijjp2mph" timestamp="1573030618811">
                                                 <title>modulated by</title>
                                                 <children>
                                                     <topics type="attached">
-                                                        <topic id="5e2cicue01ikp5vnq5pp46np83"
-                                                               modified-by="lloos"
+                                                        <topic id="5e2cicue01ikp5vnq5pp46np83" modified-by="lloos"
                                                                timestamp="1573031995294">
-                                                            <title>enzymes
-                                                            </title>
+                                                            <title>enzymes</title>
                                                             <children>
                                                                 <topics type="attached">
                                                                     <topic id="7e1s0urn8376a2q371nujihuab"
                                                                            modified-by="lloos"
                                                                            style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                            timestamp="1573030641426">
-                                                                        <title>
-                                                                            example
-                                                                        </title>
+                                                                        <title>example</title>
                                                                         <children>
                                                                             <topics type="attached">
                                                                                 <topic id="7blr5ubl6uf6c9beflm85jte19"
                                                                                        modified-by="lloos"
-                                                                                       timestamp="1573042895467">
-                                                                                    <title>
-                                                                                        MAO
-                                                                                    </title>
+                                                                                       timestamp="1594823889828">
+                                                                                    <title>MAO</title>
                                                                                     <children>
                                                                                         <topics type="attached">
                                                                                             <topic id="351v1hg3rt5vejrq10c1p3tko0"
                                                                                                    modified-by="lloos"
                                                                                                    style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                                                    timestamp="1573030725078">
-                                                                                                <title>
-                                                                                                    stands
-                                                                                                    for
+                                                                                                <title>stands for
                                                                                                 </title>
                                                                                                 <children>
                                                                                                     <topics type="attached">
@@ -252,17 +241,15 @@
                                                                                                    modified-by="lloos"
                                                                                                    style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                                                    timestamp="1573032204755">
-                                                                                                <title>
-                                                                                                    splits
-                                                                                                    up
-                                                                                                </title>
+                                                                                                <title>splits up</title>
                                                                                                 <children>
                                                                                                     <topics type="attached">
                                                                                                         <topic id="56ru8hj8k8361ppfrftrbahgvv"
                                                                                                                modified-by="lloos"
-                                                                                                               timestamp="1573030747113"
-                                                                                                               xlink:href="xmind:#122vli15fp65smkg4v6pq54gi3">
-                                                                                                            <title/>
+                                                                                                               timestamp="1594823849388">
+                                                                                                            <title>
+                                                                                                                Serotonin
+                                                                                                            </title>
                                                                                                         </topic>
                                                                                                         <topic id="03eokjlomuockpeaqn2923nvvp"
                                                                                                                modified-by="lloos"
@@ -302,9 +289,11 @@
                                                                                                                             <topics type="attached">
                                                                                                                                 <topic id="3oqcv5qlqhn28u1opce5i27709"
                                                                                                                                        modified-by="lloos"
-                                                                                                                                       timestamp="1573032312025"
-                                                                                                                                       xlink:href="xmind:#78k8nsh3vfibpmq73kangacbll">
-                                                                                                                                    <title/>
+                                                                                                                                       timestamp="1594823837351">
+                                                                                                                                    <title>
+                                                                                                                                        biogenic
+                                                                                                                                        amines
+                                                                                                                                    </title>
                                                                                                                                 </topic>
                                                                                                                             </topics>
                                                                                                                         </children>
@@ -314,13 +303,6 @@
                                                                                                         </topic>
                                                                                                     </topics>
                                                                                                 </children>
-                                                                                            </topic>
-                                                                                            <topic id="49a1au2r1i2mvpkufnrs18lb2h"
-                                                                                                   modified-by="lloos"
-                                                                                                   style-id="4hpte0h6pn5hii04feijjp2mph"
-                                                                                                   timestamp="1573042908368"
-                                                                                                   xlink:href="xmind:#077tf3ovn4gc1j1dqte7or33fl">
-                                                                                                <title/>
                                                                                             </topic>
                                                                                         </topics>
                                                                                     </children>
@@ -332,11 +314,7 @@
                                                                            modified-by="lloos"
                                                                            style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                            timestamp="1573031995280">
-                                                                        <title>
-                                                                            completely
-                                                                            unrelated
-                                                                            animation
-                                                                        </title>
+                                                                        <title>completely unrelated animation</title>
                                                                         <children>
                                                                             <topics type="attached">
                                                                                 <topic id="23nu73chqkkkem455dit5p8stu"
@@ -357,21 +335,16 @@
                                         </topics>
                                     </children>
                                 </topic>
-                                <topic id="4jf2lp878e4rn7pm85lca1vahr"
-                                       modified-by="lloos"
-                                       timestamp="1573030820527">
+                                <topic id="4jf2lp878e4rn7pm85lca1vahr" modified-by="lloos" timestamp="1573030820527">
                                     <title>perception</title>
                                     <children>
                                         <topics type="attached">
-                                            <topic id="668iln3nrlmk5ibhnf4lvbbnmo"
-                                                   modified-by="lloos"
-                                                   style-id="4hpte0h6pn5hii04feijjp2mph"
-                                                   timestamp="1573032060935">
+                                            <topic id="668iln3nrlmk5ibhnf4lvbbnmo" modified-by="lloos"
+                                                   style-id="4hpte0h6pn5hii04feijjp2mph" timestamp="1573032060935">
                                                 <title/>
                                                 <children>
                                                     <topics type="attached">
-                                                        <topic id="5asru7kdmre8059cemi8p5lm3v"
-                                                               modified-by="lloos"
+                                                        <topic id="5asru7kdmre8059cemi8p5lm3v" modified-by="lloos"
                                                                timestamp="1573030941527">
                                                             <title>Pain</title>
                                                             <children>
@@ -380,19 +353,13 @@
                                                                            modified-by="lloos"
                                                                            style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                            timestamp="1573030868375">
-                                                                        <title>
-                                                                            can
-                                                                            be
-                                                                            inhibited
-                                                                            by
-                                                                        </title>
+                                                                        <title>can be inhibited by</title>
                                                                         <children>
                                                                             <topics type="attached">
                                                                                 <topic id="3732cbg8qsmr8u4hn0bvljso06"
                                                                                        modified-by="lloos"
-                                                                                       timestamp="1573031184792"
-                                                                                       xlink:href="xmind:#122vli15fp65smkg4v6pq54gi3">
-                                                                                    <title/>
+                                                                                       timestamp="1594823818613">
+                                                                                    <title>Serotonin</title>
                                                                                 </topic>
                                                                             </topics>
                                                                         </children>
@@ -401,28 +368,20 @@
                                                                            modified-by="lloos"
                                                                            style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                            timestamp="1573030978953">
-                                                                        <title>
-                                                                            triggered
-                                                                            by
-                                                                        </title>
+                                                                        <title>triggered by</title>
                                                                         <children>
                                                                             <topics type="attached">
                                                                                 <topic id="2mbb2crv3tdgr131i9j538n0ga"
                                                                                        modified-by="lloos"
                                                                                        timestamp="1573031995280">
-                                                                                    <title>
-                                                                                        nociceptors
-                                                                                    </title>
+                                                                                    <title>nociceptors</title>
                                                                                     <children>
                                                                                         <topics type="attached">
                                                                                             <topic id="4q3e21ritrvitgmjialvadn2m6"
                                                                                                    modified-by="lloos"
                                                                                                    style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                                                    timestamp="1573030995015">
-                                                                                                <title>
-                                                                                                    can
-                                                                                                    be
-                                                                                                </title>
+                                                                                                <title>can be</title>
                                                                                                 <children>
                                                                                                     <topics type="attached">
                                                                                                         <topic id="2jf5kkori2h7sdja7cgje5i71e"
@@ -447,9 +406,10 @@
                                                                                                                             <topics type="attached">
                                                                                                                                 <topic id="4igsvlhm7ql9g1lku7gp1s1trt"
                                                                                                                                        modified-by="lloos"
-                                                                                                                                       timestamp="1573031013642"
-                                                                                                                                       xlink:href="xmind:#122vli15fp65smkg4v6pq54gi3">
-                                                                                                                                    <title/>
+                                                                                                                                       timestamp="1594823828041">
+                                                                                                                                    <title>
+                                                                                                                                        Serotonin
+                                                                                                                                    </title>
                                                                                                                                 </topic>
                                                                                                                             </topics>
                                                                                                                         </children>
@@ -462,11 +422,6 @@
                                                                                             </topic>
                                                                                         </topics>
                                                                                     </children>
-                                                                                    <xhtml:img
-                                                                                            align="bottom"
-                                                                                            svg:height="143"
-                                                                                            svg:width="240"
-                                                                                            xhtml:src="xap:attachments/460fiafdsvgknuh3dcqi23b0tk.png"/>
                                                                                 </topic>
                                                                             </topics>
                                                                         </children>
@@ -487,11 +442,20 @@
             </children>
         </topic>
         <title>biological psychology</title>
+        <sheet-settings>
+            <info-items>
+                <info-item mode="card" type="org.xmind.ui.infoItem.notes"/>
+                <info-item mode="icon" type="org.xmind.ui.infoItem.taskInfo"/>
+                <info-item mode="card" type="org.xmind.ui.infoItem.label"/>
+            </info-items>
+        </sheet-settings>
+        <legend visibility="hidden">
+            <position svg:x="1367" svg:y="599"/>
+        </legend>
     </sheet>
-    <sheet id="1bt0u8ahp0p8d41j6pto2d9q8t" modified-by="lloos"
-           theme="18gihc3j41ie3t27um9eg7dcvh" timestamp="1573034881006">
-        <topic id="5eaalsdnfrg772ka2j6pmupnkh" modified-by="lloos"
-               structure-class="org.xmind.ui.logic.right"
+    <sheet id="1bt0u8ahp0p8d41j6pto2d9q8t" modified-by="lloos" theme="18gihc3j41ie3t27um9eg7dcvh"
+           timestamp="1594823958217">
+        <topic id="5eaalsdnfrg772ka2j6pmupnkh" modified-by="lloos" structure-class="org.xmind.ui.logic.right"
                timestamp="1573030274669">
             <title>clinical psychology</title>
             <extensions>
@@ -504,56 +468,42 @@
             <children>
                 <topics type="attached">
                     <topic id="39gqd4mhg32555lck1t33ib70t" modified-by="lloos"
-                           structure-class="org.xmind.ui.logic.right"
-                           timestamp="1573029996028">
+                           structure-class="org.xmind.ui.logic.right" timestamp="1573029996028">
                         <title>investigates</title>
                         <children>
                             <topics type="attached">
-                                <topic id="1ijitnvjhg1b0lglikd7dknp0h"
-                                       modified-by="lloos"
-                                       timestamp="1573030003987">
+                                <topic id="1ijitnvjhg1b0lglikd7dknp0h" modified-by="lloos" timestamp="1573030003987">
                                     <title>psychological disorders</title>
                                     <children>
                                         <topics type="attached">
-                                            <topic id="26pj114igt039ms9jpc1r2afno"
-                                                   modified-by="lloos"
-                                                   style-id="4hpte0h6pn5hii04feijjp2mph"
-                                                   timestamp="1573030276665">
+                                            <topic id="26pj114igt039ms9jpc1r2afno" modified-by="lloos"
+                                                   style-id="4hpte0h6pn5hii04feijjp2mph" timestamp="1573030276665">
                                                 <title>examples</title>
                                                 <children>
                                                     <topics type="attached">
-                                                        <topic id="2dt2f6hmgutknau18vcfckvkkt"
-                                                               modified-by="lloos"
+                                                        <topic id="2dt2f6hmgutknau18vcfckvkkt" modified-by="lloos"
                                                                timestamp="1573030029949">
-                                                            <title>anxiety
-                                                                disorders
-                                                            </title>
+                                                            <title>anxiety disorders</title>
                                                             <children>
                                                                 <topics type="attached">
                                                                     <topic id="5h7t01bohpviq2581t4atphedd"
                                                                            modified-by="lloos"
                                                                            style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                            timestamp="1573030032849">
-                                                                        <title>
-                                                                            example
-                                                                        </title>
+                                                                        <title>example</title>
                                                                         <children>
                                                                             <topics type="attached">
                                                                                 <topic id="4plvhhm8na66sp2hf5meq437o1"
                                                                                        modified-by="lloos"
                                                                                        timestamp="1573030059387">
-                                                                                    <title>
-                                                                                        phobias
-                                                                                    </title>
+                                                                                    <title>phobias</title>
                                                                                     <children>
                                                                                         <topics type="attached">
                                                                                             <topic id="3608177csnr6upug1edj9nfu97"
                                                                                                    modified-by="lloos"
                                                                                                    style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                                                    timestamp="1573030091148">
-                                                                                                <title>
-                                                                                                    option
-                                                                                                    for
+                                                                                                <title>option for
                                                                                                     treatment
                                                                                                 </title>
                                                                                                 <children>
@@ -599,9 +549,10 @@
                                                                                                                                                     <topics type="attached">
                                                                                                                                                         <topic id="725pgmukesg0vqmof25tfm132n"
                                                                                                                                                                modified-by="lloos"
-                                                                                                                                                               timestamp="1573030659573"
-                                                                                                                                                               xlink:href="xmind:#7blr5ubl6uf6c9beflm85jte19">
-                                                                                                                                                            <title/>
+                                                                                                                                                               timestamp="1594823958217">
+                                                                                                                                                            <title>
+                                                                                                                                                                MAO
+                                                                                                                                                            </title>
                                                                                                                                                         </topic>
                                                                                                                                                     </topics>
                                                                                                                                                 </children>
@@ -611,13 +562,33 @@
                                                                                                                                 </topic>
                                                                                                                                 <topic id="2koenah8ebavhq2bl2u6u1lh4h"
                                                                                                                                        modified-by="lloos"
-                                                                                                                                       timestamp="1573030919239"
-                                                                                                                                       xlink:href="xmind:#122vli15fp65smkg4v6pq54gi3">
+                                                                                                                                       timestamp="1594823948153">
                                                                                                                                     <title>
-                                                                                                                                        ...
+                                                                                                                                        Serotonin
                                                                                                                                         reuptake
                                                                                                                                         inhibitors
                                                                                                                                     </title>
+                                                                                                                                    <children>
+                                                                                                                                        <topics type="attached">
+                                                                                                                                            <topic id="5bou6kjs2641c76q8ds5ood8ce"
+                                                                                                                                                   modified-by="lloos"
+                                                                                                                                                   style-id="4hpte0h6pn5hii04feijjp2mph"
+                                                                                                                                                   timestamp="1594823949838">
+                                                                                                                                                <title/>
+                                                                                                                                                <children>
+                                                                                                                                                    <topics type="attached">
+                                                                                                                                                        <topic id="2tq4ufdsbajd0rv28rsoed7r10"
+                                                                                                                                                               modified-by="lloos"
+                                                                                                                                                               timestamp="1594823951490">
+                                                                                                                                                            <title>
+                                                                                                                                                                Serotonin
+                                                                                                                                                            </title>
+                                                                                                                                                        </topic>
+                                                                                                                                                    </topics>
+                                                                                                                                                </children>
+                                                                                                                                            </topic>
+                                                                                                                                        </topics>
+                                                                                                                                    </children>
                                                                                                                                 </topic>
                                                                                                                             </topics>
                                                                                                                         </children>
@@ -637,48 +608,38 @@
                                                                 </topics>
                                                             </children>
                                                         </topic>
-                                                        <topic id="6evs6s91p1t90hllrf2emqfcfm"
-                                                               modified-by="lloos"
+                                                        <topic id="6evs6s91p1t90hllrf2emqfcfm" modified-by="lloos"
                                                                timestamp="1573030288643">
-                                                            <title>
-                                                                schizophrenia
-                                                            </title>
+                                                            <title>schizophrenia</title>
                                                             <children>
                                                                 <topics type="attached">
                                                                     <topic id="2qdg5f3jsvbljnakgk9m81dbr7"
                                                                            modified-by="lloos"
                                                                            style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                            timestamp="1573030307941">
-                                                                        <title>
-                                                                            possible
-                                                                            causes
-                                                                        </title>
+                                                                        <title>possible causes</title>
                                                                         <children>
                                                                             <topics type="attached">
                                                                                 <topic id="5p9v7aubas5saohakvntmdndir"
                                                                                        modified-by="lloos"
                                                                                        timestamp="1573030315425">
-                                                                                    <title>
-                                                                                        biochemical
-                                                                                        factors
-                                                                                    </title>
+                                                                                    <title>biochemical factors</title>
                                                                                     <children>
                                                                                         <topics type="attached">
                                                                                             <topic id="0aghm51vmc5jbkjut7uicpa5bn"
                                                                                                    modified-by="lloos"
                                                                                                    style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                                                    timestamp="1573030318802">
-                                                                                                <title>
-                                                                                                    may
-                                                                                                    include
+                                                                                                <title>may include
                                                                                                 </title>
                                                                                                 <children>
                                                                                                     <topics type="attached">
                                                                                                         <topic id="2rjmfhagpqe3t8k6taj6qlbgjl"
                                                                                                                modified-by="lloos"
-                                                                                                               timestamp="1573034881006"
-                                                                                                               xlink:href="xmind:#122vli15fp65smkg4v6pq54gi3">
-                                                                                                            <title/>
+                                                                                                               timestamp="1594823941929">
+                                                                                                            <title>
+                                                                                                                Serotonin
+                                                                                                            </title>
                                                                                                         </topic>
                                                                                                     </topics>
                                                                                                 </children>
@@ -706,88 +667,27 @@
         </topic>
         <title>clinical psychology</title>
     </sheet>
-    <sheet id="58c9emm00d048luacr7sp1ohl5" modified-by="lloos"
-           theme="6k95s5jt5pb7ssri19891t59j3" timestamp="1573031129314">
-        <topic id="6uucivj306fi6u07m9i9bv57d5" modified-by="lloos"
-               structure-class="org.xmind.ui.logic.right"
-               timestamp="1573031042911">
-            <title>general psychology</title>
+    <sheet id="33he9141su4nsa1nm4n2envdf8" modified-by="lloos" theme="070mekadsjbjlo4b6juaq0h8dc"
+           timestamp="1577987932089">
+        <topic id="46ghabo9pla8c00rnueglb4q93" modified-by="lloos" structure-class="org.xmind.ui.map.unbalanced"
+               timestamp="1577987932089">
+            <title>references</title>
             <extensions>
                 <extension provider="org.xmind.ui.map.unbalanced">
                     <content>
-                        <right-number>-1</right-number>
+                        <right-number>1</right-number>
                     </content>
                 </extension>
             </extensions>
             <children>
                 <topics type="attached">
-                    <topic id="3ijhnhd14hg812tjaqfg8g5hr9" modified-by="lloos"
-                           structure-class="org.xmind.ui.logic.right"
-                           timestamp="1573031119976">
-                        <title>investigates</title>
-                        <children>
-                            <topics type="attached">
-                                <topic id="0ah6fc1fk2losqo1cpf39bct0f"
-                                       modified-by="lloos"
-                                       timestamp="1573031053639">
-                                    <title>emotions</title>
-                                    <children>
-                                        <topics type="attached">
-                                            <topic id="4btfk5dufc08ehigg83a9ao5j8"
-                                                   modified-by="lloos"
-                                                   style-id="4hpte0h6pn5hii04feijjp2mph"
-                                                   timestamp="1573031059847">
-                                                <title>can be manipulated by
-                                                </title>
-                                                <children>
-                                                    <topics type="attached">
-                                                        <topic id="1ouerm12et7869vgepcgsfvgt8"
-                                                               modified-by="lloos"
-                                                               timestamp="1573031063182">
-                                                            <title>chemical
-                                                                substances
-                                                            </title>
-                                                            <children>
-                                                                <topics type="attached">
-                                                                    <topic id="5q3gp7efkled9n9m2adm0f9aqo"
-                                                                           modified-by="lloos"
-                                                                           style-id="4hpte0h6pn5hii04feijjp2mph"
-                                                                           timestamp="1573031065994">
-                                                                        <title>
-                                                                            example
-                                                                        </title>
-                                                                        <children>
-                                                                            <topics type="attached">
-                                                                                <topic id="4hf4df7s4nfl3oe6rqk38o66j4"
-                                                                                       modified-by="lloos"
-                                                                                       timestamp="1573031099010"
-                                                                                       xlink:href="xmind:#4r6avbt0pbuam4fg07jod0ubec">
-                                                                                    <title/>
-                                                                                </topic>
-                                                                            </topics>
-                                                                        </children>
-                                                                    </topic>
-                                                                </topics>
-                                                            </children>
-                                                        </topic>
-                                                    </topics>
-                                                </children>
-                                            </topic>
-                                        </topics>
-                                    </children>
-                                </topic>
-                                <topic id="7f0arh33ufio60ii4s9dko3bor"
-                                       modified-by="lloos"
-                                       timestamp="1573031129314"
-                                       xlink:href="xmind:#4jf2lp878e4rn7pm85lca1vahr">
-                                    <title/>
-                                </topic>
-                            </topics>
-                        </children>
+                    <topic id="1guht5vgv15nlrk33ab7o139fm" modified-by="lloos" timestamp="1577961479700"
+                           xlink:href="file://C:/Users/lloos/OneDrive%20-%20bwedu/Projects/AnkiAddon/anki-addon-dev/addons21/XmindImport/resources/example_general_psychology.xmind">
+                        <title>general psychology</title>
                     </topic>
                 </topics>
             </children>
         </topic>
-        <title>general psychology</title>
+        <title>ref</title>
     </sheet>
 </xmap-content>
