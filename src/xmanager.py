@@ -6,7 +6,7 @@ import tempfile
 import urllib.parse
 import zipfile
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from consts import X_MEDIA_EXTENSIONS
 from xnotemanager import ref_plus_question, ref_plus_answer, field_from_content, update_sort_id
 
@@ -64,9 +64,10 @@ def getNodeImg(tag):
         return None
 
 
-def getNodeTitle(tag):
+def get_node_title(tag: Tag):
     """
-    :param tag: Tag to get the title from
+    Gets the title of an xmind node
+    :param tag: Tag representing the node to get the title from
     :return: node's title, empty string if it has none
     """
     try:
@@ -153,7 +154,7 @@ def is_crosslink(href):
 
 def is_crosslink_node(tag):
     href = getNodeHyperlink(tag)
-    if not href or getNodeTitle(tag) or getNodeImg(tag) or not is_crosslink(
+    if not href or get_node_title(tag) or getNodeImg(tag) or not is_crosslink(
             href):
         return False
     return True
@@ -164,7 +165,7 @@ def isEmptyNode(tag):
     :param tag: tag to check for
     :return: True if node does not contain any title, image or hyperlink
     """
-    if getNodeTitle(tag):
+    if get_node_title(tag):
         return False
     if getNodeImg(tag):
         return False
@@ -223,7 +224,7 @@ class XManager:
         content = ''
         media = dict(image=None, media=None)
         href = getNodeHyperlink(tag)
-        title = getNodeTitle(tag)
+        title = get_node_title(tag)
 
         if title:
             content += title
@@ -237,7 +238,7 @@ class XManager:
         # node.
         if href and is_crosslink(href):
             crosslinkTag = self.getTagById(tagId=href[7:])
-            crosslinkTitle = getNodeTitle(crosslinkTag)
+            crosslinkTitle = get_node_title(crosslinkTag)
             if not content:
                 content = crosslinkTitle
 
@@ -308,10 +309,26 @@ class XManager:
         return remote
 
     def get_file_last_modified(self):
+        """
+        Gets the timestamp of the last time the XManagers file was edited according to the file system
+        :return: The timestamp (Real value)
+        """
         return get_os_mod(self.file)
 
     def get_map_last_modified(self):
+        """
+        Gets the internally saved timestamp of the last time the file was saved
+        :return:
+        """
         return self.soup.find('xmap-content')['timestamp']
+
+    def get_root_topic(self, sheet: str):
+        """
+        Returns the root topic of the specified sheet
+        :param sheet:
+        :return:
+        """
+        return self.sheets[sheet]['tag'].topic
 
     def remove_node(self, a_id):
         tag = self.getTagById(a_id)
@@ -331,7 +348,7 @@ class XManager:
 
     def set_node_content(self, x_id, title, img, media_dir):
         tag = self.getTagById(x_id)
-        if title != getNodeTitle(tag):
+        if title != get_node_title(tag):
             self.setNodeTitle(tag=tag, title=title)
 
         # Remove crosslink if the tag has one
@@ -435,7 +452,7 @@ class XManager:
 
     def ref_and_sort_id(self, q_topic):
         ancestry = get_ancestry(topic=q_topic, descendants=[])
-        ref = getNodeTitle(ancestry.pop(0))
+        ref = get_node_title(ancestry.pop(0))
         sort_id = ''
         mult_subjects = False
         follows_bridge = False

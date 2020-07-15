@@ -7,7 +7,7 @@ from consts import X_MODEL_NAME, X_MAX_ANSWERS, X_FLDS
 from deckselectiondialog import DeckSelectionDialog
 from statusmanager import StatusManager
 from utils import getCoordsFromId, getNotesFromSheet
-from xmanager import getNodeCrosslink, getChildnodes, isEmptyNode, XManager, get_parent_topic, getNodeTitle
+from xmanager import getNodeCrosslink, getChildnodes, isEmptyNode, XManager, get_parent_topic, get_node_title
 from xnotemanager import XNoteManager, FieldTranslator, update_sort_id, ref_plus_question, field_from_content, \
     ref_plus_answer
 from xontology import get_rel_dict, get_question_sets, XOntology
@@ -114,13 +114,13 @@ class XmindImporter(NoteImporter):
                 self.log = ["""Warning:
                         A Question titled "%s" has more than %s answers. Make sure every Question in your Map is 
                         followed by no more than %s Answers and try again.""" %
-                            (self.active_manager.getNodeTitle(q_tag),
+                            (self.active_manager.get_node_title(q_tag),
                              X_MAX_ANSWERS, X_MAX_ANSWERS)]
                 return
             next_ref = ref_plus_question(
                 field=field_from_content(content), ref=ref)
             for aId, answerDict in enumerate(answer_dicts, start=1):
-                self.get_questions(
+                self.import_node(
                     parent_answer_dict=answerDict, ref=next_ref,
                     sort_id=update_sort_id(
                         previousId=next_sort_id, idToAppend=aId),
@@ -255,8 +255,8 @@ class XmindImporter(NoteImporter):
     def get_file_dict(self, path):
         return [path, self.active_manager.file]
 
-    def get_questions(self, parent_answer_dict: dict, sort_id='', ref="",
-                      follows_bridge=False):
+    def import_node(self, parent_answer_dict: dict, sort_id='', ref="",
+                    follows_bridge=False):
         """
         :param parent_answer_dict: parent answer node of the questions to get
         :param sort_id: current id for sortId field
@@ -290,22 +290,6 @@ class XmindImporter(NoteImporter):
     def get_tag(self):
         return (self.deck_name + '_' + self.current_sheet_import).replace(" ", "_")
 
-    def import_map(self):
-        """
-        :return: adds the roottopic of the active sheet to self.onto and starts
-            the map import by calling getQuestions
-        """
-        manager = self.active_manager
-        root_topic = manager.sheets[self.current_sheet_import]['tag'].topic
-
-        # Set model to Stepwise map retrieval model
-        x_model = self.col.models.byName(X_MODEL_NAME)
-        self.col.decks.select(self.deck_id)
-        self.col.decks.current()['mid'] = x_model['id']
-        root_dict = self.get_answer_dict(node_tag=root_topic, root=True)
-        self.get_questions(parent_answer_dict=root_dict,
-                           ref=getNodeTitle(root_topic))
-
     def import_ontology(self):
         triples = [self.onto.getElements(t) for t in self.onto.getNoteTriples() if
                    t[1] in self.added_relations['storids']]
@@ -325,10 +309,15 @@ class XmindImporter(NoteImporter):
         self.deck_name = self.col.decks.get(self.deck_id)['name']
         self.repair = repair
         self.onto = XOntology(self.deck_id)
+        # Set model to Stepwise map retrieval model
+        self.col.decks.select(self.deck_id)
+        self.col.decks.current()['mid'] = self.col.models.byName(X_MODEL_NAME)['id']
         self.mw.progress.start(immediate=True, label='importing...')
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
-        self.import_files()
+        for manager in self.x_managers:
+            self.import_file(manager)
+        self.finish_import()
 
     def note_from_question_list(self, question_list):
         note = self.col.newNote()
@@ -629,23 +618,28 @@ class XmindImporter(NoteImporter):
 
         return noteData, media
 
-    def import_files(self):
+    def import_file(self, x_manager: XManager):
         """
-        Starts an import of all sheets for each x_manager and finally finishes the import
+        Imports a file managed by the provided XManager and starts imports for all sheets in that file that contain
+        concept maps
+        :param x_manager: the x_manager that manages the file
         """
-        for manager in self.x_managers:
-            self.active_manager = manager
-            self.mw.smr_world.add_xmind_file(x_manager=manager, deck_id=self.deck_id)
-            self.import_sheets(manager.get_content_sheets())
-        self.finish_import()
+        self.active_manager = x_manager
+        self.mw.smr_world.add_xmind_file(x_manager=x_manager, deck_id=self.deck_id)
+        for sheet in x_manager.get_content_sheets():
+            self.import_sheet(sheet)
 
-    def import_sheets(self, sheets):
+    def import_sheet(self, sheet: str):
         """
-        Imports the concept maps from the specified sheets
-        :param sheets: list of names of the sheets to be imported
+        Imports the specified sheet and starts importing the map contained in that sheet starting from the root concept
+        :param sheet: name of the sheet to be imported
+        :return: adds the roottopic of the active sheet to self.onto and starts
+                the map import by calling getQuestions
         """
-        for sheet in sheets:
-            self.current_sheet_import = sheet
-            self.mw.progress.update(label='importing %s' % sheet, maybeShow=False)
-            self.mw.app.processEvents()
-            self.import_map()
+        self.current_sheet_import = sheet
+        self.mw.progress.update(label='importing %s' % sheet, maybeShow=False)
+        self.mw.app.processEvents()
+        self.mw.smr_world.add_xmind_sheet(x_manager=self.active_manager, sheet=sheet)
+        root_topic = self.active_manager.get_root_topic(sheet=sheet)
+        self.import_node(parent_answer_dict=self.get_answer_dict(node_tag=root_topic, root=True),
+                         ref=get_node_title(root_topic))

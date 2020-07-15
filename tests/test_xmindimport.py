@@ -1,9 +1,5 @@
-import os
-
 import pytest
 import xmindimport
-from consts import ADDON_PATH
-
 
 #
 #
@@ -75,7 +71,7 @@ from consts import ADDON_PATH
 #         concept = [concept]
 #         answerDict = {'nodeTag': nodeTag, 'isAnswer': True, 'aId': str(0),
 #                       'crosslink': None, 'concepts': concept}
-#         act = importer.get_questions(parent_answer_dict=answerDict,
+#         act = importer.import_node(parent_answer_dict=answerDict,
 #                                      ref='biological psychology')
 #         self.fail()
 #
@@ -99,7 +95,7 @@ from consts import ADDON_PATH
 #                       'crosslink': None, 'concepts': concepts}
 #         ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: ' \
 #               'enzymes</li><li>example: MAO</li><li>splits up'
-#         act = self.xmindImporter.get_questions(parent_answer_dict=answerDict,
+#         act = self.xmindImporter.import_node(parent_answer_dict=answerDict,
 #                                                sort_id='|{|{{{|',
 #                                                ref=ref)
 #         self.fail()
@@ -274,6 +270,8 @@ from consts import ADDON_PATH
 #         importer.update_status()
 #         os.remove(importer.statusManager.status_file)
 #         self.fail()
+from XmindImport.tests.constants import EXAMPLE_MAP_PATH
+from consts import X_MODEL_NAME
 
 
 @pytest.fixture
@@ -281,8 +279,7 @@ def xmind_importer(empty_anki_collection):
     """
     XmindImporter instance for file example map.xmind
     """
-    test_map = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
-    yield xmindimport.XmindImporter(col=empty_anki_collection, file=test_map)
+    yield xmindimport.XmindImporter(col=empty_anki_collection, file=EXAMPLE_MAP_PATH)
 
 
 def test_xmind_importer(xmind_importer):
@@ -369,36 +366,47 @@ def test_initialize_import(mocker, xmind_importer):
     deck_name = 'my deck'
     mocker.patch.object(cut.col.decks, 'get', return_value={'name': deck_name})
     mocker.patch.object(cut, 'mw')
+    mocker.patch.object(cut, "finish_import")
     mocker.patch('xmindimport.XOntology')
-    mocker.patch.object(cut, 'import_files')
+    mocker.patch.object(cut, 'import_file')
+    mocker.patch.object(cut, 'col')
+    cut.col.models.byName.return_value = {'id': 'my mid'}
     # when
     xmind_importer.initialize_import(repair=False)
     # then
     cut.mw.progress.start.assert_called_once()
-    cut.import_files.assert_called_once()
-
-
-def test_import_files(xmind_importer, mocker):
-    # given
-    cut = xmind_importer
-    mocker.patch.object(cut, "import_sheets")
-    mocker.patch.object(cut, "finish_import")
-    mocker.patch.object(cut, "mw")
-    # when
-    cut.import_files()
-    # then
-    assert cut.import_sheets.call_count == 2
-    assert cut.mw.smr_world.add_xmind_file.call_count == 2
     cut.finish_import.assert_called_once()
+    assert cut.import_file.call_count == 2
+    assert cut.col.decks.select.call_count == 1
+    assert cut.col.decks.current.call_count == 1
 
 
-def test_import_sheets(xmind_importer, mocker):
+def test_import_file(xmind_importer, mocker, x_manager):
     # given
-    sheets_2_import = ['biological psychology', 'clinical psychology']
+    cut = xmind_importer
+    mocker.patch.object(cut, "import_sheet")
+    mocker.patch.object(cut, "mw")
+    # when
+    cut.import_file(x_manager)
+    # then
+    assert cut.import_sheet.call_count == 2
+    assert cut.mw.smr_world.add_xmind_file.call_count == 1
+
+
+def test_import_sheet(xmind_importer, mocker, x_manager):
+    # given
+    sheet_2_import = 'biological psychology'
     cut = xmind_importer
     mocker.patch.object(cut, "mw")
-    mocker.patch.object(cut, "import_map")
+    mocker.patch.object(cut, "import_node")
+    cut.active_manager = x_manager
+    mocker.patch.object(cut, "get_answer_dict")
     # when
-    cut.import_sheets(sheets_2_import)
+    cut.import_sheet(sheet_2_import)
     # then
-    assert cut.import_map.call_count == 2
+    assert cut.mw.progress.update.call_count == 1
+    assert cut.mw.app.processEvents.call_count == 1
+    assert cut.mw.smr_world.add_xmind_sheet.call_count == 1
+    assert cut.import_node.call_count == 1
+    assert cut.current_sheet_import == sheet_2_import
+    assert cut.get_answer_dict.call_count == 1
