@@ -35,14 +35,15 @@ import xontology
 #     def test_get_note_triples(self):
 #         a = self.x_ontology.getNoteTriples()
 #         self.fail()
+DECK_ID = "99999"
 
 
 @pytest.fixture
-def x_ontology(mocker, empty_smr_world):
+def x_ontology(mocker, smr_world_for_tests):
     mocker.patch('xontology.mw')
-    xontology.mw.smr_world = empty_smr_world
+    xontology.mw.smr_world = smr_world_for_tests
     mocker.spy(xontology.XOntology, "_set_up_classes")
-    yield xontology.XOntology("12345")
+    yield xontology.XOntology(DECK_ID)
 
 
 def test_xontology(x_ontology):
@@ -51,4 +52,5 @@ def test_xontology(x_ontology):
     # then
     cut._set_up_classes.assert_called()
     assert cut.field_translator is not None
-    assert list(cut.graph.execute("SELECT * FROM ontology_lives_in_deck").fetchall())[0] == (12345, 1)
+    assert list(cut.graph.execute(
+        "SELECT * FROM ontology_lives_in_deck WHERE deck_id = {}".format(int(DECK_ID))).fetchall())[0] == (99999, 3)

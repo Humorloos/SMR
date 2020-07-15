@@ -1,6 +1,9 @@
+import os
+
 import pytest
 from XmindImport.tests.constants import EMPTY_COLLECTION
-from smrworld import SmrWorld
+import smrworld
+from XmindImport.tests.constants import SUPPORT_PATH
 
 
 @pytest.fixture(scope="session")
@@ -11,7 +14,9 @@ def empty_anki_collection():
 
 
 @pytest.fixture(scope="session")
-def empty_smr_world(empty_anki_collection):
-    smr_world = SmrWorld()
+def smr_world_for_tests(empty_anki_collection):
+    smrworld.FILE_NAME = "smr_world_for_tests.sqlite3"
+    smrworld.USER_PATH = SUPPORT_PATH
+    smr_world = smrworld.SmrWorld()
     yield smr_world
     smr_world.close()
