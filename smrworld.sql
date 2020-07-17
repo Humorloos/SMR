@@ -34,7 +34,7 @@ CREATE TABLE xmind_edges
     title         TEXT,
     image         TEXT,
     link          TEXT,
-    ord           TEXT,
+    order_number  INTEGER,
     FOREIGN KEY (sheet_id) REFERENCES xmind_sheets (sheet_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -57,7 +57,7 @@ CREATE TABLE xmind_nodes
     link            TEXT,
     ontology_storid INTEGER,
     last_modified   INTEGER,
-    ord             INTEGER,
+    order_number    INTEGER,
     FOREIGN KEY (ontology_storid) references resources (storid)
         ON DELETE CASCADE
         ON UPDATE CASCADE,

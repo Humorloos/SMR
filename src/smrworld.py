@@ -75,12 +75,28 @@ class SmrWorld(World):
         """
         self.graph.execute(
             "INSERT INTO main.xmind_nodes VALUES ('{node_id}', '{sheet_id}', '{title}', '{image}', '{link}', "
-            "{ontology_storid}, {last_modified}, {ord})".format(node_id=node['id'], sheet_id=sheet_id,
-                                                                title=node_content['content'],
-                                                                image=node_content['media']['image'],
-                                                                link=node_content['media']['media'],
-                                                                ontology_storid=ontology_storid,
-                                                                last_modified=node['timestamp'], ord=order_number))
+            "{ontology_storid}, {last_modified}, {order_number})".format(node_id=node['id'], sheet_id=sheet_id,
+                                                                         title=node_content['content'],
+                                                                         image=node_content['media']['image'],
+                                                                         link=node_content['media']['media'],
+                                                                         ontology_storid=ontology_storid,
+                                                                         last_modified=node['timestamp'],
+                                                                         order_number=order_number))
+
+    def add_xmind_edge(self, edge: Tag, edge_content: dict, sheet_id: str, order_number: int):
+        """
+        Adds an entry for an xmind edge to the relation xmind_edges
+        :param edge: the tag representing the edge to add
+        :param edge_content: the edge's content as a dictionary
+        :param sheet_id: xmind id of the sheet that contains the edge
+        :param order_number: order number of the edge with respect to its siblings
+        """
+        self.graph.execute(
+            "INSERT INTO main.xmind_edges VALUES ('{edge_id}', '{sheet_id}', {last_modified}, '{title}', '{image}', "
+            "'{link}', {order_number})".format(edge_id=edge['id'], sheet_id=sheet_id, title=edge_content['content'],
+                                               image=edge_content['media']['image'],
+                                               link=edge_content['media']['media'], last_modified=edge['timestamp'],
+                                               order_number=order_number))
 
     def attach_anki_collection(self, anki_collection):
         self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(
