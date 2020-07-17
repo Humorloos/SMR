@@ -1,5 +1,6 @@
 import os
 
+from bs4 import Tag
 from consts import ADDON_PATH, USER_PATH
 from owlready2.namespace import World
 from xmanager import XManager
@@ -17,6 +18,8 @@ class SmrWorld(World):
     def __init__(self):
         super().__init__()
         self.set_backend(filename=os.path.join(USER_PATH, FILE_NAME))
+        self.graph.execute('PRAGMA foreign_keys = ON')
+        self.save()
 
     def set_up(self):
         """
@@ -46,17 +49,33 @@ class SmrWorld(World):
         :param deck_id: the id of the deck from anki (number in form of a string)
         """
         self.graph.execute(
-            "INSERT INTO xmind_files VALUES ('{path}', {map_last_modified}, {file_last_modified}, {deck_id})".format(
-                path=x_manager.file, map_last_modified=x_manager.get_map_last_modified(),
+            "INSERT INTO main.xmind_files VALUES ('{path}', {map_last_modified}, {file_last_modified}, "
+            "{deck_id})".format(
+                path=x_manager._file, map_last_modified=x_manager.get_map_last_modified(),
                 file_last_modified=x_manager.get_file_last_modified(), deck_id=int(deck_id)))
 
-    def add_xmind_sheet(self, x_manager: XManager, deck_id: str):
+    def add_xmind_sheet(self, x_manager: XManager, sheet: str):
         """
         Adds an entry for an xmind sheet to the relation xmind_sheets
         :param x_manager: the x_manager that manages the file
-        :param deck_id: the id of the deck from anki (number in form of a string)
+        :param sheet: the name of the sheet to import
         """
-        return
+        self.graph.execute("INSERT INTO main.xmind_sheets VALUES ('{sheet_id}', '{path}', {last_modified})".format(
+            sheet_id=x_manager.get_sheet_id(sheet), path=x_manager.get_file(),
+            last_modified=x_manager.get_sheet_last_modified(sheet)))
+
+    def add_xmind_node(self, node: Tag, node_content: dict, ontology_storid: int):
+        """
+        Adds an entry for an xmind node to the relation xmind_nodes
+        :param node: the tag representing the node to add
+        :param node_content: the node's content as a dictionary
+        :param ontology_storid: the storid of the concept in the ontology that represents the node
+        """
+        self.graph.execute(
+            "INSERT INTO main.xmind_nodes VALUES ('{node_id}', '{title}', '{image}', '{link}', {ontology_storid}, "
+            "{last_modified})".format(node_id=node['id'], title=node_content['content'],
+                                      image=node_content['media']['image'], link=node_content['media']['media'],
+                                      ontology_storid=ontology_storid, last_modified=node['timestamp']))
 
     def attach_anki_collection(self, anki_collection):
         self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(

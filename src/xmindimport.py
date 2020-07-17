@@ -3,11 +3,12 @@ import os
 import shutil
 import tempfile
 
+import bs4
 from consts import X_MODEL_NAME, X_MAX_ANSWERS, X_FLDS
 from deckselectiondialog import DeckSelectionDialog
 from statusmanager import StatusManager
 from utils import getCoordsFromId, getNotesFromSheet
-from xmanager import getNodeCrosslink, getChildnodes, isEmptyNode, XManager, get_parent_topic, get_node_title
+from xmanager import getNodeCrosslink, get_child_nodes, is_empty_node, XManager, get_parent_topic
 from xnotemanager import XNoteManager, FieldTranslator, update_sort_id, ref_plus_question, field_from_content, \
     ref_plus_answer
 from xontology import get_rel_dict, get_question_sets, XOntology
@@ -78,14 +79,14 @@ class XmindImporter(NoteImporter):
 
     def add_media(self):
         for manager in self.x_managers:
-            for file in [f for f in self.media if f['doc'] == manager.file]:
+            for file in [f for f in self.media if f['doc'] == manager._file]:
                 if file['identifier'].startswith(('attachments', 'resources')):
                     file_path = manager.getAttachment(identifier=file[
                         'identifier'], directory=self.source_dir)
                     self.col.media.addFile(file_path)
                 else:
                     self.col.media.addFile(file['identifier'])
-            for image in [i for i in self.images if i['doc'] == manager.file]:
+            for image in [i for i in self.images if i['doc'] == manager._file]:
                 file_path = manager.getAttachment(identifier=image[
                     'identifier'], directory=self.source_dir)
                 self.col.media.addFile(file_path)
@@ -96,16 +97,16 @@ class XmindImporter(NoteImporter):
         for note in notes:
             self.col.addNote(note)
 
-    def add_question(self, sort_id, q_index, q_tag, parent_a_dict, ref):
+    def import_edge(self, q_index, q_tag):
         # Update the sorting ID
         next_sort_id = update_sort_id(previousId=sort_id, idToAppend=q_index)
-        content = self.active_manager.getNodeContent(q_tag)
+        content = self.active_manager.get_node_content(q_tag)
         answer_dicts = self.find_answer_dicts(
             parents=parent_a_dict['concepts'], question=q_tag,
             sort_id=next_sort_id, ref=ref, content=content)
         if answer_dicts:
             actual_answers = [a for a in answer_dicts if a['isAnswer']]
-            is_question = not isEmptyNode(q_tag)
+            is_question = not is_empty_node(q_tag)
 
             # If the current relation is a question and has too many
             # answers give a warning and stop running
@@ -120,7 +121,7 @@ class XmindImporter(NoteImporter):
             next_ref = ref_plus_question(
                 field=field_from_content(content), ref=ref)
             for aId, answerDict in enumerate(answer_dicts, start=1):
-                self.import_node(
+                self.import_node_if_concept(
                     parent_answer_dict=answerDict, ref=next_ref,
                     sort_id=update_sort_id(
                         previousId=next_sort_id, idToAppend=aId),
@@ -130,7 +131,7 @@ class XmindImporter(NoteImporter):
         answer_dicts = list()
         manager = self.active_manager
         crosslink = getNodeCrosslink(question)
-        child_notes = getChildnodes(question)
+        child_notes = get_child_nodes(question)
 
         if len(child_notes) == 0:
             return self.stop_or_add_cross_question(
@@ -182,39 +183,6 @@ class XmindImporter(NoteImporter):
         # Remove temp dir and its files
         shutil.rmtree(self.source_dir)
 
-    def get_answer_dict(self, node_tag, question=None, root=False, a_concept=None):
-        """
-        :param a_concept:
-        :param question: Xmind id of the question the answer refers to
-        :param node_tag: The answer node to get the dict for
-        :param root: whether the node is the root or not
-        :return: dictionary containing information for creating a note from
-        this answer node, furthermore adds a Concept to onto for this node
-        """
-        manager = self.active_manager
-        is_answer = True
-        crosslink = None
-
-        # If the node is empty do not create a concept
-        if not node_tag or isEmptyNode(node_tag):
-            is_answer = False
-        else:
-            # Check whether subtopic contains a crosslink
-            crosslink = getNodeCrosslink(node_tag)
-            if not a_concept:
-                node_content = manager.getNodeContent(node_tag)
-                x_id = node_tag['id']
-                a_concept = self.onto.add_concept(
-                    crosslink=crosslink, nodeContent=node_content, a_id=x_id,
-                    root=root, file=self.active_manager.file, q_id=question)
-
-                # Assign a list to concept since concept may also contain
-                # multiple concepts in case of bridges
-            a_concept = [a_concept]
-        # Todo: check whether aID is really necessary
-        return dict(nodeTag=node_tag, isAnswer=is_answer, aId=str(0),
-                    crosslink=crosslink, concepts=a_concept)
-
     def get_children_and_bridges(self, answer_dicts, child_notes, image, media,
                                  parents, question, ref, question_class,
                                  sort_id):
@@ -255,27 +223,22 @@ class XmindImporter(NoteImporter):
     def get_file_dict(self, path):
         return [path, self.active_manager.file]
 
-    def import_node(self, parent_answer_dict: dict, sort_id='', ref="",
-                    follows_bridge=False):
+    def import_node_if_concept(self, node: bs4.Tag, root=False):
         """
-        :param parent_answer_dict: parent answer node of the questions to get
-        :param sort_id: current id for sortId field
-        :param ref: current text for reference field
-        :param follows_bridge: ???
-        :return: creates notes for each question following the answerDict
+        If it is not empty, imports the node represented by the specified tag as a concept into the ontology and as
+        a node into the smr world.
+        :param node: the tag representing the node to import
+        :param root: whether or not the concept to import is the root of the respective map
         """
-        answer_content = self.active_manager.getNodeContent(
-            parent_answer_dict['nodeTag'])['content']
+        # If the node is empty do not create a concept
+        if not is_empty_node(node):
+            node_content = self.active_manager.get_node_content(node)
+            concept = self.onto.add_concept(node_content=node_content, root=root)
+            self.mw.smr_world.add_xmind_node(node=node, node_content=node_content, ontology_storid=concept.storid)
 
-        # The reference doesn't have to be edited at the roottopic
-        if not isinstance(parent_answer_dict['concepts'][0], self.onto.Root):
-            ref = ref_plus_answer(
-                field=answer_content, followsBridge=follows_bridge,
-                ref=ref, mult_subjects=not parent_answer_dict['isAnswer'])
-        follow_rels = getChildnodes(parent_answer_dict['nodeTag'])
-        for qId, followRel in enumerate(follow_rels, start=1):
-            self.add_question(sort_id=sort_id, q_index=qId, q_tag=followRel,
-                              parent_a_dict=parent_answer_dict, ref=ref)
+        following_relationships = get_child_nodes(node)
+        for question_index, following_relationship in enumerate(following_relationships, start=1):
+            self.import_edge(q_index=question_index, q_tag=following_relationship)
 
     def _register_referenced_x_managers(self, x_manager):
         """
@@ -368,18 +331,18 @@ class XmindImporter(NoteImporter):
 
         # If the seed_topic's parent follows a bridge, start importing at the
         # bridge instead
-        parent_q_children = getChildnodes(parent_q)
+        parent_q_children = get_child_nodes(parent_q)
         if get_parent_topic(seed_topic) not in parent_q_children:
             if len(parent_as) > 1:
                 seed_topic = next(
-                    g for c in parent_q_children if isEmptyNode(c) for
-                    g in getChildnodes(c) if seed_topic.text in g.text)
+                    g for c in parent_q_children if is_empty_node(c) for
+                    g in get_child_nodes(c) if seed_topic.text in g.text)
             else:
-                seed_topic = next(t for t in getChildnodes(parent_as[0]) if
+                seed_topic = next(t for t in get_child_nodes(parent_as[0]) if
                                   seed_topic.text in t.text)
         ref, sort_id = self.active_manager.ref_and_sort_id(q_topic=seed_topic)
         q_index = sum(1 for _ in seed_topic.previous_siblings) + 1
-        self.add_question(
+        self.import_edge(
             sort_id=sort_id, q_index=q_index, q_tag=seed_topic,
             parent_a_dict=parent_a_dict, ref=ref)
 
@@ -394,7 +357,7 @@ class XmindImporter(NoteImporter):
             self.log = ["It seems like {seed_path} is already in your collection. Please choose a different "
                         "file.".format(seed_path=self.file)]
             return
-        deck_selection_dialog = DeckSelectionDialog(os.path.basename(self.x_managers[0].file))
+        deck_selection_dialog = DeckSelectionDialog(os.path.basename(self.x_managers[0]._file))
         deck_selection_dialog.exec_()
         user_inputs = deck_selection_dialog.get_inputs()
         if not user_inputs['running']:
@@ -406,10 +369,10 @@ class XmindImporter(NoteImporter):
     def set_up_import(self, deck_id, sheet, onto=None):
         self.current_sheet_import = next(
             s for m in self.x_managers for
-            s in m.sheets if m.sheets[s]['tag']['id'] == sheet)
+            s in m._sheets if m._sheets[s]['tag']['id'] == sheet)
         self.active_manager = next(
             m for m in self.x_managers for
-            s in m.sheets if s == self.current_sheet_import)
+            s in m._sheets if s == self.current_sheet_import)
         self.deck_id = deck_id
         if onto:
             self.onto = onto
@@ -426,7 +389,7 @@ class XmindImporter(NoteImporter):
             self.log = ["""Warning:
                         A Question titled "%s" (Path %s) is missing answers. Please adjust your 
                         Concept Map and try again.""" % (
-                manager.getNodeContent(tag=question)[0],
+                manager.get_node_content(tag=question)[0],
                 getCoordsFromId(sort_id))]
             return
 
@@ -434,7 +397,7 @@ class XmindImporter(NoteImporter):
         # from the parents of this question to the answers to the original
         # question
         else:
-            original_question = manager.getTagById(crosslink)
+            original_question = manager.get_tag_by_id(crosslink)
             self.find_answer_dicts(parents=parents, question=original_question,
                                    sort_id=sort_id, ref=ref, content=content)
             return
@@ -566,7 +529,7 @@ class XmindImporter(NoteImporter):
     def update_status(self):
         for manager in self.x_managers:
             remote = manager.get_remote()
-            local = self.note_manager.get_local(manager.file)
+            local = self.note_manager.get_local(manager._file)
             status = deep_merge(remote=remote, local=local)
             self.status_manager.add_new(status)
         self.status_manager.save()
@@ -640,6 +603,5 @@ class XmindImporter(NoteImporter):
         self.mw.progress.update(label='importing %s' % sheet, maybeShow=False)
         self.mw.app.processEvents()
         self.mw.smr_world.add_xmind_sheet(x_manager=self.active_manager, sheet=sheet)
-        root_topic = self.active_manager.get_root_topic(sheet=sheet)
-        self.import_node(parent_answer_dict=self.get_answer_dict(node_tag=root_topic, root=True),
-                         ref=get_node_title(root_topic))
+        root_node = self.active_manager.get_root_node(sheet=sheet)
+        self.import_node_if_concept(node=root_node, root=True)

@@ -49,16 +49,7 @@ import bs4
 #
 import pytest
 import XmindImport.tests.constants as cts
-from xmanager import is_empty_node, get_node_title
-
-
-@pytest.fixture
-def tag_for_tests():
-    with open(os.path.join(cts.SUPPORT_PATH, 'xmindImporter', 'content.xml'), 'r') as file:
-        tag = bs4.BeautifulSoup(file.read(), features='html.parser').topic
-        file.close()
-    yield tag
-
+from xmanager import is_empty_node, get_node_title, get_child_nodes
 
 def test_xmanager(x_manager):
     # given
@@ -72,13 +63,13 @@ def test_xmanager(x_manager):
     assert cut.get_referenced_files() == expected_referenced_file
 
 
-def test_get_root_topic(x_manager):
+def test_get_root_node(x_manager):
     # given
     cut = x_manager
     # when
-    root_topic = cut.get_root_node(sheet="biological psychology")
+    root_node = cut.get_root_node(sheet="biological psychology")
     # then
-    assert isinstance(root_topic, bs4.element.Tag)
+    assert isinstance(root_node, bs4.element.Tag)
 
 
 def test_is_empty_node(tag_for_tests):
@@ -139,3 +130,11 @@ def test_get_sheet_id(x_manager):
     sheet_id = x_manager.get_sheet_id('biological psychology')
     # then
     assert sheet_id == '2485j5qgetfevlt00vhrn53961'
+
+
+def test_get_child_nodes(tag_for_tests):
+    # given
+    expected_child_node_titles = ['', 'investigates']
+    # when
+    child_nodes = get_child_nodes(tag_for_tests)
+    assert [c.contents[1].text for c in child_nodes] == expected_child_node_titles

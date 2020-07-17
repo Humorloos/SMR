@@ -47,14 +47,14 @@ import xmindimport
 #     def test_empty_node(self):
 #         importer = self.xmindImporter
 #         xid = '6b0ho6vvcs4pcacchhsgju7513'
-#         nodeTag = importer.activeManager.getTagById(xid)
+#         nodeTag = importer.activeManager.get_tag_by_id(xid)
 #         act = self.xmindImporter.get_answer_dict(nodeTag)
 #         self.fail()
 #
 #     def test_crosslink_and_text(self):
 #         importer = self.xmindImporter
 #         xid = '2koenah8ebavhq2bl2u6u1lh4h'
-#         nodeTag = importer.activeManager.getTagById(xid)
+#         nodeTag = importer.activeManager.get_tag_by_id(xid)
 #         act = self.xmindImporter.get_answer_dict(nodeTag)
 #         self.fail()
 #
@@ -63,7 +63,7 @@ import xmindimport
 #     def test_questions_for_root(self):
 #         importer = self.xmindImporter
 #         xid = '0pbme7b9sg9en8qqmmn9jj06od'
-#         nodeTag = importer.activeManager.getTagById(xid)
+#         nodeTag = importer.activeManager.get_tag_by_id(xid)
 #         concept = importer.onto.Root('biological psychology')
 #         concept.Image = None
 #         concept.Media = None
@@ -71,14 +71,14 @@ import xmindimport
 #         concept = [concept]
 #         answerDict = {'nodeTag': nodeTag, 'isAnswer': True, 'aId': str(0),
 #                       'crosslink': None, 'concepts': concept}
-#         act = importer.import_node(parent_answer_dict=answerDict,
+#         act = importer.import_node_if_concept(parent_answer_dict=answerDict,
 #                                      ref='biological psychology')
 #         self.fail()
 #
 #     def test_questions_following_multiple_answers(self):
 #         importer = self.xmindImporter
 #         xid = '6b0ho6vvcs4pcacchhsgju7513'
-#         nodeTag = importer.activeManager.getTagById(xid)
+#         nodeTag = importer.activeManager.get_tag_by_id(xid)
 #         concepts = list()
 #         concepts.append(importer.onto.Concept('Serotonin'))
 #         concepts.append(importer.onto.Concept('dopamine'))
@@ -95,7 +95,7 @@ import xmindimport
 #                       'crosslink': None, 'concepts': concepts}
 #         ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: ' \
 #               'enzymes</li><li>example: MAO</li><li>splits up'
-#         act = self.xmindImporter.import_node(parent_answer_dict=answerDict,
+#         act = self.xmindImporter.import_node_if_concept(parent_answer_dict=answerDict,
 #                                                sort_id='|{|{{{|',
 #                                                ref=ref)
 #         self.fail()
@@ -105,7 +105,7 @@ import xmindimport
 #     def test_crosslink(self):
 #         importer = self.xmindImporter
 #         xid = '32dt8d2dflh4lr5oqc2oqqad28'
-#         question = importer.activeManager.getTagById(xid)
+#         question = importer.activeManager.get_tag_by_id(xid)
 #         parent = importer.onto.Root('biological psychology')
 #         ref = 'biological psychology'
 #         parent.Image = None
@@ -120,7 +120,7 @@ import xmindimport
 #     def test_two_answers_no_media(self):
 #         importer = self.xmindImporter
 #         xid = '4kdqkutdha46uns1j8jndi43ht'
-#         question = importer.activeManager.getTagById(xid)
+#         question = importer.activeManager.get_tag_by_id(xid)
 #         parent = importer.onto.Root('biological psychology')
 #         ref = 'biological psychology'
 #         parent.Image = None
@@ -136,7 +136,7 @@ import xmindimport
 #     def test_question_with_spaces(self):
 #         importer = self.xmindImporter
 #         xid = '077tf3ovn4gc1j1dqte7or33fl'
-#         question = importer.activeManager.getTagById(xid)
+#         question = importer.activeManager.get_tag_by_id(xid)
 #         parent = importer.onto.Root('biological psychology')
 #         ref = 'biological psychology'
 #         parent.Image = None
@@ -154,7 +154,7 @@ import xmindimport
 #     def test_containing_bridge_answer(self):
 #         importer = self.xmindImporter
 #         xid = '61irckf1nloq42brfmbu0ke92v'
-#         question = importer.activeManager.getTagById(xid)
+#         question = importer.activeManager.get_tag_by_id(xid)
 #         parent = importer.onto.Root('biological psychology')
 #         ref = 'biological psychology'
 #         parent.Image = None
@@ -172,7 +172,7 @@ import xmindimport
 #     def test_following_multiple_answers(self):
 #         importer = self.xmindImporter
 #         xid = '6iivm8tpoqj2c0euaabtput14l'
-#         question = importer.activeManager.getTagById(xid)
+#         question = importer.activeManager.get_tag_by_id(xid)
 #         parents = list()
 #         parents.append(importer.onto.Concept('Serotonin'))
 #         parents.append(importer.onto.Concept('dopamine'))
@@ -196,7 +196,7 @@ import xmindimport
 #     def test_bridge_question(self):
 #         importer = self.xmindImporter
 #         xid = '49a1au2r1i2mvpkufnrs18lb2h'
-#         question = importer.activeManager.getTagById(xid)
+#         question = importer.activeManager.get_tag_by_id(xid)
 #         parent = importer.onto.Concept('MAO')
 #         ref = 'biological psychology<li>investigates: information transfer and processing</li><li>modulated by: ' \
 #               'enzymes</li><li>example: MAO</li>'
@@ -292,7 +292,7 @@ def test_xmind_importer(xmind_importer):
     # when
     cut = xmind_importer
     # then
-    assert [x.file for x in cut.x_managers] == expected_x_manager_files
+    assert [x.get_file() for x in cut.x_managers] == expected_x_manager_files
 
 
 def test_run(mocker, xmind_importer, smr_world_for_tests):
@@ -398,15 +398,29 @@ def test_import_sheet(xmind_importer, mocker, x_manager):
     sheet_2_import = 'biological psychology'
     cut = xmind_importer
     mocker.patch.object(cut, "mw")
-    mocker.patch.object(cut, "import_node")
+    mocker.patch.object(cut, "import_node_if_concept")
     cut.active_manager = x_manager
-    mocker.patch.object(cut, "get_answer_dict")
     # when
     cut.import_sheet(sheet_2_import)
     # then
     assert cut.mw.progress.update.call_count == 1
     assert cut.mw.app.processEvents.call_count == 1
     assert cut.mw.smr_world.add_xmind_sheet.call_count == 1
-    assert cut.import_node.call_count == 1
+    assert cut.import_node_if_concept.call_count == 1
     assert cut.current_sheet_import == sheet_2_import
-    assert cut.get_answer_dict.call_count == 1
+
+
+def test_import_node_if_concept(mocker, xmind_importer, tag_for_tests):
+    # given
+    cut = xmind_importer
+    mocker.patch.object(cut, "active_manager")
+    mocker.patch.object(cut, "onto")
+    mocker.patch.object(cut, "mw")
+    mocker.patch.object(cut, "import_edge")
+    # when
+    cut.import_node_if_concept(node=tag_for_tests, root=True)
+    # then
+    assert cut.active_manager.get_node_content.call_count == 1
+    assert cut.onto.add_concept.call_count == 1
+    assert cut.mw.smr_world.add_xmind_node.call_count == 1
+    assert cut.import_edge.call_count == 2

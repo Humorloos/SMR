@@ -66,6 +66,7 @@ CREATE TABLE smr_triples
     child_node_id   TEXT,
     ontology_storid INTEGER,
     card_id         INTEGER,
+    child_node_ord INTEGER,
     PRIMARY KEY (parent_node_id, edge_id, child_node_id),
     FOREIGN KEY (parent_node_id) REFERENCES xmind_nodes (node_id)
         ON DELETE CASCADE

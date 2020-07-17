@@ -1,6 +1,8 @@
 import pytest
 
 import xontology
+import XmindImport.tests.constants as cts
+
 # class TestGetQuestion(TestXOntology):
 #     def test_get_question(self):
 #         x_id = '08eq1rdricsp1nt1b7aa181sq4'
@@ -35,15 +37,14 @@ import xontology
 #     def test_get_note_triples(self):
 #         a = self.x_ontology.getNoteTriples()
 #         self.fail()
-DECK_ID = "99999"
 
 
 @pytest.fixture
-def x_ontology(mocker, smr_world_for_tests):
+def x_ontology(mocker, empty_smr_world):
     mocker.patch('xontology.mw')
-    xontology.mw.smr_world = smr_world_for_tests
+    xontology.mw.smr_world = empty_smr_world
     mocker.spy(xontology.XOntology, "_set_up_classes")
-    yield xontology.XOntology(DECK_ID)
+    yield xontology.XOntology("99999")
 
 
 def test_xontology(x_ontology):
@@ -52,5 +53,12 @@ def test_xontology(x_ontology):
     # then
     cut._set_up_classes.assert_called()
     assert cut.field_translator is not None
-    assert list(cut.graph.execute(
-        "SELECT * FROM ontology_lives_in_deck WHERE deck_id = {}".format(int(DECK_ID))).fetchall())[0] == (99999, 3)
+
+
+def test_add_concept(x_ontology):
+    # given
+    cut = x_ontology
+    # when
+    cut.add_concept(node_content=cts.NEUROTRANSMITTERS_NODE_CONTENT)
+    # then
+    assert isinstance(getattr(cut, cts.NEUROTRANSMITTERS_CLASS_NAME), cut.Concept)

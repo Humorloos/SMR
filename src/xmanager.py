@@ -82,7 +82,7 @@ def get_os_mod(file):
 
 
 def get_parent_a_topics(q_topic, parent_q):
-    parent_q_children = getChildnodes(parent_q)
+    parent_q_children = get_child_nodes(parent_q)
     parent_topic = next(t for t in parent_q_children if
                         q_topic.text in t.text)
     if is_empty_node(parent_topic):
@@ -115,10 +115,11 @@ def isQuestionNode(tag, level=0):
     return isQuestionNode(tag.parent.parent.parent, level + 1)
 
 
-def getChildnodes(tag):
+def get_child_nodes(tag: Tag):
     """
-    :param tag: the tag to get the childnodes for
-    :return: childnodes as tags, empty list if it doesn't have any
+    Gets all nodes directly following the node represented by the specified tag
+    :param tag: the tag representing the node to get the child nodes for
+    :return: the child nodes as a list of tags, an empty list if it doesn't have any
     """
     try:
         return tag.find('children', recursive=False).find(
@@ -139,7 +140,7 @@ def is_anki_question(tag):
         return False
     if is_empty_node(tag):
         return False
-    children = getChildnodes(tag)
+    children = get_child_nodes(tag)
     if len(children) == 0:
         return False
     for child in children:
@@ -177,7 +178,7 @@ def is_empty_node(tag: Tag):
 
 class XManager:
     def __init__(self, file):
-        self.file = file
+        self._file = file
         self.xZip = zipfile.ZipFile(file, 'r')
         self.soup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
         self.manifest = BeautifulSoup(self.xZip.read("META-INF/manifest.xml"), features='html.parser')
@@ -197,6 +198,9 @@ class XManager:
         if not self._sheets:
             self._register_sheets()
         return self._sheets
+
+    def get_file(self):
+        return self._file
 
     def get_sheet_id(self, sheet: str):
         """
@@ -219,7 +223,7 @@ class XManager:
     def get_answer_nodes(self, tag):
         return [{'src': n, 'crosslink': '' if not is_crosslink_node(n)
                 else self.get_tag_by_id(getNodeCrosslink(n))} for n in
-                getChildnodes(tag) if not is_empty_node(n)]
+                get_child_nodes(tag) if not is_empty_node(n)]
 
     def getAttachment(self, identifier, directory):
         # extract attachment to anki media directory
@@ -277,7 +281,7 @@ class XManager:
 
     def get_remote_questions(self, sheet_id):
         remote_questions = dict()
-        for t in next(v for v in self._sheets.values() if
+        for t in next(v for v in self.get_sheets().values() if
                       v['tag']['id'] == sheet_id)['nodes']:
             if is_anki_question(t):
                 answers = dict()
@@ -297,7 +301,7 @@ class XManager:
 
     def get_remote_sheets(self):
         content_keys = self.get_content_sheets()
-        content_sheets = [self._sheets[s] for s in content_keys]
+        content_sheets = [self.get_sheets()[s] for s in content_keys]
         sheets = dict()
         for s in content_sheets:
             sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
@@ -314,7 +318,7 @@ class XManager:
     def remote_file(self, sheets=None):
         doc_mod = self.get_map_last_modified()
         os_mod = self.get_file_last_modified()
-        remote = {'file': self.file, 'xMod': doc_mod, 'osMod': os_mod,
+        remote = {'file': self._file, 'xMod': doc_mod, 'osMod': os_mod,
                   'sheets': sheets}
         return remote
 
@@ -323,14 +327,22 @@ class XManager:
         Gets the timestamp of the last time the XManagers file was edited according to the file system
         :return: the timestamp (Real value)
         """
-        return get_os_mod(self.file)
+        return get_os_mod(self._file)
 
     def get_map_last_modified(self):
         """
-        Gets the internally saved timestamp of the last time the file was saved
+        Gets the internally saved timestamp of the last time the file was modified
         :return: the timestamp (integer value)
         """
         return self.soup.find('xmap-content')['timestamp']
+
+    def get_sheet_last_modified(self, sheet: str):
+        """
+        Gets the internally saved timestamp of the last time the sheet with the provided name was modified
+        :param sheet: name of the sheet to get the timestamp for
+        :return: the timestamp (integer)
+        """
+        return self.get_sheets()[sheet]['tag']['timestamp']
 
     def get_root_node(self, sheet: str):
         """
@@ -338,11 +350,11 @@ class XManager:
         :param sheet: the sheet to get the root topic for
         :return: the tag representing the root node
         """
-        return self._sheets[sheet]['tag'].topic
+        return self.get_sheets()[sheet]['tag'].topic
 
     def remove_node(self, a_id):
         tag = self.get_tag_by_id(a_id)
-        if not getChildnodes(tag):
+        if not get_child_nodes(tag):
             tag.decompose()
             self.tag_list.remove(tag)
             self.did_introduce_changes = True
@@ -422,11 +434,11 @@ class XManager:
     def updateZip(self):
         """ taken from https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file-using-python, replaces one file in a zipfile"""
         # generate a temp file
-        tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(self.file))
+        tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(self._file))
         os.close(tmpfd)
 
         # create a temp copy of the archive without filename
-        with zipfile.ZipFile(self.file, 'r') as zin:
+        with zipfile.ZipFile(self._file, 'r') as zin:
             with zipfile.ZipFile(tmpname, 'w') as zout:
                 zout.comment = zin.comment  # preserve the comment
                 for item in zin.infolist():
@@ -436,11 +448,11 @@ class XManager:
                         zout.writestr(item, zin.read(item.filename))
 
         # replace with the temp archive
-        os.remove(self.file)
-        os.rename(tmpname, self.file)
+        os.remove(self._file)
+        os.rename(tmpname, self._file)
 
         # now add filename with its new data
-        with zipfile.ZipFile(self.file, mode='a',
+        with zipfile.ZipFile(self._file, mode='a',
                              compression=zipfile.ZIP_DEFLATED) as zf:
             zf.writestr('content.xml', str(self.soup))
             for file in os.listdir(self.srcDir):
@@ -450,7 +462,7 @@ class XManager:
                         data=str(self.manifest))
 
     def get_content_sheets(self):
-        return [k for k in self._sheets.keys() if k != 'ref']
+        return [k for k in self.get_sheets().keys() if k != 'ref']
 
     def get_or_compute_tag_list(self):
         """
@@ -461,7 +473,7 @@ class XManager:
         if not self.tag_list:
             # Nested list comprehension explained:
             # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
-            self.tag_list = [t for s in self._sheets.values() for t in s['nodes']]
+            self.tag_list = [t for s in self.get_sheets().values() for t in s['nodes']]
         return self.tag_list
 
     def ref_and_sort_id(self, q_topic):
@@ -489,9 +501,9 @@ class XManager:
         Finds the names of files to which the XManager has references to. Files are referenced in a sheet titled "ref"
         """
         self._referenced_files = []
-        for sheet in self._sheets.values():
+        for sheet in self.get_sheets().values():
             # Get reference sheets
             if sheet['tag']('title', recursive=False)[0].text == 'ref':
-                ref_tags = getChildnodes(sheet['tag'].topic)
+                ref_tags = get_child_nodes(sheet['tag'].topic)
                 ref_paths = (getNodeHyperlink(t) for t in ref_tags)
                 self._referenced_files = [clean_ref_path(p) for p in ref_paths if p is not None]

@@ -1,28 +1,16 @@
-import os
+from sqlite3 import IntegrityError
 
+import XmindImport.tests.constants as cts
 import pytest
-import smrworld
-from XmindImport.tests.constants import TEST_DECK_ID, EXAMPLE_MAP_PATH
 
 
-@pytest.fixture
-def smr_world():
-    # modify smrworld so that the world that is loaded is not the actual world in user_files but an empty World
-    test_world = "testworld.sqlite3"
-    standard_world = smrworld.FILE_NAME
-    smrworld.FILE_NAME = test_world
-    yield smrworld.SmrWorld()
-    smrworld.FILE_NAME = standard_world
-    os.unlink(os.path.join(smrworld.USER_PATH, test_world))
-
-
-def test_set_up(smr_world, empty_anki_collection):
+def test_set_up(empty_smr_world, empty_anki_collection):
     # given
     expected_tables = ["store", "objs", "datas", "ontologies", "ontology_alias", "prop_fts", "resources",
                        "ontology_lives_in_deck", "xmind_files", "xmind_sheets", "xmind_edges", "smr_notes",
                        "xmind_nodes", "smr_triples"]
     expected_databases = [0]
-    cut = smr_world
+    cut = empty_smr_world
     # when
     cut.set_up()
     smrworld_tables = [r[0] for r in
@@ -35,10 +23,45 @@ def test_set_up(smr_world, empty_anki_collection):
 
 
 def test_add_xmind_file(smr_world_for_tests, x_manager):
-    expected_entry = (EXAMPLE_MAP_PATH, 1579197475503, 1583751104.0, int(TEST_DECK_ID))
+    expected_entry = (cts.EXAMPLE_MAP_PATH, 1594823958217, 1594823958.8585837, int(cts.TEST_DECK_ID))
     # given
     cut = smr_world_for_tests
     # when
-    cut.add_xmind_file(x_manager=x_manager, deck_id=TEST_DECK_ID)
+    cut.add_xmind_file(x_manager=x_manager, deck_id=cts.TEST_DECK_ID)
     # then
-    assert list(cut.graph.execute("SELECT * FROM main.xmind_files").fetchall())[0] == expected_entry
+    assert list(cut.graph.execute("SELECT * FROM main.xmind_files").fetchall())[1] == expected_entry
+
+
+def test_add_xmind_sheet(smr_world_for_tests, x_manager):
+    # given
+    expected_entry = ('2485j5qgetfevlt00vhrn53961', cts.TEST_FILE_PATH, 1594823927933)
+    cut = smr_world_for_tests
+    manager = x_manager
+    manager._file = cts.TEST_FILE_PATH
+    # when
+    cut.add_xmind_sheet(x_manager=manager, sheet='biological psychology')
+    # then
+    assert list(cut.graph.execute("SELECT * FROM main.xmind_sheets").fetchall())[1] == expected_entry
+
+
+def test_add_xmind_sheet_wrong_path(smr_world_for_tests, x_manager):
+    # given
+    cut = smr_world_for_tests
+    manager = x_manager
+    manager._file = 'wrong path'
+    # then
+    with pytest.raises(IntegrityError):
+        # when
+        cut.add_xmind_sheet(x_manager=manager, sheet='biological psychology')
+
+
+def test_add_xmind_node(smr_world_for_tests, x_manager):
+    # given
+    expected_entry = ('4r6avbt0pbuam4fg07jod0ubec', 'neurotransmitters', 'attachments/629d18n2i73im903jkrjmr98fg.png',
+                      'None', 153, 1578314907411)
+    cut = smr_world_for_tests
+    # when
+    cut.add_xmind_node(node=x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID),
+                       node_content=cts.NEUROTRANSMITTERS_NODE_CONTENT, ontology_storid=cts.TEST_CONCEPT_STORID)
+    # then
+    assert list(cut.graph.execute("SELECT * FROM main.xmind_nodes").fetchall())[0] == expected_entry

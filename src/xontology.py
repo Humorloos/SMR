@@ -122,9 +122,9 @@ class XOntology(Ontology):
         :return: The answer concept
         """
         answer_content = content_from_field(answer_field)
-        answer_concept = self.add_concept(nodeContent=answer_content,
-                                          q_id=rel_dict['x_id'],
-                                          a_id=a_id, file=rel_dict['doc'])
+        answer_concept = self.add_concept(node_content=answer_content,
+                                          question_xmind_id=rel_dict['x_id'],
+                                          answer_xmind_id=a_id, file=rel_dict['doc'])
         if not parents:
             parents = set(q['s'] for q in self.get_question(rel_dict['x_id']))
         for parent in parents:
@@ -132,43 +132,22 @@ class XOntology(Ontology):
                               parent=parent, rel_dict=rel_dict)
         return answer_concept
 
-    def add_concept(self, nodeContent, q_id, a_id, file, root=False,
-                    crosslink=None):
+    def add_concept(self, node_content: dict, root=False):
         """
-        Adds a new concept to the ontology
-        :param nodeContent: Content dict containing concept's title, image, and
-        media.
-        :param a_id: Id attribute of the topic in the xmind file
-        :param file: Path to the xmind file
-        :param q_id: Id attribute of the question topic in the xmind file
+        Adds a new concept to the ontology and returns it
+        :param node_content: Content dict containing concept's title, image, and media.
         :param root: Whether the concept is the xmind file's root or not
-        :param crosslink: If the note contains a crosslink
-        :return: Answer Concept
+        :return: the concept
         """
         if root:
-            concept = self.Root(self.field_translator.class_from_content(nodeContent))
-            q_id = 'root'
+            generate_concept = self.Root
         else:
-            # Some concept names (e.g. 'are') can lead to errors, catch
-            # them
-            try:
-                concept = self.Concept(self.field_translator.class_from_content(
-                    nodeContent))
-            except TypeError:
-                raise NameError('Invalid concept name')
-        if nodeContent['media']['image']:
-            concept.Image = nodeContent['media']['image']
-        if nodeContent['media']['media']:
-            concept.Media = nodeContent['media']['media']
-        concept.Doc = file
-        id_dict = {'src': a_id,
-                   'crosslink': crosslink}
-        if not concept.Xid:
-            concept.Xid.append(json.dumps({q_id: id_dict}))
-        else:
-            id_prop = json.loads(concept.Xid[0])
-            id_prop[q_id] = id_dict
-            concept.Xid[0] = (json.dumps(id_prop))
+            generate_concept = self.Concept
+        # Some concept names (e.g. 'are') can lead to errors, so catch them
+        try:
+            concept = generate_concept(self.field_translator.class_from_content(node_content))
+        except TypeError:
+            raise NameError('Invalid concept name')
         return concept
 
     def add_relation(self, child, class_text, parent, rel_dict):
