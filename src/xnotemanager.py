@@ -357,28 +357,26 @@ class FieldTranslator:
 
     def field_from_class(self, class_name):
         class_name = re.sub('(.)(ximage_)', '\\1<br>\\2', class_name)
-        class_name = self.field_regex.sub(
-            lambda mo: self.field_re_dict[mo.string[mo.start():mo.end()]],
-            class_name)
-        class_name = re.sub('(_extension_)(' + '|'.join(X_IMG_EXTENSIONS) + ')',
-                            '.\\2">', class_name)
-        class_name = re.sub('(_extension_)(' + '|'.join(X_MEDIA_EXTENSIONS) +
-                            ')', '.\\2]', class_name)
+        class_name = self.field_regex.sub(lambda mo: self.field_re_dict[mo.string[mo.start():mo.end()]], class_name)
+        class_name = re.sub('(_extension_)(' + '|'.join(X_IMG_EXTENSIONS) + ')', '.\\2">', class_name)
+        class_name = re.sub('(_extension_)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')', '.\\2]', class_name)
         class_name = class_name.replace("_", " ")
         return class_name
 
-    def class_from_content(self, content):
+    def class_from_content(self, content: dict):
+        """
+        converts a node content dictionary into a string that can be used as an ontology class name
+        :param content: xmind node content dictionary of the form {'content': ..., 'media': {'image': ...,
+        'media': ...}}
+        :return: a class name generated from the node's content
+        """
         classified = content['content'].replace(" ", "_")
         if content['media']['image']:
-            classified += "ximage_" + re.sub(
-                'attachments/', '', content['media']['image'])
-            classified = re.sub('(\\.)(' + '|'.join(X_IMG_EXTENSIONS) + ')',
-                                '_extension_\\2', classified)
+            classified += "ximage_" + re.sub('attachments/', '', content['media']['image'])
+            classified = re.sub('(\\.)(' + '|'.join(X_IMG_EXTENSIONS) + ')', '_extension_\\2', classified)
         if content['media']['media']:
-            classified += "xmedia_" + re.sub(
-                'attachments/', '', content['media']['media'])
-            classified = re.sub('(\\.)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')',
-                                '_extension_\\2', classified)
-        classified = self.inverse_regex.sub(lambda mo: self.inverse_dict[
-            re.escape(mo.string[mo.start():mo.end()])], classified)
+            classified += "xmedia_" + re.sub('attachments/', '', content['media']['media'])
+            classified = re.sub('(\\.)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')', '_extension_\\2', classified)
+        classified = self.inverse_regex.sub(lambda mo: self.inverse_dict[re.escape(mo.string[mo.start():mo.end()])],
+                                            classified)
         return classified

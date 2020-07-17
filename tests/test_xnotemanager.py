@@ -26,12 +26,6 @@
 #         act = manager.get_local(file=file)
 #         self.fail()
 #
-#
-# class TestFieldTranslator(TestCase):
-#     def setUp(self):
-#         self.field_translator = FieldTranslator()
-#
-#
 # class FieldFromClass(TestFieldTranslator):
 #     def test_only_text(self):
 #         translator = self.field_translator
@@ -68,38 +62,6 @@
 #         exp = 'biological psychology (text in parenthses)'
 #         self.assertEqual(exp, act)
 #
-#
-# class TestClassify(TestFieldTranslator):
-#     def test_only_text(self):
-#         content = {"content": "biological psychology",
-#                    "media": {"image": None, "media": None}}
-#         act = self.field_translator.class_from_content(content)
-#         self.fail()
-#
-#     def test_only_image(self):
-#         content = {"content": "", "media": {
-#             "image": "attachments/09r2e442o8lppjfeblf7il2rmd.png",
-#             "media": None}}
-#         act = self.field_translator.class_from_content(content)
-#         exp = 'ximage_09r2e442o8lppjfeblf7il2rmd_extension_png'
-#         self.assertEqual(exp, act)
-#
-#     def test_only_media(self):
-#         content = {"content": "", "media": {
-#             "image": None,
-#             "media": "attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3"}}
-#         act = self.field_translator.class_from_content(content)
-#         exp = 'xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3'
-#         self.assertEqual(exp, act)
-#
-#     def test_parentheses(self):
-#         content = {"content": "biological psychology (text in parenthses)",
-#                    "media": {"image": None, "media": None}}
-#         act = self.field_translator.class_from_content(content)
-#         exp = 'biological_psychology_xlparenthesis_text_in_parenthses_xrparenthesis'
-#         self.assertEqual(exp, act)
-#
-#
 # class TestContentFromField(TestCase):
 #     def test_content_from_field(self):
 #         field = 'MAO is not a neurotransmitter[sound:3lv2k1fhghfb9ghfb8depnqvdt.mp3]<br><img src="09r2e442o8lppjfeblf7il2rmd.png">'
@@ -110,3 +72,50 @@
 #         field = 'former image'
 #         act = content_from_field(field)
 #         self.fail()
+import pytest
+from xnotemanager import FieldTranslator
+
+
+@pytest.fixture
+def field_translator():
+    yield FieldTranslator()
+
+
+def test_class_from_content(field_translator):
+    # given
+    expected_class = 'biological_psychology'
+    content = {"content": "biological psychology", "media": {"image": None, "media": None}}
+    # when
+    ontology_class = field_translator.class_from_content(content)
+    # then
+    assert ontology_class == expected_class
+
+
+def test_class_from_content_only_image(field_translator):
+    # given
+    expected_class = 'ximage_09r2e442o8lppjfeblf7il2rmd_extension_png'
+    content = {"content": "", "media": {"image": "attachments/09r2e442o8lppjfeblf7il2rmd.png", "media": None}}
+    # when
+    ontology_class = field_translator.class_from_content(content)
+    # then
+    assert ontology_class == expected_class
+
+
+def test_class_from_content_only_media(field_translator):
+    # given
+    expected_class = 'xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3'
+    content = {"content": "", "media": {"image": None, "media": "attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3"}}
+    # when
+    ontology_class = field_translator.class_from_content(content)
+    # then
+    assert ontology_class == expected_class
+
+
+def test_class_from_content_parentheses(field_translator):
+    # given
+    expected_class = 'biological_psychology_xlparenthesis_text_in_parenthses_xrparenthesis'
+    content = {"content": "biological psychology (text in parenthses)", "media": {"image": None, "media": None}}
+    # when
+    ontology_class = field_translator.class_from_content(content)
+    # then
+    assert ontology_class == expected_class
