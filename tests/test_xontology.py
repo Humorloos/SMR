@@ -43,6 +43,7 @@ import XmindImport.tests.constants as cts
 def x_ontology(mocker, empty_smr_world):
     mocker.patch('xontology.mw')
     xontology.mw.smr_world = empty_smr_world
+    xontology.mw.smr_world.set_up()
     mocker.spy(xontology.XOntology, "_set_up_classes")
     yield xontology.XOntology("99999")
 

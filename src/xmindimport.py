@@ -223,18 +223,21 @@ class XmindImporter(NoteImporter):
     def get_file_dict(self, path):
         return [path, self.active_manager.file]
 
-    def import_node_if_concept(self, node: bs4.Tag, root=False):
+    def import_node_if_concept(self, node: bs4.Tag, root=False, order_number=1):
         """
         If it is not empty, imports the node represented by the specified tag as a concept into the ontology and as
         a node into the smr world.
         :param node: the tag representing the node to import
         :param root: whether or not the concept to import is the root of the respective map
+        :param order_number: order number of the node with respect to its siblings
         """
         # If the node is empty do not create a concept
         if not is_empty_node(node):
             node_content = self.active_manager.get_node_content(node)
             concept = self.onto.add_concept(node_content=node_content, root=root)
-            self.mw.smr_world.add_xmind_node(node=node, node_content=node_content, ontology_storid=concept.storid)
+            self.mw.smr_world.add_xmind_node(node=node, node_content=node_content, ontology_storid=concept.storid,
+                                             sheet_id=self.active_manager.get_sheet_id(self.current_sheet_import),
+                                             order_number=order_number)
 
         following_relationships = get_child_nodes(node)
         for question_index, following_relationship in enumerate(following_relationships, start=1):

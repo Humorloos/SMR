@@ -64,18 +64,23 @@ class SmrWorld(World):
             sheet_id=x_manager.get_sheet_id(sheet), path=x_manager.get_file(),
             last_modified=x_manager.get_sheet_last_modified(sheet)))
 
-    def add_xmind_node(self, node: Tag, node_content: dict, ontology_storid: int):
+    def add_xmind_node(self, node: Tag, node_content: dict, ontology_storid: int, sheet_id: str, order_number: int):
         """
         Adds an entry for an xmind node to the relation xmind_nodes
         :param node: the tag representing the node to add
         :param node_content: the node's content as a dictionary
         :param ontology_storid: the storid of the concept in the ontology that represents the node
+        :param sheet_id: xmind id of the sheet that contains the node
+        :param order_number: order number of the node with respect to its siblings 
         """
         self.graph.execute(
-            "INSERT INTO main.xmind_nodes VALUES ('{node_id}', '{title}', '{image}', '{link}', {ontology_storid}, "
-            "{last_modified})".format(node_id=node['id'], title=node_content['content'],
-                                      image=node_content['media']['image'], link=node_content['media']['media'],
-                                      ontology_storid=ontology_storid, last_modified=node['timestamp']))
+            "INSERT INTO main.xmind_nodes VALUES ('{node_id}', '{sheet_id}', '{title}', '{image}', '{link}', "
+            "{ontology_storid}, {last_modified}, {ord})".format(node_id=node['id'], sheet_id=sheet_id,
+                                                                title=node_content['content'],
+                                                                image=node_content['media']['image'],
+                                                                link=node_content['media']['media'],
+                                                                ontology_storid=ontology_storid,
+                                                                last_modified=node['timestamp'], ord=order_number))
 
     def attach_anki_collection(self, anki_collection):
         self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(

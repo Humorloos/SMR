@@ -57,11 +57,14 @@ def test_add_xmind_sheet_wrong_path(smr_world_for_tests, x_manager):
 
 def test_add_xmind_node(smr_world_for_tests, x_manager):
     # given
-    expected_entry = ('4r6avbt0pbuam4fg07jod0ubec', 'neurotransmitters', 'attachments/629d18n2i73im903jkrjmr98fg.png',
-                      'None', 153, 1578314907411)
+    expected_entry = (
+        '4r6avbt0pbuam4fg07jod0ubec', cts.TEST_SHEET_ID, 'neurotransmitters',
+        'attachments/629d18n2i73im903jkrjmr98fg.png',
+        'None', 153, 1578314907411, 1)
     cut = smr_world_for_tests
     # when
     cut.add_xmind_node(node=x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID),
-                       node_content=cts.NEUROTRANSMITTERS_NODE_CONTENT, ontology_storid=cts.TEST_CONCEPT_STORID)
+                       node_content=cts.NEUROTRANSMITTERS_NODE_CONTENT, ontology_storid=cts.TEST_CONCEPT_STORID,
+                       sheet_id=cts.TEST_SHEET_ID, order_number=1)
     # then
     assert list(cut.graph.execute("SELECT * FROM main.xmind_nodes").fetchall())[0] == expected_entry

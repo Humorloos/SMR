@@ -410,15 +410,23 @@ def test_import_sheet(xmind_importer, mocker, x_manager):
     assert cut.current_sheet_import == sheet_2_import
 
 
-def test_import_node_if_concept(mocker, xmind_importer, tag_for_tests):
+@pytest.fixture
+def xmind_importer_import_node_if_concept(mocker, xmind_importer):
+    importer = xmind_importer
+    importer.current_sheet_import = "biological psychology"
+    importer.active_manager = importer.x_managers[0]
+    mocker.patch.object(importer.active_manager, "get_node_content")
+    mocker.patch.object(importer, "onto")
+    mocker.patch.object(importer, "mw")
+    mocker.patch.object(importer, "import_edge")
+    yield importer
+
+
+def test_import_node_if_concept(xmind_importer_import_node_if_concept, tag_for_tests):
     # given
-    cut = xmind_importer
-    mocker.patch.object(cut, "active_manager")
-    mocker.patch.object(cut, "onto")
-    mocker.patch.object(cut, "mw")
-    mocker.patch.object(cut, "import_edge")
+    cut = xmind_importer_import_node_if_concept
     # when
-    cut.import_node_if_concept(node=tag_for_tests, root=True)
+    cut.import_node_if_concept(node=tag_for_tests, root=True, order_number=1)
     # then
     assert cut.active_manager.get_node_content.call_count == 1
     assert cut.onto.add_concept.call_count == 1
@@ -426,16 +434,12 @@ def test_import_node_if_concept(mocker, xmind_importer, tag_for_tests):
     assert cut.import_edge.call_count == 2
 
 
-def test_import_node_if_concept_no_concept(mocker, xmind_importer, tag_for_tests):
+def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept):
     # given
-    cut = xmind_importer
-    mocker.patch.object(cut, "active_manager")
-    mocker.patch.object(cut, "onto")
-    mocker.patch.object(cut, "mw")
-    mocker.patch.object(cut, "import_edge")
+    cut = xmind_importer_import_node_if_concept
     # when
-    cut.import_node_if_concept(node=xmind_importer.x_managers[0].get_tag_by_id("6b0ho6vvcs4pcacchhsgju7513"),
-                               root=False)
+    cut.import_node_if_concept(node=cut.x_managers[0].get_tag_by_id("6b0ho6vvcs4pcacchhsgju7513"),
+                               root=False, order_number=1)
     # then
     assert cut.active_manager.get_node_content.call_count == 0
     assert cut.onto.add_concept.call_count == 0
