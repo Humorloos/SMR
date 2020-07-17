@@ -424,3 +424,21 @@ def test_import_node_if_concept(mocker, xmind_importer, tag_for_tests):
     assert cut.onto.add_concept.call_count == 1
     assert cut.mw.smr_world.add_xmind_node.call_count == 1
     assert cut.import_edge.call_count == 2
+
+
+def test_import_node_if_concept_no_concept(mocker, xmind_importer, tag_for_tests):
+    # given
+    cut = xmind_importer
+    mocker.patch.object(cut, "active_manager")
+    mocker.patch.object(cut, "onto")
+    mocker.patch.object(cut, "mw")
+    mocker.patch.object(cut, "import_edge")
+    # when
+    cut.import_node_if_concept(node=xmind_importer.x_managers[0].get_tag_by_id("6b0ho6vvcs4pcacchhsgju7513"),
+                               root=False)
+    # then
+    assert cut.active_manager.get_node_content.call_count == 0
+    assert cut.onto.add_concept.call_count == 0
+    assert cut.mw.smr_world.add_xmind_node.call_count == 0
+    assert cut.import_edge.call_count == 1
+
