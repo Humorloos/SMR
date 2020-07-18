@@ -34,14 +34,8 @@ def replaceSound(content: str):
 
 # Receives a sortId of an anki note and returns the path that leads to the
 # corresponding node in the xmind document
-def getCoordsFromId(sortId):
-    if sortId == '':
-        return '0'
-    indices = list(map(lambda index: str(ord(index) - 122), sortId))
-    coords = indices[0]
-    for index in indices[1:]:
-        coords += '.' + index
-    return coords
+def get_edge_coordinates_from_parent_node(order_number, parent_node_ids):
+    raise NotImplementedError
 
 
 # receives a topic's id attribute, a BeautifulSoup object representing an

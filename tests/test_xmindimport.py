@@ -1,6 +1,6 @@
 import pytest
 import xmindimport
-
+import XmindImport.tests.constants as cts
 #
 #
 # class TestGetValidSheets(TestXmindImporter):
@@ -271,11 +271,15 @@ import xmindimport
 #         os.remove(importer.statusManager.status_file)
 #         self.fail()
 from XmindImport.tests.constants import EXAMPLE_MAP_PATH
-from consts import X_MODEL_NAME
+from bs4 import Tag
+from consts import X_MODEL_NAME, X_MAX_ANSWERS
+from xmanager import get_node_content, get_non_empty_sibling_nodes, get_parent_node
+
+from anki import Collection
 
 
 @pytest.fixture
-def xmind_importer(empty_anki_collection):
+def xmind_importer(empty_anki_collection: Collection) -> xmindimport.XmindImporter:
     """
     XmindImporter instance for file example map.xmind
     """
@@ -411,38 +415,143 @@ def test_import_sheet(xmind_importer, mocker, x_manager):
 
 
 @pytest.fixture
-def xmind_importer_import_node_if_concept(mocker, xmind_importer):
+def active_xmind_importer(xmind_importer):
     importer = xmind_importer
     importer.current_sheet_import = "biological psychology"
     importer.active_manager = importer.x_managers[0]
-    mocker.patch.object(importer.active_manager, "get_node_content")
-    mocker.patch.object(importer, "onto")
+    return importer
+
+
+@pytest.fixture
+def xmind_importer_import_node_if_concept(mocker, active_xmind_importer):
+    importer = active_xmind_importer
     mocker.patch.object(importer, "mw")
     mocker.patch.object(importer, "import_edge")
+    mocker.patch.object(importer, "import_triple")
     yield importer
 
 
-def test_import_node_if_concept(xmind_importer_import_node_if_concept, tag_for_tests):
+def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, tag_for_tests, x_ontology):
     # given
     cut = xmind_importer_import_node_if_concept
     # when
-    cut.import_node_if_concept(node=tag_for_tests, root=True, order_number=1)
+    cut.import_node_if_concept(node=tag_for_tests, concepts=[x_ontology.Root(
+        x_ontology.field_translator.class_from_content(get_node_content(tag_for_tests)))])
     # then
-    assert cut.active_manager.get_node_content.call_count == 1
-    assert cut.onto.add_concept.call_count == 1
+    assert cut.import_triple.call_count == 0
     assert cut.mw.smr_world.add_xmind_node.call_count == 1
     assert cut.import_edge.call_count == 2
 
 
-def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept):
+def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept, x_ontology):
     # given
     cut = xmind_importer_import_node_if_concept
+    node = cut.x_managers[0].get_tag_by_id(cts.EMPTY_NODE_TAG_ID)
+    concepts = [x_ontology.concept_from_node_content(get_node_content(t)) for t in
+                get_non_empty_sibling_nodes(node)]
+    parent_edge = get_parent_node(node)
+    parent_node = get_parent_node(parent_edge)
     # when
-    cut.import_node_if_concept(node=cut.x_managers[0].get_tag_by_id("6b0ho6vvcs4pcacchhsgju7513"),
-                               root=False, order_number=1)
+    cut.import_node_if_concept(
+        node=node, concepts=concepts, parent_node_ids=[parent_node['id']],
+        parent_concepts=[x_ontology.concept_from_node_content(get_node_content(parent_node))],
+        parent_edge_id=parent_edge['id'],
+        parent_relationship_class_name=x_ontology.field_translator.class_from_content(get_node_content(parent_edge)),
+        order_number=5)
     # then
-    assert cut.active_manager.get_node_content.call_count == 0
-    assert cut.onto.add_concept.call_count == 0
+    assert cut.import_triple.call_count == 0
     assert cut.mw.smr_world.add_xmind_node.call_count == 0
     assert cut.import_edge.call_count == 1
 
+
+def test_import_node_if_concept_following_multiple_concepts(xmind_importer_import_node_if_concept, x_ontology):
+    # given
+    cut = xmind_importer_import_node_if_concept
+    node = cut.x_managers[0].get_tag_by_id("3oqcv5qlqhn28u1opce5i27709")
+    concepts = [x_ontology.concept_from_node_content(get_node_content(node))]
+    parent_edge = get_parent_node(node)
+    parent_nodes = get_non_empty_sibling_nodes(get_parent_node(parent_edge))
+    # when
+    cut.import_node_if_concept(
+        node=node, concepts=concepts, parent_node_ids=[n['id'] for n in parent_nodes],
+        parent_concepts=[x_ontology.concept_from_node_content(get_node_content(n)) for n in parent_nodes],
+        parent_edge_id=parent_edge['id'],
+        parent_relationship_class_name=x_ontology.field_translator.class_from_content(get_node_content(parent_edge)),
+        order_number=1)
+    # then
+    assert cut.import_triple.call_count == 4
+    assert cut.mw.smr_world.add_xmind_node.call_count == 1
+    assert cut.import_edge.call_count == 0
+
+
+@pytest.fixture
+def xmind_importer_import_edge(active_xmind_importer, mocker):
+    # given
+    importer = active_xmind_importer
+    mocker.patch.object(importer, "onto")
+    mocker.patch.object(importer, "mw")
+    mocker.patch.object(importer, "import_node_if_concept")
+    return importer
+
+
+def test_import_edge(xmind_importer_import_edge, x_ontology):
+    # given
+    cut = xmind_importer_import_edge
+    # when
+    cut.import_edge(order_number=1, edge=cut.active_manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID), parent_node_ids=[
+        cts.NEUROTRANSMITTERS_XMIND_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
+    # then
+    assert cut.onto.concept_from_node_content.call_count == 1
+    assert cut.mw.smr_world.add_xmind_edge.call_count == 1
+    assert cut.import_node_if_concept.call_count == 1
+
+
+def assert_import_edge_not_executed(cut):
+    assert cut.onto.concept_from_node_content.call_count == 0
+    assert cut.mw.smr_world.add_xmind_edge.call_count == 0
+    assert cut.import_node_if_concept.call_count == 0
+    assert cut.running is False
+
+
+def test_import_edge_no_child_nodes(xmind_importer_import_edge, x_ontology, mocker):
+    # given
+    cut = xmind_importer_import_edge
+    mocker.patch("xmindimport.get_child_nodes", return_value=[])
+    mocker.patch("xmindimport.get_edge_coordinates_from_parent_node", return_value='coordinates')
+    # when
+    cut.import_edge(order_number=1, edge=cut.active_manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID), parent_node_ids=[
+        cts.NEUROTRANSMITTERS_XMIND_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
+    # then
+    assert_import_edge_not_executed(cut)
+    assert cut.log == [
+        "Warning:\nA Question titled types (path coordinates) is missing answers. Please adjust your Concept Map and "
+        "try again."]
+
+
+def test_import_edge_too_many_child_nodes(xmind_importer_import_edge, x_ontology, mocker):
+    # given
+    cut = xmind_importer_import_edge
+    mocker.patch("xmindimport.get_child_nodes", return_value=[Tag(name='tag')] * (X_MAX_ANSWERS + 1))
+    mocker.patch("xmindimport.is_empty_node", return_value=False)
+    # when
+    cut.import_edge(order_number=1, edge=cut.active_manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID), parent_node_ids=[
+        cts.NEUROTRANSMITTERS_XMIND_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
+    # then
+    assert_import_edge_not_executed(cut)
+    assert cut.log == [
+        "Warning:\nA Question titled \"types\" has more than 20 answers. Make sure every Question in your Map is "
+        "followed by no more than 20 Answers and try again."]
+
+
+def test_import_edge_following_multiple_concepts(xmind_importer_import_edge, x_ontology):
+    # given
+    cut = xmind_importer_import_edge
+    edge = cut.active_manager.get_tag_by_id("61irckf1nloq42brfmbu0ke92v")
+    parent_node = get_parent_node(edge)
+    # when
+    cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node['id']],
+                    parent_concepts=[x_ontology.concept_from_node_content(get_node_content(parent_node))])
+    # then
+    assert cut.onto.concept_from_node_content.call_count == 4
+    assert cut.mw.smr_world.add_xmind_edge.call_count == 1
+    assert cut.import_node_if_concept.call_count == 5

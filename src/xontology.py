@@ -3,9 +3,11 @@ import os
 import types
 
 import owlready2
+from bs4 import Tag
 from consts import X_MAX_ANSWERS, USER_PATH
+from owlready2 import ThingClass
 from owlready2.namespace import Ontology
-from owlready2.prop import destroy_entity
+from owlready2.prop import destroy_entity, ObjectProperty
 from utils import file_dict
 from xnotemanager import FieldTranslator, content_from_field
 
@@ -37,19 +39,6 @@ def get_question_sets(q_id_elements):
     # Finally add the last triple_list to the question_list
     questionList.append(tripleList)
     return questionList
-
-
-def get_rel_dict(aIndex, image, media, x_id, ref, sortId, doc, sheet, tag):
-    return {
-        'aIndex': aIndex,
-        'image': image,
-        'media': media,
-        'x_id': x_id,
-        'ref': ref,
-        'sortId': sortId,
-        'doc': doc,
-        'sheet': sheet,
-        'tag': tag}
 
 
 def remove_answer_concept(answer_concept, q_id):
@@ -122,71 +111,56 @@ class XOntology(Ontology):
         :return: The answer concept
         """
         answer_content = content_from_field(answer_field)
-        answer_concept = self.add_concept(node_content=answer_content,
-                                          question_xmind_id=rel_dict['x_id'],
-                                          answer_xmind_id=a_id, file=rel_dict['doc'])
+        answer_concept = self.concept_from_node_content(node_content=answer_content,
+                                                        question_xmind_id=rel_dict['x_id'],
+                                                        answer_xmind_id=a_id, file=rel_dict['doc'])
         if not parents:
             parents = set(q['s'] for q in self.get_question(rel_dict['x_id']))
         for parent in parents:
-            self.add_relation(child=answer_concept, class_text=question_class,
-                              parent=parent, rel_dict=rel_dict)
+            self.add_relation(child_thing=answer_concept, relationship_class_name=question_class,
+                              parent_thing=parent, rel_dict=rel_dict)
         return answer_concept
 
-    def add_concept(self, node_content: dict, root=False):
+    def concept_from_node_content(self, node_content: dict, node_is_root: bool = False) -> ThingClass:
         """
         Adds a new concept to the ontology and returns it
         :param node_content: Content dict containing concept's title, image, and media.
-        :param root: Whether the concept is the xmind file's root or not
+        :param node_is_root: Whether the concept is the xmind file's root or not
         :return: the concept
         """
-        if root:
-            generate_concept = self.Root
+        if node_is_root:
+            generate_concept: ThingClass = self.Root
         else:
-            generate_concept = self.Concept
+            generate_concept: ThingClass = self.Concept
         # Some concept names (e.g. 'are') can lead to errors, so catch them
         try:
-            concept = generate_concept(self.field_translator.class_from_content(node_content))
+            concept: ThingClass = generate_concept(self.field_translator.class_from_content(node_content))
         except TypeError:
             raise NameError('Invalid concept name')
         return concept
 
-    def add_relation(self, child, class_text, parent, rel_dict):
-        relProp = getattr(self, class_text)
+    def add_relation(self, child_thing: ThingClass, relationship_class_name: str, parent_thing: ThingClass) -> type:
+        """
 
-        # Add objectproperty if not yet in ontology
-        if not relProp:
+        :param child_thing: ontology concept representing the child in the triple
+        :param relationship_class_name: class text of the relationship property between parent and child concept
+        :param parent_thing: ontology concept representing the parent in the triple
+        :return:
+        """
+        relationship_property: type = getattr(self, relationship_class_name)
+        # add objectproperty if not yet in ontology
+        if not relationship_property:
             with self:
-                relProp = types.new_class(
-                    class_text, (owlready2.ObjectProperty,))
-                relProp.domain = [self.Concept]
-                relProp.range = [self.Concept]
-
-        current_children = getattr(parent, class_text)
-        new_children = current_children + [child]
-        setattr(parent, class_text, new_children)
-
-        current_parents = getattr(child, 'Parent')
-        new_parents = current_parents + [parent]
-        setattr(child, 'Parent', new_parents)
-
-        # set annotation porperties for child relation
-        self.Reference[parent, relProp, child] = rel_dict['ref']
-        if rel_dict['sortId']:
-            self.SortId[parent, relProp, child] = rel_dict['sortId']
-        self.Doc[parent, relProp, child] = rel_dict['doc']
-        self.Sheet[parent, relProp, child] = rel_dict['sheet']
-        self.Xid[parent, relProp, child] = rel_dict['x_id']
-        if rel_dict['image']:
-            self.Image[parent, relProp, child] = rel_dict['image']
-        if rel_dict['media']:
-            self.Media[parent, relProp, child] = rel_dict['media']
-        self.NoteTag[parent, relProp, child] = rel_dict['tag']
-        self.AIndex[parent, relProp, child] = rel_dict['aIndex']
-
-        # set annotation properties for parent relation
-        self.Xid[child, self.Parent, parent] = rel_dict['x_id']
-
-        return relProp
+                relationship_property = types.new_class(relationship_class_name, (owlready2.ObjectProperty,))
+                relationship_property.domain = [self.Concept]
+                relationship_property.range = [self.Concept]
+        current_children = getattr(parent_thing, relationship_class_name)
+        new_children = current_children + [child_thing]
+        setattr(parent_thing, relationship_class_name, new_children)
+        current_parents = getattr(child_thing, 'Parent')
+        new_parents = current_parents + [parent_thing]
+        setattr(child_thing, 'Parent', new_parents)
+        return relationship_property
 
     def change_answer(self, q_id, a_id, a_field):
         answer = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
@@ -209,8 +183,8 @@ class XOntology(Ontology):
             rel_dict=rel_dict, question_class=question_class)
 
         for o in objects_2_answer:
-            self.add_relation(child=o['child'], class_text=o['class_text'],
-                              parent=new_answer, rel_dict=o['rel_dict'])
+            self.add_relation(child_thing=o['child'], relationship_class_name=o['class_text'],
+                              parent_thing=new_answer, rel_dict=o['rel_dict'])
 
     def change_question(self, x_id, new_question):
         """
@@ -245,7 +219,7 @@ class XOntology(Ontology):
         attributes of the question relation
         """
         self.add_relation(
-            child=child, class_text=class_text, parent=parent,
+            child_thing=child, relationship_class_name=class_text, parent_thing=parent,
             rel_dict=self.rel_dict_from_triple(question_triple=question_triple))
 
     def rel_dict_from_triple(self, question_triple):

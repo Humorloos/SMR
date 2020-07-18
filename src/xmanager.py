@@ -4,19 +4,23 @@ import os
 import shutil
 import tempfile
 import urllib.parse
-import zipfile
+from typing import Dict, List
+from zipfile import ZipFile, ZIP_DEFLATED
 
 from bs4 import BeautifulSoup, Tag
 from consts import X_MEDIA_EXTENSIONS
 from xnotemanager import ref_plus_question, ref_plus_answer, field_from_content, update_sort_id
 
 
-def clean_ref_path(path):
-    clean_path = path.replace('file://', '')
-    clean_path = clean_path.replace('%20', ' ')
-    clean_path = clean_path.split('/')
-    clean_path[0] = clean_path[0] + '\\'
-    clean_path = os.path.join(*clean_path)
+def clean_ref_path(path: str) -> str:
+    """
+    converts a path from the format that is provided in xmind files into the standard os format
+    :param path: the path from the xmind file
+    :return: the clean path in os format
+    """
+    path_elements: List[str] = path.replace('file://', '').replace('%20', ' ').split('/')
+    path_elements[0] = path_elements[0] + '\\'
+    clean_path: str = os.path.join(*path_elements)
     return clean_path
 
 
@@ -25,21 +29,9 @@ def get_ancestry(topic, descendants):
         descendants.reverse()
         return descendants
     else:
-        parent_topic = get_parent_topic(topic)
+        parent_topic = get_parent_node(topic)
         descendants.append(parent_topic)
         return get_ancestry(topic=parent_topic, descendants=descendants)
-
-
-def getNodeCrosslink(tag):
-    """
-    :param tag: tag to get the crosslink from
-    :return: node id of the node the crosslink refers to
-    """
-    href = getNodeHyperlink(tag)
-    if href and href.startswith('xmind:#'):
-        return href[7:]
-    else:
-        return None
 
 
 def getNodeHyperlink(tag):
@@ -92,14 +84,19 @@ def get_parent_a_topics(q_topic, parent_q):
 
 
 def get_parent_question_topic(tag):
-    parent_relation_topic = get_parent_topic(get_parent_topic(tag))
+    parent_relation_topic = get_parent_node(get_parent_node(tag))
     if is_anki_question(parent_relation_topic):
         return parent_relation_topic
     else:
         return get_parent_question_topic(parent_relation_topic)
 
 
-def get_parent_topic(tag):
+def get_parent_node(tag: Tag) -> Tag:
+    """
+    gets the tag representing the parent node of the node represented by the specified tag
+    :param tag: the tag representing the node to get the parent node for
+    :return: the tag representing the parent node
+    """
     return tag.parent.parent.parent
 
 
@@ -115,7 +112,7 @@ def isQuestionNode(tag, level=0):
     return isQuestionNode(tag.parent.parent.parent, level + 1)
 
 
-def get_child_nodes(tag: Tag):
+def get_child_nodes(tag: Tag) -> List[Tag]:
     """
     Gets all nodes directly following the node represented by the specified tag
     :param tag: the tag representing the node to get the child nodes for
@@ -126,6 +123,15 @@ def get_child_nodes(tag: Tag):
             'topics', recursive=False)('topic', recursive=False)
     except AttributeError:
         return []
+
+
+def get_non_empty_sibling_nodes(tag: Tag) -> List[Tag]:
+    """
+    gets all nodes that are siblings of the node represented by the specified tag and not empty
+    :param tag: the tag representing the node to get the sibling nodes for
+    :return: the sibling nodes as a list of tags
+    """
+    return [node for node in get_child_nodes(get_parent_node(tag)) if not is_empty_node(node)]
 
 
 def is_anki_question(tag):
@@ -176,14 +182,44 @@ def is_empty_node(tag: Tag):
     return True
 
 
+def get_node_content(tag: Tag) -> Dict[str, Dict[str, str]]:
+    """
+    Gets the content of the node represented by the specified Tag in a dictionary
+    :param tag: the tag representing the node to get the content of
+    :return: dictionary containing the content of the node as a string, an optional url to an image and a media file
+    """
+    content = ''
+    media = dict(image=None, media=None)
+    href = getNodeHyperlink(tag)
+    title = get_node_title(tag)
+
+    if title:
+        content += title
+
+    # if necessary add image
+    attachment = getNodeImg(tag=tag)
+    if attachment:
+        media['image'] = attachment[4:]
+
+    # if necessary add sound
+    if href and href.endswith(X_MEDIA_EXTENSIONS):
+        if href.startswith('file'):
+            media_path = urllib.parse.unquote(href[7:])
+            media['media'] = media_path
+        else:
+            media_path = href[4:]
+            media['media'] = media_path
+    return {'content': content, 'media': media}
+
+
 class XManager:
     def __init__(self, file):
-        self._file = file
-        self.xZip = zipfile.ZipFile(file, 'r')
-        self.soup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
-        self.manifest = BeautifulSoup(self.xZip.read("META-INF/manifest.xml"), features='html.parser')
-        self.srcDir = tempfile.mkdtemp()
-        self._sheets = None
+        self._file: str = file
+        self.xZip: ZipFile = ZipFile(file, 'r')
+        self.soup: BeautifulSoup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
+        self.manifest: BeautifulSoup = BeautifulSoup(self.xZip.read("META-INF/manifest.xml"), features='html.parser')
+        self.srcDir: str = tempfile.mkdtemp()
+        self._sheets: Dict[str, Dict] = None
         self._referenced_files = None
         self.fileBin = []
         self.did_introduce_changes = False
@@ -218,56 +254,18 @@ class XManager:
 
     def content_by_id(self, x_id):
         topic = self.get_tag_by_id(x_id)
-        return self.get_node_content(topic)
+        return get_node_content(topic)
 
     def get_answer_nodes(self, tag):
         return [{'src': n, 'crosslink': '' if not is_crosslink_node(n)
                 else self.get_tag_by_id(getNodeCrosslink(n))} for n in
                 get_child_nodes(tag) if not is_empty_node(n)]
 
-    def getAttachment(self, identifier, directory):
+    def get_attachment(self, identifier, directory):
         # extract attachment to anki media directory
         self.xZip.extract(identifier, directory)
         # get image from subdirectory attachments in mediaDir
         return os.path.join(directory, identifier)
-
-    def get_node_content(self, tag: Tag):
-        """
-        Gets the content of the node represented by the specified Tag in a dictionary
-        :param tag: the tag to get the content for
-        :return: dictionary containing the content of the node as a string,
-            an optional url to an image and a media file
-        """
-        content = ''
-        media = dict(image=None, media=None)
-        href = getNodeHyperlink(tag)
-        title = get_node_title(tag)
-
-        if title:
-            content += title
-
-        # if necessary add image
-        attachment = getNodeImg(tag=tag)
-        if attachment:
-            media['image'] = attachment[4:]
-
-        # If the node contains a link to another node, add the text of that
-        # node.
-        if href and is_crosslink(href):
-            crosslinkTag = self.get_tag_by_id(tag_id=href[7:])
-            crosslinkTitle = get_node_title(crosslinkTag)
-            if not content:
-                content = crosslinkTitle
-
-        # if necessary add sound
-        if href and href.endswith(X_MEDIA_EXTENSIONS):
-            if href.startswith('file'):
-                mediaPath = urllib.parse.unquote(href[7:])
-                media['media'] = mediaPath
-            else:
-                mediaPath = href[4:]
-                media['media'] = mediaPath
-        return {'content': content, 'media': media}
 
     def get_remote(self):
         remote_sheets = self.get_remote_sheets()
@@ -438,8 +436,8 @@ class XManager:
         os.close(tmpfd)
 
         # create a temp copy of the archive without filename
-        with zipfile.ZipFile(self._file, 'r') as zin:
-            with zipfile.ZipFile(tmpname, 'w') as zout:
+        with ZipFile(self._file, 'r') as zin:
+            with ZipFile(tmpname, 'w') as zout:
                 zout.comment = zin.comment  # preserve the comment
                 for item in zin.infolist():
                     if item.filename not in ['content.xml',
@@ -452,8 +450,8 @@ class XManager:
         os.rename(tmpname, self._file)
 
         # now add filename with its new data
-        with zipfile.ZipFile(self._file, mode='a',
-                             compression=zipfile.ZIP_DEFLATED) as zf:
+        with ZipFile(self._file, mode='a',
+                     compression=ZIP_DEFLATED) as zf:
             zf.writestr('content.xml', str(self.soup))
             for file in os.listdir(self.srcDir):
                 zf.write(filename=os.path.join(self.srcDir, file),
@@ -483,7 +481,7 @@ class XManager:
         mult_subjects = False
         follows_bridge = False
         for i, ancestor in enumerate(ancestry):
-            field = field_from_content(self.get_node_content(ancestor))
+            field = field_from_content(get_node_content(ancestor))
             sort_id = update_sort_id(sort_id, get_topic_index(ancestor))
             if i % 2:
                 ref = ref_plus_answer(field=field, followsBridge=follows_bridge,

@@ -363,20 +363,20 @@ class FieldTranslator:
         class_name = class_name.replace("_", " ")
         return class_name
 
-    def class_from_content(self, content: dict):
+    def class_from_content(self, content: dict) -> str:
         """
         converts a node content dictionary into a string that can be used as an ontology class name
         :param content: xmind node content dictionary of the form {'content': ..., 'media': {'image': ...,
         'media': ...}}
         :return: a class name generated from the node's content
         """
-        classified = content['content'].replace(" ", "_")
+        classified: str = content['content'].replace(" ", "_")
         if content['media']['image']:
             classified += "ximage_" + re.sub('attachments/', '', content['media']['image'])
             classified = re.sub('(\\.)(' + '|'.join(X_IMG_EXTENSIONS) + ')', '_extension_\\2', classified)
         if content['media']['media']:
             classified += "xmedia_" + re.sub('attachments/', '', content['media']['media'])
             classified = re.sub('(\\.)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')', '_extension_\\2', classified)
-        classified = self.inverse_regex.sub(lambda mo: self.inverse_dict[re.escape(mo.string[mo.start():mo.end()])],
-                                            classified)
+        classified = self.inverse_regex.sub(
+            lambda mo: self.inverse_dict[re.escape(mo.string[mo.start():mo.end()])], classified)
         return classified

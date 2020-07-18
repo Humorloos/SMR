@@ -59,7 +59,7 @@ def test_card_five(template_card_five):
     assert act == template_card_five
 
 
-def test_add_and_then_update_x_model(empty_anki_collection, template_card_one, template_card_five):
+def test_add_x_model_then_update_x_model(empty_anki_collection, template_card_one, template_card_five):
     col = empty_anki_collection
     act = add_x_model(col)
 

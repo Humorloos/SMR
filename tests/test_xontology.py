@@ -39,15 +39,6 @@ import XmindImport.tests.constants as cts
 #         self.fail()
 
 
-@pytest.fixture
-def x_ontology(mocker, empty_smr_world):
-    mocker.patch('xontology.mw')
-    xontology.mw.smr_world = empty_smr_world
-    xontology.mw.smr_world.set_up()
-    mocker.spy(xontology.XOntology, "_set_up_classes")
-    yield xontology.XOntology("99999")
-
-
 def test_xontology(x_ontology):
     # when
     cut = x_ontology
@@ -60,6 +51,6 @@ def test_add_concept(x_ontology):
     # given
     cut = x_ontology
     # when
-    cut.add_concept(node_content=cts.NEUROTRANSMITTERS_NODE_CONTENT)
+    cut.concept_from_node_content(node_content=cts.NEUROTRANSMITTERS_NODE_CONTENT)
     # then
     assert isinstance(getattr(cut, cts.NEUROTRANSMITTERS_CLASS_NAME), cut.Concept)

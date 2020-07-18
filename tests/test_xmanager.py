@@ -1,7 +1,3 @@
-import os
-
-import bs4
-
 # class TestGetNodeImg(TestXManager):
 #     def test_no_image(self):
 #         with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
@@ -47,9 +43,11 @@ import bs4
 #         act = manager.is_crosslink_node(tag)
 #         self.assertFalse(act)
 #
-import pytest
 import XmindImport.tests.constants as cts
-from xmanager import is_empty_node, get_node_title, get_child_nodes
+import bs4
+from xmanager import is_empty_node, get_node_title, get_child_nodes, get_non_empty_sibling_nodes, get_parent_node, \
+    get_node_content
+
 
 def test_xmanager(x_manager):
     # given
@@ -86,15 +84,6 @@ def test_get_node_title(tag_for_tests):
     assert title == 'biological psychology'
 
 
-def test_get_node_content(x_manager, tag_for_tests):
-    # when
-    node_content = x_manager.get_node_content(tag=tag_for_tests)
-    # then
-    assert node_content['content'] == 'biological psychology'
-    assert node_content['media']['image'] is None
-    assert node_content['media']['media'] is None
-
-
 def test_get_tag_by_id(tag_for_tests, x_manager):
     # given
     expexted_tag = tag_for_tests
@@ -104,12 +93,21 @@ def test_get_tag_by_id(tag_for_tests, x_manager):
     assert tag.contents[0].text == expexted_tag.contents[1].text
 
 
+def test_get_node_content(tag_for_tests):
+    # when
+    node_content = get_node_content(tag=tag_for_tests)
+    # then
+    assert node_content['content'] == 'biological psychology'
+    assert node_content['media']['image'] is None
+    assert node_content['media']['media'] is None
+
+
 def test_get_node_content_with_image(x_manager):
     # given
     cut = x_manager
     tag = cut.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID)
     # when
-    node_content = cut.get_node_content(tag=tag)
+    node_content = get_node_content(tag=tag)
     # then
     assert node_content == cts.NEUROTRANSMITTERS_NODE_CONTENT
 
@@ -119,7 +117,7 @@ def test_get_node_content_with_media(x_manager):
     cut = x_manager
     tag = cut.get_tag_by_id('1s7h0rvsclrnvs8qq9u71acml5')
     # when
-    node_content = cut.get_node_content(tag=tag)
+    node_content = get_node_content(tag=tag)
     # then
     assert node_content == {'content': '',
                             'media': {'image': None, 'media': 'attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3'}}
@@ -137,4 +135,23 @@ def test_get_child_nodes(tag_for_tests):
     expected_child_node_titles = ['', 'investigates']
     # when
     child_nodes = get_child_nodes(tag_for_tests)
+    # then
     assert [c.contents[1].text for c in child_nodes] == expected_child_node_titles
+
+
+def test_get_parent_node(x_manager):
+    # given
+    expected_parent = "splits up"
+    # when
+    parent_node = get_parent_node(x_manager.get_tag_by_id(cts.EMPTY_NODE_TAG_ID))
+    # then
+    assert parent_node.contents[0].text == expected_parent
+
+
+def test_get_non_empty_sibling_nodes(x_manager):
+    # given
+    expected_siblings = ['Serotonin', 'dopamine', 'adrenaline', 'noradrenaline']
+    # when
+    sibling_nodes = get_non_empty_sibling_nodes(x_manager.get_tag_by_id(cts.EMPTY_NODE_TAG_ID))
+    # then
+    assert [n.contents[0].text for n in sibling_nodes] == expected_siblings

@@ -1,4 +1,5 @@
 import os
+from typing import List, TextIO
 
 from bs4 import Tag
 from consts import ADDON_PATH, USER_PATH
@@ -25,8 +26,8 @@ class SmrWorld(World):
         """
         Sets up SMR's database architecture. Use this method once to set up the database for the first time.
         """
-        sql_file = open(os.path.join(ADDON_PATH, SQL_FILE_NAME), 'r')
-        sql_code = sql_file.read().split(';')
+        sql_file: TextIO = open(os.path.join(ADDON_PATH, SQL_FILE_NAME), 'r')
+        sql_code: List[str] = sql_file.read().split(';')
         sql_file.close()
         for statement in sql_code:
             self.graph.execute(statement)
@@ -51,7 +52,7 @@ class SmrWorld(World):
         self.graph.execute(
             "INSERT INTO main.xmind_files VALUES ('{path}', {map_last_modified}, {file_last_modified}, "
             "{deck_id})".format(
-                path=x_manager._file, map_last_modified=x_manager.get_map_last_modified(),
+                path=x_manager.get_file(), map_last_modified=x_manager.get_map_last_modified(),
                 file_last_modified=x_manager.get_file_last_modified(), deck_id=int(deck_id)))
 
     def add_xmind_sheet(self, x_manager: XManager, sheet: str):

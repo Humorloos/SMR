@@ -2,6 +2,7 @@ from sqlite3 import IntegrityError
 
 import XmindImport.tests.constants as cts
 import pytest
+from xmanager import get_node_content
 
 
 def test_set_up(empty_smr_world, empty_anki_collection):
@@ -72,12 +73,12 @@ def test_add_xmind_node(smr_world_for_tests, x_manager):
 
 def test_add_xmind_edge(smr_world_for_tests, x_manager):
     # given
-    expected_entry = ('485fcs7jl72gtqesace4v8igf0', cts.TEST_SHEET_ID, 1573032291149, 'types', 'None', 'None', 1)
+    expected_entry = (cts.TYPES_EDGE_XMIND_ID, cts.TEST_SHEET_ID, 1573032291149, 'types', 'None', 'None', 1)
     manager = x_manager
-    edge = manager.get_tag_by_id("485fcs7jl72gtqesace4v8igf0")
+    edge = manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID)
     cut = smr_world_for_tests
     # when
-    cut.add_xmind_edge(edge=edge, edge_content=manager.get_node_content(edge), sheet_id=cts.TEST_SHEET_ID,
+    cut.add_xmind_edge(edge=edge, edge_content=get_node_content(edge), sheet_id=cts.TEST_SHEET_ID,
                        order_number=1)
     # then
     assert list(cut.graph.execute("SELECT * FROM main.xmind_edges").fetchall())[0] == expected_entry
