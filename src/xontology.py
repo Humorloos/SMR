@@ -141,7 +141,9 @@ class XOntology(Ontology):
 
     def add_relation(self, child_thing: ThingClass, relationship_class_name: str, parent_thing: ThingClass) -> type:
         """
-
+        if the parent already has the relationship specified in relationship_class_name, adds the child to the
+        relationship, else creates the relationship. Also adds a reverse "Parent" relationship from child concept to
+        parent concept
         :param child_thing: ontology concept representing the child in the triple
         :param relationship_class_name: class text of the relationship property between parent and child concept
         :param parent_thing: ontology concept representing the parent in the triple

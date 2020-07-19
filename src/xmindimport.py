@@ -5,7 +5,6 @@ import tempfile
 from typing import List, Dict, Optional
 
 import bs4
-from bs4 import Tag
 from consts import X_MODEL_NAME, X_MAX_ANSWERS, X_FLDS
 from deckselectiondialog import DeckSelectionDialog
 from owlready2 import ThingClass
@@ -13,13 +12,12 @@ from statusmanager import StatusManager
 from utils import get_edge_coordinates_from_parent_node, getNotesFromSheet
 from xmanager import get_child_nodes, is_empty_node, XManager, get_parent_node, get_non_empty_sibling_nodes, \
     get_node_content, get_node_title
-from xnotemanager import XNoteManager, FieldTranslator, update_sort_id
+from xnotemanager import XNoteManager, FieldTranslator
 from xontology import get_question_sets, XOntology
 
 import aqt
 from anki.importing.noteimp import NoteImporter
 from anki.utils import intTime, guid64, timestampID, splitFields, joinFields
-
 # TODO: adjust sheet selection windows to adjust to the window size
 # TODO: check out hierarchical tags, may be useful
 # TODO: add warning when something is wrong with the map
@@ -104,15 +102,15 @@ class XmindImporter(NoteImporter):
     def import_edge(self, order_number: int, edge: bs4.Tag, parent_node_ids: List[str],
                     parent_concepts: List[ThingClass]) -> None:
         """
-        Imports the edge represented by the specified tag into the smr world and calls import_node_if_concept() for
-        each node following the edge.
+        Creates concepts for all child nodes following the edge represented by the specified tag. Then adds the edge to
+        the smr world and then calls import_node_if_concept() for all child nodes following the edge.
         :param order_number: order number of the edge with respect to its siblings
         :param edge: tag that represents the edge to be imported
         :param parent_node_ids: list of xmind ids of parent nodes
         :param parent_concepts: list of concepts of parent nodes
         """
         edge_content: Dict = get_node_content(edge)
-        child_nodes: List[Tag] = get_child_nodes(edge)
+        child_nodes: List[bs4.Tag] = get_child_nodes(edge)
         # stop execution and warn if an edge is not followed by any nodes
         if len(child_nodes) == 0:
             self.running = False

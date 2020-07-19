@@ -3,6 +3,7 @@ import pytest
 import xontology
 import XmindImport.tests.constants as cts
 
+
 # class TestGetQuestion(TestXOntology):
 #     def test_get_question(self):
 #         x_id = '08eq1rdricsp1nt1b7aa181sq4'
@@ -54,3 +55,30 @@ def test_add_concept(x_ontology):
     cut.concept_from_node_content(node_content=cts.NEUROTRANSMITTERS_NODE_CONTENT)
     # then
     assert isinstance(getattr(cut, cts.NEUROTRANSMITTERS_CLASS_NAME), cut.Concept)
+
+
+def test_add_relation(x_ontology):
+    # given
+    cut = x_ontology
+    parent_concept = cut.Concept('parent')
+    parent_2_concept = cut.Concept('parent2')
+    child_1_concept = cut.Concept('child')
+    child_2_concept = cut.Concept('child2')
+    relationship_class_name = 'relationship'
+    # when
+    cut.add_relation(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
+                     child_thing=child_1_concept)
+    # then
+    assert cut.parent.relationship == [child_1_concept]
+    assert cut.child.Parent == [parent_concept]
+    # when
+    cut.add_relation(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
+                     child_thing=child_2_concept)
+    # then
+    assert cut.parent.relationship == [child_1_concept, child_2_concept]
+    # when
+    cut.add_relation(parent_thing=parent_2_concept, relationship_class_name=relationship_class_name,
+                     child_thing=child_1_concept)
+    # then
+    assert cut.parent.relationship == [child_1_concept, child_2_concept]
+    assert cut.child.Parent == [parent_concept, parent_2_concept]
