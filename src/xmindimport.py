@@ -213,8 +213,8 @@ class XmindImporter(NoteImporter):
                 node=node, node_content=get_node_content(node), ontology_storid=concepts[0].storid,
                 sheet_id=self.active_manager.get_sheet_id(self.current_sheet_import), order_number=order_number)
             for parent_node_id, parent_concept in zip(parent_node_ids, parent_concepts):
-                self.import_triple(parent_node_id=parent_node_id, parent_thing='', edge_id=parent_edge_id,
-                                   child_node_id=node['id'],
+                self.import_triple(parent_node_id=parent_node_id, parent_thing=parent_concept, edge_id=parent_edge_id,
+                                   child_node_id=node['id'], child_thing=concepts[0],
                                    relationship_class_name=parent_relationship_class_name)
             node_ids_preceding_next_edge: List[str] = [node['id']]
         else:
@@ -553,7 +553,7 @@ class XmindImporter(NoteImporter):
 
     def import_sheet(self, sheet: str):
         """
-        Imports the specified sheet and starts importing the map contained in that sheet starting from the root concept
+        imports the specified sheet and starts importing the map contained in that sheet starting from the root concept
         :param sheet: name of the sheet to be imported
         :return: adds the roottopic of the active sheet to self.onto and starts
                 the map import by calling getQuestions
@@ -563,10 +563,22 @@ class XmindImporter(NoteImporter):
         self.mw.app.processEvents()
         self.mw.smr_world.add_xmind_sheet(x_manager=self.active_manager, sheet=sheet)
         root_node = self.active_manager.get_root_node(sheet=sheet)
-        self.import_node_if_concept(node=root_node, node_is_root=True)
+        self.import_node_if_concept(node=root_node,
+                                    concepts=[self.onto.concept_from_node_content(get_node_content(root_node))])
 
-    def import_triple(self, parent_node_id: str, parent_thing: ThingClass, edge_id: str, child_node_id: str,
-                      child_thing: ThingClass, relationship_class_name: str):
+    def import_triple(self, parent_node_id: str, parent_thing: ThingClass, edge_id: str, relationship_class_name: str,
+                      child_node_id: str, child_thing: ThingClass, ) -> None:
+        """
+        connects the specified concepts in the ontology using the specified relationship class name and adds the
+        triple of parent node, edge, and concept to the smr world
+        :param parent_node_id: xmind id of the parent node
+        :param parent_thing: ontology concept representing the parent node
+        :param edge_id: xmind id of the edge
+        :param relationship_class_name: ontology class name of the relationship
+        :param child_node_id: xmind id of the child node
+        :param child_thing: ontology concept representing the child node
+        """
         connect_concepts(child_thing=child_thing, relationship_class_name=relationship_class_name,
                          parent_thing=parent_thing)
-        self.mw.smr_world.add_smr_triple(parent_)
+        self.mw.smr_world.add_smr_triple(parent_node_id=parent_node_id, edge_id=edge_id, child_node_id=child_node_id,
+                                         card_id=None)

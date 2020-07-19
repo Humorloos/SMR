@@ -47,9 +47,18 @@ def _smr_world_for_tests_session(empty_anki_collection):
     smrworld.FILE_NAME = "smr_world_for_tests.sqlite3"
     smrworld.USER_PATH = cts.SMR_WORLD_PATH
     smr_world_path = os.path.join(cts.SMR_WORLD_PATH, smrworld.FILE_NAME)
+    try:
+        os.unlink(smr_world_path)
+    except FileNotFoundError:
+        pass
     smr_world = smrworld.SmrWorld()
     smr_world.set_up()
-    for csv_filename in os.listdir(cts.SMR_WORLD_CSV_PATH):
+    relevant_csv_files = ['main_datas.csv', 'main_objs.csv', 'main_ontologies.csv', 'main_ontology_alias.csv',
+                          'main_prop_fts.csv', 'main_resources.csv', 'main_store.csv',
+                          'main_ontology_lives_in_deck.csv', 'main_xmind_files.csv', 'main_xmind_sheets.csv',
+                          'main_xmind_nodes.csv', 'main_xmind_edges.csv', 'main_smr_triples.csv',
+                          'main_smr_notes.csv']
+    for csv_filename in relevant_csv_files:
         table: str = re.sub("main_|.csv", '', csv_filename)
         csv_file_path = os.path.join(cts.SMR_WORLD_CSV_PATH, csv_filename)
         # noinspection SqlWithoutWhere
@@ -58,7 +67,6 @@ def _smr_world_for_tests_session(empty_anki_collection):
         df.to_sql(name=table, con=smr_world.graph.db, if_exists='append', index=False)
     yield smr_world
     smr_world.close()
-    os.unlink(smr_world_path)
 
 
 @pytest.fixture()
