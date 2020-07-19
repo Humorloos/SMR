@@ -30,12 +30,16 @@ CREATE TABLE xmind_edges
 (
     edge_id       TEXT PRIMARY KEY,
     sheet_id      TEXT,
-    last_modified INTEGER,
     title         TEXT,
     image         TEXT,
     link          TEXT,
+    ontology_storid INTEGER,
+    last_modified INTEGER,
     order_number  INTEGER,
     FOREIGN KEY (sheet_id) REFERENCES xmind_sheets (sheet_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (ontology_storid) references resources (storid)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -70,7 +74,6 @@ CREATE TABLE smr_triples
     parent_node_id  TEXT,
     edge_id         TEXT,
     child_node_id   TEXT,
-    ontology_storid INTEGER,
     card_id         INTEGER,
     PRIMARY KEY (parent_node_id, edge_id, child_node_id),
     FOREIGN KEY (parent_node_id) REFERENCES xmind_nodes (node_id)

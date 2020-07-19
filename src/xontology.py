@@ -87,6 +87,23 @@ def remove_relations(answers, parents, question_triples):
         answer.Parent = left_parents
 
 
+def connect_concepts(child_thing: ThingClass, parent_thing: ThingClass, relationship_class_name: str):
+    """
+
+    :param child_thing:
+    :param parent_thing:
+    :param relationship_class_name:
+    :return:
+    """
+    current_children = getattr(parent_thing, relationship_class_name)
+    new_children = current_children + [child_thing]
+    setattr(parent_thing, relationship_class_name, new_children)
+    current_parents = getattr(child_thing, 'Parent')
+    new_parents = current_parents + [parent_thing]
+    setattr(child_thing, 'Parent', new_parents)
+    return
+
+
 class XOntology(Ontology):
     def __init__(self, deck_id):
         base_iri = os.path.join(USER_PATH, str(deck_id) + '#')
@@ -139,15 +156,11 @@ class XOntology(Ontology):
             raise NameError('Invalid concept name')
         return concept
 
-    def add_relation(self, child_thing: ThingClass, relationship_class_name: str, parent_thing: ThingClass) -> type:
+    def add_relation(self, relationship_class_name: str) -> type:
         """
-        if the parent already has the relationship specified in relationship_class_name, adds the child to the
-        relationship, else creates the relationship. Also adds a reverse "Parent" relationship from child concept to
-        parent concept
-        :param child_thing: ontology concept representing the child in the triple
+        if the specified relation has not been created yet, creates it and returns it
         :param relationship_class_name: class text of the relationship property between parent and child concept
-        :param parent_thing: ontology concept representing the parent in the triple
-        :return:
+        :return: the created or acquired relationship property
         """
         relationship_property: type = getattr(self, relationship_class_name)
         # add objectproperty if not yet in ontology
@@ -156,12 +169,6 @@ class XOntology(Ontology):
                 relationship_property = types.new_class(relationship_class_name, (owlready2.ObjectProperty,))
                 relationship_property.domain = [self.Concept]
                 relationship_property.range = [self.Concept]
-        current_children = getattr(parent_thing, relationship_class_name)
-        new_children = current_children + [child_thing]
-        setattr(parent_thing, relationship_class_name, new_children)
-        current_parents = getattr(child_thing, 'Parent')
-        new_parents = current_parents + [parent_thing]
-        setattr(child_thing, 'Parent', new_parents)
         return relationship_property
 
     def change_answer(self, q_id, a_id, a_field):

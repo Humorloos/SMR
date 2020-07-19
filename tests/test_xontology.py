@@ -60,25 +60,38 @@ def test_add_concept(x_ontology):
 def test_add_relation(x_ontology):
     # given
     cut = x_ontology
+    relation_name = "new_relation"
+    # then
+    assert getattr(cut, relation_name) is None
+    # when
+    cut.add_relation(relation_name)
+    # then
+    assert getattr(cut, relation_name).name == relation_name
+
+
+def test_connect_concepts(x_ontology):
+    # given
+    cut = x_ontology
     parent_concept = cut.Concept('parent')
     parent_2_concept = cut.Concept('parent2')
     child_1_concept = cut.Concept('child')
     child_2_concept = cut.Concept('child2')
     relationship_class_name = 'relationship'
+    x_ontology.add_relation(relationship_class_name)
     # when
-    cut.add_relation(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
-                     child_thing=child_1_concept)
+    xontology.connect_concepts(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
+                               child_thing=child_1_concept)
     # then
     assert cut.parent.relationship == [child_1_concept]
     assert cut.child.Parent == [parent_concept]
     # when
-    cut.add_relation(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
-                     child_thing=child_2_concept)
+    xontology.connect_concepts(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
+                               child_thing=child_2_concept)
     # then
     assert cut.parent.relationship == [child_1_concept, child_2_concept]
     # when
-    cut.add_relation(parent_thing=parent_2_concept, relationship_class_name=relationship_class_name,
-                     child_thing=child_1_concept)
+    xontology.connect_concepts(parent_thing=parent_2_concept, relationship_class_name=relationship_class_name,
+                               child_thing=child_1_concept)
     # then
     assert cut.parent.relationship == [child_1_concept, child_2_concept]
     assert cut.child.Parent == [parent_concept, parent_2_concept]

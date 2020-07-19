@@ -73,12 +73,13 @@ def test_add_xmind_node(smr_world_for_tests, x_manager):
 
 def test_add_xmind_edge(smr_world_for_tests, x_manager):
     # given
-    expected_entry = (cts.TYPES_EDGE_XMIND_ID, cts.TEST_SHEET_ID, 1573032291149, 'types', 'None', 'None', 1)
+    expected_entry = (cts.TYPES_EDGE_XMIND_ID, cts.TEST_SHEET_ID, 'types', 'None', 'None', cts.TEST_RELATION_STORID,
+                      1573032291149, 1)
     manager = x_manager
     edge = manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID)
     cut = smr_world_for_tests
     # when
     cut.add_xmind_edge(edge=edge, edge_content=get_node_content(edge), sheet_id=cts.TEST_SHEET_ID,
-                       order_number=1)
+                       order_number=1, ontology_storid=cts.TEST_RELATION_STORID)
     # then
     assert list(cut.graph.execute("SELECT * FROM main.xmind_edges").fetchall())[0] == expected_entry

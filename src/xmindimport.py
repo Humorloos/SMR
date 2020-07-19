@@ -13,7 +13,7 @@ from utils import get_edge_coordinates_from_parent_node, getNotesFromSheet
 from xmanager import get_child_nodes, is_empty_node, XManager, get_parent_node, get_non_empty_sibling_nodes, \
     get_node_content, get_node_title
 from xnotemanager import XNoteManager, FieldTranslator
-from xontology import get_question_sets, XOntology
+from xontology import get_question_sets, XOntology, connect_concepts
 
 import aqt
 from anki.importing.noteimp import NoteImporter
@@ -143,14 +143,15 @@ class XmindImporter(NoteImporter):
         all_child_concepts = [self.onto.concept_from_node_content(node_content=n, node_is_root=False) for n in
                               node_contents]
         single_child_concepts = [[concept] for concept in all_child_concepts]
+        # add the relation to the ontology
+        relationship_class_name: str = self.translator.class_from_content(edge_content)
+        if not relationship_class_name:
+            relationship_class_name = 'Child'
+        relationship_property = self.onto.add_relation(relationship_class_name)
         # add the edge to the smr world
         self.mw.smr_world.add_xmind_edge(
             edge=edge, edge_content=edge_content, sheet_id=self.active_manager.get_sheet_id(self.current_sheet_import),
             order_number=order_number)
-        # set the relationship class name for following triple imports
-        relationship_class_name: str = self.translator.class_from_content(edge_content)
-        if not relationship_class_name:
-            relationship_class_name = 'Child'
         # import each child_node either with a list of the single concept or a list of all concepts if they are empty
         for order_number, (child_node, child_concepts) in enumerate(
                 zip(non_empty_child_nodes + empty_child_nodes,
@@ -566,6 +567,6 @@ class XmindImporter(NoteImporter):
 
     def import_triple(self, parent_node_id: str, parent_thing: ThingClass, edge_id: str, child_node_id: str,
                       child_thing: ThingClass, relationship_class_name: str):
-        self.onto.add_relation(child_thing=child_thing, relationship_class_name=relationship_class_name,
-                               parent_thing=parent_thing)
-        self.mw.smr_world.add_smr_triple()
+        connect_concepts(child_thing=child_thing, relationship_class_name=relationship_class_name,
+                         parent_thing=parent_thing)
+        self.mw.smr_world.add_smr_triple(parent_)
