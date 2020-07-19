@@ -5,6 +5,8 @@ from consts import ADDON_PATH
 from anki import Collection
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
+SMR_WORLD_PATH = os.path.join(SUPPORT_PATH, "smr_world")
+SMR_WORLD_CSV_PATH = os.path.join(SMR_WORLD_PATH, "csv")
 EMPTY_COLLECTION_PATH = os.path.join(SUPPORT_PATH, 'empty_smr_col.anki2')
 EMPTY_COLLECTION = Collection(EMPTY_COLLECTION_PATH)
 EXAMPLE_MAP_PATH = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')

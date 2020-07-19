@@ -1,6 +1,8 @@
 import os
 from imp import reload
 
+import pandas as pd
+import csv
 import bs4
 import pytest
 import smrworld
@@ -8,9 +10,10 @@ import xmanager
 import XmindImport.tests.constants as cts
 import xontology
 from config import get_or_create_smr_world
+from pandas.errors import EmptyDataError
 
 from anki import Collection
-
+import re
 
 TEST_WORLD_NAME = "testworld.sqlite3"
 
@@ -23,7 +26,7 @@ def empty_anki_collection() -> Collection:
 
 
 @pytest.fixture()
-def patch_smr_world() -> None:
+def patch_empty_smr_world() -> None:
     standard_world = smrworld.FILE_NAME
     smrworld.FILE_NAME = TEST_WORLD_NAME
     yield
@@ -32,7 +35,7 @@ def patch_smr_world() -> None:
 
 
 @pytest.fixture
-def empty_smr_world(patch_smr_world) -> smrworld.SmrWorld:
+def empty_smr_world(patch_empty_smr_world) -> smrworld.SmrWorld:
     # modify smrworld so that the world that is loaded is not the actual world in user_files but an empty World
     smr_world = smrworld.SmrWorld()
     yield smr_world
@@ -42,10 +45,20 @@ def empty_smr_world(patch_smr_world) -> smrworld.SmrWorld:
 @pytest.fixture(scope="session")
 def _smr_world_for_tests_session(empty_anki_collection):
     smrworld.FILE_NAME = "smr_world_for_tests.sqlite3"
-    smrworld.USER_PATH = cts.SUPPORT_PATH
+    smrworld.USER_PATH = cts.SMR_WORLD_PATH
+    smr_world_path = os.path.join(cts.SMR_WORLD_PATH, smrworld.FILE_NAME)
     smr_world = smrworld.SmrWorld()
+    smr_world.set_up()
+    for csv_filename in os.listdir(cts.SMR_WORLD_CSV_PATH):
+        table: str = re.sub("main_|.csv", '', csv_filename)
+        csv_file_path = os.path.join(cts.SMR_WORLD_CSV_PATH, csv_filename)
+        # noinspection SqlWithoutWhere
+        smr_world.graph.execute("DELETE FROM {}".format(table))
+        df = pd.read_csv(csv_file_path)
+        df.to_sql(name=table, con=smr_world.graph.db, if_exists='append', index=False)
     yield smr_world
     smr_world.close()
+    os.unlink(smr_world_path)
 
 
 @pytest.fixture()
@@ -69,7 +82,7 @@ def tag_for_tests():
 
 
 @pytest.fixture()
-def x_ontology(mocker, patch_smr_world) -> xontology.XOntology:
+def x_ontology(mocker, patch_empty_smr_world) -> xontology.XOntology:
     mocker.patch('xontology.mw')
     xontology.mw.smr_world = get_or_create_smr_world()
     mocker.spy(xontology.XOntology, "_set_up_classes")

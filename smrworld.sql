@@ -81,9 +81,6 @@ CREATE TABLE smr_triples
         ON UPDATE CASCADE,
     FOREIGN KEY (child_node_id) REFERENCES xmind_nodes (node_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (ontology_storid) REFERENCES quads (s)
-        ON DELETE CASCADE
         ON UPDATE CASCADE
 );
 COMMIT;
