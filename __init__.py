@@ -1,2 +1,2 @@
 # noinspection PyUnresolvedReferences
-import main
+from main import main

@@ -1,26 +1,25 @@
 import os
-from imp import reload
-
-import pandas as pd
-import csv
-import bs4
-import pytest
-import smrworld
-import xmanager
-import XmindImport.tests.constants as cts
-import xontology
-from config import get_or_create_smr_world
-from pandas.errors import EmptyDataError
-
-from anki import Collection
 import re
+
+import bs4
+import pandas as pd
+import pytest
+
+import main.smrworld as smrworld
+import main.xmanager as xmanager
+import main.xmindimport as xmindimport
+import main.xontology as xontology
+import test.constants as cts
+from anki import Collection
+from main.config import get_or_create_smr_world
+from tests.shared import getEmptyCol
 
 TEST_WORLD_NAME = "testworld.sqlite3"
 
 
 @pytest.fixture(scope="session")
 def empty_anki_collection() -> Collection:
-    collection = cts.EMPTY_COLLECTION
+    collection = getEmptyCol()
     yield collection
     collection.close(save=False)
 
@@ -91,9 +90,17 @@ def tag_for_tests():
 
 @pytest.fixture()
 def x_ontology(mocker, patch_empty_smr_world) -> xontology.XOntology:
-    mocker.patch('xontology.mw')
+    mocker.patch('main.xontology.mw')
     xontology.mw.smr_world = get_or_create_smr_world()
     mocker.spy(xontology.XOntology, "_set_up_classes")
     x_ontology = xontology.XOntology("99999")
     yield x_ontology
     xontology.mw.smr_world.close()
+
+
+@pytest.fixture
+def xmind_importer(empty_anki_collection: Collection) -> xmindimport.XmindImporter:
+    """
+    XmindImporter instance for file example map.xmind
+    """
+    yield xmindimport.XmindImporter(col=empty_anki_collection, file=cts.EXAMPLE_MAP_PATH)
