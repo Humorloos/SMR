@@ -155,6 +155,8 @@ def xmind_importer_import_node_if_concept(mocker, active_xmind_importer):
     mocker.patch.object(importer, "mw")
     mocker.patch.object(importer, "import_edge")
     mocker.patch.object(importer, "import_triple")
+    mocker.patch.object(importer, "add_image_and_media")
+
     yield importer
 
 
@@ -168,6 +170,7 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, tag_
     assert cut.import_triple.call_count == 0
     assert cut.mw.smr_world.add_xmind_node.call_count == 1
     assert cut.import_edge.call_count == 2
+    assert cut.add_image_and_media.call_count == 1
 
 
 def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept, x_ontology):
@@ -189,6 +192,7 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
     assert cut.import_triple.call_count == 0
     assert cut.mw.smr_world.add_xmind_node.call_count == 0
     assert cut.import_edge.call_count == 1
+    assert cut.add_image_and_media.call_count == 0
 
 
 def test_import_node_if_concept_following_multiple_concepts(xmind_importer_import_node_if_concept, x_ontology):
@@ -209,6 +213,7 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
     assert cut.import_triple.call_count == 4
     assert cut.mw.smr_world.add_xmind_node.call_count == 1
     assert cut.import_edge.call_count == 0
+    assert cut.add_image_and_media.call_count == 1
 
 
 @pytest.fixture
@@ -218,6 +223,7 @@ def xmind_importer_import_edge(active_xmind_importer, mocker):
     mocker.patch.object(importer, "onto")
     mocker.patch.object(importer, "mw")
     mocker.patch.object(importer, "import_node_if_concept")
+    mocker.patch.object(importer, "add_image_and_media")
     return importer
 
 
@@ -231,6 +237,7 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.mw.smr_world.add_xmind_edge.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
+    assert cut.add_image_and_media.call_count == 1
 
 
 def assert_import_edge_not_executed(cut):
@@ -238,6 +245,7 @@ def assert_import_edge_not_executed(cut):
     assert cut.mw.smr_world.add_xmind_edge.call_count == 0
     assert cut.import_node_if_concept.call_count == 0
     assert cut.running is False
+    assert cut.add_image_and_media.call_count == 0
 
 
 def test_import_edge_no_child_nodes(xmind_importer_import_edge, x_ontology, mocker):
@@ -282,7 +290,50 @@ def test_import_edge_following_multiple_concepts(xmind_importer_import_edge, x_o
     assert cut.onto.concept_from_node_content.call_count == 4
     assert cut.mw.smr_world.add_xmind_edge.call_count == 1
     assert cut.import_node_if_concept.call_count == 5
+    assert cut.add_image_and_media.call_count == 1
 
 
-# def test_add_image_and_media():
-#
+@pytest.fixture
+def add_image_and_media_importer(mocker, active_xmind_importer):
+    importer = active_xmind_importer
+    mocker.spy(importer.col.media, 'write_data')
+    mocker.spy(importer.col.media, 'add_file')
+    yield importer
+
+
+# noinspection DuplicatedCode
+def test_add_image_and_media(add_image_and_media_importer):
+    # given
+    cut = add_image_and_media_importer
+    # when
+    new_content = cut.add_image_and_media(cts.NEUROTRANSMITTERS_NODE_CONTENT)
+    # then
+    assert cut.col.media.have(new_content.image)
+    assert new_content.image in cut.col.media.check().unused
+    assert cut.col.media.write_data.call_count == 1
+    assert cut.col.media.add_file.call_count == 0
+
+
+# noinspection DuplicatedCode
+def test_add_image_and_media_with_media_attachment(add_image_and_media_importer):
+    # given
+    cut = add_image_and_media_importer
+    # when
+    new_content = cut.add_image_and_media(cts.MEDIA_ATTACHMENT_NODE_CONTENT)
+    # then
+    assert cut.col.media.have(new_content.media)
+    assert new_content.media in cut.col.media.check().unused
+    assert cut.col.media.write_data.call_count == 1
+    assert cut.col.media.add_file.call_count == 0
+
+
+def test_add_image_and_media_with_media_hyperlink(add_image_and_media_importer):
+    # given
+    cut = add_image_and_media_importer
+    # when
+    new_content = cut.add_image_and_media(cts.MEDIA_HYPERLINK_NODE_CONTENT)
+    # then
+    assert cut.col.media.have(new_content.media)
+    assert new_content.media in cut.col.media.check().unused
+    assert cut.col.media.write_data.call_count == 1
+    assert cut.col.media.add_file.call_count == 1

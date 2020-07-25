@@ -24,5 +24,9 @@ TYPES_EDGE_XMIND_ID = '485fcs7jl72gtqesace4v8igf0'
 NEUROTRANSMITTERS_XMIND_ID = "4r6avbt0pbuam4fg07jod0ubec"
 NEUROTRANSMITTERS_NODE_CONTENT = NodeContentDTO(image='attachments/629d18n2i73im903jkrjmr98fg.png',
                                                 title='neurotransmitters')
+MEDIA_HYPERLINK_NODE_CONTENT = NodeContentDTO(
+    media="C:/Users/lloos/OneDrive - bwedu/Projects/AnkiAddon/anki-addon-dev/addons21/XmindImport/resources"
+          "/serotonin.mp3")
+MEDIA_ATTACHMENT_NODE_CONTENT: NodeContentDTO = NodeContentDTO(media='attachments/395ke7i9a6nkutu85fcpa66as2.mp4')
 NEUROTRANSMITTERS_CLASS_NAME = 'neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png'
 EMPTY_NODE_TAG_ID = "6b0ho6vvcs4pcacchhsgju7513"

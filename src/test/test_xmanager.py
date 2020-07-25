@@ -119,7 +119,7 @@ def test_get_node_content_with_media(x_manager):
     # when
     node_content = get_node_content(tag=tag)
     # then
-    assert node_content == NodeContentDTO(media='attachments/395ke7i9a6nkutu85fcpa66as2.mp4')
+    assert node_content == cts.MEDIA_ATTACHMENT_NODE_CONTENT
 
 
 def test_get_node_content_with_media_via_hyperlink(x_manager):
@@ -128,9 +128,7 @@ def test_get_node_content_with_media_via_hyperlink(x_manager):
     # when
     node_content = get_node_content(tag=tag)
     # then
-    assert node_content == NodeContentDTO(
-        media="C:/Users/lloos/OneDrive - bwedu/Projects/AnkiAddon/anki-addon-dev/addons21/XmindImport/resources"
-              "/serotonin.mp3")
+    assert node_content == cts.MEDIA_HYPERLINK_NODE_CONTENT
 
 
 def test_get_sheet_id(x_manager):

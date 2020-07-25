@@ -31,6 +31,7 @@ from anki.utils import intTime, guid64, timestampID, splitFields, joinFields
 #  https://docs.python.org/3.6/library/profile.html
 from aqt.main import AnkiQt
 
+
 def get_xmind_meta(note_data):
     xmind_meta = dict()
     xmind_meta['path'] = note_data['document']
@@ -79,20 +80,24 @@ class XmindImporter(NoteImporter):
         self._register_referenced_x_managers(self.x_managers[0])
         self.needMapper = True
 
-    def add_image_and_media(self, content: NodeContentDTO) -> None:
+    def add_image_and_media(self, content: NodeContentDTO) -> NodeContentDTO:
         """
-        if present, adds media and image specified in the content DTO
-        :return:
+        If present, adds media and image specified in the content DTO to the anki collection and media folder and
+        overwrites the content entries for the files with the potentially changed file names.
+        :return: the node content dto with potentially changed file names
         """
         if content.media:
             # xmind 8 adds prefix attachments, xmind zen adds prefix resources
             if content.media.startswith(('attachments', 'resources')):
-                self.col.media.write_data(self.active_manager.read_attachment(content.media))
+                content.media = self.col.media.write_data(desired_fname=content.media,
+                                                          data=self.active_manager.read_attachment(content.media))
             # if media file was not attached but only referenced via hyperlink
             else:
-                self.col.media.addFile(content.media)
+                content.media = self.col.media.add_file(content.media)
         if content.image:
-            self.col.media.write_data(self.active_manager.read_attachment(content.image))
+            content.image = self.col.media.write_data(desired_fname=content.image,
+                                                      data=self.active_manager.read_attachment(content.image))
+        return content
 
     def addNew(self, notes):
         for note in notes:
@@ -101,8 +106,11 @@ class XmindImporter(NoteImporter):
     def import_edge(self, order_number: int, edge: bs4.Tag, parent_node_ids: List[str],
                     parent_concepts: List[ThingClass]) -> None:
         """
-        Creates concepts for all child nodes following the edge represented by the specified tag. Then adds the edge to
-        the smr world and then calls import_node_if_concept() for all child nodes following the edge.
+        - creates concepts for all non-empty all the edge represented by the specified tag
+        - adds the relationship property to the ontology
+        - adds the edge to the smr world
+        - adds image and media from the edge to the anki collection
+        - calls import_node_if_concept() for each child node following the edge.
         :param order_number: order number of the edge with respect to its siblings
         :param edge: tag that represents the edge to be imported
         :param parent_node_ids: list of xmind ids of parent nodes
@@ -152,7 +160,7 @@ class XmindImporter(NoteImporter):
             edge=edge, edge_content=edge_content, sheet_id=self.active_manager.get_sheet_id(self.current_sheet_import),
             order_number=order_number, ontology_storid=relationship_property.storid)
         # add node image and media to anki
-        self.add_image_and_media(edge_content)
+        edge_content = self.add_image_and_media(edge_content)
         # import each child_node either with a list of the single concept or a list of all concepts if they are empty
         for order_number, (child_node, child_concepts) in enumerate(
                 zip(non_empty_child_nodes + empty_child_nodes,
@@ -195,13 +203,18 @@ class XmindImporter(NoteImporter):
             parent_concepts: Optional[List[ThingClass]] = None, parent_edge_id: Optional[str] = None,
             parent_relationship_class_name: Optional[str] = None, order_number: int = 1) -> None:
         """
-        If it is not empty, imports the node represented by the specified tag as a concept into the ontology and as
-        a node into the smr world. Calls import_triple() for each parent node preceding the parent edge and
-        import_edge() for each edge following the concept.
+        If the node is not empty:
+        - adds a node to the smr world
+        - adds image and media files from the node to the anki collection
+        - calls import_triple() for each parent node preceding the parent edge
+        Finally calls import_edge() for each edge following the node.
         :param node: the tag representing the node to import
-        :param concepts:
+        :param concepts: A list of concepts that only contains one concept if the node that is imported is not
+        empty. Multiple concepts if the node is empty to serve as a representation of multiple concepts preceding a
+        relation. In this case the list serves
         :param parent_node_ids: list of xmind ids of parent nodes for the triples that are imported for this node
-        :param parent_concepts: list of concepts of parent nodes for creating the ontology relationships for this node
+        :param parent_concepts: list of concepts of parent nodes for creating the ontology relationships preceding
+        this node
         :param parent_edge_id: xmind id of the node's parent edge
         :param parent_relationship_class_name: class name for the relationship in the triple that we import into the ontology
         :param order_number: order number of the node with respect to its siblings
@@ -210,11 +223,15 @@ class XmindImporter(NoteImporter):
             parent_node_ids = []
         if parent_concepts is None:
             parent_concepts = []
-        following_relationships = get_child_nodes(node)
         if not is_empty_node(node):
+            node_content = get_node_content(node)
+            # add the node to the smr world
             self.mw.smr_world.add_xmind_node(
-                node=node, node_content=get_node_content(node), ontology_storid=concepts[0].storid,
+                node=node, node_content=node_content, ontology_storid=concepts[0].storid,
                 sheet_id=self.active_manager.get_sheet_id(self.current_sheet_import), order_number=order_number)
+            # add image and media to the anki collection
+            self.add_image_and_media(node_content)
+            # import a triple for each parent concept
             for parent_node_id, parent_concept in zip(parent_node_ids, parent_concepts):
                 self.import_triple(parent_node_id=parent_node_id, parent_thing=parent_concept, edge_id=parent_edge_id,
                                    child_node_id=node['id'], child_thing=concepts[0],
@@ -222,7 +239,8 @@ class XmindImporter(NoteImporter):
             node_ids_preceding_next_edge: List[str] = [node['id']]
         else:
             node_ids_preceding_next_edge: List[str] = [n['id'] for n in get_non_empty_sibling_nodes(node)]
-        for order_number, following_relationship in enumerate(following_relationships, start=1):
+        # import each child edge
+        for order_number, following_relationship in enumerate(get_child_nodes(node), start=1):
             self.import_edge(order_number=order_number, edge=following_relationship,
                              parent_node_ids=node_ids_preceding_next_edge, parent_concepts=concepts)
 
