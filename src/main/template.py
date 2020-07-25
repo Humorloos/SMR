@@ -53,7 +53,6 @@ def add_x_model(col: Collection) -> Dict[str, List[str]]:
         template['afmt'] = card[1]
         models.addTemplate(x_model, template)
     set_x_model_fields(x_model)
-
     models.add(x_model)
     return x_model
 
@@ -79,5 +78,4 @@ def set_x_model_fields(x_model: Dict):
     :param x_model: the smr model dictionary from the collection
     """
     x_model['css'] = X_CARD_CSS
-    x_model['sortf'] = list(X_FLDS).index(X_SORT_FIELD)  # set sortfield to ID
     x_model['version'] = X_MODEL_VERSION

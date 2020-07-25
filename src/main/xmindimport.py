@@ -5,21 +5,10 @@ import tempfile
 from typing import List, Dict, Optional
 
 import bs4
-from main.consts import X_MODEL_NAME, X_MAX_ANSWERS, X_FLDS
-from main.deckselectiondialog import DeckSelectionDialog
-from main.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
-from main.dto.nodecontentdto import NodeContentDTO
-from owlready2 import ThingClass, ObjectPropertyClass
-from main.statusmanager import StatusManager
-from main.utils import get_edge_coordinates_from_parent_node, getNotesFromSheet
-from main.xmanager import get_child_nodes, is_empty_node, XManager, get_parent_node, get_non_empty_sibling_nodes, \
-    get_node_content, get_node_title
-from main.xnotemanager import XNoteManager, FieldTranslator
-from main.xontology import get_question_sets, XOntology, connect_concepts
 
 import aqt
 from anki.importing.noteimp import NoteImporter
-from anki.utils import intTime, guid64, timestampID, splitFields, joinFields
+from anki.utils import splitFields, joinFields
 # TODO: adjust sheet selection windows to adjust to the window size
 # TODO: check out hierarchical tags, may be useful
 # TODO: add warning when something is wrong with the map
@@ -30,6 +19,16 @@ from anki.utils import intTime, guid64, timestampID, splitFields, joinFields
 #  https://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
 #  https://docs.python.org/3.6/library/profile.html
 from aqt.main import AnkiQt
+from main.consts import X_MODEL_NAME, X_MAX_ANSWERS, X_FLDS
+from main.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
+from main.dto.nodecontentdto import NodeContentDTO
+from main.statusmanager import StatusManager
+from main.utils import get_edge_coordinates_from_parent_node, getNotesFromSheet
+from main.xmanager import get_child_nodes, is_empty_node, XManager, get_parent_node, get_non_empty_sibling_nodes, \
+    get_node_content, get_node_title
+from main.xnotemanager import XNoteManager, FieldTranslator
+from main.xontology import get_question_sets, XOntology, connect_concepts
+from owlready2 import ThingClass, ObjectPropertyClass
 
 
 def get_xmind_meta(note_data):
@@ -272,7 +271,7 @@ class XmindImporter(NoteImporter):
         self.addNew(notes=notes)
         self.add_image_and_media()
 
-    def initialize_import(self, user_inputs: DeckSelectionDialogUserInputsDTO):
+    def initialize_import(self, user_inputs: DeckSelectionDialogUserInputsDTO) -> None:
         """
         Sets up the required fields for the import and initializes the import
         :param user_inputs: user inputs from the deck selection dialog
@@ -290,25 +289,6 @@ class XmindImporter(NoteImporter):
         for manager in self.x_managers:
             self.import_file(manager)
         self.finish_import()
-
-    def note_from_question_list(self, question_list):
-        note = self.col.newNote()
-        if note.id <= self.last_nid:
-            note.id = self.last_nid + 1
-        self.last_nid = note.id
-        note.model()['did'] = self.deck_id
-        note_data = self.onto.getNoteData(question_list)
-        self.images.extend(note_data['images'])
-        self.media.extend(note_data['media'])
-        meta = get_xmind_meta(note_data)
-        fields = [note_data['reference'],
-                  note_data['question']]
-        fields.extend([a['text'] if len(a) != 0 else '' for
-                       a in note_data['answers']])
-        fields.extend([note_data['sortId'], meta])
-        note.fields = fields
-        note.tags.append(note_data['tag'])
-        return note
 
     def partial_import(self, seed_topic, sheet_id, deck_id, parent_q,
                        parent_as, onto=None):
@@ -353,7 +333,7 @@ class XmindImporter(NoteImporter):
         q_index = sum(1 for _ in seed_topic.previous_siblings) + 1
         self.import_edge(order_number=q_index, edge=seed_topic)
 
-    def open(self):
+    def open(self) -> None:
         """
         Starts deck selection dialog and runs import sheets with selected sheets
         """
@@ -376,14 +356,6 @@ class XmindImporter(NoteImporter):
         else:
             self.onto = XOntology(deck_id)
         self.deck_name = self.col.decks.get(self.deck_id)['name']
-
-    def note_from_note_data(self, note_data):
-        note = self.col.newNote()
-        note.model()['did'] = self.deck_id
-        fields = splitFields(note_data[6])
-        note.fields = fields
-        note.tags.append(note_data[5].replace(" ", ""))
-        return note
 
     def maybe_sync(self, sheet_id, note_list):
         if self.repair:
@@ -509,53 +481,6 @@ class XmindImporter(NoteImporter):
             self.status_manager.add_new(status)
         self.status_manager.save()
 
-    def getNoteData(self, sortId, question, answerDicts, ref, siblings,
-                    connections):
-        """returns a list of all content needed to create the a new note and
-        the media contained in that note in a list"""
-
-        noteList = []
-        media = []
-
-        # Set field Reference
-        noteList.append('<ul>%s</ul>' % ref)
-
-        # Set field Question
-        qtContent, qtMedia = getNodeContent(tagList=self.tagList, tag=question)
-        noteList.append(qtContent)
-        media.append(qtMedia)
-
-        # Set Answer fields
-        aId = 0
-        for answerDict in answerDicts:
-            if answerDict['isAnswer']:
-                aId += 1
-                # noinspection PyTypeChecker
-                anContent, anMedia = getNodeContent(tagList=self.tagList,
-                                                    tag=answerDict['nodeTag'])
-                noteList.append(anContent)
-                media.append(anMedia)
-                answerDict['aId'] = str(aId)
-
-        # noinspection PyShadowingNames
-        for i in range(aId, X_MAX_ANSWERS):
-            noteList.append('')
-
-        # set field ID
-        noteList.append(sortId)
-
-        # set field Meta
-        meta = get_xmind_meta(question=question, answerDicts=answerDicts,
-                              siblings=siblings, connections=connections)
-        noteList.append(meta)
-
-        nId = timestampID(self.col.db, "notes")
-        noteData = [nId, guid64(), self.model['id'], intTime(), self.col.usn(),
-                    self.current_sheet_import['tag'], joinFields(noteList), "",
-                    "", 0, ""]
-
-        return noteData, media
-
     def import_file(self, x_manager: XManager):
         """
         Imports a file managed by the provided XManager and starts imports for all sheets in that file that contain
@@ -598,3 +523,30 @@ class XmindImporter(NoteImporter):
                          parent_thing=parent_thing)
         self.mw.smr_world.add_smr_triple(parent_node_id=parent_node_id, edge_id=edge_id, child_node_id=child_node_id,
                                          card_id=None)
+
+    # def create_and_add_note(self, edge_id: str) -> None:
+    #     note = Note(col=self.col, model=self.model)
+    #     fields = ''
+    #     note.fields = fields
+    #     note.tags.append(note_data['tag'])
+    #     # add card ids to smr_triples in smr_world
+    #     self.col.add_note(note=note, deck_id=self.deck_id)
+    #
+    #     def note_from_question_list(self, question_list):
+    #         note = self.col.newNote()
+    #         if note.id <= self.last_nid:
+    #             note.id = self.last_nid + 1
+    #         self.last_nid = note.id
+    #         note.model()['did'] = self.deck_id
+    #         note_data = self.onto.getNoteData(question_list)
+    #         self.images.extend(note_data['images'])
+    #         self.media.extend(note_data['media'])
+    #         meta = get_xmind_meta(note_data)
+    #         fields = [note_data['reference'],
+    #                   note_data['question']]
+    #         fields.extend([a['text'] if len(a) != 0 else '' for
+    #                        a in note_data['answers']])
+    #         fields.extend([note_data['sortId'], meta])
+    #         note.fields = fields
+    #
+    #         return note

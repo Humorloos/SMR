@@ -66,7 +66,6 @@ def test_add_x_model_then_update_x_model(empty_anki_collection, template_card_on
     assert len(act['flds']) == len(X_FLDS)
     assert len(act['tmpls']) == X_MAX_ANSWERS
     assert act['name'][:len(X_MODEL_NAME)] == X_MODEL_NAME
-    assert act['sortf'] == list(X_FLDS).index(X_SORT_FIELD)
 
     x_model = col.models.byName(X_MODEL_NAME)
     for tmpl in x_model['tmpls']:
