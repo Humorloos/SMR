@@ -54,9 +54,9 @@ def _smr_world_for_tests_session(empty_anki_collection):
     smr_world.set_up()
     relevant_csv_files = ['main_datas.csv', 'main_objs.csv', 'main_ontologies.csv', 'main_ontology_alias.csv',
                           'main_prop_fts.csv', 'main_resources.csv', 'main_store.csv',
-                          'main_ontology_lives_in_deck.csv', 'main_xmind_files.csv', 'main_xmind_sheets.csv',
-                          'main_xmind_nodes.csv', 'main_xmind_edges.csv', 'main_smr_triples.csv',
-                          'main_smr_notes.csv']
+                          'main_xmind_media_to_anki_files.csv', 'main_ontology_lives_in_deck.csv',
+                          'main_xmind_files.csv', 'main_xmind_sheets.csv', 'main_xmind_nodes.csv',
+                          'main_xmind_edges.csv', 'main_smr_triples.csv', 'main_smr_notes.csv']
     for csv_filename in relevant_csv_files:
         table: str = re.sub("main_|.csv", '', csv_filename)
         csv_file_path = os.path.join(cts.SMR_WORLD_CSV_PATH, csv_filename)

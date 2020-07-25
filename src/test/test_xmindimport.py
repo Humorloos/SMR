@@ -298,6 +298,7 @@ def add_image_and_media_importer(mocker, active_xmind_importer):
     importer = active_xmind_importer
     mocker.spy(importer.col.media, 'write_data')
     mocker.spy(importer.col.media, 'add_file')
+    mocker.patch.object(importer, 'mw')
     yield importer
 
 
@@ -306,10 +307,11 @@ def test_add_image_and_media(add_image_and_media_importer):
     # given
     cut = add_image_and_media_importer
     # when
-    new_content = cut.add_image_and_media(cts.NEUROTRANSMITTERS_NODE_CONTENT)
+    cut.add_image_and_media(cts.NEUROTRANSMITTERS_NODE_CONTENT)
     # then
-    assert cut.col.media.have(new_content.image)
-    assert new_content.image in cut.col.media.check().unused
+    new_image = cut.mw.smr_world.add_xmind_media_to_anki_file.call_args[1]['anki_file_name']
+    assert cut.col.media.have(new_image)
+    assert new_image in cut.col.media.check().unused
     assert cut.col.media.write_data.call_count == 1
     assert cut.col.media.add_file.call_count == 0
 
@@ -319,10 +321,11 @@ def test_add_image_and_media_with_media_attachment(add_image_and_media_importer)
     # given
     cut = add_image_and_media_importer
     # when
-    new_content = cut.add_image_and_media(cts.MEDIA_ATTACHMENT_NODE_CONTENT)
+    cut.add_image_and_media(cts.MEDIA_ATTACHMENT_NODE_CONTENT)
     # then
-    assert cut.col.media.have(new_content.media)
-    assert new_content.media in cut.col.media.check().unused
+    new_media = cut.mw.smr_world.add_xmind_media_to_anki_file.call_args[1]['anki_file_name']
+    assert cut.col.media.have(new_media)
+    assert new_media in cut.col.media.check().unused
     assert cut.col.media.write_data.call_count == 1
     assert cut.col.media.add_file.call_count == 0
 
@@ -331,9 +334,10 @@ def test_add_image_and_media_with_media_hyperlink(add_image_and_media_importer):
     # given
     cut = add_image_and_media_importer
     # when
-    new_content = cut.add_image_and_media(cts.MEDIA_HYPERLINK_NODE_CONTENT)
+    cut.add_image_and_media(cts.MEDIA_HYPERLINK_NODE_CONTENT)
     # then
-    assert cut.col.media.have(new_content.media)
-    assert new_content.media in cut.col.media.check().unused
+    new_media = cut.mw.smr_world.add_xmind_media_to_anki_file.call_args[1]['anki_file_name']
+    assert cut.col.media.have(new_media)
+    assert new_media in cut.col.media.check().unused
     assert cut.col.media.write_data.call_count == 1
     assert cut.col.media.add_file.call_count == 1

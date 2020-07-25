@@ -124,7 +124,7 @@ def test_get_node_content_with_media(x_manager):
 
 def test_get_node_content_with_media_via_hyperlink(x_manager):
     # given
-    tag = x_manager.get_tag_by_id('1s7h0rvsclrnvs8qq9u71acml5')
+    tag = x_manager.get_tag_by_id(cts.MEDIA_HYPERLINK_XMIND_ID)
     # when
     node_content = get_node_content(tag=tag)
     # then

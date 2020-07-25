@@ -8,8 +8,8 @@ from main.xmanager import get_node_content
 def test_set_up(empty_smr_world, empty_anki_collection):
     # given
     expected_tables = ["store", "objs", "datas", "ontologies", "ontology_alias", "prop_fts", "resources",
-                       "ontology_lives_in_deck", "xmind_files", "xmind_sheets", "xmind_edges", "smr_notes",
-                       "xmind_nodes", "smr_triples"]
+                       "ontology_lives_in_deck", "xmind_files", "xmind_sheets", "xmind_media_to_anki_files",
+                       "xmind_edges", "smr_notes", "xmind_nodes", "smr_triples"]
     expected_databases = [0]
     cut = empty_smr_world
     # when
@@ -68,6 +68,22 @@ def test_add_xmind_node(smr_world_for_tests, x_manager):
     # then
     assert list(cut.graph.execute(
         "SELECT * FROM main.xmind_nodes WHERE node_id = '{}'".format(cts.NEUROTRANSMITTERS_XMIND_ID)).fetchall())[
+               0] == expected_entry
+
+
+def test_add_xmind_node_with_media_hyperlink(smr_world_for_tests, x_manager):
+    # given
+    expected_entry = (cts.MEDIA_HYPERLINK_XMIND_ID, cts.TEST_SHEET_ID, '', None,
+                      "C:/Users/lloos/OneDrive - bwedu/Projects/AnkiAddon/anki-addon-dev/addons21/XmindImport"
+                      "/resources/serotonin.mp3", 153, 1595671089759, 1)
+    cut = smr_world_for_tests
+    # when
+    cut.add_xmind_node(node=x_manager.get_tag_by_id(cts.MEDIA_HYPERLINK_XMIND_ID),
+                       node_content=cts.MEDIA_HYPERLINK_NODE_CONTENT, ontology_storid=cts.TEST_CONCEPT_STORID,
+                       sheet_id=cts.TEST_SHEET_ID, order_number=1)
+    # then
+    assert list(cut.graph.execute(
+        "SELECT * FROM main.xmind_nodes WHERE node_id = '{}'".format(cts.MEDIA_HYPERLINK_XMIND_ID)).fetchall())[
                0] == expected_entry
 
 

@@ -26,17 +26,30 @@ CREATE TABLE xmind_sheets
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+CREATE TABLE xmind_media_to_anki_files
+(
+    xmind_uri TEXT PRIMARY KEY,
+    anki_file_name TEXT
+);
+
 CREATE TABLE xmind_edges
 (
-    edge_id       TEXT PRIMARY KEY,
-    sheet_id      TEXT,
-    title         TEXT,
-    image         TEXT,
-    link          TEXT,
+    edge_id         TEXT PRIMARY KEY,
+    sheet_id        TEXT,
+    title           TEXT,
+    image           TEXT,
+    link            TEXT,
     ontology_storid INTEGER,
-    last_modified INTEGER,
-    order_number  INTEGER,
+    last_modified   INTEGER,
+    order_number    INTEGER,
     FOREIGN KEY (sheet_id) REFERENCES xmind_sheets (sheet_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (image) REFERENCES xmind_media_to_anki_files (xmind_uri)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (link) REFERENCES xmind_media_to_anki_files (xmind_uri)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (ontology_storid) references resources (storid)
@@ -71,10 +84,10 @@ CREATE TABLE xmind_nodes
 );
 CREATE TABLE smr_triples
 (
-    parent_node_id  TEXT,
-    edge_id         TEXT,
-    child_node_id   TEXT,
-    card_id         INTEGER,
+    parent_node_id TEXT,
+    edge_id        TEXT,
+    child_node_id  TEXT,
+    card_id        INTEGER,
     PRIMARY KEY (parent_node_id, edge_id, child_node_id),
     FOREIGN KEY (parent_node_id) REFERENCES xmind_nodes (node_id)
         ON DELETE CASCADE

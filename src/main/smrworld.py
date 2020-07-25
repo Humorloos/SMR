@@ -101,6 +101,14 @@ class SmrWorld(World):
         self.graph.execute("INSERT INTO main.smr_triples VALUES (?, ?, ?, ?)",
                            (parent_node_id, edge_id, child_node_id, card_id))
 
+    def add_xmind_media_to_anki_file(self, xmind_uri: str, anki_file_name: str):
+        """
+        adds an entry linking an xmind file uri to an anki file name to the relation xmind_media_to_anki_files
+        :param xmind_uri: the uri the file is identified by in the xmind file (attachment or hyperlink)
+        :param anki_file_name: the filename by which the file is identified in anki
+        """
+        self.graph.execute("INSERT INTO main.xmind_media_to_anki_files VALUES (?, ?)", (xmind_uri, anki_file_name))
+
     def attach_anki_collection(self, anki_collection):
         self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(
             anki_collection_path=anki_collection.path, anki_collection_db_name=ANKI_COLLECTION_DB_NAME))
