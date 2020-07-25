@@ -203,6 +203,7 @@ def get_node_content(tag: Tag) -> NodeContentDTO:
     # if necessary add sound
     href = get_node_hyperlink(tag)
     if href.endswith(X_MEDIA_EXTENSIONS):
+        # for media that was referenced via hyperlink
         if href.startswith('file'):
             media = urllib.parse.unquote(href[7:])
         else:
@@ -260,11 +261,14 @@ class XManager:
                 else self.get_tag_by_id(getNodeCrosslink(n))} for n in
                 get_child_nodes(tag) if not is_empty_node(n)]
 
-    def get_attachment(self, identifier, directory):
-        # extract attachment to anki media directory
-        self.xZip.extract(identifier, directory)
-        # get image from subdirectory attachments in mediaDir
-        return os.path.join(directory, identifier)
+    def read_attachment(self, attachment_uri: str) -> bytes:
+        """
+        extracts an attachment from the manager's file and saves it to the specified directory
+        :param attachment_uri: uri of the attachment (of the form attachment/filename)
+        :return: the attachment as binary data
+        """
+        with self.xZip.open(attachment_uri) as attachment:
+            return attachment.read()
 
     def get_remote(self):
         remote_sheets = self.get_remote_sheets()

@@ -24,7 +24,7 @@ def test_set_up(empty_smr_world, empty_anki_collection):
 
 
 def test_add_xmind_file(smr_world_for_tests, x_manager):
-    expected_entry = (cts.EXAMPLE_MAP_PATH, 1594823958217, 1594823958.8585835, int(cts.TEST_DECK_ID))
+    expected_entry = (cts.EXAMPLE_MAP_PATH, 1595671089759, 1595671098.9155583, int(cts.TEST_DECK_ID))
     # given
     cut = smr_world_for_tests
     # when
@@ -35,7 +35,7 @@ def test_add_xmind_file(smr_world_for_tests, x_manager):
 
 def test_add_xmind_sheet(smr_world_for_tests, x_manager):
     # given
-    expected_entry = ('2485j5qgetfevlt00vhrn53961', cts.TEST_FILE_PATH, 1594823927933)
+    expected_entry = ('2485j5qgetfevlt00vhrn53961', cts.TEST_FILE_PATH, 1595671089759)
     cut = smr_world_for_tests
     manager = x_manager
     manager._file = cts.TEST_FILE_PATH

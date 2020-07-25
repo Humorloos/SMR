@@ -79,25 +79,20 @@ class XmindImporter(NoteImporter):
         self._register_referenced_x_managers(self.x_managers[0])
         self.needMapper = True
 
-    def add_media(self, content) -> None:
+    def add_image_and_media(self, content: NodeContentDTO) -> None:
         """
-        if present, adds media and image specified in
+        if present, adds media and image specified in the content DTO
         :return:
         """
-        for manager in self.x_managers:
-            for file in [f for f in self.media if f['doc'] == manager._file]:
-                if file['identifier'].startswith(('attachments', 'resources')):
-                    file_path = manager.get_attachment(identifier=file[
-                        'identifier'], directory=self.source_dir)
-                    self.col.media.addFile(file_path)
-                else:
-                    self.col.media.addFile(file['identifier'])
-            for image in [i for i in self.images if i['doc'] == manager._file]:
-                file_path = manager.get_attachment(identifier=image[
-                    'identifier'], directory=self.source_dir)
-                self.col.media.addFile(file_path)
-        self.media = []
-        self.images = []
+        if content.media:
+            # xmind 8 adds prefix attachments, xmind zen adds prefix resources
+            if content.media.startswith(('attachments', 'resources')):
+                self.col.media.write_data(self.active_manager.read_attachment(content.media))
+            # if media file was not attached but only referenced via hyperlink
+            else:
+                self.col.media.addFile(content.media)
+        if content.image:
+            self.col.media.write_data(self.active_manager.read_attachment(content.image))
 
     def addNew(self, notes):
         for note in notes:
@@ -156,6 +151,8 @@ class XmindImporter(NoteImporter):
         self.mw.smr_world.add_xmind_edge(
             edge=edge, edge_content=edge_content, sheet_id=self.active_manager.get_sheet_id(self.current_sheet_import),
             order_number=order_number, ontology_storid=relationship_property.storid)
+        # add node image and media to anki
+        self.add_image_and_media(edge_content)
         # import each child_node either with a list of the single concept or a list of all concepts if they are empty
         for order_number, (child_node, child_concepts) in enumerate(
                 zip(non_empty_child_nodes + empty_child_nodes,
@@ -164,6 +161,8 @@ class XmindImporter(NoteImporter):
                 node=child_node, concepts=child_concepts, parent_node_ids=parent_node_ids,
                 parent_concepts=parent_concepts, parent_edge_id=edge['id'],
                 parent_relationship_class_name=relationship_class_name, order_number=order_number)
+        # create the note and add it to anki's collection
+        # self.create_and_add_note()
 
     def finish_import(self):
         # Add all notes to the collection
@@ -248,7 +247,7 @@ class XmindImporter(NoteImporter):
         question_list = get_question_sets(added_triples)
         notes = [self.note_from_question_list(q) for q in question_list]
         self.addNew(notes=notes)
-        self.add_media()
+        self.add_image_and_media()
 
     def initialize_import(self, user_inputs: DeckSelectionDialogUserInputsDTO):
         """

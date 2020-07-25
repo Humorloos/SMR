@@ -115,11 +115,22 @@ def test_get_node_content_with_image(x_manager):
 
 def test_get_node_content_with_media(x_manager):
     # given
+    tag = x_manager.get_tag_by_id('23nu73chqkkkem455dit5p8stu')
+    # when
+    node_content = get_node_content(tag=tag)
+    # then
+    assert node_content == NodeContentDTO(media='attachments/395ke7i9a6nkutu85fcpa66as2.mp4')
+
+
+def test_get_node_content_with_media_via_hyperlink(x_manager):
+    # given
     tag = x_manager.get_tag_by_id('1s7h0rvsclrnvs8qq9u71acml5')
     # when
     node_content = get_node_content(tag=tag)
     # then
-    assert node_content == NodeContentDTO(media='attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3')
+    assert node_content == NodeContentDTO(
+        media="C:/Users/lloos/OneDrive - bwedu/Projects/AnkiAddon/anki-addon-dev/addons21/XmindImport/resources"
+              "/serotonin.mp3")
 
 
 def test_get_sheet_id(x_manager):
@@ -171,4 +182,12 @@ def test_get_node_hyperlink(x_manager):
     # when
     node_media = get_node_hyperlink(tag)
     # then
-    assert node_media == 'xap:attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3'
+    assert node_media == "file://C:/Users/lloos/OneDrive%20-%20bwedu/Projects/AnkiAddon/anki-addon-dev/addons21" \
+                         "/XmindImport/resources/serotonin.mp3"
+
+
+def test_extract_attachment(x_manager):
+    # when
+    attachment = x_manager.read_attachment("attachments/395ke7i9a6nkutu85fcpa66as2.mp4")
+    # then
+    assert type(attachment) == bytes

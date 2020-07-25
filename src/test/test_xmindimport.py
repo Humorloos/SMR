@@ -282,3 +282,7 @@ def test_import_edge_following_multiple_concepts(xmind_importer_import_edge, x_o
     assert cut.onto.concept_from_node_content.call_count == 4
     assert cut.mw.smr_world.add_xmind_edge.call_count == 1
     assert cut.import_node_if_concept.call_count == 5
+
+
+# def test_add_image_and_media():
+#
