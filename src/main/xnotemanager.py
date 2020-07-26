@@ -3,9 +3,68 @@ import re
 
 from main.consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS, X_MAX_ANSWERS
 from main.dto.nodecontentdto import NodeContentDTO
-from main.utils import replaceSound, get_smr_model_id
+from main.smrworld import SmrWorld
+from main.utils import replace_embedded_media, get_smr_model_id
 
 from anki.utils import splitFields, joinFields
+
+
+def get_smr_note_reference_field(smr_world: SmrWorld, edge_id: str) -> str:
+    """
+    gets the data for the reference field from smr_world and converts it into the content for an smr note reference
+    field
+    :param smr_world: the smr world containing the data for the field
+    :param edge_id: the xmind id of the edge to to get the reference field for
+    :return: the reference field's content
+    """
+    reference_data = smr_world.get_smr_note_reference_data(edge_id)
+    reference_field = reference_data[0][0]
+    for row_id, row in enumerate(reference_data[1:]):
+        reference_field += '<li>'
+        if reference_data[row_id][1]:
+            reference_field += reference_data[row_id][1]
+            if row[0]:
+                reference_field += ': '
+        if row[0]:
+            reference_field += row[0]
+        reference_field += '</li>'
+    reference_field = replace_embedded_media(reference_field)
+    return reference_field
+
+
+def ref_minus_last(ref):
+    return re.sub(r'<li>(?!.*<li>).*', '', ref)
+
+
+def ref_plus_answer(field, followsBridge, ref, mult_subjects):
+    # If the answerdict contains nothing (i.e. questions
+    # following multiple answers), just close the reference
+    if mult_subjects:
+        ref = ref + '</li>'
+    elif followsBridge:
+        ref = ref + replace_embedded_media(field) + '</li>'
+    else:
+        ref = ref + ': ' + replace_embedded_media(field) + '</li>'
+    return ref
+
+
+def ref_plus_question(field, ref):
+    # Update ref with content of this question but without sound
+    refContent = replace_embedded_media(field)
+    nextRef = ref + '<li>' + refContent
+    return nextRef
+
+
+def replace_ref_answer(ref, answer_dict):
+    old_answer = next(iter(answer_dict))
+    return re.sub(': ' + old_answer + '</li>',
+                  ': ' + answer_dict[old_answer] + '</li>', ref)
+
+
+def replace_ref_question(ref, question_dict):
+    old_question = next(iter(question_dict))
+    return re.sub('<li>' + old_question + ':',
+                  '<li>' + question_dict[old_question] + ':', ref)
 
 
 def change_dict(old, new):
@@ -82,41 +141,6 @@ def meta_from_fields(fields):
 
 def meta_from_flds(flds):
     return meta_from_fields(splitFields(flds))
-
-
-def ref_minus_last(ref):
-    return re.sub('<li>(?!.*<li>).*', '', ref)
-
-
-def ref_plus_answer(field, followsBridge, ref, mult_subjects):
-    # If the answerdict contains nothing (i.e. questions
-    # following multiple answers), just close the reference
-    if mult_subjects:
-        ref = ref + '</li>'
-    elif followsBridge:
-        ref = ref + replaceSound(field) + '</li>'
-    else:
-        ref = ref + ': ' + replaceSound(field) + '</li>'
-    return ref
-
-
-def ref_plus_question(field, ref):
-    # Update ref with content of this question but without sound
-    refContent = replaceSound(field)
-    nextRef = ref + '<li>' + refContent
-    return nextRef
-
-
-def replace_ref_answer(ref, answer_dict):
-    old_answer = next(iter(answer_dict))
-    return re.sub(': ' + old_answer + '</li>',
-                  ': ' + answer_dict[old_answer] + '</li>', ref)
-
-
-def replace_ref_question(ref, question_dict):
-    old_question = next(iter(question_dict))
-    return re.sub('<li>' + old_question + ':',
-                  '<li>' + question_dict[old_question] + ':', ref)
 
 
 def sort_id_from_index(index):

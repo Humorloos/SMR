@@ -75,7 +75,8 @@
 import pytest
 
 from main.dto.nodecontentdto import NodeContentDTO
-from main.xnotemanager import FieldTranslator
+from main.xnotemanager import FieldTranslator, get_smr_note_reference_field
+import test.constants as cts
 
 
 @pytest.fixture
@@ -121,3 +122,21 @@ def test_class_from_content_parentheses(field_translator):
     ontology_class = field_translator.class_from_content(content)
     # then
     assert ontology_class == expected_class
+
+
+def test_get_smr_note_reference_field(smr_world_for_tests):
+    # when
+    reference_field = get_smr_note_reference_field(smr_world=smr_world_for_tests,
+                                                   edge_id=cts.PRONOUNCIATION_EDGE_XMIND_ID)
+    assert reference_field == 'biological psychology<li>investigates: information transfer and ' \
+                              'processing</li><li>requires: neurotransmitters <img ' \
+                              'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic ' \
+                              'amines</li><li> <img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: Serotonin</li>'
+
+
+def test_get_smr_note_reference_field_replace_media(smr_world_for_tests):
+    # when
+    reference_field = get_smr_note_reference_field(smr_world=smr_world_for_tests,
+                                                   edge_id="7ipkhjdorhgcasdf12asd123ga")
+    assert reference_field == 'biological psychology<li>investigates: perception</li><li>Pain</li><li>some media ' \
+                              'edge title (media): answer to some media edge</li>'

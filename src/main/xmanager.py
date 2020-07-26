@@ -10,7 +10,6 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from bs4 import BeautifulSoup, Tag
 from main.consts import X_MEDIA_EXTENSIONS
 from main.dto.nodecontentdto import NodeContentDTO
-from main.xnotemanager import ref_plus_question, ref_plus_answer, field_from_content, update_sort_id
 
 
 def clean_ref_path(path: str) -> str:
@@ -477,25 +476,25 @@ class XManager:
             self.tag_list = [t for s in self.get_sheets().values() for t in s['nodes']]
         return self.tag_list
 
-    def ref_and_sort_id(self, q_topic):
-        ancestry = get_ancestry(topic=q_topic, descendants=[])
-        ref = get_node_title(ancestry.pop(0))
-        sort_id = ''
-        mult_subjects = False
-        follows_bridge = False
-        for i, ancestor in enumerate(ancestry):
-            field = field_from_content(get_node_content(ancestor))
-            sort_id = update_sort_id(sort_id, get_topic_index(ancestor))
-            if i % 2:
-                ref = ref_plus_answer(field=field, followsBridge=follows_bridge,
-                                      ref=ref, mult_subjects=mult_subjects)
-                follows_bridge = False
-                mult_subjects = is_empty_node(ancestor)
-            else:
-                ref = ref_plus_question(field=field, ref=ref)
-                if not is_anki_question(ancestor):
-                    follows_bridge = True
-        return ref, sort_id
+    # def ref_and_sort_id(self, q_topic):
+    #     ancestry = get_ancestry(topic=q_topic, descendants=[])
+    #     ref = get_node_title(ancestry.pop(0))
+    #     sort_id = ''
+    #     mult_subjects = False
+    #     follows_bridge = False
+    #     for i, ancestor in enumerate(ancestry):
+    #         field = main.xnotemanager.field_from_content(get_node_content(ancestor))
+    #         sort_id = main.xnotemanager.update_sort_id(sort_id, get_topic_index(ancestor))
+    #         if i % 2:
+    #             ref = main.xnotemanager.ref_plus_answer(field=field, followsBridge=follows_bridge,
+    #                                                     ref=ref, mult_subjects=mult_subjects)
+    #             follows_bridge = False
+    #             mult_subjects = is_empty_node(ancestor)
+    #         else:
+    #             ref = main.xnotemanager.ref_plus_question(field=field, ref=ref)
+    #             if not is_anki_question(ancestor):
+    #                 follows_bridge = True
+    #     return ref, sort_id
 
     def _register_referenced_files(self):
         """

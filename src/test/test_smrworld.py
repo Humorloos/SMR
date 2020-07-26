@@ -137,7 +137,7 @@ def test_get_smr_note_reference_data_with_edge_following_multiple_nodes(smr_worl
 
 def test_get_smr_note_reference_data_with_media(smr_world_for_tests):
     # when
-    reference = smr_world_for_tests.get_smr_note_reference_data("7ite3obkfmbcasdf12asd123ga")
+    reference = smr_world_for_tests.get_smr_note_reference_data(cts.EDGE_WITH_MEDIA_XMIND_ID)
     # then
     assert reference == [('biological psychology', 'investigates'), ('perception', ''),
                          ('Pain', 'some media edge title [sound:somemedia.mp3]')]

@@ -27,10 +27,14 @@ def deep_merge(remote, local, path=None):
     return local
 
 
-# replace the anki sound html code with (sound) to avoid anki playing sounds
-# when they are mentioned in the reference
-def replaceSound(content: str):
-    return re.sub("\[sound:.*\]", '(sound)', content)
+def replace_embedded_media(content: str) -> str:
+    """
+    replaces embedded anki media with (media) to avoid anki playing sounds or videos when they are mentioned in the
+    reference
+    :param content: the content in which to replace the embeddings
+    :return: the content with replaced media embeddings
+    """
+    return re.sub(r"\[sound:.*\]", '(media)', content)
 
 
 # Receives a sortId of an anki note and returns the path that leads to the
