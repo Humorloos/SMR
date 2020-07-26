@@ -119,7 +119,7 @@ def test_import_file(xmind_importer, mocker, x_manager):
     cut.import_file(x_manager)
     # then
     assert cut.import_sheet.call_count == 2
-    assert cut.mw.smr_world.add_xmind_file.call_count == 1
+    assert cut.smr_world.add_xmind_file.call_count == 1
 
 
 def test_import_sheet(xmind_importer, mocker, x_manager):
@@ -135,7 +135,7 @@ def test_import_sheet(xmind_importer, mocker, x_manager):
     # then
     assert cut.mw.progress.update.call_count == 1
     assert cut.mw.app.processEvents.call_count == 1
-    assert cut.mw.smr_world.add_xmind_sheet.call_count == 1
+    assert cut.smr_world.add_xmind_sheet.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
     assert cut.current_sheet_import == sheet_2_import
     assert cut.onto.concept_from_node_content.call_count == 1
@@ -152,7 +152,6 @@ def active_xmind_importer(xmind_importer):
 @pytest.fixture
 def xmind_importer_import_node_if_concept(mocker, active_xmind_importer):
     importer = active_xmind_importer
-    mocker.patch.object(importer, "mw")
     mocker.patch.object(importer, "import_edge")
     mocker.patch.object(importer, "import_triple")
     mocker.patch.object(importer, "add_image_and_media")
@@ -168,7 +167,7 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, tag_
         x_ontology.field_translator.class_from_content(get_node_content(tag_for_tests)))])
     # then
     assert cut.import_triple.call_count == 0
-    assert cut.mw.smr_world.add_xmind_node.call_count == 1
+    assert cut.smr_world.add_xmind_node.call_count == 1
     assert cut.import_edge.call_count == 2
     assert cut.add_image_and_media.call_count == 1
 
@@ -190,7 +189,7 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
         order_number=5)
     # then
     assert cut.import_triple.call_count == 0
-    assert cut.mw.smr_world.add_xmind_node.call_count == 0
+    assert cut.smr_world.add_xmind_node.call_count == 0
     assert cut.import_edge.call_count == 1
     assert cut.add_image_and_media.call_count == 0
 
@@ -211,7 +210,7 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
         order_number=1)
     # then
     assert cut.import_triple.call_count == 4
-    assert cut.mw.smr_world.add_xmind_node.call_count == 1
+    assert cut.smr_world.add_xmind_node.call_count == 1
     assert cut.import_edge.call_count == 0
     assert cut.add_image_and_media.call_count == 1
 
@@ -235,14 +234,14 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
         cts.NEUROTRANSMITTERS_XMIND_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
     # then
     assert cut.onto.concept_from_node_content.call_count == 1
-    assert cut.mw.smr_world.add_xmind_edge.call_count == 1
+    assert cut.smr_world.add_xmind_edge.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
     assert cut.add_image_and_media.call_count == 1
 
 
 def assert_import_edge_not_executed(cut):
     assert cut.onto.concept_from_node_content.call_count == 0
-    assert cut.mw.smr_world.add_xmind_edge.call_count == 0
+    assert cut.smr_world.add_xmind_edge.call_count == 0
     assert cut.import_node_if_concept.call_count == 0
     assert cut.running is False
     assert cut.add_image_and_media.call_count == 0
@@ -288,7 +287,7 @@ def test_import_edge_following_multiple_concepts(xmind_importer_import_edge, x_o
                     parent_concepts=[x_ontology.concept_from_node_content(get_node_content(parent_node))])
     # then
     assert cut.onto.concept_from_node_content.call_count == 4
-    assert cut.mw.smr_world.add_xmind_edge.call_count == 1
+    assert cut.smr_world.add_xmind_edge.call_count == 1
     assert cut.import_node_if_concept.call_count == 5
     assert cut.add_image_and_media.call_count == 1
 
@@ -309,7 +308,7 @@ def test_add_image_and_media(add_image_and_media_importer):
     # when
     cut.add_image_and_media(cts.NEUROTRANSMITTERS_NODE_CONTENT)
     # then
-    new_image = cut.mw.smr_world.add_xmind_media_to_anki_file.call_args[1]['anki_file_name']
+    new_image = cut.smr_world.add_xmind_media_to_anki_file.call_args[1]['anki_file_name']
     assert cut.col.media.have(new_image)
     assert new_image in cut.col.media.check().unused
     assert cut.col.media.write_data.call_count == 1
@@ -323,7 +322,7 @@ def test_add_image_and_media_with_media_attachment(add_image_and_media_importer)
     # when
     cut.add_image_and_media(cts.MEDIA_ATTACHMENT_NODE_CONTENT)
     # then
-    new_media = cut.mw.smr_world.add_xmind_media_to_anki_file.call_args[1]['anki_file_name']
+    new_media = cut.smr_world.add_xmind_media_to_anki_file.call_args[1]['anki_file_name']
     assert cut.col.media.have(new_media)
     assert new_media in cut.col.media.check().unused
     assert cut.col.media.write_data.call_count == 1
@@ -336,7 +335,7 @@ def test_add_image_and_media_with_media_hyperlink(add_image_and_media_importer):
     # when
     cut.add_image_and_media(cts.MEDIA_HYPERLINK_NODE_CONTENT)
     # then
-    new_media = cut.mw.smr_world.add_xmind_media_to_anki_file.call_args[1]['anki_file_name']
+    new_media = cut.smr_world.add_xmind_media_to_anki_file.call_args[1]['anki_file_name']
     assert cut.col.media.have(new_media)
     assert new_media in cut.col.media.check().unused
     assert cut.col.media.write_data.call_count == 1

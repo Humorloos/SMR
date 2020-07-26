@@ -13,6 +13,17 @@ REFERENCE_FILE_NAME = 'reference.sql'
 ANKI_COLLECTION_DB_NAME = "anki_collection"
 
 
+def get_xmind_content_selection_clause(relation_name: str):
+    return """
+    ifnull({relation_name}.title, '') || IFNULL(' <img src="' || (
+    SELECT anki_file_name FROM xmind_media_to_anki_files WHERE xmind_uri = {relation_name}.image) || '">', '') ||
+                                      IFNULL(' [sound:' || (
+                                          SELECT anki_file_name
+                                          FROM xmind_media_to_anki_files
+                                          WHERE xmind_uri = {relation_name}.link) || ']', '')
+                                          """.format(relation_name=relation_name)
+
+
 class SmrWorld(World):
     """
     Class for managing all the data required by SMR
@@ -119,9 +130,44 @@ class SmrWorld(World):
         :param edge_id: id of the edge up to which to get the reference
         :return: list of tuples containing the data to generate the reference for an smr note
         """
-        with open(os.path.join(ADDON_PATH, REFERENCE_FILE_NAME), 'r') as reference_file:
-            sql_code: str = reference_file.read()
-        return self.graph.execute(sql_code, (edge_id,)).fetchall()
+        return self.graph.execute("""
+        WITH ancestor AS (
+        SELECT parent_node_id,
+               edge_id,
+               child_node_id,
+               0 level
+        FROM smr_triples
+        WHERE edge_id = ?
+        UNION ALL
+        SELECT t.parent_node_id,
+               t.edge_id,
+               t.child_node_id,
+               a.level + 1
+        FROM smr_triples t
+                 JOIN ancestor a
+                      ON a.parent_node_id = t.child_node_id
+    )
+    SELECT DISTINCT group_concat(DISTINCT {node_selection_clause}) AS node,
+                    group_concat(DISTINCT {edge_selection_clause}) AS edge
+    FROM ancestor a
+             JOIN xmind_edges e ON a.edge_id = e.edge_id
+             JOIN xmind_nodes n ON a.parent_node_id = n.node_id
+    GROUP BY a.edge_id
+    ORDER BY avg(a.level) DESC""".format(node_selection_clause=get_xmind_content_selection_clause('n'),
+                                         edge_selection_clause=get_xmind_content_selection_clause('e')),
+                                  (edge_id,)).fetchall()
+
+    def get_smr_note_question_field(self, edge_id: str) -> str:
+        """
+
+        :param edge_id:
+        :return:
+        """
+        return self.graph.execute("""
+        select {edge_selection_clause}
+from xmind_edges
+where edge_id = ?;
+        """.format(edge_selection_clause=get_xmind_content_selection_clause('xmind_edges')), (edge_id,)).fetchone()[0]
 
     def attach_anki_collection(self, anki_collection):
         self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(

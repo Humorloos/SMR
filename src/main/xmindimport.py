@@ -23,11 +23,12 @@ from aqt.main import AnkiQt
 from main.consts import X_MODEL_NAME, X_MAX_ANSWERS, X_FLDS
 from main.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from main.dto.nodecontentdto import NodeContentDTO
+from main.smrworld import SmrWorld
 from main.statusmanager import StatusManager
 from main.utils import get_edge_coordinates_from_parent_node, getNotesFromSheet
 from main.xmanager import get_child_nodes, is_empty_node, XManager, get_parent_node, get_non_empty_sibling_nodes, \
     get_node_content, get_node_title
-from main.xnotemanager import XNoteManager, FieldTranslator
+from main.xnotemanager import XNoteManager, FieldTranslator, get_smr_note_reference_field
 from main.xontology import get_question_sets, XOntology, connect_concepts
 from owlready2 import ThingClass, ObjectPropertyClass
 
@@ -57,6 +58,7 @@ class XmindImporter(NoteImporter):
         self.added_relations: Dict[str, List] = {'storids': [], 'q_ids': []}
         self.model: Dict = col.models.byName(X_MODEL_NAME)
         self.mw: AnkiQt = aqt.mw
+        self.smr_world: SmrWorld = self.mw.smr_world
         self.media_dir: str = os.path.join(os.path.dirname(col.path), 'collection.media')
         self.source_dir: str = tempfile.mkdtemp()
         self.warnings: List[str] = []
@@ -95,11 +97,11 @@ class XmindImporter(NoteImporter):
             # if media file was not attached but only referenced via hyperlink
             else:
                 new_media_name = self.col.media.add_file(content.media)
-            self.mw.smr_world.add_xmind_media_to_anki_file(xmind_uri=content.media, anki_file_name=new_media_name)
+            self.smr_world.add_xmind_media_to_anki_file(xmind_uri=content.media, anki_file_name=new_media_name)
         if content.image:
             new_image_name = self.col.media.write_data(desired_fname=content.image,
                                                        data=self.active_manager.read_attachment(content.image))
-            self.mw.smr_world.add_xmind_media_to_anki_file(xmind_uri=content.image, anki_file_name=new_image_name)
+            self.smr_world.add_xmind_media_to_anki_file(xmind_uri=content.image, anki_file_name=new_image_name)
 
     def addNew(self, notes):
         for note in notes:
@@ -160,7 +162,7 @@ class XmindImporter(NoteImporter):
         # add node image and media to anki
         self.add_image_and_media(edge_content)
         # add the edge to the smr world
-        self.mw.smr_world.add_xmind_edge(
+        self.smr_world.add_xmind_edge(
             edge=edge, edge_content=edge_content, sheet_id=self.active_manager.get_sheet_id(self.current_sheet_import),
             order_number=order_number, ontology_storid=relationship_property.storid)
         # import each child_node either with a list of the single concept or a list of all concepts if they are empty
@@ -172,7 +174,7 @@ class XmindImporter(NoteImporter):
             enumerate(zip(non_empty_child_nodes + empty_child_nodes,
                           single_child_concepts + len(empty_child_nodes) * [all_child_concepts]), start=1)]
         # create the note and add it to anki's collection
-        # self.create_and_add_note()
+        self.create_and_add_note()
 
     def finish_import(self):
         # Add all notes to the collection
@@ -232,7 +234,7 @@ class XmindImporter(NoteImporter):
             # add image and media to the anki collection
             self.add_image_and_media(node_content)
             # add the node to the smr world
-            self.mw.smr_world.add_xmind_node(
+            self.smr_world.add_xmind_node(
                 node=node, node_content=node_content, ontology_storid=concepts[0].storid,
                 sheet_id=self.active_manager.get_sheet_id(self.current_sheet_import), order_number=order_number)
             # import a triple for each parent concept
@@ -339,7 +341,7 @@ class XmindImporter(NoteImporter):
         Starts deck selection dialog and runs import sheets with selected sheets
         """
         # check whether the file has already been imported before
-        if self.mw.smr_world.graph.execute("select * from xmind_files where path = '{seed_path}'".format(
+        if self.smr_world.graph.execute("select * from xmind_files where path = '{seed_path}'".format(
                 seed_path=self.file)).fetchone():
             self.log = ["It seems like {seed_path} is already in your collection. Please choose a different "
                         "file.".format(seed_path=self.file)]
@@ -489,7 +491,7 @@ class XmindImporter(NoteImporter):
         :param x_manager: the x_manager that manages the file
         """
         self.active_manager = x_manager
-        self.mw.smr_world.add_xmind_file(x_manager=x_manager, deck_id=self.deck_id)
+        self.smr_world.add_xmind_file(x_manager=x_manager, deck_id=self.deck_id)
         for sheet in x_manager.get_content_sheets():
             self.import_sheet(sheet)
 
@@ -503,7 +505,7 @@ class XmindImporter(NoteImporter):
         self.current_sheet_import = sheet
         self.mw.progress.update(label='importing %s' % sheet, maybeShow=False)
         self.mw.app.processEvents()
-        self.mw.smr_world.add_xmind_sheet(x_manager=self.active_manager, sheet=sheet)
+        self.smr_world.add_xmind_sheet(x_manager=self.active_manager, sheet=sheet)
         root_node = self.active_manager.get_root_node(sheet=sheet)
         self.import_node_if_concept(node=root_node,
                                     concepts=[self.onto.concept_from_node_content(get_node_content(root_node))])
@@ -522,11 +524,13 @@ class XmindImporter(NoteImporter):
         """
         connect_concepts(child_thing=child_thing, relationship_class_name=relationship_class_name,
                          parent_thing=parent_thing)
-        self.mw.smr_world.add_smr_triple(parent_node_id=parent_node_id, edge_id=edge_id, child_node_id=child_node_id,
+        self.smr_world.add_smr_triple(parent_node_id=parent_node_id, edge_id=edge_id, child_node_id=child_node_id,
                                          card_id=None)
 
     # def create_and_add_note(self, edge_id: str) -> None:
     #     note = Note(col=self.col, model=self.model)
+    #     reference_field = [get_smr_note_reference_field(self.smr_world, edge_id)]
+    #     question_field = self.smr_world.get_smr_note_question_field(edge_id)
     #
     #     fields = [note_data['reference'],
     #               note_data['question']]

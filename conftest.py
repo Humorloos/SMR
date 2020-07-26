@@ -99,8 +99,9 @@ def x_ontology(mocker, patch_empty_smr_world) -> xontology.XOntology:
 
 
 @pytest.fixture
-def xmind_importer(empty_anki_collection: Collection) -> xmindimport.XmindImporter:
+def xmind_importer(mocker, empty_anki_collection: Collection) -> xmindimport.XmindImporter:
     """
     XmindImporter instance for file example map.xmind
     """
+    mocker.patch("aqt.mw")
     yield xmindimport.XmindImporter(col=empty_anki_collection, file=cts.EXAMPLE_MAP_PATH)

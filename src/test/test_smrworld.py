@@ -141,3 +141,17 @@ def test_get_smr_note_reference_data_with_media(smr_world_for_tests):
     # then
     assert reference == [('biological psychology', 'investigates'), ('perception', ''),
                          ('Pain', 'some media edge title [sound:somemedia.mp3]')]
+
+
+def test_get_smr_note_question_field_media_edge(smr_world_for_tests):
+    # when
+    question = smr_world_for_tests.get_smr_note_question_field(cts.EDGE_WITH_MEDIA_XMIND_ID)
+    # then
+    assert question == 'some media edge title [sound:somemedia.mp3]'
+
+
+def test_get_smr_note_question_field_only_image(smr_world_for_tests):
+    # when
+    question = smr_world_for_tests.get_smr_note_question_field("08eq1rdricsp1nt1b7aa181sq4")
+    # then
+    assert question == ' <img src="attachments09r2e442o8lppjfeblf7il2rmd.png">'
