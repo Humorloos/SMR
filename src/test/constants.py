@@ -20,11 +20,16 @@ TEST_RELATION_STORID = 154
 TEST_RELATION_CLASS_NAME = "test_relation"
 TEST_RELATION_EDGE_ID = "edge id"
 TEST_SHEET_ID = "sheet id"
+
+# edges
 TYPES_EDGE_XMIND_ID = '485fcs7jl72gtqesace4v8igf0'
 PRONOUNCIATION_EDGE_XMIND_ID = "4s27e1mvsb5jqoiuaqmnlo8m71"
-NEUROTRANSMITTERS_XMIND_ID = "4r6avbt0pbuam4fg07jod0ubec"
 EDGE_WITH_MEDIA_XMIND_ID = "7ite3obkfmbcasdf12asd123ga"
 EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID = "61irckf1nloq42brfmbu0ke92v"
+EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID = "6iivm8tpoqj2c0euaabtput14l"
+
+# nodes
+NEUROTRANSMITTERS_XMIND_ID = "4r6avbt0pbuam4fg07jod0ubec"
 MEDIA_HYPERLINK_XMIND_ID = '1s7h0rvsclrnvs8qq9u71acml5'
 NEUROTRANSMITTERS_NODE_CONTENT = NodeContentDTO(image='attachments/629d18n2i73im903jkrjmr98fg.png',
                                                 title='neurotransmitters')

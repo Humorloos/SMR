@@ -75,7 +75,8 @@
 import pytest
 
 from main.dto.nodecontentdto import NodeContentDTO
-from main.xnotemanager import FieldTranslator, get_smr_note_reference_field
+from main.xnotemanager import FieldTranslator, get_smr_note_reference_field, get_smr_note_sort_field, \
+    sort_id_from_order_number
 import test.constants as cts
 
 
@@ -128,6 +129,7 @@ def test_get_smr_note_reference_field(smr_world_for_tests):
     # when
     reference_field = get_smr_note_reference_field(smr_world=smr_world_for_tests,
                                                    edge_id=cts.PRONOUNCIATION_EDGE_XMIND_ID)
+    # then
     assert reference_field == 'biological psychology<li>investigates: information transfer and ' \
                               'processing</li><li>requires: neurotransmitters <img ' \
                               'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic ' \
@@ -138,5 +140,21 @@ def test_get_smr_note_reference_field_replace_media(smr_world_for_tests):
     # when
     reference_field = get_smr_note_reference_field(smr_world=smr_world_for_tests,
                                                    edge_id="7ipkhjdorhgcasdf12asd123ga")
+    # then
     assert reference_field == 'biological psychology<li>investigates: perception</li><li>Pain</li><li>some media ' \
                               'edge title (media): answer to some media edge</li>'
+
+
+def test_get_smr_note_sort_field(smr_world_for_tests):
+    # when
+    sort_field = get_smr_note_sort_field(smr_world=smr_world_for_tests,
+                                         edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
+    # then
+    assert sort_field == '|{|{{{|{'
+
+
+def test_sort_id_from_order_number():
+    # when
+    sort_ids = [sort_id_from_order_number(i) for i in range(1, 21)]
+    # then
+    assert sort_ids == sorted(sort_ids)

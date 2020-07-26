@@ -4,7 +4,7 @@ from main.xmanager import get_topic_index, get_os_mod, XManager, get_parent_ques
 from main.xmindimport import XmindImporter
 from main.xnotemanager import field_by_name, XNoteManager, FieldTranslator, field_from_content, meta_from_fields, \
     content_from_field, title_from_field, img_from_field, change_dict, get_index_by_a_id, get_index_by_field_name, \
-    sort_id_from_index
+    sort_id_from_order_number
 from main.xontology import XOntology
 
 
@@ -178,7 +178,7 @@ class XSyncer:
                 status[a_id]['index'] = remote[a_id]['index']
 
                 # Add change to sort_id_changes
-                new_sort_id = sort_id_from_index(remote[a_id]['index'])
+                new_sort_id = sort_id_from_order_number(remote[a_id]['index'])
                 if not level:
                     q_topic = self.map_manager.get_tag_by_id(q_id)
                     level = len(self.map_manager.ref_and_sort_id(q_topic)[1])
@@ -218,7 +218,7 @@ class XSyncer:
         if not status['index'] == remote['index']:
             q_topic = self.map_manager.get_tag_by_id(q_id)
             level = len(self.map_manager.ref_and_sort_id(q_topic)[1])
-            new_sort_id = sort_id_from_index(remote['index'])
+            new_sort_id = sort_id_from_order_number(remote['index'])
 
             # Add change to changes dict
             import_dict['sort_id_changes']['question'] = change_dict(

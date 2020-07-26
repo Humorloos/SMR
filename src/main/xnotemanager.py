@@ -32,6 +32,33 @@ def get_smr_note_reference_field(smr_world: SmrWorld, edge_id: str) -> str:
     return reference_field
 
 
+def sort_id_from_order_number(order_number: int) -> chr:
+    """
+    converts the specified order number into a character used for sorting the notes generated from an xmind map. The
+    returned characters are handled by anki so that a character belonging to a larger order number is sorted after
+    one belonging to a smaller order number
+    :param order_number: the number to convert into a character
+    :return: the character for the sort field
+    """
+    return chr(order_number + 122)
+
+
+def get_smr_note_sort_field(smr_world: SmrWorld, edge_id: str) -> str:
+    """
+    gets the data for the sort field of the smr note belonging to the specified edge from the specified smr world and
+    converts it into the string that is used to sort the smr notes belonging to a certain map
+    :param smr_world: the smr world to get the data from
+    :param edge_id: xmind id of the edge representing the note to get the sort field for
+    :return: the sort field's content
+    """
+    sort_field_data = smr_world.get_smr_note_sort_data(edge_id)
+    sort_field = sort_id_from_order_number(sort_field_data[0][1])
+    for row in sort_field_data[1:]:
+        for order_number in row:
+            sort_field += sort_id_from_order_number(order_number)
+    return sort_field
+
+
 def ref_minus_last(ref):
     return re.sub(r'<li>(?!.*<li>).*', '', ref)
 
@@ -143,16 +170,12 @@ def meta_from_flds(flds):
     return meta_from_fields(splitFields(flds))
 
 
-def sort_id_from_index(index):
-    return chr(index + 122)
-
-
 def title_from_field(field):
     return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", field)
 
 
 def update_sort_id(previousId, idToAppend):
-    return previousId + sort_id_from_index(idToAppend)
+    return previousId + sort_id_from_order_number(idToAppend)
 
 
 def content_from_field(field):
@@ -269,7 +292,7 @@ class XNoteManager:
         :return: All notes that are children of the given note
         """
         tag = ' ' + note.tags[0] + ' '
-        sort_id = field_by_name(note.fields, 'id') + sort_id_from_index(a_index)
+        sort_id = field_by_name(note.fields, 'id') + sort_id_from_order_number(a_index)
         all_child_nids = self.col.db.list(
             'select id from notes where tags is ? and sfld '
             'like ? and length(sfld) > ?', tag, sort_id + '%', len(sort_id))

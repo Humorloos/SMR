@@ -24,6 +24,26 @@ def get_xmind_content_selection_clause(relation_name: str):
                                           """.format(relation_name=relation_name)
 
 
+def get_xmind_hierarchy_recursive_cte_clause(edge_id: str):
+    return """
+with ancestor as (
+    SELECT parent_node_id,
+           edge_id,
+           child_node_id,
+           0 level
+    from smr_triples
+    where edge_id = '{edge_id}'
+    UNION ALL
+    SELECT t.parent_node_id,
+           t.edge_id,
+           t.child_node_id,
+           a.level + 1
+    from smr_triples t
+             JOIN ancestor a
+                  on a.parent_node_id = t.child_node_id
+)""".format(edge_id=edge_id)
+
+
 class SmrWorld(World):
     """
     Class for managing all the data required by SMR
@@ -131,52 +151,58 @@ class SmrWorld(World):
         :return: list of tuples containing the data to generate the reference for an smr note
         """
         return self.graph.execute("""
-        WITH ancestor AS (
-        SELECT parent_node_id,
-               edge_id,
-               child_node_id,
-               0 level
-        FROM smr_triples
-        WHERE edge_id = ?
-        UNION ALL
-        SELECT t.parent_node_id,
-               t.edge_id,
-               t.child_node_id,
-               a.level + 1
-        FROM smr_triples t
-                 JOIN ancestor a
-                      ON a.parent_node_id = t.child_node_id
-    )
+        {hierarchy_recursive_cte_clause}
     SELECT DISTINCT group_concat(DISTINCT {node_selection_clause}) AS node,
                     group_concat(DISTINCT {edge_selection_clause}) AS edge
     FROM ancestor a
              JOIN xmind_edges e ON a.edge_id = e.edge_id
              JOIN xmind_nodes n ON a.parent_node_id = n.node_id
     GROUP BY a.edge_id
-    ORDER BY avg(a.level) DESC""".format(node_selection_clause=get_xmind_content_selection_clause('n'),
-                                         edge_selection_clause=get_xmind_content_selection_clause('e')),
-                                  (edge_id,)).fetchall()
+    ORDER BY avg(a.level) DESC""".format(
+            hierarchy_recursive_cte_clause=get_xmind_hierarchy_recursive_cte_clause(edge_id),
+            node_selection_clause=get_xmind_content_selection_clause('n'),
+            edge_selection_clause=get_xmind_content_selection_clause('e'))).fetchall()
 
     def get_smr_note_question_field(self, edge_id: str) -> str:
         """
-        gets the content of an smr note question field for the specified edge id
+        gets the content of an smr note's question field for the specified edge id
         :param edge_id: the edge id of the edge that represents the question to get the content for
         :return: the textual content for the note question field
         """
         return self.graph.execute("""
-        select {edge_selection_clause}
+select {edge_selection_clause}
 from xmind_edges
 where edge_id = ?;
         """.format(edge_selection_clause=get_xmind_content_selection_clause('xmind_edges')), (edge_id,)).fetchone()[0]
 
     def get_smr_note_answer_fields(self, edge_id: str) -> List[str]:
-        return [a[0] for a in self.graph.execute("""
-        select {node_selection_clause}
+        """
+        gets the contents of the answer fields of the smr note belonging to the specified edge id
+        :param edge_id: xmind id of the edge that belongs to the node to get the answer fields for
+        :return: answer fields as a llist of strings
+        """
+        return [a[0] for a in self.graph.execute("""select {node_selection_clause}
 from smr_triples t
          join xmind_nodes n ON t.child_node_id = n.node_id
 where edge_id = ?
 order by n.order_number""".format(node_selection_clause=get_xmind_content_selection_clause('n')),
                                                  (edge_id,)).fetchall()]
+
+    def get_smr_note_sort_data(self, edge_id: str) -> List[Tuple[int, int]]:
+        """
+        gets the data for generating the sort field for the notde belonging to the specified edge id
+        :param edge_id: xmind id of the edge that belongs to the node to get the answer fields for
+        :return: the data for generating the sort field in a list of tuples
+        """
+        return self.graph.execute("""
+        {hierarchy_recursive_cte_clause}
+SELECT cast(count(DISTINCT n.order_number) > 1 AS INTEGER) + max(n.order_number), e.order_number
+FROM ancestor a
+         JOIN xmind_edges e ON a.edge_id = e.edge_id
+         JOIN xmind_nodes n ON a.parent_node_id = n.node_id
+GROUP BY a.edge_id
+ORDER BY avg(a.level) DESC;""".format(hierarchy_recursive_cte_clause=get_xmind_hierarchy_recursive_cte_clause(
+            edge_id))).fetchall()
 
     def attach_anki_collection(self, anki_collection):
         self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(

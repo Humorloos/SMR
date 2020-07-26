@@ -28,7 +28,7 @@ from main.statusmanager import StatusManager
 from main.utils import get_edge_coordinates_from_parent_node, getNotesFromSheet
 from main.xmanager import get_child_nodes, is_empty_node, XManager, get_parent_node, get_non_empty_sibling_nodes, \
     get_node_content, get_node_title
-from main.xnotemanager import XNoteManager, FieldTranslator, get_smr_note_reference_field
+from main.xnotemanager import XNoteManager, FieldTranslator, get_smr_note_reference_field, get_smr_note_sort_field
 from main.xontology import get_question_sets, XOntology, connect_concepts
 from owlready2 import ThingClass, ObjectPropertyClass
 
@@ -174,7 +174,7 @@ class XmindImporter(NoteImporter):
             enumerate(zip(non_empty_child_nodes + empty_child_nodes,
                           single_child_concepts + len(empty_child_nodes) * [all_child_concepts]), start=1)]
         # create the note and add it to anki's collection
-        self.create_and_add_note()
+        # self.create_and_add_note()
 
     def finish_import(self):
         # Add all notes to the collection
@@ -529,10 +529,10 @@ class XmindImporter(NoteImporter):
 
     def create_and_add_note(self, edge_id: str) -> None:
         note = Note(col=self.col, model=self.model)
-        reference_field = [get_smr_note_reference_field(self.smr_world, edge_id)]
-        question_field = self.smr_world.get_smr_note_question_field(edge_id)
+        reference_field = [get_smr_note_reference_field(smr_world=self.smr_world, edge_id=edge_id)]
+        question_field = [self.smr_world.get_smr_note_question_field(edge_id)]
         answer_fields = self.smr_world.get_smr_note_answer_fields(edge_id)
-        sort_field =
+        sort_field = [get_smr_note_sort_field(smr_world=self.smr_world, edge_id=edge_id)]
         fields = [note_data['reference'],
                   note_data['question']]
         fields.extend([a['text'] if len(a) != 0 else '' for

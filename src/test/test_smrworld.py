@@ -128,7 +128,7 @@ def test_get_smr_note_reference_data(smr_world_for_tests):
 
 def test_get_smr_note_reference_data_with_edge_following_multiple_nodes(smr_world_for_tests):
     # when
-    reference = smr_world_for_tests.get_smr_note_reference_data("6iivm8tpoqj2c0euaabtput14l")
+    reference = smr_world_for_tests.get_smr_note_reference_data(cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
     # then
     assert reference == [('biological psychology', 'investigates'),
                          ('information transfer and processing', 'modulated by'), ('enzymes', 'example'),
@@ -176,3 +176,10 @@ def test_get_smr_note_answer_fields_media(smr_world_for_tests):
     answers = smr_world_for_tests.get_smr_note_answer_fields("4vfsmbd1fmn6s0tqmlj4cei7pe")
     # then
     assert answers == [' [sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]']
+
+
+def test_get_smr_note_sort_data(smr_world_for_tests):
+    # when
+    sort_field_data = smr_world_for_tests.get_smr_note_sort_data(cts.PRONOUNCIATION_EDGE_XMIND_ID)
+    # then
+    assert sort_field_data == [(1, 2), (1, 1), (1, 1), (1, 1), (1, 2)]
