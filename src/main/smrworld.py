@@ -110,7 +110,7 @@ class SmrWorld(World):
         """
         self.graph.execute("INSERT INTO main.xmind_media_to_anki_files VALUES (?, ?)", (xmind_uri, anki_file_name))
 
-    def get_smr_note_reference(self, edge_id: str) -> List[Tuple[str, str]]:
+    def get_smr_note_reference_data(self, edge_id: str) -> List[Tuple[str, str]]:
         """
         gets the data needed to generate the reference for an smr note from the smr world. The returned data
         consists of a List of tuples. In each tuple, the first value is the field content of a node and the second

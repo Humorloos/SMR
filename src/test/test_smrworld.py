@@ -116,9 +116,9 @@ def test_add_smr_triple(smr_world_for_tests):
         test_edge_id)).fetchall())[0] == expected_entry
 
 
-def test_get_smr_note_reference(smr_world_for_tests):
+def test_get_smr_note_reference_data(smr_world_for_tests):
     # when
-    reference = smr_world_for_tests.get_smr_note_reference("4s27e1mvsb5jqoiuaqmnlo8m71")
+    reference = smr_world_for_tests.get_smr_note_reference_data(cts.PRONOUNCIATION_EDGE_XMIND_ID)
     # then
     assert reference == [('biological psychology', 'investigates'), ('information transfer and processing', 'requires'),
                          ('neurotransmitters <img src="attachments629d18n2i73im903jkrjmr98fg.png">', 'types'),
@@ -126,18 +126,18 @@ def test_get_smr_note_reference(smr_world_for_tests):
                          ('Serotonin', 'pronounciation')]
 
 
-def test_get_smr_note_reference_with_edge_following_multiple_nodes(smr_world_for_tests):
+def test_get_smr_note_reference_data_with_edge_following_multiple_nodes(smr_world_for_tests):
     # when
-    reference = smr_world_for_tests.get_smr_note_reference("6iivm8tpoqj2c0euaabtput14l")
+    reference = smr_world_for_tests.get_smr_note_reference_data("6iivm8tpoqj2c0euaabtput14l")
     # then
     assert reference == [('biological psychology', 'investigates'),
                          ('information transfer and processing', 'modulated by'), ('enzymes', 'example'),
                          ('MAO', 'splits up'), ('dopamine,adrenaline,Serotonin,noradrenaline', 'are')]
 
 
-def test_get_smr_note_reference_with_media(smr_world_for_tests):
+def test_get_smr_note_reference_data_with_media(smr_world_for_tests):
     # when
-    reference = smr_world_for_tests.get_smr_note_reference("7ite3obkfmbcasdf12asd123ga")
+    reference = smr_world_for_tests.get_smr_note_reference_data("7ite3obkfmbcasdf12asd123ga")
     # then
     assert reference == [('biological psychology', 'investigates'), ('perception', ''),
                          ('Pain', 'some media edge title [sound:somemedia.mp3]')]
