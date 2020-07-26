@@ -1,5 +1,5 @@
 import os
-from typing import List, TextIO
+from typing import List, TextIO, Tuple
 
 from bs4 import Tag
 from main.consts import ADDON_PATH, USER_PATH
@@ -9,6 +9,7 @@ from main.xmanager import XManager
 
 FILE_NAME = 'smrworld.sqlite3'
 SQL_FILE_NAME = 'smrworld.sql'
+REFERENCE_FILE_NAME = 'reference.sql'
 ANKI_COLLECTION_DB_NAME = "anki_collection"
 
 
@@ -108,6 +109,19 @@ class SmrWorld(World):
         :param anki_file_name: the filename by which the file is identified in anki
         """
         self.graph.execute("INSERT INTO main.xmind_media_to_anki_files VALUES (?, ?)", (xmind_uri, anki_file_name))
+
+    def get_smr_note_reference(self, edge_id: str) -> List[Tuple[str, str]]:
+        """
+        gets the data needed to generate the reference for an smr note from the smr world. The returned data
+        consists of a List of tuples. In each tuple, the first value is the field content of a node and the second
+        value is the field content of the edge following the node. The list contains all tuples up to the edge with
+        the provided id.
+        :param edge_id: id of the edge up to which to get the reference
+        :return: list of tuples containing the data to generate the reference for an smr note
+        """
+        with open(os.path.join(ADDON_PATH, REFERENCE_FILE_NAME), 'r') as reference_file:
+            sql_code: str = reference_file.read()
+        return self.graph.execute(sql_code, (edge_id,)).fetchall()
 
     def attach_anki_collection(self, anki_collection):
         self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(

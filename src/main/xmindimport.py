@@ -8,6 +8,7 @@ import bs4
 
 import aqt
 from anki.importing.noteimp import NoteImporter
+from anki.notes import Note
 from anki.utils import splitFields, joinFields
 # TODO: adjust sheet selection windows to adjust to the window size
 # TODO: check out hierarchical tags, may be useful
@@ -526,7 +527,15 @@ class XmindImporter(NoteImporter):
 
     # def create_and_add_note(self, edge_id: str) -> None:
     #     note = Note(col=self.col, model=self.model)
+    #
+    #     fields = [note_data['reference'],
+    #               note_data['question']]
+    #     fields.extend([a['text'] if len(a) != 0 else '' for
+    #                    a in note_data['answers']])
+    #     fields.extend([note_data['sortId'], meta])
+    #     note.fields = fields
     #     fields = ''
+    #     note.to_backend_note()
     #     note.fields = fields
     #     note.tags.append(note_data['tag'])
     #     # add card ids to smr_triples in smr_world
@@ -542,11 +551,6 @@ class XmindImporter(NoteImporter):
     #         self.images.extend(note_data['images'])
     #         self.media.extend(note_data['media'])
     #         meta = get_xmind_meta(note_data)
-    #         fields = [note_data['reference'],
-    #                   note_data['question']]
-    #         fields.extend([a['text'] if len(a) != 0 else '' for
-    #                        a in note_data['answers']])
-    #         fields.extend([note_data['sortId'], meta])
-    #         note.fields = fields
+    #
     #
     #         return note

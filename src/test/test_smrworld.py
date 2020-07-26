@@ -24,7 +24,7 @@ def test_set_up(empty_smr_world, empty_anki_collection):
 
 
 def test_add_xmind_file(smr_world_for_tests, x_manager):
-    expected_entry = (cts.EXAMPLE_MAP_PATH, 1595671089759, 1595671098.9155583, int(cts.TEST_DECK_ID))
+    expected_entry = (cts.EXAMPLE_MAP_PATH, 1595671089759, 1595687290.0987637, int(cts.TEST_DECK_ID))
     # given
     cut = smr_world_for_tests
     # when
@@ -105,10 +105,39 @@ def test_add_xmind_edge(smr_world_for_tests, x_manager):
 
 def test_add_smr_triple(smr_world_for_tests):
     # given
-    expected_entry = ('node id', 'edge id', 'node id2', None)
+    test_edge_id = 'edge id'
+    expected_entry = ('node id', test_edge_id, 'node id2', None)
     cut = smr_world_for_tests
     # when
     cut.add_smr_triple(parent_node_id=cts.TEST_CONCEPT_NODE_ID, edge_id=cts.TEST_RELATION_EDGE_ID,
                        child_node_id=cts.TEST_CONCEPT_2_NODE_ID, card_id=None)
     # then
-    assert list(cut.graph.execute("SELECT * FROM main.smr_triples").fetchall())[0] == expected_entry
+    assert list(cut.graph.execute("SELECT * FROM main.smr_triples WHERE edge_id = '{}'".format(
+        test_edge_id)).fetchall())[0] == expected_entry
+
+
+def test_get_smr_note_reference(smr_world_for_tests):
+    # when
+    reference = smr_world_for_tests.get_smr_note_reference("4s27e1mvsb5jqoiuaqmnlo8m71")
+    # then
+    assert reference == [('biological psychology', 'investigates'), ('information transfer and processing', 'requires'),
+                         ('neurotransmitters <img src="attachments629d18n2i73im903jkrjmr98fg.png">', 'types'),
+                         ('biogenic amines', ' <img src="attachments09r2e442o8lppjfeblf7il2rmd.png">'),
+                         ('Serotonin', 'pronounciation')]
+
+
+def test_get_smr_note_reference_with_edge_following_multiple_nodes(smr_world_for_tests):
+    # when
+    reference = smr_world_for_tests.get_smr_note_reference("6iivm8tpoqj2c0euaabtput14l")
+    # then
+    assert reference == [('biological psychology', 'investigates'),
+                         ('information transfer and processing', 'modulated by'), ('enzymes', 'example'),
+                         ('MAO', 'splits up'), ('dopamine,adrenaline,Serotonin,noradrenaline', 'are')]
+
+
+def test_get_smr_note_reference_with_media(smr_world_for_tests):
+    # when
+    reference = smr_world_for_tests.get_smr_note_reference("7ite3obkfmbcasdf12asd123ga")
+    # then
+    assert reference == [('biological psychology', 'investigates'), ('perception', ''),
+                         ('Pain', 'some media edge title [sound:somemedia.mp3]')]
