@@ -277,10 +277,10 @@ def test_import_edge_too_many_child_nodes(xmind_importer_import_edge, x_ontology
         "followed by no more than 20 Answers and try again."]
 
 
-def test_import_edge_following_multiple_concepts(xmind_importer_import_edge, x_ontology):
+def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge, x_ontology):
     # given
     cut = xmind_importer_import_edge
-    edge = cut.active_manager.get_tag_by_id("61irckf1nloq42brfmbu0ke92v")
+    edge = cut.active_manager.get_tag_by_id(cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID)
     parent_node = get_parent_node(edge)
     # when
     cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node['id']],

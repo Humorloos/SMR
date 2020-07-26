@@ -1,5 +1,5 @@
 import os
-from typing import List, TextIO, Tuple
+from typing import List, TextIO, Tuple, Optional
 
 from bs4 import Tag
 from main.consts import ADDON_PATH, USER_PATH
@@ -102,7 +102,7 @@ class SmrWorld(World):
             edge['id'], sheet_id, edge_content.title, edge_content.image,
             edge_content.media, ontology_storid, edge['timestamp'], order_number))
 
-    def add_smr_triple(self, parent_node_id: str, edge_id: str, child_node_id: str, card_id: int) -> None:
+    def add_smr_triple(self, parent_node_id: str, edge_id: str, child_node_id: str, card_id: Optional[int]) -> None:
         """
         adds an entry for a triple of parent node, edge, and child node to the relation smr_triples
         :param parent_node_id: the parent node's xmind id
@@ -159,15 +159,24 @@ class SmrWorld(World):
 
     def get_smr_note_question_field(self, edge_id: str) -> str:
         """
-
-        :param edge_id:
-        :return:
+        gets the content of an smr note question field for the specified edge id
+        :param edge_id: the edge id of the edge that represents the question to get the content for
+        :return: the textual content for the note question field
         """
         return self.graph.execute("""
         select {edge_selection_clause}
 from xmind_edges
 where edge_id = ?;
         """.format(edge_selection_clause=get_xmind_content_selection_clause('xmind_edges')), (edge_id,)).fetchone()[0]
+
+    def get_smr_note_answer_fields(self, edge_id: str) -> List[str]:
+        return [a[0] for a in self.graph.execute("""
+        select {node_selection_clause}
+from smr_triples t
+         join xmind_nodes n ON t.child_node_id = n.node_id
+where edge_id = ?
+order by n.order_number""".format(node_selection_clause=get_xmind_content_selection_clause('n')),
+                                                 (edge_id,)).fetchall()]
 
     def attach_anki_collection(self, anki_collection):
         self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(

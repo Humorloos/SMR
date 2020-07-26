@@ -525,36 +525,36 @@ class XmindImporter(NoteImporter):
         connect_concepts(child_thing=child_thing, relationship_class_name=relationship_class_name,
                          parent_thing=parent_thing)
         self.smr_world.add_smr_triple(parent_node_id=parent_node_id, edge_id=edge_id, child_node_id=child_node_id,
-                                         card_id=None)
+                                      card_id=None)
 
-    # def create_and_add_note(self, edge_id: str) -> None:
-    #     note = Note(col=self.col, model=self.model)
-    #     reference_field = [get_smr_note_reference_field(self.smr_world, edge_id)]
-    #     question_field = self.smr_world.get_smr_note_question_field(edge_id)
-    #
-    #     fields = [note_data['reference'],
-    #               note_data['question']]
-    #     fields.extend([a['text'] if len(a) != 0 else '' for
-    #                    a in note_data['answers']])
-    #     fields.extend([note_data['sortId'], meta])
-    #     note.fields = fields
-    #     fields = ''
-    #     note.to_backend_note()
-    #     note.fields = fields
-    #     note.tags.append(note_data['tag'])
-    #     # add card ids to smr_triples in smr_world
-    #     self.col.add_note(note=note, deck_id=self.deck_id)
-    #
-    #     def note_from_question_list(self, question_list):
-    #         note = self.col.newNote()
-    #         if note.id <= self.last_nid:
-    #             note.id = self.last_nid + 1
-    #         self.last_nid = note.id
-    #         note.model()['did'] = self.deck_id
-    #         note_data = self.onto.getNoteData(question_list)
-    #         self.images.extend(note_data['images'])
-    #         self.media.extend(note_data['media'])
-    #         meta = get_xmind_meta(note_data)
-    #
-    #
-    #         return note
+    def create_and_add_note(self, edge_id: str) -> None:
+        note = Note(col=self.col, model=self.model)
+        reference_field = [get_smr_note_reference_field(self.smr_world, edge_id)]
+        question_field = self.smr_world.get_smr_note_question_field(edge_id)
+        answer_fields = self.smr_world.get_smr_note_answer_fields(edge_id)
+        sort_field =
+        fields = [note_data['reference'],
+                  note_data['question']]
+        fields.extend([a['text'] if len(a) != 0 else '' for
+                       a in note_data['answers']])
+        fields.extend([note_data['sortId'], meta])
+        note.fields = fields
+        fields = ''
+        note.to_backend_note()
+        note.fields = fields
+        note.tags.append(note_data['tag'])
+        # add card ids to smr_triples in smr_world
+        self.col.add_note(note=note, deck_id=self.deck_id)
+
+        def note_from_question_list(self, question_list):
+            note = self.col.newNote()
+            if note.id <= self.last_nid:
+                note.id = self.last_nid + 1
+            self.last_nid = note.id
+            note.model()['did'] = self.deck_id
+            note_data = self.onto.getNoteData(question_list)
+            self.images.extend(note_data['images'])
+            self.media.extend(note_data['media'])
+            meta = get_xmind_meta(note_data)
+
+            return note

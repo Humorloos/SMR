@@ -155,3 +155,24 @@ def test_get_smr_note_question_field_only_image(smr_world_for_tests):
     question = smr_world_for_tests.get_smr_note_question_field("08eq1rdricsp1nt1b7aa181sq4")
     # then
     assert question == ' <img src="attachments09r2e442o8lppjfeblf7il2rmd.png">'
+
+
+def test_get_smr_note_answer_fields(smr_world_for_tests):
+    # when
+    answers = smr_world_for_tests.get_smr_note_answer_fields(cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID)
+    # then
+    assert answers == ['Serotonin', 'dopamine', 'adrenaline', 'noradrenaline']
+
+
+def test_get_smr_note_answer_fields_image(smr_world_for_tests):
+    # when
+    answers = smr_world_for_tests.get_smr_note_answer_fields("730ahk5oc4himfrdvkqc5ci1o2")
+    # then
+    assert answers == ['neurotransmitters <img src="attachments629d18n2i73im903jkrjmr98fg.png">']
+
+
+def test_get_smr_note_answer_fields_media(smr_world_for_tests):
+    # when
+    answers = smr_world_for_tests.get_smr_note_answer_fields("4vfsmbd1fmn6s0tqmlj4cei7pe")
+    # then
+    assert answers == [' [sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]']
