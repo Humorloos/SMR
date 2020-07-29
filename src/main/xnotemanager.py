@@ -1,7 +1,7 @@
 import json
 import re
 
-from main.consts import X_FLDS, X_MEDIA_EXTENSIONS, X_IMG_EXTENSIONS, X_MAX_ANSWERS
+from main.consts import SMR_NOTE_FIELD_NAMES, X_MEDIA_EXTENSIONS, X_IMAGE_EXTENSIONS, X_MAX_ANSWERS
 from main.dto.nodecontentdto import NodeContentDTO
 from main.smrworld import SmrWorld
 from main.utils import replace_embedded_media, get_smr_model_id
@@ -123,10 +123,10 @@ def field_from_content(content):
 
 
 def get_index_by_field_name(name):
-    if name not in X_FLDS:
+    if name not in SMR_NOTE_FIELD_NAMES:
         raise NameError('Name not in X_FLDS, valid names are ' +
-                        X_FLDS.keys())
-    return list(X_FLDS.keys()).index(name)
+                        SMR_NOTE_FIELD_NAMES.keys())
+    return list(SMR_NOTE_FIELD_NAMES.keys()).index(name)
 
 
 def get_index_by_a_id(note, a_id):
@@ -144,7 +144,7 @@ def get_n_answers(note):
 
 def img_from_field(field):
     try:
-        return re.search('<img src=\"(.*\.(' + '|'.join(X_IMG_EXTENSIONS) +
+        return re.search('<img src=\"(.*\.(' + '|'.join(X_IMAGE_EXTENSIONS) +
                          '))\">', field).group(1)
     except AttributeError:
         return None
@@ -406,7 +406,7 @@ class FieldTranslator:
     def field_from_class(self, class_name):
         class_name = re.sub('(.)(ximage_)', '\\1<br>\\2', class_name)
         class_name = self.field_regex.sub(lambda mo: self.field_re_dict[mo.string[mo.start():mo.end()]], class_name)
-        class_name = re.sub('(_extension_)(' + '|'.join(X_IMG_EXTENSIONS) + ')', '.\\2">', class_name)
+        class_name = re.sub('(_extension_)(' + '|'.join(X_IMAGE_EXTENSIONS) + ')', '.\\2">', class_name)
         class_name = re.sub('(_extension_)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')', '.\\2]', class_name)
         class_name = class_name.replace("_", " ")
         return class_name
@@ -420,7 +420,7 @@ class FieldTranslator:
         classified: str = content.title.replace(" ", "_")
         if content.image:
             classified += "ximage_" + re.sub('attachments/', '', content.image)
-            classified = re.sub('(\\.)(' + '|'.join(X_IMG_EXTENSIONS) + ')', '_extension_\\2', classified)
+            classified = re.sub('(\\.)(' + '|'.join(X_IMAGE_EXTENSIONS) + ')', '_extension_\\2', classified)
         if content.media:
             classified += "xmedia_" + re.sub('attachments/', '', content.media)
             classified = re.sub('(\\.)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')', '_extension_\\2', classified)

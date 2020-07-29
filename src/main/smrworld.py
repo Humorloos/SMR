@@ -181,7 +181,7 @@ where edge_id = ?;
         :param edge_id: xmind id of the edge that belongs to the node to get the answer fields for
         :return: answer fields as a llist of strings
         """
-        return [a[0] for a in self.graph.execute("""select {node_selection_clause}
+        return [a[0] for a in self.graph.execute("""select distinct {node_selection_clause}
 from smr_triples t
          join xmind_nodes n ON t.child_node_id = n.node_id
 where edge_id = ?

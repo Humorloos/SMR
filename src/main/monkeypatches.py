@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QMessageBox, QDialog, QDialogButtonBox, QPushButton
 import aqt
 from anki.hooks import wrap
 from aqt import importing, qconnect, gui_hooks
-from main.consts import X_FLDS
+from main.consts import SMR_NOTE_FIELD_NAMES
 from main.deckselectiondialog import DeckSelectionDialog
 from main.sync import XSyncer
 from main.utils import getDueAnswersToNote, isSMRDeck

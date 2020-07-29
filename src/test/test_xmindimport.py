@@ -56,8 +56,9 @@ import pytest
 from bs4 import Tag
 
 import test.constants as cts
-from main.consts import X_MAX_ANSWERS
+from main.consts import X_MAX_ANSWERS, X_MODEL_NAME
 from main.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
+from main.template import add_x_model
 from main.xmanager import get_node_content, get_non_empty_sibling_nodes, get_parent_node
 
 
@@ -74,7 +75,7 @@ def test_xmind_importer(xmind_importer):
     assert [x.get_file() for x in cut.x_managers] == expected_x_manager_files
 
 
-def test_open_aborts_if_file_already_exists(mocker, xmind_importer, smr_world_for_tests):
+def test_open_aborts_if_file_already_exists(mocker, xmind_importer):
     """
     Test whether the import stops when the file to be imported is already in the world
     """
@@ -223,6 +224,7 @@ def xmind_importer_import_edge(active_xmind_importer, mocker):
     mocker.patch.object(importer, "mw")
     mocker.patch.object(importer, "import_node_if_concept")
     mocker.patch.object(importer, "add_image_and_media")
+    mocker.patch.object(importer, "create_and_add_note")
     return importer
 
 
@@ -237,6 +239,7 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     assert cut.smr_world.add_xmind_edge.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
     assert cut.add_image_and_media.call_count == 1
+    assert cut.create_and_add_note.call_count == 1
 
 
 def assert_import_edge_not_executed(cut):
@@ -245,6 +248,7 @@ def assert_import_edge_not_executed(cut):
     assert cut.import_node_if_concept.call_count == 0
     assert cut.running is False
     assert cut.add_image_and_media.call_count == 0
+    assert cut.create_and_add_note.call_count == 0
 
 
 def test_import_edge_no_child_nodes(xmind_importer_import_edge, x_ontology, mocker):
@@ -290,6 +294,7 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge, x_o
     assert cut.smr_world.add_xmind_edge.call_count == 1
     assert cut.import_node_if_concept.call_count == 5
     assert cut.add_image_and_media.call_count == 1
+    assert cut.create_and_add_note.call_count == 1
 
 
 @pytest.fixture
@@ -329,6 +334,7 @@ def test_add_image_and_media_with_media_attachment(add_image_and_media_importer)
     assert cut.col.media.add_file.call_count == 0
 
 
+# noinspection DuplicatedCode
 def test_add_image_and_media_with_media_hyperlink(add_image_and_media_importer):
     # given
     cut = add_image_and_media_importer
@@ -340,3 +346,28 @@ def test_add_image_and_media_with_media_hyperlink(add_image_and_media_importer):
     assert new_media in cut.col.media.check().unused
     assert cut.col.media.write_data.call_count == 1
     assert cut.col.media.add_file.call_count == 1
+
+
+def test_create_and_add_note(mocker, active_xmind_importer, smr_world_for_tests):
+    # given
+    cut = active_xmind_importer
+    add_x_model(cut.col)
+    cut.model = cut.col.models.byName(X_MODEL_NAME)
+    cut.smr_world = smr_world_for_tests
+    cut.deck_name = 'my deck'
+    mocker.spy(cut, "acquire_tag")
+    # when
+    cut.create_and_add_note(edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
+    # then
+    assert cut.acquire_tag.call_count == 1
+    assert len(cut.notes_2_import) == 1
+
+
+def test_acquire_tag(active_xmind_importer):
+    # given
+    cut = active_xmind_importer
+    cut.deck_name = 'my deck'
+    # when
+    tag = cut.acquire_tag()
+    # then
+    assert tag == 'my_deck::biological_psychology'
