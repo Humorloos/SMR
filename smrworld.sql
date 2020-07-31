@@ -58,9 +58,9 @@ CREATE TABLE xmind_edges
 );
 CREATE TABLE smr_notes
 (
-    note_id       TEXT PRIMARY KEY,
+    note_id       INTEGER PRIMARY KEY,
     edge_id       TEXT,
-    last_modified TEXT,
+    last_modified INTEGER,
     FOREIGN KEY (edge_id) REFERENCES xmind_edges (edge_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE

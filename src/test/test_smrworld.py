@@ -183,3 +183,14 @@ def test_get_smr_note_sort_data(smr_world_for_tests):
     sort_field_data = smr_world_for_tests.get_smr_note_sort_data(cts.PRONOUNCIATION_EDGE_XMIND_ID)
     # then
     assert sort_field_data == [(1, 2), (1, 1), (1, 1), (1, 1), (1, 2)]
+
+
+def test_update_smr_triples_card_id(smr_world_for_tests):
+    # given
+    cut = smr_world_for_tests
+    card_id = 55115
+    # when
+    cut.update_smr_triples_card_id(note_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_NOTE_ID, card_id=card_id, order_number=1)
+    # then
+    assert cut.graph.execute("select card_id from smr_triples where edge_id = ?",
+                             (cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID,)).fetchall() == 4 * [(55115,)]

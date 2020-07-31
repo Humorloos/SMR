@@ -133,6 +133,26 @@ class SmrWorld(World):
         self.graph.execute("INSERT INTO main.smr_triples VALUES (?, ?, ?, ?)",
                            (parent_node_id, edge_id, child_node_id, card_id))
 
+    def update_smr_triples_card_id(self, note_id: int, order_number: int, card_id: int) -> None:
+        """
+        updates the card id for all triples belonging to a certain answer in an smr note
+        :param note_id: anki's id of the note to which the triple belongs
+        :param order_number: order number of the child node in the triple (also indicates which answer the child node
+        represents in the note
+        :param card_id: anki's card id which is to be written to the smr triple
+        """
+        self.graph.execute("""WITH card_triples(edge_id, child_node_id) AS (
+    SELECT smr_triples.edge_id, child_node_id
+    FROM smr_triples
+             JOIN smr_notes USING (edge_id)
+             JOIN xmind_nodes ON smr_triples.child_node_id = xmind_nodes.node_id
+    WHERE note_id = ?
+      AND order_number = ?)
+UPDATE smr_triples
+SET card_id = ?
+WHERE edge_id IN (SELECT edge_id FROM card_triples)
+  AND child_node_id IN (SELECT child_node_id FROM card_triples);""", (note_id, order_number, card_id))
+
     def add_xmind_media_to_anki_file(self, xmind_uri: str, anki_file_name: str):
         """
         adds an entry linking an xmind file uri to an anki file name to the relation xmind_media_to_anki_files
@@ -140,6 +160,15 @@ class SmrWorld(World):
         :param anki_file_name: the filename by which the file is identified in anki
         """
         self.graph.execute("INSERT INTO main.xmind_media_to_anki_files VALUES (?, ?)", (xmind_uri, anki_file_name))
+
+    def add_smr_note(self, note_id: int, edge_id: str, last_modified: int):
+        """
+        adds an entry linking an xmind edge to an anki note and saving the creation time in last_modified
+        :param note_id: the note's id from the anki collection
+        :param edge_id: the edge's id from the xmind file
+        :param last_modified: the time the note was created in epoch seconds
+        """
+        self.graph.execute("INSERT INTO main.smr_notes VALUES (?, ?, ?)", (note_id, edge_id, last_modified))
 
     def get_smr_note_reference_data(self, edge_id: str) -> List[Tuple[str, str]]:
         """
@@ -170,9 +199,9 @@ class SmrWorld(World):
         :return: the textual content for the note question field
         """
         return self.graph.execute("""
-select {edge_selection_clause}
-from xmind_edges
-where edge_id = ?;
+SELECT {edge_selection_clause}
+FROM xmind_edges
+WHERE edge_id = ?;
         """.format(edge_selection_clause=get_xmind_content_selection_clause('xmind_edges')), (edge_id,)).fetchone()[0]
 
     def get_smr_note_answer_fields(self, edge_id: str) -> List[str]:
@@ -181,18 +210,18 @@ where edge_id = ?;
         :param edge_id: xmind id of the edge that belongs to the node to get the answer fields for
         :return: answer fields as a llist of strings
         """
-        return [a[0] for a in self.graph.execute("""select distinct {node_selection_clause}
-from smr_triples t
-         join xmind_nodes n ON t.child_node_id = n.node_id
-where edge_id = ?
-order by n.order_number""".format(node_selection_clause=get_xmind_content_selection_clause('n')),
+        return [a[0] for a in self.graph.execute("""SELECT DISTINCT {node_selection_clause}
+FROM smr_triples t
+         JOIN xmind_nodes n ON t.child_node_id = n.node_id
+WHERE edge_id = ?
+ORDER BY n.order_number""".format(node_selection_clause=get_xmind_content_selection_clause('n')),
                                                  (edge_id,)).fetchall()]
 
     def get_smr_note_sort_data(self, edge_id: str) -> List[Tuple[int, int]]:
         """
         gets the data for generating the sort field for the notde belonging to the specified edge id
         :param edge_id: xmind id of the edge that belongs to the node to get the answer fields for
-        :return: the data for generating the sort field in a list of tuples
+        :return: the data for generating the sort field IN a list of tuples
         """
         return self.graph.execute("""
         {hierarchy_recursive_cte_clause}

@@ -3,13 +3,17 @@ import json
 import os
 import random
 import time
+from typing import Callable, Optional, List
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox, QDialog, QDialogButtonBox, QPushButton
 
 import aqt
 from anki.hooks import wrap
+from anki.importing import noteimp
+from anki.importing.noteimp import NoteImporter, ForeignNote
 from aqt import importing, qconnect, gui_hooks
+from aqt.importing import ImportDialog
 from main.consts import SMR_NOTE_FIELD_NAMES
 from main.deckselectiondialog import DeckSelectionDialog
 from main.sync import XSyncer
@@ -28,6 +32,56 @@ from aqt.utils import askUserDialog, tooltip, showText
 from main.xmindimport import XmindImporter
 
 IMPORT_CANCELED_MESSAGE = 'Import canceled'
+
+
+def patch_import_diaglog(self: ImportDialog, mw: AnkiQt, importer: NoteImporter, _old: Callable) -> None:
+    """
+    Wraps around ImportDialog constructor to show the SMR deck selection dialog instead when importing an xmind file
+    :param self: the ImportDialog around which this function wraps
+    :param mw: the Anki main window
+    :param importer: the NoteImporter instance that is used with the import dialog
+    :param _old: the constructor around which this function wraps
+    """
+    if type(importer) == XmindImporter:
+        deck_selection_dialog = DeckSelectionDialog(mw=mw, filename=os.path.basename(importer.x_managers[0].get_file()))
+        user_inputs = deck_selection_dialog.get_inputs()
+        if user_inputs.running:
+            importer.initialize_import(deck_selection_dialog.get_inputs())
+            log = "\n".join(importer.log)
+        else:
+            log = IMPORT_CANCELED_MESSAGE
+        if "\n" not in log:
+            tooltip(log)
+        else:
+            showText(log)
+        return
+    _old(self, mw, importer)
+
+
+importing.ImportDialog.__init__ = wrap(importing.ImportDialog.__init__, patch_import_diaglog, pos="around")
+
+
+def patch_new_data(self: NoteImporter, foreign_note: ForeignNote, _old: Callable) -> List:
+    """
+    wraps around NoteImporter's method newData() and calls SmrWorld's method add_smr_note() if the method was called
+    by an XmindImporter instance
+    :param self: the NoteImporter around whose newData() method this function wraps
+    :param foreign_note: the note whose data is to be processed and which is to be added to the smr world when an
+    xmind file is being imported
+    :param _old: the newData() method around which this function wraps
+    :return: the data that is needed to create a new anki note in a list
+    """
+    if type(self) == XmindImporter:
+        edge_id = foreign_note.tags.pop(-1)
+        data = _old(self, foreign_note)
+        self.smr_world.add_smr_note(note_id=data[0], edge_id=edge_id, last_modified=data[3])
+        return data
+    return _old(self, foreign_note)
+
+
+noteimp.NoteImporter.newData = wrap(noteimp.NoteImporter.newData, patch_new_data, pos="around")
+
+
 #
 # def showReviewer(self):
 #     self.mw.col.reset()
@@ -570,23 +624,3 @@ IMPORT_CANCELED_MESSAGE = 'Import canceled'
 #
 #
 # AnkiQt.onSMRSync = onSync
-
-
-def patch_import_diaglog(self, mw, importer, _old) -> None:
-    if type(importer) == XmindImporter:
-        deck_selection_dialog = DeckSelectionDialog(mw=mw, filename=os.path.basename(importer.x_managers[0].get_file()))
-        user_inputs = deck_selection_dialog.get_inputs()
-        if user_inputs.running:
-            importer.initialize_import(deck_selection_dialog.get_inputs())
-            log = "\n".join(importer.log)
-        else:
-            log = IMPORT_CANCELED_MESSAGE
-        if "\n" not in log:
-            tooltip(log)
-        else:
-            showText(log)
-        return
-    _old(self, mw, importer)
-
-
-importing.ImportDialog.__init__ = wrap(importing.ImportDialog.__init__, patch_import_diaglog, pos="around")

@@ -8,17 +8,7 @@ import bs4
 
 import aqt
 from anki.importing.noteimp import NoteImporter, ForeignNote, ForeignCard
-from anki.notes import Note
-from anki.utils import splitFields, joinFields, timestampID
-# TODO: adjust sheet selection windows to adjust to the window size
-# TODO: check out hierarchical tags, may be useful
-# TODO: add warning when something is wrong with the map
-# TODO: Implement hints as part of the meta json instead of javascript and use
-#  sound=False to mute answers in hint
-# TODO: Implement warning if an audio file can't be found
-# TODO: Check for performance issues:
-#  https://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
-#  https://docs.python.org/3.6/library/profile.html
+from anki.utils import splitFields, joinFields
 from aqt.main import AnkiQt
 from main.consts import X_MODEL_NAME, X_MAX_ANSWERS, SMR_NOTE_FIELD_NAMES
 from main.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
@@ -41,13 +31,12 @@ class XmindImporter(NoteImporter):
 
     def __init__(self, col, file, status_manager=None):
         NoteImporter.__init__(self, col, file)
-        self.notes_2_import: List[ForeignNote] = []
+        self._notes_2_import: List[ForeignNote] = []
         self.added_relations: Dict[str, List] = {'storids': [], 'q_ids': []}
         self.model: Dict = col.models.byName(X_MODEL_NAME)
         self.mw: AnkiQt = aqt.mw
         self.smr_world: SmrWorld = self.mw.smr_world
         self.media_dir: str = os.path.join(os.path.dirname(col.path), 'collection.media')
-        self.source_dir: str = tempfile.mkdtemp()
         self.warnings: List[str] = []
         self.deck_id: Optional[int] = None
         self.deck_name: str = ''
@@ -303,10 +292,12 @@ class XmindImporter(NoteImporter):
         note.fields = reference_field + question_field + answer_fields + (X_MAX_ANSWERS - len(answer_fields)) * [
             ''] + sort_field
         note.tags.append(self.acquire_tag())
+        # add the edge id to the tags list to be able to assign the note to the right edge during import
+        note.tags.append(edge_id)
         note.deck = self.deck_id
         note.cards = {i: ForeignCard() for i, _ in enumerate(answer_fields, start=1)}
         note.fieldsStr = joinFields(note.fields)
-        self.notes_2_import.append(note)
+        self._notes_2_import.append(note)
 
     def acquire_tag(self) -> str:
         """
@@ -318,27 +309,23 @@ class XmindImporter(NoteImporter):
         return (self.deck_name + "::" + self.current_sheet_import).replace(" ", "_")
 
     def finish_import(self):
-        # Add all notes to the collection
+        """
+        - Cancels the import if something went wrong
+        - Adds Notes to the anki collection
+        - Registers the notes in the smr world
+        - Adds card ids from imported notes to the triples they belong to in the smr world
+        - Saves the smr world
+        """
         if not self.running:
             return
-        self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
-                    ['removed', 0, 'notes']]
-        self.import_ontology()
-        self.update_status()
-        self.onto.save_changes()
-        self.added_relations = {'storids': [], 'q_ids': []}
-        for logId, log in enumerate(self.log, start=0):
-            if log[1] == 1:
-                self.log[logId][2] = 'note'
-            self.log[logId][1] = str(self.log[logId][1])
-
-        self.log = [
-            ", ".join(list(map(lambda l: " ".join(l), self.log)))]
-        if self.mw:
-            self.mw.progress.finish()
-
-        # Remove temp dir and its files
-        shutil.rmtree(self.source_dir)
+        # Add all notes to the collection
+        self.importNotes(self._notes_2_import)
+        for card in self._cards:
+            self.smr_world.update_smr_triples_card_id(
+                note_id=card[0], order_number=card[1],
+                card_id=self.col.db.first("select id from cards where nid = ?", card[0])[0])
+        self.smr_world.save()
+        self.mw.progress.finish()
 
     def partial_import(self, seed_topic, sheet_id, deck_id, parent_q,
                        parent_as, onto=None):
@@ -520,8 +507,6 @@ class XmindImporter(NoteImporter):
             status = deep_merge(remote=remote, local=local)
             self.status_manager.add_new(status)
         self.status_manager.save()
-
-
 
     def import_ontology(self):
         triples = [self.onto.getElements(t) for t in self.onto.getNoteTriples() if

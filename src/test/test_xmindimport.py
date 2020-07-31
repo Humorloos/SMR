@@ -1,60 +1,10 @@
+import pickle
+
 import pytest
-# class TestImportOntology(TestImportMap):
-#     def setUp(self):
-#         super().setUp()
-#         importer = self.xmindImporter
-#         importer.x_managers.append(
-#             XManager(os.path.join(
-#                 ADDON_PATH, 'resources', 'example_general_psychology.xmind')))
-#         importer.import_map()
-#         importer.currentSheetImport = 'clinical psychology'
-#         importer.import_map()
-#         importer.activeManager = importer.x_managers[1]
-#         importer.currentSheetImport = 'general psychology'
-#         importer.import_map()
-#
-#     def test_example(self):
-#         importer = self.xmindImporter
-#         importer.import_ontology()
-#         self.fail()
-#
-#
-# class TestNoteFromQuestionList(TestImportOntology):
-#     def test_multiple_answers(self):
-#         importer = self.xmindImporter
-#         questionList = [(315, 317, 318), (315, 317, 319)]
-#         act = importer.note_from_question_list(questionList)
-#         self.fail()
-#
-#     def test_bridge_parent(self):
-#         importer = self.xmindImporter
-#         questionList = [(328, 346, 325)]
-#         act = importer.note_from_question_list(questionList)
-#         self.fail()
-#
-#
-# class TestGetXMindMeta(TestImportOntology):
-#     def test_multiple_answers(self):
-#         importer = self.xmindImporter
-#         noteData = pickle.load(
-#             open(os.path.join(SUPPORT_PATH, 'xmindImporter', 'noteData.p'),
-#                  'rb'))
-#         act = importer.get_xmind_meta(noteData)
-#         self.fail()
-#
-#
-# class TestUpdateStatus(TestImportOntology):
-#     def setUp(self):
-#         super().setUp()
-#         self.xmindImporter.import_ontology()
-#
-#     def test_update_status(self):
-#         importer = self.xmindImporter
-#         importer.update_status()
-#         os.remove(importer.statusManager.status_file)
-#         self.fail()
 from bs4 import Tag
 
+# noinspection PyUnresolvedReferences
+import main.monkeypatches
 import test.constants as cts
 from main.consts import X_MAX_ANSWERS, X_MODEL_NAME
 from main.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
@@ -351,16 +301,13 @@ def test_add_image_and_media_with_media_hyperlink(add_image_and_media_importer):
 def test_create_and_add_note(mocker, active_xmind_importer, smr_world_for_tests):
     # given
     cut = active_xmind_importer
-    add_x_model(cut.col)
-    cut.model = cut.col.models.byName(X_MODEL_NAME)
     cut.smr_world = smr_world_for_tests
-    cut.deck_name = 'my deck'
     mocker.spy(cut, "acquire_tag")
     # when
     cut.create_and_add_note(edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
     # then
     assert cut.acquire_tag.call_count == 1
-    assert len(cut.notes_2_import) == 1
+    assert pickle.dumps(cut._notes_2_import[0]) == cts.EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE
 
 
 def test_acquire_tag(active_xmind_importer):
@@ -371,3 +318,23 @@ def test_acquire_tag(active_xmind_importer):
     tag = cut.acquire_tag()
     # then
     assert tag == 'my_deck::biological_psychology'
+
+
+def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
+    # given
+    cut = active_xmind_importer
+    cut.smr_world = smr_world_for_tests
+    add_x_model(cut.col)
+    cut.model = cut.col.models.byName(X_MODEL_NAME)
+    mocker.patch.object(cut.smr_world, "add_smr_note")
+    mocker.patch.object(cut.smr_world, "update_smr_triples_card_id")
+    mocker.patch.object(cut.smr_world, "save")
+    for edge_id in [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
+                    cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID]:
+        cut.create_and_add_note(edge_id)
+    # when
+    cut.finish_import()
+    # then
+    assert cut.smr_world.add_smr_note.call_count == 4
+    assert cut.smr_world.update_smr_triples_card_id.call_count == 7
+    assert cut.smr_world.save.call_count == 1
