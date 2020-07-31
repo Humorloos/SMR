@@ -26,21 +26,21 @@ def get_xmind_content_selection_clause(relation_name: str):
 
 def get_xmind_hierarchy_recursive_cte_clause(edge_id: str):
     return """
-with ancestor as (
+WITH ancestor AS (
     SELECT parent_node_id,
            edge_id,
            child_node_id,
            0 level
-    from smr_triples
-    where edge_id = '{edge_id}'
+    FROM smr_triples
+    WHERE edge_id = '{edge_id}'
     UNION ALL
     SELECT t.parent_node_id,
            t.edge_id,
            t.child_node_id,
            a.level + 1
-    from smr_triples t
+    FROM smr_triples t
              JOIN ancestor a
-                  on a.parent_node_id = t.child_node_id
+                  ON a.parent_node_id = t.child_node_id
 )""".format(edge_id=edge_id)
 
 

@@ -56,6 +56,7 @@ class XmindImporter(NoteImporter):
         self.last_nid: int = 0
         self.x_managers: List[XManager] = [XManager(os.path.normpath(file))]
         self._register_referenced_x_managers(self.x_managers[0])
+        self.allowHTML: bool = True
         # Fields to make methods from super class work
         self.needMapper = True
         self.mapping = list(SMR_NOTE_FIELD_NAMES.values())
@@ -239,10 +240,11 @@ class XmindImporter(NoteImporter):
         # add the relation to the ontology
         relationship_class_name: str = self.translator.class_from_content(edge_content)
         if not relationship_class_name:
-            relationship_class_name = 'Child'
+            relationship_class_name = self.onto.CHILD_CLASS_NAME
         relationship_property: ObjectPropertyClass = self.onto.add_relation(relationship_class_name)
-        # add node image and media to anki
-        self.add_image_and_media(edge_content)
+        # add node image and media to anki if edge is not empty
+        if relationship_class_name != self.onto.CHILD_CLASS_NAME:
+            self.add_image_and_media(edge_content)
         # add the edge to the smr world
         self.smr_world.add_xmind_edge(
             edge=edge, edge_content=edge_content, sheet_id=self.active_manager.get_sheet_id(self.current_sheet_import),
@@ -255,8 +257,9 @@ class XmindImporter(NoteImporter):
                 node=child_node, concepts=child_concepts, parent_node_ids=parent_node_ids,
                 parent_concepts=parent_concepts, parent_edge_id=edge['id'],
                 parent_relationship_class_name=relationship_class_name, order_number=order_number)
-            # create the note and add it to anki's collection
-        self.create_and_add_note(edge['id'])
+        # create the note and add it to anki's collection if the edge is not empty
+        if relationship_class_name != self.onto.CHILD_CLASS_NAME:
+            self.create_and_add_note(edge['id'])
 
     def add_image_and_media(self, content: NodeContentDTO) -> None:
         """

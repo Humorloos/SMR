@@ -105,6 +105,8 @@ def connect_concepts(child_thing: ThingClass, parent_thing: ThingClass, relation
 
 
 class XOntology(Ontology):
+    CHILD_CLASS_NAME = 'Child'
+
     def __init__(self, deck_id):
         base_iri = os.path.join(USER_PATH, str(deck_id) + '#')
         Ontology.__init__(self, world=mw.smr_world, base_iri=base_iri)

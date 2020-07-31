@@ -247,6 +247,22 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge, x_o
     assert cut.create_and_add_note.call_count == 1
 
 
+def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
+    # given
+    cut = xmind_importer_import_edge
+    edge = cut.active_manager.get_tag_by_id("668iln3nrlmk5ibhnf4lvbbnmo")
+    parent_node = get_parent_node(edge)
+    # when
+    cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node['id']],
+                    parent_concepts=[x_ontology.concept_from_node_content(get_node_content(parent_node))])
+    # then
+    assert cut.onto.concept_from_node_content.call_count == 1
+    assert cut.smr_world.add_xmind_edge.call_count == 1
+    assert cut.import_node_if_concept.call_count == 1
+    assert cut.add_image_and_media.call_count == 0
+    assert cut.create_and_add_note.call_count == 0
+
+
 @pytest.fixture
 def add_image_and_media_importer(mocker, active_xmind_importer):
     importer = active_xmind_importer
