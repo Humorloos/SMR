@@ -297,7 +297,7 @@ class XmindImporter(NoteImporter):
         note.tags.append(self.acquire_tag())
         # add the edge id to the tags list to be able to assign the note to the right edge during import
         note.tags.append(edge_id)
-        note.deck = self.deck_id
+        # note.deck = self.deck_id
         note.cards = {i: ForeignCard() for i, _ in enumerate(answer_fields, start=1)}
         note.fieldsStr = joinFields(note.fields)
         self._notes_2_import.append(note)
@@ -326,9 +326,10 @@ class XmindImporter(NoteImporter):
         # remove log entries informing about duplicate fields
         self.log = [self.log[-1]]
         for card in self._cards:
-            self.smr_world.update_smr_triples_card_id(
-                note_id=card[0], order_number=card[1],
-                card_id=self.col.db.first("select id from cards where nid = ?", card[0])[0])
+            card_id = self.col.db.first("select id from cards where nid = ? and ord = ?", card[0], card[1] - 1)[0]
+            self.smr_world.update_smr_triples_card_id(note_id=card[0], order_number=card[1], card_id=card_id)
+            # manually set the deck until I find a better solution
+            self.col.db.executemany("update cards set did = ? where id = ?", [(self.deck_id, card_id)])
         self.smr_world.save()
         self.mw.progress.finish()
 

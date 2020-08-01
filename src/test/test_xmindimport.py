@@ -378,3 +378,29 @@ def test_initialize_import_import_whole_example(mocker, empty_smr_world, empty_a
     assert cut.import_node_if_concept.call_count == 45
     assert cut.import_triple.call_count == 44
     assert len(cut.log) == 1
+
+
+def test_initialize_import_import_import_notes_to_correct_deck(mocker, empty_smr_world, empty_anki_collection):
+    # given
+    mocker.patch("aqt.mw")
+    aqt.mw.smr_world = empty_smr_world
+    collection = empty_anki_collection
+    add_x_model(collection)
+    cut = XmindImporter(col=collection, file=cts.EXAMPLE_MAP_PATH)
+    cut.smr_world.set_up()
+    test_deck_id = cut.col.decks.id(name="test_deck")
+    mocker.spy(cut, "import_edge")
+    mocker.spy(cut, "import_node_if_concept")
+    mocker.spy(cut, "import_sheet")
+    mocker.spy(cut, "import_triple")
+    mocker.spy(cut, "import_file")
+    # when
+    cut.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=test_deck_id))
+    # then
+    assert cut.import_file.call_count == 2
+    assert cut.import_sheet.call_count == 3
+    assert cut.import_edge.call_count == 32
+    assert cut.import_node_if_concept.call_count == 45
+    assert cut.import_triple.call_count == 44
+    assert len(cut.log) == 1
+    assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == 29
