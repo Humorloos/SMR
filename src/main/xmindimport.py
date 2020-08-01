@@ -90,7 +90,7 @@ class XmindImporter(NoteImporter):
         self.deck_id = user_inputs.deck_id
         self.deck_name = self.col.decks.get(self.deck_id)['name']
         self.repair = user_inputs.repair
-        self.onto = XOntology(self.deck_id)
+        self.onto = XOntology(deck_id=self.deck_id, smr_world=self.smr_world)
         # Set model to Stepwise map retrieval model
         self.col.decks.select(self.deck_id)
         self.col.decks.current()['mid'] = self.col.models.byName(X_MODEL_NAME)['id']
@@ -323,6 +323,8 @@ class XmindImporter(NoteImporter):
             return
         # Add all notes to the collection
         self.importNotes(self._notes_2_import)
+        # remove log entries informing about duplicate fields
+        self.log = [self.log[-1]]
         for card in self._cards:
             self.smr_world.update_smr_triples_card_id(
                 note_id=card[0], order_number=card[1],
@@ -437,42 +439,42 @@ class XmindImporter(NoteImporter):
         oldIds = list(map(lambda nt: nt[0], existingNotes))
         self.col.remNotes(oldIds)
 
-    def addUpdates(self, rows):
-        for noteTpl in rows:
-            fields = []
-            # get List of aIds to check whether the cards for this note have
-            # changed
-            fields.append(splitFields(noteTpl[0][1]))
-            fields.append(splitFields(noteTpl[1][6]))
-            metas = list(
-                map(lambda f: json.loads(f[list(SMR_NOTE_FIELD_NAMES.keys()).index('mt')]),
-                    fields))
-            aIds = list(
-                map(lambda m: list(map(lambda a: a['answerId'], m['answers'])),
-                    metas))
-
-            cardUpdates = []
-            if not self.repair:
-                # if answers have changed get data for updating their status
-                if not aIds[0] == aIds[1]:
-                    cardUpdates = self.getCardUpdates(aIds, noteTpl)
-
-            # change contents of this note
-            updateData = [noteTpl[1][3:7] + [noteTpl[0][0]]]
-            self.col.db.executemany("""
-            update notes set mod = ?, usn = ?, tags = ?,  flds = ?
-            where id = ?""", updateData)
-
-            if not self.repair:
-                # change card values where necessary
-                for CUId, cardUpdate in enumerate(cardUpdates, start=0):
-                    if cardUpdate != '':
-                        self.col.db.executemany("""
-    update cards set type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?, lapses = ?, left = ?, odue = ?, 
-    flags = ? where nid = ? and ord = ?""",
-                                                [list(cardUpdate) + [
-                                                    str(noteTpl[0][0]),
-                                                    str(CUId)]])
+    # def addUpdates(self, rows):
+    #     for noteTpl in rows:
+    #         fields = []
+    #         # get List of aIds to check whether the cards for this note have
+    #         # changed
+    #         fields.append(splitFields(noteTpl[0][1]))
+    #         fields.append(splitFields(noteTpl[1][6]))
+    #         metas = list(
+    #             map(lambda f: json.loads(f[list(SMR_NOTE_FIELD_NAMES.keys()).index('mt')]),
+    #                 fields))
+    #         aIds = list(
+    #             map(lambda m: list(map(lambda a: a['answerId'], m['answers'])),
+    #                 metas))
+    #
+    #         cardUpdates = []
+    #         if not self.repair:
+    #             # if answers have changed get data for updating their status
+    #             if not aIds[0] == aIds[1]:
+    #                 cardUpdates = self.getCardUpdates(aIds, noteTpl)
+    #
+    #         # change contents of this note
+    #         updateData = [noteTpl[1][3:7] + [noteTpl[0][0]]]
+    #         self.col.db.executemany("""
+    #         update notes set mod = ?, usn = ?, tags = ?,  flds = ?
+    #         where id = ?""", updateData)
+    #
+    #         if not self.repair:
+    #             # change card values where necessary
+    #             for CUId, cardUpdate in enumerate(cardUpdates, start=0):
+    #                 if cardUpdate != '':
+    #                     self.col.db.executemany("""
+    # update cards set type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?, lapses = ?, left = ?, odue = ?,
+    # flags = ? where nid = ? and ord = ?""",
+    #                                             [list(cardUpdate) + [
+    #                                                 str(noteTpl[0][0]),
+    #                                                 str(CUId)]])
 
     def getCardUpdates(self, aIds, noteTpl):
         cardUpdates = []

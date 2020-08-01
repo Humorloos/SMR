@@ -1,5 +1,6 @@
 import os
 import re
+from unittest.mock import MagicMock
 
 import bs4
 import pandas as pd
@@ -11,6 +12,7 @@ import main.xmindimport as xmindimport
 import main.xontology as xontology
 import test.constants as cts
 from anki import Collection
+from main import config
 from main.config import get_or_create_smr_world
 from tests.shared import getEmptyCol
 
@@ -24,13 +26,23 @@ def empty_anki_collection() -> Collection:
     collection.close(save=False)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def patch_empty_smr_world() -> None:
-    standard_world = smrworld.FILE_NAME
+    try:
+        os.unlink(os.path.join(cts.SMR_WORLD_PATH, TEST_WORLD_NAME))
+    except FileNotFoundError:
+        pass
+    standard_world_file_name = smrworld.FILE_NAME
+    standard_user_path = smrworld.USER_PATH
+    standard_user_path_config = config.USER_PATH
     smrworld.FILE_NAME = TEST_WORLD_NAME
+    smrworld.USER_PATH = cts.SMR_WORLD_PATH
+    config.USER_PATH = cts.SMR_WORLD_PATH
     yield
-    smrworld.FILE_NAME = standard_world
-    os.unlink(os.path.join(smrworld.USER_PATH, TEST_WORLD_NAME))
+    smrworld.FILE_NAME = standard_world_file_name
+    smrworld.USER_PATH = standard_user_path
+    config.USER_PATH = standard_user_path_config
+    assert True
 
 
 @pytest.fixture
@@ -90,12 +102,11 @@ def tag_for_tests():
 
 @pytest.fixture()
 def x_ontology(mocker, patch_empty_smr_world) -> xontology.XOntology:
-    mocker.patch('main.xontology.mw')
-    xontology.mw.smr_world = get_or_create_smr_world()
     mocker.spy(xontology.XOntology, "_set_up_classes")
-    x_ontology = xontology.XOntology("99999")
+    x_ontology = xontology.XOntology("99999", get_or_create_smr_world())
     yield x_ontology
-    xontology.mw.smr_world.close()
+    # noinspection PyProtectedMember
+    x_ontology._smr_world.close()
 
 
 @pytest.fixture

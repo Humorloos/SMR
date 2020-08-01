@@ -5,13 +5,12 @@ import types
 import owlready2
 from main.consts import X_MAX_ANSWERS, USER_PATH
 from main.dto.nodecontentdto import NodeContentDTO
+from main.smrworld import SmrWorld
 from owlready2 import ThingClass
 from owlready2.namespace import Ontology
 from owlready2.prop import destroy_entity, ObjectPropertyClass
 from main.utils import file_dict
 from main.xnotemanager import FieldTranslator, content_from_field
-
-from aqt import mw
 
 
 def get_question_sets(q_id_elements):
@@ -107,15 +106,16 @@ def connect_concepts(child_thing: ThingClass, parent_thing: ThingClass, relation
 class XOntology(Ontology):
     CHILD_CLASS_NAME = 'Child'
 
-    def __init__(self, deck_id):
+    def __init__(self, deck_id, smr_world):
+        self._smr_world: SmrWorld = smr_world
         base_iri = os.path.join(USER_PATH, str(deck_id) + '#')
-        Ontology.__init__(self, world=mw.smr_world, base_iri=base_iri)
+        Ontology.__init__(self, world=self._smr_world, base_iri=base_iri)
         # set up classes and register ontology only if the ontology has not been set up before
         try:
             next(self.classes())
         except StopIteration:
             self._set_up_classes()
-            mw.smr_world.add_ontology_lives_in_deck(ontology_base_iri=base_iri, deck_id=deck_id)
+            self._smr_world.add_ontology_lives_in_deck(ontology_base_iri=base_iri, deck_id=deck_id)
         self.field_translator = FieldTranslator()
 
     def add_answer(self, a_id, answer_field, rel_dict, question_class,
@@ -232,18 +232,6 @@ class XOntology(Ontology):
         self.add_relation(
             child_thing=child, relationship_class_name=class_text, parent_thing=parent,
             rel_dict=self.rel_dict_from_triple(question_triple=question_triple))
-
-    def rel_dict_from_triple(self, question_triple):
-        return get_rel_dict(
-            aIndex=self.get_trpl_a_index(question_triple),
-            image=self.get_trpl_image(question_triple),
-            media=self.get_trpl_media(question_triple),
-            x_id=self.get_trpl_x_id(question_triple),
-            ref=self.get_trpl_ref(question_triple),
-            sortId=self.get_trpl_sort_id(question_triple),
-            doc=self.get_trpl_doc(question_triple),
-            sheet=self.get_trpl_sheet(question_triple),
-            tag=self.getNoteTag(question_triple))
 
     def get_answer_by_a_id(self, a_id, q_id):
         return self.search(Xid='*"' + q_id + '": {"src": "' + a_id + '*')[0]

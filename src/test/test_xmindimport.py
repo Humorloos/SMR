@@ -3,13 +3,13 @@ import pickle
 import pytest
 from bs4 import Tag
 
-# noinspection PyUnresolvedReferences
-import main.monkeypatches
+import aqt
 import test.constants as cts
 from main.consts import X_MAX_ANSWERS, X_MODEL_NAME
 from main.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from main.template import add_x_model
 from main.xmanager import get_node_content, get_non_empty_sibling_nodes, get_parent_node
+from main.xmindimport import XmindImporter
 
 
 def test_xmind_importer(xmind_importer):
@@ -354,3 +354,27 @@ def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
     assert cut.smr_world.add_smr_note.call_count == 4
     assert cut.smr_world.update_smr_triples_card_id.call_count == 7
     assert cut.smr_world.save.call_count == 1
+
+
+def test_initialize_import_import_whole_example(mocker, empty_smr_world, empty_anki_collection):
+    # given
+    mocker.patch("aqt.mw")
+    aqt.mw.smr_world = empty_smr_world
+    collection = empty_anki_collection
+    add_x_model(collection)
+    cut = XmindImporter(col=collection, file=cts.EXAMPLE_MAP_PATH)
+    cut.smr_world.set_up()
+    mocker.spy(cut, "import_edge")
+    mocker.spy(cut, "import_node_if_concept")
+    mocker.spy(cut, "import_sheet")
+    mocker.spy(cut, "import_triple")
+    mocker.spy(cut, "import_file")
+    # when
+    cut.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=1))
+    # then
+    assert cut.import_file.call_count == 2
+    assert cut.import_sheet.call_count == 3
+    assert cut.import_edge.call_count == 32
+    assert cut.import_node_if_concept.call_count == 45
+    assert cut.import_triple.call_count == 44
+    assert len(cut.log) == 1
