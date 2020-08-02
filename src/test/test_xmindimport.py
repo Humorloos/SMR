@@ -357,30 +357,6 @@ def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
     assert cut.smr_world.save.call_count == 1
 
 
-def test_initialize_import_import_whole_example(mocker, empty_smr_world, empty_anki_collection_session):
-    # given
-    mocker.patch("aqt.mw")
-    aqt.mw.smr_world = empty_smr_world
-    collection = empty_anki_collection_session
-    add_x_model(collection)
-    cut = XmindImporter(col=collection, file=cts.EXAMPLE_MAP_PATH)
-    cut.smr_world.set_up()
-    mocker.spy(cut, "import_edge")
-    mocker.spy(cut, "import_node_if_concept")
-    mocker.spy(cut, "import_sheet")
-    mocker.spy(cut, "import_triple")
-    mocker.spy(cut, "import_file")
-    # when
-    cut.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=1))
-    # then
-    assert cut.import_file.call_count == 2
-    assert cut.import_sheet.call_count == 3
-    assert cut.import_edge.call_count == 32
-    assert cut.import_node_if_concept.call_count == 45
-    assert cut.import_triple.call_count == 44
-    assert len(cut.log) == 1
-
-
 def test_initialize_import_import_import_notes_to_correct_deck(mocker, empty_smr_world, empty_anki_collection_function):
     # given
     mocker.patch("aqt.mw")
@@ -405,3 +381,24 @@ def test_initialize_import_import_import_notes_to_correct_deck(mocker, empty_smr
     assert cut.import_triple.call_count == 44
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == 37
+    assert cut.col.db.execute('select type from cards') == 37 * [[0]]
+
+
+# noinspection PyPep8Naming
+def test_newData(xmind_importer, smr_world_for_tests):
+    # given
+    next_note_id = 1
+    foreign_note = pickle.loads(cts.EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE)
+    importer = xmind_importer
+    add_x_model(importer.col)
+    importer.model = importer.col.models.byName(X_MODEL_NAME)
+    importer._fmap = importer.col.models.fieldMap(importer.model)
+    importer._nextID = next_note_id
+    importer._ids = []
+    importer._cards = []
+    importer.smr_world = smr_world_for_tests
+    # when
+    importer.newData(foreign_note)
+    # then
+    assert importer.smr_world.graph.execute("SELECT * FROM smr_notes").fetchone()[:2] == (
+        next_note_id, cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)

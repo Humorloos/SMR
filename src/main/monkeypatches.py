@@ -40,41 +40,6 @@ def patch_import_diaglog(self: ImportDialog, mw: AnkiQt, importer: NoteImporter,
 
 
 importing.ImportDialog.__init__ = wrap(importing.ImportDialog.__init__, patch_import_diaglog, pos="around")
-
-
-def patch_new_data(self: NoteImporter, foreign_note: ForeignNote, _old: Callable) -> List:
-    """
-    wraps around NoteImporter's method newData() and calls SmrWorld's method add_smr_note() if the method was called
-    by an XmindImporter instance
-    :param self: the NoteImporter around whose newData() method this function wraps
-    :param foreign_note: the note whose data is to be processed and which is to be added to the smr world when an
-    xmind file is being imported
-    :param _old: the newData() method around which this function wraps
-    :return: the data that is needed to create a new anki note in a list
-    """
-    if type(self) == XmindImporter:
-        edge_id = foreign_note.tags.pop(-1)
-        data = _old(self, foreign_note)
-        self.smr_world.add_smr_note(note_id=data[0], edge_id=edge_id, last_modified=data[3])
-        return data
-    return _old(self, foreign_note)
-
-
-noteimp.NoteImporter.newData = wrap(noteimp.NoteImporter.newData, patch_new_data, pos="around")
-
-
-def patch_update_cards(self: NoteImporter, _old: Callable) -> None:
-    """
-    wraps around NoteImporter's method updateCards() to avoid that cards' type and queue attributes are set to 2
-    :param self: the NoteImporter around whose updateCards() method this function wraps
-    :param _old: the updateCards() method around which this function wraps
-    """
-    if type(self) == XmindImporter:
-        return
-    _old(self)
-
-
-noteimp.NoteImporter.updateCards = wrap(noteimp.NoteImporter.updateCards, patch_update_cards, pos="around")
 #
 # def showReviewer(self):
 #     self.mw.col.reset()

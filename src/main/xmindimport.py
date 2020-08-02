@@ -63,15 +63,22 @@ class XmindImporter(NoteImporter):
         self.updateCount = 0
         self.importMode = ADD_MODE
 
-    def _register_referenced_x_managers(self, x_manager: XManager):
+    def newData(self, n: ForeignNote) -> List:
         """
-        Adds XManagers referenced by ref sheet to xManagers list
-        :param x_manager: the XManager to get References from
+        overrides NoteImporter's method newData() to additionally call smr_world.add_smr_note()
+        :param n: the note whose data is to be processed and which is to be added to the smr world
+        :return: the data needed to create a new anki note in a list
         """
-        ref_managers: List[XManager] = [XManager(f) for f in x_manager.get_referenced_files()]
-        self.x_managers.extend(ref_managers)
-        for manager in ref_managers:
-            self._register_referenced_x_managers(manager)
+        edge_id = n.tags.pop(-1)
+        data = NoteImporter.newData(self, n)
+        self.smr_world.add_smr_note(note_id=data[0], edge_id=edge_id, last_modified=data[3])
+        return data
+
+    def updateCards(self) -> None:
+        """
+        overrides NoteImporter's method updateCards() to avoid that cards' type and queue attributes are set to 2
+        """
+        return
 
     def open(self) -> None:
         """
@@ -82,6 +89,16 @@ class XmindImporter(NoteImporter):
                 seed_path=self.file)).fetchone():
             self.log = ["It seems like {seed_path} is already in your collection. Please choose a different "
                         "file.".format(seed_path=self.file)]
+
+    def _register_referenced_x_managers(self, x_manager: XManager):
+        """
+        Adds XManagers referenced by ref sheet to xManagers list
+        :param x_manager: the XManager to get References from
+        """
+        ref_managers: List[XManager] = [XManager(f) for f in x_manager.get_referenced_files()]
+        self.x_managers.extend(ref_managers)
+        for manager in ref_managers:
+            self._register_referenced_x_managers(manager)
 
     def initialize_import(self, user_inputs: DeckSelectionDialogUserInputsDTO) -> None:
         """
