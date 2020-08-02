@@ -333,7 +333,7 @@ def test_acquire_tag(active_xmind_importer):
     # when
     tag = cut.acquire_tag()
     # then
-    assert tag == 'my_deck::biological_psychology'
+    assert tag == 'my_deck::example_map::biological_psychology'
 
 
 def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
@@ -355,6 +355,7 @@ def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
     assert cut.smr_world.add_smr_note.call_count == 4
     assert cut.smr_world.update_smr_triples_card_id.call_count == 7
     assert cut.smr_world.save.call_count == 1
+    assert cut.mw.reset.call_count == 1
 
 
 def test_initialize_import_import_import_notes_to_correct_deck(mocker, empty_smr_world, empty_anki_collection_function):
