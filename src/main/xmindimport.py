@@ -354,6 +354,7 @@ class XmindImporter(NoteImporter):
             # see https://forums.ankiweb.net/t/importnotes-always-adds-cards-to-default-deck/1690 for issue
             self.col.db.executemany("update cards set did = ? where id = ?", [(self.deck_id, card_id)])
         self.smr_world.save()
+        self.mw.reset(guiOnly=True)
         self.mw.progress.finish()
 
     def partial_import(self, seed_topic, sheet_id, deck_id, parent_q,
