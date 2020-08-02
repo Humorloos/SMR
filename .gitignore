@@ -2,7 +2,8 @@
 /desktop.ini
 /.idea/
 /src/test/support/smr_world/testworld.sqlite3
-/src/test/support/collections/
+/src/test/support/collections/empty_smr_col_function/
+/src/test/support/collections/empty_smr_col_session/
 /src/test/support/smr_world/smr_world_for_tests.sqlite3
 /user_files/smrworld.sqlite3
 /user_files/smrworld.sqlite3-journal

@@ -4,6 +4,7 @@ import re
 import bs4
 import pandas as pd
 import pytest
+from sqlite3 import Connection, connect
 
 import main.smrworld as smrworld
 import main.xmanager as xmanager
@@ -91,6 +92,22 @@ def _smr_world_for_tests_session(empty_anki_collection_session):
         df.to_sql(name=table, con=smr_world.graph.db, if_exists='append', index=False)
     yield smr_world
     smr_world.close()
+
+
+@pytest.fixture(scope="function")
+def collection_4_migration(empty_anki_collection_function):
+    col = empty_anki_collection_function
+    col.close()
+    con = connect(col.path)
+    old_collection_path = os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_version_0.0.1/csv')
+    for csv_filename in os.listdir(old_collection_path):
+        table: str = re.sub("main_|.csv", '', csv_filename)
+        csv_file_path = os.path.join(old_collection_path, csv_filename)
+        df = pd.read_csv(csv_file_path, na_filter=False)
+        df.to_sql(name=table, con=con, if_exists='replace', index=False)
+    con.close()
+    col.reopen()
+    yield col
 
 
 @pytest.fixture()
