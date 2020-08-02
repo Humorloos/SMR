@@ -328,7 +328,8 @@ class XmindImporter(NoteImporter):
         for card in self._cards:
             card_id = self.col.db.first("select id from cards where nid = ? and ord = ?", card[0], card[1] - 1)[0]
             self.smr_world.update_smr_triples_card_id(note_id=card[0], order_number=card[1], card_id=card_id)
-            # manually set the deck until I find a better solution
+            # manually set the deck until I find a better solution, 
+            # see https://forums.ankiweb.net/t/importnotes-always-adds-cards-to-default-deck/1690 for issue
             self.col.db.executemany("update cards set did = ? where id = ?", [(self.deck_id, card_id)])
         self.smr_world.save()
         self.mw.progress.finish()

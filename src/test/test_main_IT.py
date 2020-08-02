@@ -7,7 +7,7 @@ from main import smrworld, config, main
 from main.consts import X_MODEL_NAME, X_MODEL_VERSION, USER_PATH
 
 
-def test_on_profile_loaded(mocker, empty_anki_collection):
+def test_on_profile_loaded(mocker, empty_anki_collection_session):
     """Checks that the database that is created if there is no database yet is the same as the one that is loaded if it
     already exists"""
     # given
@@ -15,7 +15,7 @@ def test_on_profile_loaded(mocker, empty_anki_collection):
     mocker.patch("main.config.mw")
     config.mw.col.models.byName.side_effect = models.get
     mocker.patch("main.main.mw")
-    main.mw.col = empty_anki_collection
+    main.mw.col = empty_anki_collection_session
     # when
     main.on_profile_loaded()
     tables_database_present = [

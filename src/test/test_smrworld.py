@@ -5,7 +5,7 @@ import pytest
 from main.xmanager import get_node_content
 
 
-def test_set_up(empty_smr_world, empty_anki_collection):
+def test_set_up(empty_smr_world, empty_anki_collection_session):
     # given
     expected_tables = ["store", "objs", "datas", "ontologies", "ontology_alias", "prop_fts", "resources",
                        "ontology_lives_in_deck", "xmind_files", "xmind_sheets", "xmind_media_to_anki_files",

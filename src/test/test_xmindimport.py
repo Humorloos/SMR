@@ -342,6 +342,7 @@ def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
     cut.smr_world = smr_world_for_tests
     add_x_model(cut.col)
     cut.model = cut.col.models.byName(X_MODEL_NAME)
+    cut.deck_id = 1
     mocker.patch.object(cut.smr_world, "add_smr_note")
     mocker.patch.object(cut.smr_world, "update_smr_triples_card_id")
     mocker.patch.object(cut.smr_world, "save")
@@ -356,11 +357,11 @@ def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
     assert cut.smr_world.save.call_count == 1
 
 
-def test_initialize_import_import_whole_example(mocker, empty_smr_world, empty_anki_collection):
+def test_initialize_import_import_whole_example(mocker, empty_smr_world, empty_anki_collection_session):
     # given
     mocker.patch("aqt.mw")
     aqt.mw.smr_world = empty_smr_world
-    collection = empty_anki_collection
+    collection = empty_anki_collection_session
     add_x_model(collection)
     cut = XmindImporter(col=collection, file=cts.EXAMPLE_MAP_PATH)
     cut.smr_world.set_up()
@@ -380,11 +381,11 @@ def test_initialize_import_import_whole_example(mocker, empty_smr_world, empty_a
     assert len(cut.log) == 1
 
 
-def test_initialize_import_import_import_notes_to_correct_deck(mocker, empty_smr_world, empty_anki_collection):
+def test_initialize_import_import_import_notes_to_correct_deck(mocker, empty_smr_world, empty_anki_collection_function):
     # given
     mocker.patch("aqt.mw")
     aqt.mw.smr_world = empty_smr_world
-    collection = empty_anki_collection
+    collection = empty_anki_collection_function
     add_x_model(collection)
     cut = XmindImporter(col=collection, file=cts.EXAMPLE_MAP_PATH)
     cut.smr_world.set_up()

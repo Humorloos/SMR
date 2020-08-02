@@ -71,8 +71,8 @@ def test_generate_card_template_card_five(template_card_five):
     assert act == template_card_five
 
 
-def test_add_x_model_then_update_x_model(empty_anki_collection, template_card_one, template_card_five):
-    col = empty_anki_collection
+def test_add_x_model_then_update_x_model(empty_anki_collection_session, template_card_one, template_card_five):
+    col = empty_anki_collection_session
     act = add_x_model(col)
 
     assert len(act['flds']) == len(SMR_NOTE_FIELD_NAMES)

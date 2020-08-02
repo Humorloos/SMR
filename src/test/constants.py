@@ -6,7 +6,10 @@ from main.dto.nodecontentdto import NodeContentDTO
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'src', 'test', 'support')
 SMR_WORLD_PATH = os.path.join(SUPPORT_PATH, "smr_world")
 SMR_WORLD_CSV_PATH = os.path.join(SMR_WORLD_PATH, "csv")
-EMPTY_COLLECTION_PATH = os.path.join(SUPPORT_PATH, 'empty_smr_col.anki2')
+TEST_COLLECTIONS_PATH = os.path.join(SUPPORT_PATH, 'collections')
+EMPTY_COLLECTION_PATH_SESSION = os.path.join(TEST_COLLECTIONS_PATH, 'empty_smr_col_session/empty_smr_col_session.anki2')
+EMPTY_COLLECTION_PATH_FUNCTION = os.path.join(TEST_COLLECTIONS_PATH,
+                                              'empty_smr_col_function/empty_smr_col_function.anki2')
 EXAMPLE_MAP_PATH = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
 TEST_DECK_ID = "12345"
 TEST_FILE_PATH = "path for test file"

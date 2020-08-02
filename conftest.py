@@ -1,6 +1,5 @@
 import os
 import re
-from unittest.mock import MagicMock
 
 import bs4
 import pandas as pd
@@ -14,14 +13,28 @@ import test.constants as cts
 from anki import Collection
 from main import config
 from main.config import get_or_create_smr_world
-from tests.shared import getEmptyCol
 
 TEST_WORLD_NAME = "testworld.sqlite3"
 
 
 @pytest.fixture(scope="session")
-def empty_anki_collection() -> Collection:
-    collection = getEmptyCol()
+def empty_anki_collection_session() -> Collection:
+    try:
+        os.unlink(os.path.join(cts.EMPTY_COLLECTION_PATH_SESSION))
+    except FileNotFoundError:
+        pass
+    collection = Collection(cts.EMPTY_COLLECTION_PATH_SESSION)
+    yield collection
+    collection.close(save=False)
+
+
+@pytest.fixture(scope="function")
+def empty_anki_collection_function() -> Collection:
+    try:
+        os.unlink(os.path.join(cts.EMPTY_COLLECTION_PATH_FUNCTION))
+    except FileNotFoundError:
+        pass
+    collection = Collection(cts.EMPTY_COLLECTION_PATH_FUNCTION)
     yield collection
     collection.close(save=False)
 
@@ -54,7 +67,7 @@ def empty_smr_world(patch_empty_smr_world) -> smrworld.SmrWorld:
 
 
 @pytest.fixture(scope="session")
-def _smr_world_for_tests_session(empty_anki_collection):
+def _smr_world_for_tests_session(empty_anki_collection_session):
     smrworld.FILE_NAME = "smr_world_for_tests.sqlite3"
     smrworld.USER_PATH = cts.SMR_WORLD_PATH
     smr_world_path = os.path.join(cts.SMR_WORLD_PATH, smrworld.FILE_NAME)
@@ -110,9 +123,9 @@ def x_ontology(mocker, patch_empty_smr_world) -> xontology.XOntology:
 
 
 @pytest.fixture
-def xmind_importer(mocker, empty_anki_collection: Collection) -> xmindimport.XmindImporter:
+def xmind_importer(mocker, empty_anki_collection_session) -> xmindimport.XmindImporter:
     """
     XmindImporter instance for file example map.xmind
     """
     mocker.patch("aqt.mw")
-    yield xmindimport.XmindImporter(col=empty_anki_collection, file=cts.EXAMPLE_MAP_PATH)
+    yield xmindimport.XmindImporter(col=empty_anki_collection_session, file=cts.EXAMPLE_MAP_PATH)

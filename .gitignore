@@ -2,3 +2,4 @@
 /desktop.ini
 /.idea/
 /src/test/support/smr_world/testworld.sqlite3
+/src/test/support/collections/
