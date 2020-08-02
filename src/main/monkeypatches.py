@@ -1,34 +1,15 @@
 """monkey patches"""
-import json
 import os
-import random
-import time
-from typing import Callable, Optional, List
+from typing import Callable, List
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMessageBox, QDialog, QDialogButtonBox, QPushButton
-
-import aqt
 from anki.hooks import wrap
 from anki.importing import noteimp
 from anki.importing.noteimp import NoteImporter, ForeignNote
-from aqt import importing, qconnect, gui_hooks
+from aqt import importing
 from aqt.importing import ImportDialog
-from main.consts import SMR_NOTE_FIELD_NAMES
-from main.deckselectiondialog import DeckSelectionDialog
-from main.sync import XSyncer
-from main.utils import getDueAnswersToNote, isSMRDeck
-
-import anki.sched as scheduler
-import aqt.reviewer as reviewer
-# noinspection PyProtectedMember
-from anki.lang import _, ngettext
-from anki.utils import ids2str
-from aqt.deckbrowser import DeckBrowser
 from aqt.main import AnkiQt
-from aqt.utils import askUserDialog, tooltip, showText
-
-# noinspection PyPep8Naming
+from aqt.utils import tooltip, showText
+from main.deckselectiondialog import DeckSelectionDialog
 from main.xmindimport import XmindImporter
 
 IMPORT_CANCELED_MESSAGE = 'Import canceled'
@@ -82,6 +63,18 @@ def patch_new_data(self: NoteImporter, foreign_note: ForeignNote, _old: Callable
 noteimp.NoteImporter.newData = wrap(noteimp.NoteImporter.newData, patch_new_data, pos="around")
 
 
+def patch_update_cards(self: NoteImporter, _old: Callable) -> None:
+    """
+    wraps around NoteImporter's method updateCards() to avoid that cards' type and queue attributes are set to 2
+    :param self: the NoteImporter around whose updateCards() method this function wraps
+    :param _old: the updateCards() method around which this function wraps
+    """
+    if type(self) == XmindImporter:
+        return
+    _old(self)
+
+
+noteimp.NoteImporter.updateCards = wrap(noteimp.NoteImporter.updateCards, patch_update_cards, pos="around")
 #
 # def showReviewer(self):
 #     self.mw.col.reset()

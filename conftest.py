@@ -25,7 +25,7 @@ def empty_anki_collection_session() -> Collection:
         pass
     collection = Collection(cts.EMPTY_COLLECTION_PATH_SESSION)
     yield collection
-    collection.close(save=False)
+    collection.close()
 
 
 @pytest.fixture(scope="function")
@@ -36,7 +36,7 @@ def empty_anki_collection_function() -> Collection:
         pass
     collection = Collection(cts.EMPTY_COLLECTION_PATH_FUNCTION)
     yield collection
-    collection.close(save=False)
+    collection.close()
 
 
 @pytest.fixture(scope="function")

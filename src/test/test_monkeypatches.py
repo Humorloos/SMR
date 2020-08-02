@@ -1,6 +1,8 @@
 import pickle
 from unittest.mock import MagicMock
 
+from pytest import fail
+
 import aqt.importing
 import main.monkeypatches
 import test.constants as cts
@@ -58,3 +60,12 @@ def test_patch_new_data(xmind_importer, smr_world_for_tests):
     # then
     assert importer.smr_world.graph.execute("SELECT * FROM smr_notes").fetchone()[:2] == (
         next_note_id, cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
+
+
+def test_patch_update_cards(xmind_importer):
+    # when
+    try:
+        xmind_importer.updateCards()
+    # then
+    except AttributeError:
+        fail("Unexpected AttributeError, updateCards() was probably called.")
