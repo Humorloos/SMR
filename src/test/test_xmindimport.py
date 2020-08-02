@@ -404,4 +404,4 @@ def test_initialize_import_import_import_notes_to_correct_deck(mocker, empty_smr
     assert cut.import_node_if_concept.call_count == 45
     assert cut.import_triple.call_count == 44
     assert len(cut.log) == 1
-    assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == 29
+    assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == 37

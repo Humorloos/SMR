@@ -7,7 +7,7 @@ from typing import List, Dict, Optional
 import bs4
 
 import aqt
-from anki.importing.noteimp import NoteImporter, ForeignNote, ForeignCard
+from anki.importing.noteimp import NoteImporter, ForeignNote, ForeignCard, ADD_MODE
 from anki.utils import splitFields, joinFields
 from aqt.main import AnkiQt
 from main.consts import X_MODEL_NAME, X_MAX_ANSWERS, SMR_NOTE_FIELD_NAMES
@@ -61,6 +61,7 @@ class XmindImporter(NoteImporter):
         self.needMapper = True
         self.mapping = list(SMR_NOTE_FIELD_NAMES.values())
         self.updateCount = 0
+        self.importMode = ADD_MODE
 
     def _register_referenced_x_managers(self, x_manager: XManager):
         """
@@ -170,6 +171,8 @@ class XmindImporter(NoteImporter):
             node_ids_preceding_next_edge: List[str] = [n['id'] for n in get_non_empty_sibling_nodes(node)]
         # import each child edge
         for order_number, following_relationship in enumerate(get_child_nodes(node), start=1):
+            if following_relationship.text == 'pronounciation':
+                assert True
             self.import_edge(order_number=order_number, edge=following_relationship,
                              parent_node_ids=node_ids_preceding_next_edge, parent_concepts=concepts)
 
@@ -257,6 +260,8 @@ class XmindImporter(NoteImporter):
                 node=child_node, concepts=child_concepts, parent_node_ids=parent_node_ids,
                 parent_concepts=parent_concepts, parent_edge_id=edge['id'],
                 parent_relationship_class_name=relationship_class_name, order_number=order_number)
+        if edge_content.title == 'pronounciation':
+            assert True
         # create the note and add it to anki's collection if the edge is not empty
         if relationship_class_name != self.onto.CHILD_CLASS_NAME:
             self.create_and_add_note(edge['id'])
