@@ -1,5 +1,6 @@
 import json
 import re
+from typing import List
 
 from main.consts import SMR_NOTE_FIELD_NAMES, X_MEDIA_EXTENSIONS, X_IMAGE_EXTENSIONS, X_MAX_ANSWERS
 from main.dto.nodecontentdto import NodeContentDTO
@@ -202,6 +203,14 @@ class XNoteManager:
         self.col = col
         self.model = get_smr_model_id(self.col.models)
         self.media_dir = re.sub(r"(?i)\.(anki2)$", ".media", self.col.path)
+
+    def get_smr_deck_ids(self) -> List[int]:
+        """
+        gets a list of deck ids of all the decks that contain smr notes
+        :return: a list of deck ids of all decks containing smr notes
+        """
+        return [row[0] for row in self.col.db.execute(
+            "select distinct did from cards join notes where mid = ?", self.model)]
 
     def get_fields_from_qId(self, qId):
         return splitFields(self.col.db.first(

@@ -76,7 +76,7 @@ import pytest
 
 from main.dto.nodecontentdto import NodeContentDTO
 from main.xnotemanager import FieldTranslator, get_smr_note_reference_field, get_smr_note_sort_field, \
-    sort_id_from_order_number
+    sort_id_from_order_number, XNoteManager
 import test.constants as cts
 
 
@@ -158,3 +158,17 @@ def test_sort_id_from_order_number():
     sort_ids = [sort_id_from_order_number(i) for i in range(1, 21)]
     # then
     assert sort_ids == sorted(sort_ids)
+
+
+@pytest.fixture
+def note_manager(collection_4_migration):
+    yield XNoteManager(collection_4_migration)
+
+
+def test_get_smr_deck_ids(note_manager):
+    # given
+    cut = note_manager
+    # when
+    smr_deck_ids = cut.get_smr_deck_ids()
+    # then
+    assert smr_deck_ids == [1596384453519]

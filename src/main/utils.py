@@ -1,9 +1,28 @@
 import re
+from typing import Optional
 
 from anki.models import ModelManager
 from main.consts import X_MODEL_NAME
 
 from anki.utils import ids2str
+
+
+def get_smr_model_id(model_manager: ModelManager) -> Optional[int]:
+    """
+    gets anki's model id that was assigned to the smr model
+    :param model_manager: model manager from the anki collection containing the model
+    """
+    return model_manager.id_for_name(X_MODEL_NAME)
+
+
+def replace_embedded_media(content: str) -> str:
+    """
+    replaces embedded anki media with (media) to avoid anki playing sounds or videos when they are mentioned in the
+    reference
+    :param content: the content in which to replace the embeddings
+    :return: the content with replaced media embeddings
+    """
+    return re.sub(r"\[sound:.*\]", '(media)', content)
 
 
 def deep_merge(remote, local, path=None):
@@ -25,16 +44,6 @@ def deep_merge(remote, local, path=None):
         else:
             local[key] = remote[key]
     return local
-
-
-def replace_embedded_media(content: str) -> str:
-    """
-    replaces embedded anki media with (media) to avoid anki playing sounds or videos when they are mentioned in the
-    reference
-    :param content: the content in which to replace the embeddings
-    :return: the content with replaced media embeddings
-    """
-    return re.sub(r"\[sound:.*\]", '(media)', content)
 
 
 # Receives a sortId of an anki note and returns the path that leads to the
@@ -89,15 +98,6 @@ def isSMRDeck(did, col):
     midsInDeck = list(set(sum(col.db.execute(
         "select mid from notes where id in " + ids2str(nidsInDeck)), ())))
     return get_smr_model_id(col) in midsInDeck
-
-
-def get_smr_model_id(model_manager: ModelManager) -> str:
-    """
-    gets anki's model id that was assigned to the smr model
-    :param model_manager:
-    :return:
-    """
-    return model_manager.id_for_name(X_MODEL_NAME)
 
 
 def getDueAnswersToNote(nId, dueAnswers, col):
