@@ -20,8 +20,14 @@ def on_profile_loaded():
     """
     get_or_create_model()
     mw.smr_world = get_or_create_smr_world()
-    if not mw.col.get_config('smr') or LooseVersion(mw.col.get_config('smr')['version']) < LooseVersion(
-            SMR_CONFIG['version']):
+    current_version = None
+    if mw.col.get_config('smr'):
+        current_version = LooseVersion(mw.col.get_config('smr')['version'])
+    if not mw.col.get_config('smr') or current_version < LooseVersion(
+            '0.1.0'):
+
+        update_smr_version()
+    elif current_version < LooseVersion(SMR_CONFIG['version']):
         update_smr_version()
 
 

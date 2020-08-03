@@ -344,6 +344,13 @@ class XmindImporter(NoteImporter):
         """
         if not self.running:
             return
+        # # anki defaults to the last note type used in the selected deck
+        # m = self.col.models.byName(X_MODEL_NAME)
+        # deck = self.col.decks.get(self.deck_id)
+        # deck['mid'] = m['id']
+        # self.col.decks.save(deck)
+        # # and puts cards in the last deck used by the note type
+        # m['did'] = self.deck_id
         # Add all notes to the collection
         self.importNotes(self._notes_2_import)
         # remove log entries informing about duplicate fields
@@ -358,193 +365,157 @@ class XmindImporter(NoteImporter):
         self.mw.reset(guiOnly=True)
         self.mw.progress.finish()
 
-        def partial_import(self, seed_topic, sheet_id, deck_id, parent_q,
-                           parent_as, onto=None):
-            """
-            Imports questions starting at a given point
-            :param onto: Optional, Ontology to set as importer's ontology:
-            :param seed_topic: Tag of the topic of the question to start at
-            :param sheet_id: Xmind id of the sheet the question belongs to
-            :param deck_id: Deck-id of the deck to import to
-            :param parent_q: Tag of the parent-question of the question the
-            import starts at
-            :param parent_as: List of tags of the answers to the parent-question
-            """
-            self.set_up_import(deck_id=deck_id, sheet=sheet_id, onto=onto)
-            self.col.decks.select(self.deck_id)
-            self.col.decks.current()['mid'] = self.col.models.byName(
-                X_MODEL_NAME)['id']
-            parent_a_concepts = [self.onto.get_answer_by_a_id(
-                a_id=a['id'], q_id=parent_q['id']) for a in parent_as]
-            if len(parent_as) > 1:
-                node_tag = None
-                a_concept = parent_a_concepts
-            else:
-                node_tag = parent_as[0]
-                a_concept = parent_a_concepts[0]
-            parent_a_dict = self.get_answer_dict(
-                node_tag=node_tag, question=parent_q['id'], root=False,
-                a_concept=a_concept)
-
-            # If the seed_topic's parent follows a bridge, start importing at the
-            # bridge instead
-            parent_q_children = get_child_nodes(parent_q)
-            if get_parent_node(seed_topic) not in parent_q_children:
-                if len(parent_as) > 1:
-                    seed_topic = next(
-                        g for c in parent_q_children if is_empty_node(c) for
-                        g in get_child_nodes(c) if seed_topic.text in g.text)
-                else:
-                    seed_topic = next(t for t in get_child_nodes(parent_as[0]) if
-                                      seed_topic.text in t.text)
-            ref, sort_id = self.active_manager.ref_and_sort_id(q_topic=seed_topic)
-            q_index = sum(1 for _ in seed_topic.previous_siblings) + 1
-            self.import_edge(order_number=q_index, edge=seed_topic)
-
-        def set_up_import(self, deck_id, sheet, onto=None):
-            self.current_sheet_import = next(
-                s for m in self.x_managers for
-                s in m._sheets if m._sheets[s]['tag']['id'] == sheet)
-            self.active_manager = next(
-                m for m in self.x_managers for
-                s in m._sheets if s == self.current_sheet_import)
-            self.deck_id = deck_id
-            if onto:
-                self.onto = onto
-            else:
-                self.onto = XOntology(deck_id)
-            self.deck_name = self.col.decks.get(self.deck_id)['name']
-
-        def maybe_sync(self, sheet_id, note_list):
-            if self.repair:
-                # noinspection PyTypeChecker
-                existing_notes = list(self.col.db.execute(
-                    "select id, flds from notes where tags like '%" +
-                    self.current_sheet_import['tag'].replace(" ", "") + "%'"))
-            else:
-                existing_notes = getNotesFromSheet(sheetId=sheet_id, col=self.col)
-            if existing_notes:
-                notes_2_add = []
-                notes_2_update = []
-                old_q_id_list = list(map(lambda n: json.loads(
-                    splitFields(n[1])[list(SMR_NOTE_FIELD_NAMES.keys()).index('mt')])[
-                    'questionId'], existing_notes))
-                for newNote in note_list:
-                    new_fields = splitFields(newNote[6])
-                    new_meta = json.loads(new_fields[list(SMR_NOTE_FIELD_NAMES.keys()).index('mt')])
-                    new_q_id = new_meta['questionId']
-                    try:
-                        if self.repair:
-                            new_qt_x_aw = joinFields(new_fields[1:22])
-                            old_tpl = tuple(
-                                filter(lambda n: new_qt_x_aw in n[1], existing_notes))[0]
-                            note_id = existing_notes.index(old_tpl)
-                        else:
-                            note_id = old_q_id_list.index(new_q_id)
-                            # if the fields are different, add it to notes to be updated
-                        if not existing_notes[note_id][1] == newNote[6]:
-                            notes_2_update.append(
-                                [existing_notes[note_id], newNote])
-                        del existing_notes[note_id]
-                        del old_q_id_list[note_id]
-                    except (ValueError, IndexError):
-                        notes_2_add.append(newNote)
-                self.addNew(notes_2_add)
-                self.log[0][1] += len(notes_2_add)
-                self.addUpdates(notes_2_update)
-                self.log[1][1] += len(notes_2_update)
-                self.removeOld(existing_notes)
-                self.log[2][1] += len(existing_notes)
-                self.col.save()
-            else:
-                notes_2_add = note_list
-                self.addNew(notes_2_add)
-                self.log[0][1] += len(notes_2_add)
-
-        def removeOld(self, existingNotes):
-            oldIds = list(map(lambda nt: nt[0], existingNotes))
-            self.col.remNotes(oldIds)
-
-        # def addUpdates(self, rows):
-        #     for noteTpl in rows:
-        #         fields = []
-        #         # get List of aIds to check whether the cards for this note have
-        #         # changed
-        #         fields.append(splitFields(noteTpl[0][1]))
-        #         fields.append(splitFields(noteTpl[1][6]))
-        #         metas = list(
-        #             map(lambda f: json.loads(f[list(SMR_NOTE_FIELD_NAMES.keys()).index('mt')]),
-        #                 fields))
-        #         aIds = list(
-        #             map(lambda m: list(map(lambda a: a['answerId'], m['answers'])),
-        #                 metas))
-        #
-        #         cardUpdates = []
-        #         if not self.repair:
-        #             # if answers have changed get data for updating their status
-        #             if not aIds[0] == aIds[1]:
-        #                 cardUpdates = self.getCardUpdates(aIds, noteTpl)
-        #
-        #         # change contents of this note
-        #         updateData = [noteTpl[1][3:7] + [noteTpl[0][0]]]
-        #         self.col.db.executemany("""
-        #         update notes set mod = ?, usn = ?, tags = ?,  flds = ?
-        #         where id = ?""", updateData)
-        #
-        #         if not self.repair:
-        #             # change card values where necessary
-        #             for CUId, cardUpdate in enumerate(cardUpdates, start=0):
-        #                 if cardUpdate != '':
-        #                     self.col.db.executemany("""
-        # update cards set type = ?, queue = ?, due = ?, ivl = ?, factor = ?, reps = ?, lapses = ?, left = ?, odue = ?,
-        # flags = ? where nid = ? and ord = ?""",
-        #                                             [list(cardUpdate) + [
-        #                                                 str(noteTpl[0][0]),
-        #                                                 str(CUId)]])
-
-        def getCardUpdates(self, aIds, noteTpl):
-            cardUpdates = []
-            # Get relevant values of the prior answers
-            relevantVals = ['type', 'queue', 'due', 'ivl', 'factor', 'reps',
-                            'lapses', 'left', 'odue', 'flags']
-            # remember prior values of cards that have moved
-            oldVals = list(self.col.db.execute(
-                "select " + ", ".join(relevantVals) + " from cards where nid = " +
-                str(noteTpl[0][0])))
-            for i, aId in enumerate(aIds[1], start=0):
-                # if this answer was a different answer before, remember the
-                # stats
-                try:
-                    if aId != aIds[0][i]:
-                        try:
-                            cardUpdates.append(oldVals[aIds[0].index(aId)])
-                        except ValueError:
-                            # if this answer was not in the old answers at all
-                            # get Values for a completely new card
-                            cardUpdates.append([str(0)] * 10)
-                    else:
-                        # if this answer was the same answer before, ignore it
-                        cardUpdates.append('')
-                except IndexError:
-                    # if this answer was not in the old answers at all
-                    # get Values for a completely new card
-                    cardUpdates.append([str(0)] * 10)
-            return cardUpdates
-
-        def update_status(self):
-            for manager in self.x_managers:
-                remote = manager.get_remote()
-                local = self.note_manager.get_local(manager._file)
-                status = deep_merge(remote=remote, local=local)
-                self.status_manager.add_new(status)
-            self.status_manager.save()
-
-        def import_ontology(self):
-            triples = [self.onto.getElements(t) for t in self.onto.getNoteTriples() if
-                       t[1] in self.added_relations['storids']]
-            triples_with_q_ids = [self.onto.q_id_elements(t) for t in triples]
-            added_triples = [t for t in triples_with_q_ids if t['q_id'] in self.added_relations['q_ids']]
-            question_list = get_question_sets(added_triples)
-            notes = [self.note_from_question_list(q) for q in question_list]
-            self.addNew(notes=notes)
-            self.add_image_and_media()
+# old code
+# def partial_import(self, seed_topic, sheet_id, deck_id, parent_q,
+#                    parent_as, onto=None):
+#     """
+#     Imports questions starting at a given point
+#     :param onto: Optional, Ontology to set as importer's ontology:
+#     :param seed_topic: Tag of the topic of the question to start at
+#     :param sheet_id: Xmind id of the sheet the question belongs to
+#     :param deck_id: Deck-id of the deck to import to
+#     :param parent_q: Tag of the parent-question of the question the
+#     import starts at
+#     :param parent_as: List of tags of the answers to the parent-question
+#     """
+#     self.set_up_import(deck_id=deck_id, sheet=sheet_id, onto=onto)
+#     self.col.decks.select(self.deck_id)
+#     self.col.decks.current()['mid'] = self.col.models.byName(
+#         X_MODEL_NAME)['id']
+#     parent_a_concepts = [self.onto.get_answer_by_a_id(
+#         a_id=a['id'], q_id=parent_q['id']) for a in parent_as]
+#     if len(parent_as) > 1:
+#         node_tag = None
+#         a_concept = parent_a_concepts
+#     else:
+#         node_tag = parent_as[0]
+#         a_concept = parent_a_concepts[0]
+#     parent_a_dict = self.get_answer_dict(
+#         node_tag=node_tag, question=parent_q['id'], root=False,
+#         a_concept=a_concept)
+#
+#     # If the seed_topic's parent follows a bridge, start importing at the
+#     # bridge instead
+#     parent_q_children = get_child_nodes(parent_q)
+#     if get_parent_node(seed_topic) not in parent_q_children:
+#         if len(parent_as) > 1:
+#             seed_topic = next(
+#                 g for c in parent_q_children if is_empty_node(c) for
+#                 g in get_child_nodes(c) if seed_topic.text in g.text)
+#         else:
+#             seed_topic = next(t for t in get_child_nodes(parent_as[0]) if
+#                               seed_topic.text in t.text)
+#     ref, sort_id = self.active_manager.ref_and_sort_id(q_topic=seed_topic)
+#     q_index = sum(1 for _ in seed_topic.previous_siblings) + 1
+#     self.import_edge(order_number=q_index, edge=seed_topic)
+#
+# def set_up_import(self, deck_id, sheet, onto=None):
+#     self.current_sheet_import = next(
+#         s for m in self.x_managers for
+#         s in m._sheets if m._sheets[s]['tag']['id'] == sheet)
+#     self.active_manager = next(
+#         m for m in self.x_managers for
+#         s in m._sheets if s == self.current_sheet_import)
+#     self.deck_id = deck_id
+#     if onto:
+#         self.onto = onto
+#     else:
+#         self.onto = XOntology(deck_id)
+#     self.deck_name = self.col.decks.get(self.deck_id)['name']
+#
+# def maybe_sync(self, sheet_id, note_list):
+#     if self.repair:
+#         # noinspection PyTypeChecker
+#         existing_notes = list(self.col.db.execute(
+#             "select id, flds from notes where tags like '%" +
+#             self.current_sheet_import['tag'].replace(" ", "") + "%'"))
+#     else:
+#         existing_notes = getNotesFromSheet(sheetId=sheet_id, col=self.col)
+#     if existing_notes:
+#         notes_2_add = []
+#         notes_2_update = []
+#         old_q_id_list = list(map(lambda n: json.loads(
+#             splitFields(n[1])[list(SMR_NOTE_FIELD_NAMES.keys()).index('mt')])[
+#             'questionId'], existing_notes))
+#         for newNote in note_list:
+#             new_fields = splitFields(newNote[6])
+#             new_meta = json.loads(new_fields[list(SMR_NOTE_FIELD_NAMES.keys()).index('mt')])
+#             new_q_id = new_meta['questionId']
+#             try:
+#                 if self.repair:
+#                     new_qt_x_aw = joinFields(new_fields[1:22])
+#                     old_tpl = tuple(
+#                         filter(lambda n: new_qt_x_aw in n[1], existing_notes))[0]
+#                     note_id = existing_notes.index(old_tpl)
+#                 else:
+#                     note_id = old_q_id_list.index(new_q_id)
+#                     # if the fields are different, add it to notes to be updated
+#                 if not existing_notes[note_id][1] == newNote[6]:
+#                     notes_2_update.append(
+#                         [existing_notes[note_id], newNote])
+#                 del existing_notes[note_id]
+#                 del old_q_id_list[note_id]
+#             except (ValueError, IndexError):
+#                 notes_2_add.append(newNote)
+#         self.addNew(notes_2_add)
+#         self.log[0][1] += len(notes_2_add)
+#         self.addUpdates(notes_2_update)
+#         self.log[1][1] += len(notes_2_update)
+#         self.removeOld(existing_notes)
+#         self.log[2][1] += len(existing_notes)
+#         self.col.save()
+#     else:
+#         notes_2_add = note_list
+#         self.addNew(notes_2_add)
+#         self.log[0][1] += len(notes_2_add)
+#
+# def removeOld(self, existingNotes):
+#     oldIds = list(map(lambda nt: nt[0], existingNotes))
+#     self.col.remNotes(oldIds)
+#
+# def getCardUpdates(self, aIds, noteTpl):
+#     cardUpdates = []
+#     # Get relevant values of the prior answers
+#     relevantVals = ['type', 'queue', 'due', 'ivl', 'factor', 'reps',
+#                     'lapses', 'left', 'odue', 'flags']
+#     # remember prior values of cards that have moved
+#     oldVals = list(self.col.db.execute(
+#         "select " + ", ".join(relevantVals) + " from cards where nid = " +
+#         str(noteTpl[0][0])))
+#     for i, aId in enumerate(aIds[1], start=0):
+#         # if this answer was a different answer before, remember the
+#         # stats
+#         try:
+#             if aId != aIds[0][i]:
+#                 try:
+#                     cardUpdates.append(oldVals[aIds[0].index(aId)])
+#                 except ValueError:
+#                     # if this answer was not in the old answers at all
+#                     # get Values for a completely new card
+#                     cardUpdates.append([str(0)] * 10)
+#             else:
+#                 # if this answer was the same answer before, ignore it
+#                 cardUpdates.append('')
+#         except IndexError:
+#             # if this answer was not in the old answers at all
+#             # get Values for a completely new card
+#             cardUpdates.append([str(0)] * 10)
+#     return cardUpdates
+#
+# def update_status(self):
+#     for manager in self.x_managers:
+#         remote = manager.get_remote()
+#         local = self.note_manager.get_local(manager._file)
+#         status = deep_merge(remote=remote, local=local)
+#         self.status_manager.add_new(status)
+#     self.status_manager.save()
+#
+# def import_ontology(self):
+#     triples = [self.onto.getElements(t) for t in self.onto.getNoteTriples() if
+#                t[1] in self.added_relations['storids']]
+#     triples_with_q_ids = [self.onto.q_id_elements(t) for t in triples]
+#     added_triples = [t for t in triples_with_q_ids if t['q_id'] in self.added_relations['q_ids']]
+#     question_list = get_question_sets(added_triples)
+#     notes = [self.note_from_question_list(q) for q in question_list]
+#     self.addNew(notes=notes)
+#     self.add_image_and_media()
