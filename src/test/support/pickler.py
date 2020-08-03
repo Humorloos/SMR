@@ -22,7 +22,7 @@ def getSheetImports():
     col = getEmptyCol()
     map = EXAMPLE_MAP_PATH
     xmindImporter = XmindImporter(col=col, file=map)
-    sheetImports = xmindImporter._register_referenced_x_managers(xmindImporter.x_managers['root'])[1]
+    sheetImports = xmindImporter._register_referenced_x_managers(xmindImporter._x_managers['root'])[1]
     pickle.dump(sheetImports, open(
         os.path.join(SUPPORT_PATH, 'sheetSelectors', 'sheetImports.p'), 'wb'))
     return pickle.load(
@@ -50,8 +50,8 @@ def getSheetBiologicalPsychology():
     col = getEmptyCol()
     map = EXAMPLE_MAP_PATH
     xmindImporter = XmindImporter(col=col, file=map)
-    xmindImporter._register_referenced_x_managers(xmindImporter.x_managers[0])
-    sheets = xmindImporter.x_managers[0].sheets
+    xmindImporter._register_referenced_x_managers(xmindImporter._x_managers[0])
+    sheets = xmindImporter._x_managers[0].sheets
     with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
                            'sheet_biological_psychology.xml'), 'w') as file:
         file.write(str(sheets['biological psychology']))
@@ -65,20 +65,20 @@ def getOntologyBiologicalPsychology():
     col = Collection(colPath)
     map = EXAMPLE_MAP_PATH
     importer = XmindImporter(col=col, file=map)
-    importer.deck_id = '1'
-    importer.current_sheet_import = 'biological psychology'
-    importer.active_manager = importer.x_managers[0]
-    importer.x_managers.append(
+    importer._deck_id = '1'
+    importer._current_sheet_import = 'biological psychology'
+    importer._active_manager = importer._x_managers[0]
+    importer._x_managers.append(
         XManager(os.path.join(
             ADDON_PATH, 'resources', 'example_general_psychology.xmind')))
     importer.import_map()
-    importer.current_sheet_import = 'clinical psychology'
+    importer._current_sheet_import = 'clinical psychology'
     importer.import_map()
-    importer.active_manager = importer.x_managers[1]
-    importer.current_sheet_import = 'general psychology'
+    importer._active_manager = importer._x_managers[1]
+    importer._current_sheet_import = 'general psychology'
     importer.import_map()
     output = os.path.join(SUPPORT_PATH, 'ontology_biological_psychology.rdf')
-    importer.onto.save(file=output, format="rdfxml")
+    importer._onto.save(file=output, format="rdfxml")
     return owlready2.get_ontology(output).load()
 
 
@@ -87,19 +87,19 @@ def getNoteData():
     col = Collection(colPath)
     map = EXAMPLE_MAP_PATH
     importer = XmindImporter(col=col, file=map)
-    importer.deck_id = '1'
-    importer.current_sheet_import = 'biological psychology'
-    importer.active_manager = importer.x_managers[0]
-    importer.x_managers.append(
+    importer._deck_id = '1'
+    importer._current_sheet_import = 'biological psychology'
+    importer._active_manager = importer._x_managers[0]
+    importer._x_managers.append(
         XManager(os.path.join(
             ADDON_PATH, 'resources', 'example_general_psychology.xmind')))
     importer.import_map()
-    importer.current_sheet_import = 'clinical psychology'
+    importer._current_sheet_import = 'clinical psychology'
     importer.import_map()
-    importer.active_manager = importer.x_managers[1]
-    importer.current_sheet_import = 'general psychology'
+    importer._active_manager = importer._x_managers[1]
+    importer._current_sheet_import = 'general psychology'
     importer.import_map()
-    noteData = importer.onto.getNoteData([(328, 346, 325)])
+    noteData = importer._onto.getNoteData([(328, 346, 325)])
     pickle.dump(noteData, open(
         os.path.join(SUPPORT_PATH, 'xmindImporter', 'noteData.p'), 'wb'))
     return pickle.load(

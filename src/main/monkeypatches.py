@@ -1,10 +1,9 @@
 """monkey patches"""
 import os
-from typing import Callable, List
+from typing import Callable
 
 from anki.hooks import wrap
-from anki.importing import noteimp
-from anki.importing.noteimp import NoteImporter, ForeignNote
+from anki.importing.noteimp import NoteImporter
 from aqt import importing
 from aqt.importing import ImportDialog
 from aqt.main import AnkiQt

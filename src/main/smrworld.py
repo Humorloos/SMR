@@ -89,7 +89,7 @@ class SmrWorld(World):
         c = self.graph.execute("SELECT c FROM ontologies WHERE iri = '{}'".format(ontology_base_iri)).fetchone()[0]
         self.graph.execute("INSERT INTO ontology_lives_in_deck VALUES (?, ?)", (int(deck_id), c))
 
-    def add_xmind_file(self, x_manager: XManager, deck_id: str) -> None:
+    def add_xmind_file(self, x_manager: XManager, deck_id: int) -> None:
         """
         Adds an entry for an xmind file to the relation xmind_files
         :param x_manager: the x_manager that manages the file
