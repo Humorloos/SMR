@@ -1,7 +1,8 @@
 import json
 import re
-from typing import List
+from typing import List, Optional
 
+from anki import Collection
 from main.consts import SMR_NOTE_FIELD_NAMES, X_MEDIA_EXTENSIONS, X_IMAGE_EXTENSIONS, X_MAX_ANSWERS
 from main.dto.nodecontentdto import NodeContentDTO
 from main.smrworld import SmrWorld
@@ -58,6 +59,16 @@ def get_smr_note_sort_field(smr_world: SmrWorld, edge_id: str) -> str:
         for order_number in row:
             sort_field += sort_id_from_order_number(order_number)
     return sort_field
+
+
+def order_number_from_sort_id_character(sort_id_character: str) -> int:
+    """
+    converts the specified letter into the order_number that would normally be converted into this character by the
+    function sort_id_from_order_number()
+    :param sort_id_character: the character to convert into an order number
+    :return: the order number
+    """
+    return ord(sort_id_character) - 122
 
 
 def ref_minus_last(ref):
@@ -143,16 +154,17 @@ def get_n_answers(note):
     return sum(answers)
 
 
-def img_from_field(field):
+def image_from_field(field: str) -> Optional[str]:
+    """
+    Extracts an image filename from an anki note field and returns it
+    :param field: the content of the anki note field to extract the image from
+    :return: the image filename, None if the field does not contain an image
+    """
     try:
         return re.search('<img src=\"(.*\.(' + '|'.join(X_IMAGE_EXTENSIONS) +
                          '))\">', field).group(1)
     except AttributeError:
         return None
-
-
-def index_from_sort_id(sort_id):
-    return ord(sort_id) - 122
 
 
 def media_from_field(field):
@@ -179,13 +191,15 @@ def update_sort_id(previousId, idToAppend):
     return previousId + sort_id_from_order_number(idToAppend)
 
 
-def content_from_field(field):
-    image = img_from_field(field)
+def content_from_field(field) -> NodeContentDTO:
+    content = NodeContentDTO
+    image = image_from_field(field)
     if image:
         image = 'attachments/' + image
     media = media_from_field(field)
     if media:
         media = 'attachments/' + media
+
     return {'content': title_from_field(field),
             'media': {
                 'image': image,
@@ -199,18 +213,10 @@ def local_answer_dict(anki_mod, answers, field, a_id):
 
 
 class XNoteManager:
-    def __init__(self, col):
-        self.col = col
+    def __init__(self, col: Collection):
+        self.col: Collection = col
         self.model = get_smr_model_id(self.col.models)
         self.media_dir = re.sub(r"(?i)\.(anki2)$", ".media", self.col.path)
-
-    def get_smr_deck_ids(self) -> List[int]:
-        """
-        gets a list of deck ids of all the decks that contain smr notes
-        :return: a list of deck ids of all decks containing smr notes
-        """
-        return [row[0] for row in self.col.db.execute(
-            "select distinct did from cards join notes where mid = ?", self.model)]
 
     def get_fields_from_qId(self, qId):
         return splitFields(self.col.db.first(

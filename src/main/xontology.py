@@ -86,13 +86,13 @@ def remove_relations(answers, parents, question_triples):
         answer.Parent = left_parents
 
 
-def connect_concepts(child_thing: ThingClass, parent_thing: ThingClass, relationship_class_name: str):
+def connect_concepts(child_thing: ThingClass, parent_thing: ThingClass, relationship_class_name: str) -> None:
     """
-
-    :param child_thing:
-    :param parent_thing:
-    :param relationship_class_name:
-    :return:
+    - assigns the child concept to the parent concept with the specified relation
+    - assigns the parent concept to the child concept with the relation 'Parent'
+    :param child_thing: the child concept in the relation
+    :param parent_thing: the parent concept in the relation
+    :param relationship_class_name: the relation's class name
     """
     current_children = getattr(parent_thing, relationship_class_name)
     new_children = current_children + [child_thing]
@@ -100,7 +100,6 @@ def connect_concepts(child_thing: ThingClass, parent_thing: ThingClass, relation
     current_parents = getattr(child_thing, 'Parent')
     new_parents = current_parents + [parent_thing]
     setattr(child_thing, 'Parent', new_parents)
-    return
 
 
 class XOntology(Ontology):
@@ -108,6 +107,7 @@ class XOntology(Ontology):
 
     def __init__(self, deck_id, smr_world):
         self._smr_world: SmrWorld = smr_world
+        self._deck_id = deck_id
         base_iri = os.path.join(USER_PATH, str(deck_id) + '#')
         Ontology.__init__(self, world=self._smr_world, base_iri=base_iri)
         # set up classes and register ontology only if the ontology has not been set up before
@@ -117,6 +117,9 @@ class XOntology(Ontology):
             self._set_up_classes()
             self._smr_world.add_ontology_lives_in_deck(ontology_base_iri=base_iri, deck_id=deck_id)
         self.field_translator = FieldTranslator()
+
+    def get_deck_id(self):
+        return self._deck_id
 
     def add_answer(self, a_id, answer_field, rel_dict, question_class,
                    parents=None):

@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Optional
+from typing import List, Optional
 
 import bs4
 
@@ -12,11 +12,10 @@ from main.consts import X_MODEL_NAME, X_MAX_ANSWERS, SMR_NOTE_FIELD_NAMES
 from main.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from main.dto.nodecontentdto import NodeContentDTO
 from main.smrworld import SmrWorld
-from main.statusmanager import StatusManager
 from main.utils import get_edge_coordinates_from_parent_node
 from main.xmanager import get_child_nodes, is_empty_node, XManager, get_non_empty_sibling_nodes, \
     get_node_content, get_node_title
-from main.xnotemanager import XNoteManager, FieldTranslator, get_smr_note_reference_field, get_smr_note_sort_field
+from main.xnotemanager import FieldTranslator, get_smr_note_reference_field, get_smr_note_sort_field
 from main.xontology import XOntology, connect_concepts
 from owlready2 import ThingClass, ObjectPropertyClass
 
@@ -32,7 +31,6 @@ class XmindImporter(NoteImporter):
         NoteImporter.__init__(self, col, file)
         self._mw: AnkiQt = aqt.mw
         self._x_managers: List[XManager] = [XManager(os.path.normpath(file))]
-        self._model: NoteType = col.models.byName(X_MODEL_NAME)
         self._smr_world: SmrWorld = self._mw.smr_world
         self._translator: FieldTranslator = FieldTranslator()
         self._running: bool = True
@@ -47,6 +45,7 @@ class XmindImporter(NoteImporter):
         self._onto: Optional[XOntology] = None
         self._register_referenced_x_managers(self._x_managers[0])
         # fields from Noteimporter:
+        self.model: NoteType = col.models.byName(X_MODEL_NAME)
         self.allowHTML: bool = True
         # Fields to make methods from super class work
         self.needMapper: bool = True
@@ -102,7 +101,7 @@ class XmindImporter(NoteImporter):
         self._onto = XOntology(deck_id=self._deck_id, smr_world=self._smr_world)
         # Set model to Stepwise map retrieval model
         self.col.decks.select(self._deck_id)
-        self.col.decks.current()['mid'] = self._model['id']
+        self.col.decks.current()['mid'] = self.model['id']
         self._mw.progress.start(immediate=True, label='importing...')
         self._mw.app.processEvents()
         self._mw.checkpoint("Import")
@@ -131,7 +130,7 @@ class XmindImporter(NoteImporter):
         self._current_sheet_import = sheet
         self._mw.progress.update(label='importing %s' % sheet, maybeShow=False)
         self._mw.app.processEvents()
-        self._smr_world.add_xmind_sheet(x_manager=self._active_manager, sheet=sheet)
+        self._smr_world.add_xmind_sheet(x_manager=self._active_manager, sheet_name=sheet)
         root_node = self._active_manager.get_root_node(sheet=sheet)
         self.import_node_if_concept(node=root_node,
                                     concepts=[self._onto.concept_from_node_content(get_node_content(root_node))])
@@ -165,7 +164,8 @@ class XmindImporter(NoteImporter):
         if not is_empty_node(node):
             node_content = get_node_content(node)
             # add image and media to the anki collection
-            self.add_image_and_media(node_content)
+            self._smr_world.add_image_and_media_to_collection_and_self(
+                content=node_content, collection=self.col, x_manager=self._active_manager)
             # add the node to the smr world
             self._smr_world.add_xmind_node(
                 node=node, node_content=node_content, ontology_storid=concepts[0].storid,
@@ -256,10 +256,12 @@ class XmindImporter(NoteImporter):
         relationship_property: ObjectPropertyClass = self._onto.add_relation(relationship_class_name)
         # add node image and media to anki if edge is not empty
         if relationship_class_name != self._onto.CHILD_CLASS_NAME:
-            self.add_image_and_media(edge_content)
+            self._smr_world.add_image_and_media_to_collection_and_self(
+                content=edge_content, collection=self.col, x_manager=self._active_manager)
         # add the edge to the smr world
         self._smr_world.add_xmind_edge(
-            edge=edge, edge_content=edge_content, sheet_id=self._active_manager.get_sheet_id(self._current_sheet_import),
+            edge=edge, edge_content=edge_content,
+            sheet_id=self._active_manager.get_sheet_id(self._current_sheet_import),
             order_number=order_number, ontology_storid=relationship_property.storid)
         # import each child_node either with a list of the single concept or a list of all concepts if they are empty
         for order_number, (child_node, child_concepts) in enumerate(zip(
@@ -275,26 +277,8 @@ class XmindImporter(NoteImporter):
         if relationship_class_name != self._onto.CHILD_CLASS_NAME:
             self.create_and_add_note(edge['id'])
 
-    def add_image_and_media(self, content: NodeContentDTO) -> None:
-        """
-        - If present, adds media and image specified in the content DTO to the anki collection and media folder
-        - Adds an entry in the smr world linking the potentially new file name to the media attachment / hyperlink
-        from the xmind map
-        :param content: the content of the xmind node to add the image and media for
-        """
-        if content.media:
-            # xmind 8 adds prefix attachments, xmind zen adds prefix resources
-            if content.media.startswith(('attachments', 'resources')):
-                new_media_name = self.col.media.write_data(desired_fname=content.media,
-                                                           data=self._active_manager.read_attachment(content.media))
-            # if media file was not attached but only referenced via hyperlink
-            else:
-                new_media_name = self.col.media.add_file(content.media)
-            self._smr_world.add_xmind_media_to_anki_file(xmind_uri=content.media, anki_file_name=new_media_name)
-        if content.image:
-            new_image_name = self.col.media.write_data(desired_fname=content.image,
-                                                       data=self._active_manager.read_attachment(content.image))
-            self._smr_world.add_xmind_media_to_anki_file(xmind_uri=content.image, anki_file_name=new_image_name)
+    def get_x_managers(self) -> List[XManager]:
+        return self._x_managers
 
     def create_and_add_note(self, edge_id: str) -> None:
         """
@@ -308,23 +292,14 @@ class XmindImporter(NoteImporter):
         sort_field = [get_smr_note_sort_field(smr_world=self._smr_world, edge_id=edge_id)]
         note.fields = reference_field + question_field + answer_fields + (X_MAX_ANSWERS - len(answer_fields)) * [
             ''] + sort_field
-        note.tags.append(self.acquire_tag())
+        note.tags.append(self._active_manager.acquire_anki_tag(
+            deck_name=self._deck_name, sheet_name=self._current_sheet_import))
         # add the edge id to the tags list to be able to assign the note to the right edge during import
         note.tags.append(edge_id)
         # note.deck = self.deck_id
         note.cards = {i: ForeignCard() for i, _ in enumerate(answer_fields, start=1)}
         note.fieldsStr = joinFields(note.fields)
         self._notes_2_import.append(note)
-
-    def acquire_tag(self) -> str:
-        """
-        Gets a tag that is compatible with the hierarchical tags addon. The tag built from the deck to which notes are
-        imported and the xmind sheet to which the the note belongs, replacing spaces with underscores to produce
-        valid tags
-        :return: the tag
-        """
-        return "::".join((self._deck_name, os.path.basename(self._active_manager.get_file()).replace('.xmind', ''),
-                          self._current_sheet_import)).replace(" ", "_")
 
     def finish_import(self):
         """

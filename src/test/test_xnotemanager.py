@@ -76,7 +76,7 @@ import pytest
 
 from main.dto.nodecontentdto import NodeContentDTO
 from main.xnotemanager import FieldTranslator, get_smr_note_reference_field, get_smr_note_sort_field, \
-    sort_id_from_order_number, XNoteManager
+    sort_id_from_order_number, XNoteManager, image_from_field
 import test.constants as cts
 
 
@@ -165,10 +165,16 @@ def note_manager(collection_4_migration):
     yield XNoteManager(collection_4_migration)
 
 
-def test_get_smr_deck_ids(note_manager):
-    # given
-    cut = note_manager
+def test_image_from_field():
     # when
-    smr_deck_ids = cut.get_smr_deck_ids()
+    image = image_from_field('MAO is not a neurotransmitter[sound:3lv2k1fhghfb9ghfb8depnqvdt.mp3]<br><img '
+                             'src="09r2e442o8lppjfeblf7il2rmd.png">')
     # then
-    assert smr_deck_ids == [1596384453519]
+    assert image == '09r2e442o8lppjfeblf7il2rmd.png'
+
+
+def test_image_from_field_no_image():
+    # when
+    image = image_from_field('no image')
+    # then
+    assert image is None

@@ -2,6 +2,9 @@ from sqlite3 import IntegrityError
 
 import test.constants as cts
 import pytest
+
+from anki import Collection
+from main.smrworld import SmrWorld
 from main.xmanager import get_node_content
 
 
@@ -17,14 +20,13 @@ def test_set_up(empty_smr_world, empty_anki_collection_session):
     smrworld_tables = [r[0] for r in
                        cut.graph.execute("SELECT name from sqlite_master where type = 'table'").fetchall()]
     smrworld_databases = [r[0] for r in cut.graph.execute('PRAGMA database_list').fetchall()]
-    cut.close()
     # then
     assert smrworld_tables == expected_tables
     assert smrworld_databases == expected_databases
 
 
 def test_add_xmind_file(smr_world_for_tests, x_manager):
-    expected_entry = (cts.EXAMPLE_MAP_PATH, 1595671089759, 1595687290.0987637, int(cts.TEST_DECK_ID))
+    expected_entry = (cts.EXAMPLE_MAP_PATH, 1595671089759, 1595687290.0, int(cts.TEST_DECK_ID))
     # given
     cut = smr_world_for_tests
     # when
@@ -33,27 +35,43 @@ def test_add_xmind_file(smr_world_for_tests, x_manager):
     assert list(cut.graph.execute("SELECT * FROM main.xmind_files").fetchall())[1] == expected_entry
 
 
-def test_add_xmind_sheet(smr_world_for_tests, x_manager):
+@pytest.fixture
+def x_manager_test_file(x_manager):
+    manager = x_manager
+    default_file = x_manager.get_file()
+    manager._file = cts.TEST_FILE_PATH
+    yield manager
+    manager._file = default_file
+
+
+def test_add_xmind_sheet(smr_world_for_tests, x_manager_test_file):
     # given
     expected_entry = ('2485j5qgetfevlt00vhrn53961', cts.TEST_FILE_PATH, 1595671089759)
     cut = smr_world_for_tests
-    manager = x_manager
-    manager._file = cts.TEST_FILE_PATH
+    manager = x_manager_test_file
     # when
-    cut.add_xmind_sheet(x_manager=manager, sheet='biological psychology')
+    cut.add_xmind_sheet(x_manager=manager, sheet_name='biological psychology')
     # then
     assert list(cut.graph.execute("SELECT * FROM main.xmind_sheets").fetchall())[1] == expected_entry
 
 
-def test_add_xmind_sheet_wrong_path(smr_world_for_tests, x_manager):
+@pytest.fixture
+def x_manager_absent_file(x_manager):
+    manager = x_manager
+    default_file = x_manager.get_file()
+    manager._file = 'wrong path'
+    yield manager
+    manager._file = default_file
+
+
+def test_add_xmind_sheet_wrong_path(smr_world_for_tests, x_manager_absent_file):
     # given
     cut = smr_world_for_tests
-    manager = x_manager
-    manager._file = 'wrong path'
+    manager = x_manager_absent_file
     # then
     with pytest.raises(IntegrityError):
         # when
-        cut.add_xmind_sheet(x_manager=manager, sheet='biological psychology')
+        cut.add_xmind_sheet(x_manager=manager, sheet_name='biological psychology')
 
 
 def test_add_xmind_node(smr_world_for_tests, x_manager):
@@ -194,3 +212,55 @@ def test_update_smr_triples_card_id(smr_world_for_tests):
     # then
     assert cut.graph.execute("select card_id from smr_triples where edge_id = ?",
                              (cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID,)).fetchall() == 4 * [(55115,)]
+
+
+@pytest.fixture
+def add_image_and_media_smr_world(set_up_empty_smr_world, mocker, x_manager, empty_anki_collection_session):
+    # given
+    smr_world = set_up_empty_smr_world
+    mocker.spy(smr_world, "add_xmind_media_to_anki_file")
+    col = empty_anki_collection_session
+    mocker.spy(col.media, "write_data")
+    mocker.spy(col.media, "add_file")
+
+    yield smr_world, x_manager, col
+
+
+def validate_add_image_and_media(col: Collection, cut: SmrWorld, add_file_call_count: int):
+    new_image = cut.add_xmind_media_to_anki_file.call_args[1]['anki_file_name']
+    assert col.media.have(new_image)
+    assert new_image in col.media.check().unused
+    assert col.media.write_data.call_count == 1
+    assert col.media.add_file.call_count == add_file_call_count
+
+
+def test_add_image_and_media_to_collection_and_self(add_image_and_media_smr_world):
+    # given
+    cut, x_manager, col = add_image_and_media_smr_world
+    # when
+    cut.add_image_and_media_to_collection_and_self(
+        content=cts.NEUROTRANSMITTERS_NODE_CONTENT, collection=col, x_manager=x_manager)
+    # then
+    validate_add_image_and_media(col=col, cut=cut, add_file_call_count=0)
+
+
+# noinspection DuplicatedCode
+def test_add_image_and_media_to_collection_and_self_with_media_attachment(add_image_and_media_smr_world):
+    # given
+    cut, x_manager, col = add_image_and_media_smr_world
+    # when
+    cut.add_image_and_media_to_collection_and_self(
+        content=cts.MEDIA_ATTACHMENT_NODE_CONTENT, collection=col, x_manager=x_manager)
+    # then
+    validate_add_image_and_media(col=col, cut=cut, add_file_call_count=0)
+
+
+# noinspection DuplicatedCode
+def test_add_image_and_media_to_collection_and_self_with_media_hyperlink(add_image_and_media_smr_world):
+    # given
+    cut, x_manager, col = add_image_and_media_smr_world
+    # when
+    cut.add_image_and_media_to_collection_and_self(
+        content=cts.MEDIA_HYPERLINK_NODE_CONTENT, collection=col, x_manager=x_manager)
+    # then
+    validate_add_image_and_media(col=col, cut=cut, add_file_call_count=1)

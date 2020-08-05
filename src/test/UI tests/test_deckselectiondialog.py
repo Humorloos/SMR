@@ -1,14 +1,11 @@
 import sys
-from unittest.mock import MagicMock, Mock
 
 from PyQt5 import QtWidgets
-
-from aqt import AnkiQt
-import main.deckselectiondialog
-from PyQt5.QtWidgets import QWidget, QDialog
+from PyQt5.QtWidgets import QWidget
 
 import aqt
 import aqt.deckchooser
+import main.deckselectiondialog
 
 
 def test_deck_selection_dialog(mocker):
@@ -30,6 +27,5 @@ def test_deck_selection_dialog(mocker):
     cut = main.deckselectiondialog.DeckSelectionDialog(mw=QWidget(), filename=filename)
     # when
     cut.accept()
-
     # then
     assert cut._deck_id == test_id

@@ -8,9 +8,9 @@ from typing import Dict, List, Optional
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from bs4 import BeautifulSoup, Tag
+
 from main.consts import X_MEDIA_EXTENSIONS
 from main.dto.nodecontentdto import NodeContentDTO
-
 
 def clean_ref_path(path: str) -> str:
     """
@@ -123,7 +123,7 @@ def get_child_nodes(tag: Tag) -> List[Tag]:
     """
     try:
         return tag.find('children', recursive=False).find(
-            'topics', recursive=False)('topic', recursive=False)
+            'topics', recursive=False).find_all('topic', recursive=False)
     except AttributeError:
         return []
 
@@ -211,18 +211,35 @@ def get_node_content(tag: Tag) -> NodeContentDTO:
     return node_content
 
 
+class NodeNotFoundError(Exception):
+    """
+    Exception that occurs when a node is not found in the manager's node dict.
+    """
+    ERROR_MESSAGE = 'Node with id "{}" not found.'
+
+    def __init__(self, node_id):
+        self.node_id = node_id
+        self.message = self.ERROR_MESSAGE.format(node_id)
+
+
 class XManager:
+    FILE_NOT_FOUND_MESSAGE = 'Xmind file "{}" not found.'
+
     def __init__(self, file):
         self._file: str = file
-        self.xZip: ZipFile = ZipFile(file, 'r')
-        self.soup: BeautifulSoup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
+        try:
+            self.xZip: ZipFile = ZipFile(file, 'r')
+        except FileNotFoundError:
+            raise FileNotFoundError(self.FILE_NOT_FOUND_MESSAGE.format(file))
+        self._soup: BeautifulSoup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
         self.manifest: BeautifulSoup = BeautifulSoup(self.xZip.read("META-INF/manifest.xml"), features='html.parser')
         self.srcDir: str = tempfile.mkdtemp()
-        self._sheets: Dict[str, Dict] = None
+        self._sheets: Optional[Dict[str, Dict]] = None
         self._referenced_files = None
         self.fileBin = []
         self.did_introduce_changes = False
-        self.tag_list = None
+        # tags are only loaded when needed
+        self._node_dict: Optional[Dict[str, Tag]] = None
 
     def get_referenced_files(self):
         if not self._referenced_files:
@@ -247,7 +264,7 @@ class XManager:
 
     def _register_sheets(self):
         self._sheets = dict()
-        for sheet in self.soup('sheet'):
+        for sheet in self._soup('sheet'):
             sheet_title = sheet('title', recursive=False)[0].text
             self._sheets[sheet_title] = {'tag': sheet, 'nodes': sheet('topic')}
 
@@ -255,10 +272,10 @@ class XManager:
         topic = self.get_tag_by_id(x_id)
         return get_node_content(topic)
 
-    def get_answer_nodes(self, tag):
-        return [{'src': n, 'crosslink': '' if not is_crosslink_node(n)
-                else self.get_tag_by_id(getNodeCrosslink(n))} for n in
-                get_child_nodes(tag) if not is_empty_node(n)]
+    # def get_answer_nodes(self, tag):
+    #     return [{'src': n, 'crosslink': '' if not is_crosslink_node(n)
+    #     else self.get_tag_by_id(getNodeCrosslink(n))} for n in
+    #             get_child_nodes(tag) if not is_empty_node(n)]
 
     def read_attachment(self, attachment_uri: str) -> bytes:
         """
@@ -279,25 +296,25 @@ class XManager:
         remote = self.remote_file(remote_sheets)
         return remote
 
-    def get_remote_questions(self, sheet_id):
-        remote_questions = dict()
-        for t in next(v for v in self.get_sheets().values() if
-                      v['tag']['id'] == sheet_id)['nodes']:
-            if is_anki_question(t):
-                answers = dict()
-                remote_questions[t['id']] = {'xMod': t['timestamp'],
-                                             'index': get_topic_index(t),
-                                             'answers': answers}
-                for a in self.get_answer_nodes(self.get_tag_by_id(t['id'])):
-                    answers[a['src']['id']] = {
-                        'xMod': a['src']['timestamp'],
-                        'index': get_topic_index(a['src']),
-                        'crosslink': {}}
-                    if a['crosslink']:
-                        answers[a['src']['id']]['crosslink'] = {
-                            'xMod': a['crosslink']['timestamp'],
-                            'x_id': a['crosslink']['id']}
-        return remote_questions
+    # def get_remote_questions(self, sheet_id):
+    #     remote_questions = dict()
+    #     for t in next(v for v in self.get_sheets().values() if
+    #                   v['tag']['id'] == sheet_id)['nodes']:
+    #         if is_anki_question(t):
+    #             answers = dict()
+    #             remote_questions[t['id']] = {'xMod': t['timestamp'],
+    #                                          'index': get_topic_index(t),
+    #                                          'answers': answers}
+    #             for a in self.get_answer_nodes(self.get_tag_by_id(t['id'])):
+    #                 answers[a['src']['id']] = {
+    #                     'xMod': a['src']['timestamp'],
+    #                     'index': get_topic_index(a['src']),
+    #                     'crosslink': {}}
+    #                 if a['crosslink']:
+    #                     answers[a['src']['id']]['crosslink'] = {
+    #                         'xMod': a['crosslink']['timestamp'],
+    #                         'x_id': a['crosslink']['id']}
+    #     return remote_questions
 
     def get_remote_sheets(self):
         content_keys = self.get_content_sheets()
@@ -307,13 +324,26 @@ class XManager:
             sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
         return sheets
 
+    def acquire_anki_tag(self, deck_name, sheet_name) -> str:
+        """
+        Gets a tag that is compatible with the hierarchical tags addon. The tag built from the deck to which notes are
+        imported and the xmind sheet to which the the note belongs, replacing spaces with underscores to produce
+        valid tags
+        :return: the tag
+        """
+        return " " + "::".join((deck_name, os.path.basename(self.get_file()).replace('.xmind', ''),
+                                sheet_name)).replace(" ", "_") + " "
+
     def get_tag_by_id(self, tag_id: str):
         """
         Gets the tag that
         :param tag_id: the id property of the tag
         :return: the tag containing the Id
         """
-        return next(t for t in self.get_or_compute_tag_list() if t['id'] == tag_id)
+        try:
+            return self.get_node_dict()[tag_id]
+        except KeyError as exception_info:
+            raise NodeNotFoundError(exception_info.args[0])
 
     def remote_file(self, sheets=None):
         doc_mod = self.get_map_last_modified()
@@ -334,7 +364,7 @@ class XManager:
         Gets the internally saved timestamp of the last time the file was modified
         :return: the timestamp (integer value)
         """
-        return self.soup.find('xmap-content')['timestamp']
+        return self._soup.find('xmap-content')['timestamp']
 
     def get_sheet_last_modified(self, sheet: str):
         """
@@ -356,7 +386,7 @@ class XManager:
         tag = self.get_tag_by_id(a_id)
         if not get_child_nodes(tag):
             tag.decompose()
-            self.tag_list.remove(tag)
+            del self._node_dict[a_id]
             self.did_introduce_changes = True
         else:
             raise AttributeError('Topic has subtopics, can not remove.')
@@ -372,10 +402,6 @@ class XManager:
         tag = self.get_tag_by_id(x_id)
         if title != get_node_title(tag):
             self.setNodeTitle(tag=tag, title=title)
-
-        # Remove crosslink if the tag has one
-        if getNodeCrosslink(tag):
-            del tag['xlink:href']
 
         nodeImg = get_node_image(tag)
 
@@ -427,7 +453,7 @@ class XManager:
         try:
             tag.find('title', recursive=False).string = title
         except AttributeError:
-            title_tag = self.soup.new_tag(name='title')
+            title_tag = self._soup.new_tag(name='title')
             title_tag.string = title
             tag.append(title_tag)
 
@@ -454,7 +480,7 @@ class XManager:
         # now add filename with its new data
         with ZipFile(self._file, mode='a',
                      compression=ZIP_DEFLATED) as zf:
-            zf.writestr('content.xml', str(self.soup))
+            zf.writestr('content.xml', str(self._soup))
             for file in os.listdir(self.srcDir):
                 zf.write(filename=os.path.join(self.srcDir, file),
                          arcname=os.path.join('attachments', file))
@@ -464,37 +490,17 @@ class XManager:
     def get_content_sheets(self):
         return [k for k in self.get_sheets().keys() if k != 'ref']
 
-    def get_or_compute_tag_list(self):
+    def get_node_dict(self) -> Dict[str, Tag]:
         """
         If the tag_list has not been computed yet computes it and returns it. The tag_list is a list of all tags
         contained in all sheets managed by this XManager
         :return: the tag_list
         """
-        if not self.tag_list:
+        if not self._node_dict:
             # Nested list comprehension explained:
             # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
-            self.tag_list = [t for s in self.get_sheets().values() for t in s['nodes']]
-        return self.tag_list
-
-    # def ref_and_sort_id(self, q_topic):
-    #     ancestry = get_ancestry(topic=q_topic, descendants=[])
-    #     ref = get_node_title(ancestry.pop(0))
-    #     sort_id = ''
-    #     mult_subjects = False
-    #     follows_bridge = False
-    #     for i, ancestor in enumerate(ancestry):
-    #         field = main.xnotemanager.field_from_content(get_node_content(ancestor))
-    #         sort_id = main.xnotemanager.update_sort_id(sort_id, get_topic_index(ancestor))
-    #         if i % 2:
-    #             ref = main.xnotemanager.ref_plus_answer(field=field, followsBridge=follows_bridge,
-    #                                                     ref=ref, mult_subjects=mult_subjects)
-    #             follows_bridge = False
-    #             mult_subjects = is_empty_node(ancestor)
-    #         else:
-    #             ref = main.xnotemanager.ref_plus_question(field=field, ref=ref)
-    #             if not is_anki_question(ancestor):
-    #                 follows_bridge = True
-    #     return ref, sort_id
+            self._node_dict = {t['id']: t for s in self.get_sheets().values() for t in s['nodes']}
+        return self._node_dict
 
     def _register_referenced_files(self):
         """

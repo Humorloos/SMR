@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 
 import bs4
 import pandas as pd
@@ -14,8 +15,6 @@ import test.constants as cts
 from anki import Collection
 from main import config
 from main.config import get_or_create_smr_world
-
-TEST_WORLD_NAME = "testworld.sqlite3"
 
 
 @pytest.fixture(scope="session")
@@ -43,20 +42,19 @@ def empty_anki_collection_function() -> Collection:
 @pytest.fixture(scope="function")
 def patch_empty_smr_world() -> None:
     try:
-        os.unlink(os.path.join(cts.SMR_WORLD_PATH, TEST_WORLD_NAME))
+        os.unlink(os.path.join(cts.SMR_WORLD_PATH, cts.EMPTY_SMR_WORLD_NAME))
     except FileNotFoundError:
         pass
     standard_world_file_name = smrworld.FILE_NAME
     standard_user_path = smrworld.USER_PATH
     standard_user_path_config = config.USER_PATH
-    smrworld.FILE_NAME = TEST_WORLD_NAME
+    smrworld.FILE_NAME = cts.EMPTY_SMR_WORLD_NAME
     smrworld.USER_PATH = cts.SMR_WORLD_PATH
     config.USER_PATH = cts.SMR_WORLD_PATH
     yield
     smrworld.FILE_NAME = standard_world_file_name
     smrworld.USER_PATH = standard_user_path
     config.USER_PATH = standard_user_path_config
-    assert True
 
 
 @pytest.fixture
@@ -64,7 +62,15 @@ def empty_smr_world(patch_empty_smr_world) -> smrworld.SmrWorld:
     # modify smrworld so that the world that is loaded is not the actual world in user_files but an empty World
     smr_world = smrworld.SmrWorld()
     yield smr_world
+    smr_world.save()
     smr_world.close()
+
+
+@pytest.fixture
+def set_up_empty_smr_world(empty_smr_world):
+    smr_world = empty_smr_world
+    smr_world.set_up()
+    yield smr_world
 
 
 @pytest.fixture(scope="session")
@@ -95,18 +101,14 @@ def _smr_world_for_tests_session(empty_anki_collection_session):
 
 
 @pytest.fixture(scope="function")
-def collection_4_migration(empty_anki_collection_function):
-    col = empty_anki_collection_function
-    col.close()
-    con = connect(col.path)
-    old_collection_path = os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_version_0.0.1/csv')
-    for csv_filename in os.listdir(old_collection_path):
-        table: str = re.sub("main_|.csv", '', csv_filename)
-        csv_file_path = os.path.join(old_collection_path, csv_filename)
-        df = pd.read_csv(csv_file_path, na_filter=False)
-        df.to_sql(name=table, con=con, if_exists='replace', index=False)
-    con.close()
-    col.reopen()
+def collection_4_migration():
+    try:
+        os.unlink(os.path.join(cts.EMPTY_COLLECTION_PATH_FUNCTION))
+    except FileNotFoundError:
+        pass
+    shutil.copy(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_version_0.0.1', 'collection.anki2'),
+                dst=cts.EMPTY_COLLECTION_PATH_FUNCTION)
+    col = Collection(cts.EMPTY_COLLECTION_PATH_FUNCTION)
     yield col
 
 
@@ -117,7 +119,7 @@ def smr_world_for_tests(_smr_world_for_tests_session):
     smr_world.graph.db.rollback()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def x_manager():
     yield xmanager.XManager(cts.EXAMPLE_MAP_PATH)
 

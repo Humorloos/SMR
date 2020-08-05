@@ -2,9 +2,14 @@ import os
 from collections import OrderedDict
 
 # SMR Version
+from ximports.xversion import LooseVersion
+
 SMR_CONFIG = {
     'version': '0.1.0'
 }
+
+# Version of addon where smr world was first introduced
+SMR_WORLD_VERSION = LooseVersion('0.1.0')
 
 # SMR Template information
 X_MODEL_VERSION = '0.2.0'

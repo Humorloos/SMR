@@ -23,9 +23,12 @@ def patch_import_diaglog(self: ImportDialog, mw: AnkiQt, importer: NoteImporter,
     :param _old: the constructor around which this function wraps
     """
     if type(importer) == XmindImporter:
-        deck_selection_dialog = DeckSelectionDialog(mw=mw, filename=os.path.basename(importer.x_managers[0].get_file()))
+        # noinspection PyUnresolvedReferences
+        deck_selection_dialog = DeckSelectionDialog(mw=mw, filename=os.path.basename(importer.get_x_managers()[
+                                                                                         0].get_file()))
         user_inputs = deck_selection_dialog.get_inputs()
         if user_inputs.running:
+            # noinspection PyUnresolvedReferences
             importer.initialize_import(deck_selection_dialog.get_inputs())
             log = "\n".join(importer.log)
         else:

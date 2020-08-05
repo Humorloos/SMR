@@ -10,7 +10,7 @@ from ximports.xversion import LooseVersion
 from aqt import mw
 
 
-def get_or_create_model() -> Dict[str, List[str]]:
+def create_or_update_model() -> None:
     """
     Creates the SMR model if it is not yet created and returns it.
     :return: the SMR model
@@ -18,10 +18,9 @@ def get_or_create_model() -> Dict[str, List[str]]:
     model: Dict[str, List[str]] = mw.col.models.byName(X_MODEL_NAME)
     if not model:
         # create model
-        model: Dict[str, List[str]] = add_x_model(mw.col)
+        add_x_model(mw.col)
     elif len(model['vers']) == 0 or LooseVersion(model['vers'][-1]) < LooseVersion(X_MODEL_VERSION):
         update_x_model(mw.col)
-    return model
 
 
 def update_smr_version():

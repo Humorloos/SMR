@@ -43,15 +43,19 @@
 #         act = manager.is_crosslink_node(tag)
 #         self.assertFalse(act)
 #
+import os
+
+import pytest
+
 import test.constants as cts
 import bs4
 
 from main.dto.nodecontentdto import NodeContentDTO
 from main.xmanager import is_empty_node, get_node_title, get_child_nodes, get_non_empty_sibling_nodes, get_parent_node, \
-    get_node_content, get_node_image, get_node_hyperlink
+    get_node_content, get_node_image, get_node_hyperlink, XManager, NodeNotFoundError
 
 
-def test_xmanager(x_manager):
+def test_x_manager(x_manager):
     # given
     expected_sheets = ['biological psychology', 'clinical psychology', 'ref']
     expected_referenced_file = ['C:\\Users\\lloos\\OneDrive - bwedu\\Projects\\AnkiAddon\\anki-addon-dev\\addons21'
@@ -61,6 +65,14 @@ def test_xmanager(x_manager):
     # then
     assert list(cut.get_sheets().keys()) == expected_sheets
     assert cut.get_referenced_files() == expected_referenced_file
+
+
+def test_x_manager_wrong_file_path():
+    # when
+    with pytest.raises(FileNotFoundError) as exception_info:
+        XManager(file=cts.ABSENT_XMIND_FILE_PATH)
+    # then
+    assert exception_info.value.args[0] == XManager.FILE_NOT_FOUND_MESSAGE.format(cts.ABSENT_XMIND_FILE_PATH)
 
 
 def test_get_root_node(x_manager):
@@ -93,6 +105,16 @@ def test_get_tag_by_id(tag_for_tests, x_manager):
     tag = x_manager.get_tag_by_id(expexted_tag['id'])
     # then
     assert tag.contents[0].text == expexted_tag.contents[1].text
+
+
+def test_get_tag_by_id_tag_not_found(x_manager):
+    # given
+    node_id = 'absent_id'
+    # when
+    with pytest.raises(NodeNotFoundError) as exception_info:
+        x_manager.get_tag_by_id(node_id)
+    # then
+    assert exception_info.value.message == NodeNotFoundError.ERROR_MESSAGE.format(node_id)
 
 
 def test_get_node_content(tag_for_tests):
@@ -189,3 +211,10 @@ def test_extract_attachment(x_manager):
     attachment = x_manager.read_attachment("attachments/395ke7i9a6nkutu85fcpa66as2.mp4")
     # then
     assert type(attachment) == bytes
+
+
+def test_acquire_tag(x_manager):
+    # when
+    tag = x_manager.acquire_anki_tag(deck_name='my deck', sheet_name='biological_psychology')
+    # then
+    assert tag == ' my_deck::example_map::biological_psychology '

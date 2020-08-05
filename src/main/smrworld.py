@@ -2,6 +2,8 @@ import os
 from typing import List, TextIO, Tuple, Optional
 
 from bs4 import Tag
+
+from anki import Collection
 from main.consts import ADDON_PATH, USER_PATH
 from main.dto.nodecontentdto import NodeContentDTO
 from owlready2.namespace import World
@@ -98,14 +100,14 @@ class SmrWorld(World):
         self.graph.execute("INSERT INTO main.xmind_files VALUES (?, ?, ?, ?)", (
             x_manager.get_file(), x_manager.get_map_last_modified(), x_manager.get_file_last_modified(), int(deck_id)))
 
-    def add_xmind_sheet(self, x_manager: XManager, sheet: str) -> None:
+    def add_xmind_sheet(self, x_manager: XManager, sheet_name: str) -> None:
         """
         Adds an entry for an xmind sheet to the relation xmind_sheets
         :param x_manager: the x_manager that manages the file
-        :param sheet: the name of the sheet to import
+        :param sheet_name: the name of the sheet to import
         """
         self.graph.execute("INSERT INTO main.xmind_sheets VALUES (?, ?, ?)", (
-            x_manager.get_sheet_id(sheet), x_manager.get_file(), x_manager.get_sheet_last_modified(sheet)))
+            x_manager.get_sheet_id(sheet_name), x_manager.get_file(), x_manager.get_sheet_last_modified(sheet_name)))
 
     def add_xmind_node(self, node: Tag, node_content: NodeContentDTO, ontology_storid: int, sheet_id: str,
                        order_number: int) -> None:
@@ -166,6 +168,31 @@ UPDATE smr_triples
 SET card_id = ?
 WHERE edge_id IN (SELECT edge_id FROM card_triples)
   AND child_node_id IN (SELECT child_node_id FROM card_triples);""", (note_id, order_number, card_id))
+
+    def add_image_and_media_to_collection_and_self(self, content: NodeContentDTO, collection: Collection,
+                                                   x_manager: XManager) -> None:
+        """
+        - If present, adds media and image specified in the content DTO to the specified anki collection and media
+        folder
+        - Adds an entry in the smr world linking the potentially new file name to the media attachment /
+        hyperlink from the xmind map
+        :param content: the content of the xmind node to add the image and media for
+        :param collection: the anki collection to add the files to
+        :param x_manager: the xmind manager instance that manages the xmind file from which to get the files
+        """
+        if content.media:
+            # xmind 8 adds prefix attachments, xmind zen adds prefix resources
+            if content.media.startswith(('attachments', 'resources')):
+                new_media_name = collection.media.write_data(desired_fname=content.media,
+                                                             data=x_manager.read_attachment(content.media))
+            # if media file was not attached but only referenced via hyperlink
+            else:
+                new_media_name = collection.media.add_file(content.media)
+            self.add_xmind_media_to_anki_file(xmind_uri=content.media, anki_file_name=new_media_name)
+        if content.image:
+            new_image_name = collection.media.write_data(desired_fname=content.image,
+                                                         data=x_manager.read_attachment(content.image))
+            self.add_xmind_media_to_anki_file(xmind_uri=content.image, anki_file_name=new_image_name)
 
     def add_xmind_media_to_anki_file(self, xmind_uri: str, anki_file_name: str):
         """

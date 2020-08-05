@@ -3,6 +3,7 @@ import os
 import main.config
 import main.main
 import main.smrworld
+import main.smrworldmigrationdialog
 from main import smrworld, config, main
 from main.consts import X_MODEL_NAME, X_MODEL_VERSION, USER_PATH
 
@@ -16,6 +17,7 @@ def test_on_profile_loaded(mocker, empty_anki_collection_session):
     config.mw.col.models.byName.side_effect = models.get
     mocker.patch("main.main.mw")
     main.mw.col = empty_anki_collection_session
+    mocker.patch("main.main.SmrWorldMigrationDialog")
     # when
     main.on_profile_loaded()
     tables_database_present = [
