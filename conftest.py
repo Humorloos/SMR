@@ -5,8 +5,8 @@ import shutil
 import bs4
 import pandas as pd
 import pytest
-from sqlite3 import Connection, connect
 
+import aqt
 import main.smrworld as smrworld
 import main.xmanager as xmanager
 import main.xmindimport as xmindimport
@@ -110,6 +110,20 @@ def collection_4_migration():
                 dst=cts.EMPTY_COLLECTION_PATH_FUNCTION)
     col = Collection(cts.EMPTY_COLLECTION_PATH_FUNCTION)
     yield col
+    col.close()
+
+
+@pytest.fixture(scope="function")
+def real_collection_4_migration():
+    try:
+        os.unlink(os.path.join(cts.EMPTY_COLLECTION_PATH_FUNCTION))
+    except FileNotFoundError:
+        pass
+    shutil.copy(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'real_collection_version_0.0.1', 'collection.anki2'),
+                dst=cts.EMPTY_COLLECTION_PATH_FUNCTION)
+    col = Collection(cts.EMPTY_COLLECTION_PATH_FUNCTION)
+    yield col
+    col.close()
 
 
 @pytest.fixture()
@@ -148,3 +162,11 @@ def xmind_importer(mocker, empty_anki_collection_session) -> xmindimport.XmindIm
     """
     mocker.patch("aqt.mw")
     yield xmindimport.XmindImporter(col=empty_anki_collection_session, file=cts.EXAMPLE_MAP_PATH)
+
+
+@pytest.fixture
+def patch_aqt_mw_empty_smr_world(mocker, set_up_empty_smr_world):
+    mocker.patch('aqt.mw')
+    aqt.mw.smr_world = set_up_empty_smr_world
+    aqt.mw.return_value = aqt.mw
+    yield aqt.mw

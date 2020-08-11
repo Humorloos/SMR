@@ -10,3 +10,6 @@ class NodeContentDTO:
     image: Optional[str] = None
     media: Optional[str] = None
     title: str = ""
+
+    def is_empty(self):
+        return not (self.image or self.media or self.title)

@@ -94,6 +94,8 @@ def connect_concepts(child_thing: ThingClass, parent_thing: ThingClass, relation
     :param parent_thing: the parent concept in the relation
     :param relationship_class_name: the relation's class name
     """
+    if relationship_class_name == 'Verwendungsmoeglichkeiten':
+        assert True
     current_children = getattr(parent_thing, relationship_class_name)
     new_children = current_children + [child_thing]
     setattr(parent_thing, relationship_class_name, new_children)
@@ -169,7 +171,7 @@ class XOntology(Ontology):
         """
         relationship_property: ObjectPropertyClass = getattr(self, relationship_class_name)
         # add objectproperty if not yet in ontology
-        if not relationship_property:
+        if not relationship_property or not isinstance(relationship_property, ObjectPropertyClass):
             with self:
                 relationship_property = types.new_class(relationship_class_name, (owlready2.ObjectProperty,))
                 relationship_property.domain = [self.Concept]

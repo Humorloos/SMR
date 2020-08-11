@@ -13,7 +13,7 @@ from anki import Collection
 
 from main.consts import ADDON_PATH
 from main.xmindimport import XmindImporter
-from main.xmanager import XManager
+from main.xmanager import XManager, register_referenced_x_managers
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 
@@ -22,7 +22,7 @@ def getSheetImports():
     col = getEmptyCol()
     map = EXAMPLE_MAP_PATH
     xmindImporter = XmindImporter(col=col, file=map)
-    sheetImports = xmindImporter._register_referenced_x_managers(xmindImporter._x_managers['root'])[1]
+    sheetImports = register_referenced_x_managers(xmindImporter._x_managers['root'])[1]
     pickle.dump(sheetImports, open(
         os.path.join(SUPPORT_PATH, 'sheetSelectors', 'sheetImports.p'), 'wb'))
     return pickle.load(
@@ -50,7 +50,7 @@ def getSheetBiologicalPsychology():
     col = getEmptyCol()
     map = EXAMPLE_MAP_PATH
     xmindImporter = XmindImporter(col=col, file=map)
-    xmindImporter._register_referenced_x_managers(xmindImporter._x_managers[0])
+    register_referenced_x_managers(xmindImporter._x_managers[0])
     sheets = xmindImporter._x_managers[0].sheets
     with open(os.path.join(SUPPORT_PATH, 'xmindImporter',
                            'sheet_biological_psychology.xml'), 'w') as file:
@@ -78,7 +78,7 @@ def getOntologyBiologicalPsychology():
     importer._current_sheet_import = 'general psychology'
     importer.import_map()
     output = os.path.join(SUPPORT_PATH, 'ontology_biological_psychology.rdf')
-    importer._onto.save(file=output, format="rdfxml")
+    importer.__onto.save(file=output, format="rdfxml")
     return owlready2.get_ontology(output).load()
 
 
@@ -99,7 +99,7 @@ def getNoteData():
     importer._active_manager = importer._x_managers[1]
     importer._current_sheet_import = 'general psychology'
     importer.import_map()
-    noteData = importer._onto.getNoteData([(328, 346, 325)])
+    noteData = importer.__onto.getNoteData([(328, 346, 325)])
     pickle.dump(noteData, open(
         os.path.join(SUPPORT_PATH, 'xmindImporter', 'noteData.p'), 'wb'))
     return pickle.load(

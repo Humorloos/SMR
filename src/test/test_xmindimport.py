@@ -5,8 +5,14 @@ from bs4 import Tag
 
 import aqt
 import test.constants as cts
+from anki import Collection
 from main.consts import X_MAX_ANSWERS, X_MODEL_NAME
 from main.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
+from main.dto.smrnotedto import SmrNoteDto
+from main.dto.xmindfiledto import XmindFileDto
+from main.dto.xmindnodedto import XmindNodeDto
+from main.dto.xmindsheetdto import XmindSheetDto
+from main.smrworld import SmrWorld
 from main.template import add_x_model
 from main.xmanager import get_node_content, get_non_empty_sibling_nodes, get_parent_node
 from main.xmindimport import XmindImporter
@@ -22,7 +28,7 @@ def test_xmind_importer(xmind_importer):
     # when
     cut = xmind_importer
     # then
-    assert [x.get_file() for x in cut._x_managers] == expected_x_manager_files
+    assert [x.file for x in cut.x_managers] == expected_x_manager_files
 
 
 def test_open_aborts_if_file_already_exists(mocker, xmind_importer):
@@ -54,11 +60,8 @@ def test_initialize_import(mocker, xmind_importer):
     # when
     xmind_importer.initialize_import(DeckSelectionDialogUserInputsDTO())
     # then
-    cut._mw.progress.start.assert_called_once()
-    cut.finish_import.assert_called_once()
+    cut.mw.progress.start.assert_called_once()
     assert cut.import_file.call_count == 2
-    assert cut.col.decks.select.call_count == 1
-    assert cut.col.decks.current.call_count == 1
 
 
 def test_import_file(xmind_importer, mocker, x_manager):
@@ -66,11 +69,13 @@ def test_import_file(xmind_importer, mocker, x_manager):
     cut = xmind_importer
     mocker.patch.object(cut, "import_sheet")
     mocker.patch.object(cut, "_mw")
+    cut.deck_id = cts.TEST_DECK_ID
     # when
     cut.import_file(x_manager)
     # then
     assert cut.import_sheet.call_count == 2
-    assert cut._smr_world.add_xmind_file.call_count == 1
+    assert cut.files_2_import == [XmindFileDto(path=cts.EXAMPLE_MAP_PATH, map_last_modified=1595671089759,
+                                               file_last_modified=1595687290.0, deck_id=cts.TEST_DECK_ID)]
 
 
 def test_import_sheet(xmind_importer, mocker, x_manager):
@@ -84,19 +89,20 @@ def test_import_sheet(xmind_importer, mocker, x_manager):
     # when
     cut.import_sheet(sheet_2_import)
     # then
-    assert cut._mw.progress.update.call_count == 1
-    assert cut._mw.app.processEvents.call_count == 1
-    assert cut._smr_world.add_xmind_sheet.call_count == 1
+    assert cut.mw.progress.update.call_count == 1
+    assert cut.mw.app.processEvents.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
-    assert cut._current_sheet_import == sheet_2_import
-    assert cut._onto.concept_from_node_content.call_count == 1
+    assert cut.current_sheet_import == sheet_2_import
+    assert cut.onto.concept_from_node_content.call_count == 1
+    assert cut.sheets_2_import == [
+        XmindSheetDto(sheet_id='2485j5qgetfevlt00vhrn53961', path=cts.EXAMPLE_MAP_PATH, last_modified=1595671089759)]
 
 
 @pytest.fixture
 def active_xmind_importer(xmind_importer):
     importer = xmind_importer
     importer._current_sheet_import = "biological psychology"
-    importer._active_manager = importer._x_managers[0]
+    importer._active_manager = importer.x_managers[0]
     return importer
 
 
@@ -105,6 +111,7 @@ def xmind_importer_import_node_if_concept(mocker, active_xmind_importer):
     importer = active_xmind_importer
     mocker.patch.object(importer, "import_edge")
     mocker.patch.object(importer, "import_triple")
+    mocker.patch.object(importer, "add_image_and_media_to_collection")
     yield importer
 
 
@@ -116,10 +123,9 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, tag_
         x_ontology.field_translator.class_from_content(get_node_content(tag_for_tests)))])
     # then
     assert cut.import_triple.call_count == 0
-    assert cut._smr_world.add_xmind_node.call_count == 1
     assert cut.import_edge.call_count == 2
-    assert cut._smr_world.add_image_and_media_to_collection_and_self.call_count == 1
-
+    assert cut.add_image_and_media_to_collection.call_count == 1
+    assert len(cut.nodes_2_import) == 1
 
 def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept, x_ontology):
     # given
@@ -138,9 +144,9 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
         order_number=5)
     # then
     assert cut.import_triple.call_count == 0
-    assert cut._smr_world.add_xmind_node.call_count == 0
+    assert cut._smr_world.add_xmind_nodes.call_count == 0
     assert cut.import_edge.call_count == 1
-    assert cut._smr_world.add_image_and_media_to_collection_and_self.call_count == 0
+    assert cut._smr_world.add_images_and_media_to_collection_and_self.call_count == 0
 
 
 def test_import_node_if_concept_following_multiple_concepts(xmind_importer_import_node_if_concept, x_ontology):
@@ -159,9 +165,9 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
         order_number=1)
     # then
     assert cut.import_triple.call_count == 4
-    assert cut._smr_world.add_xmind_node.call_count == 1
     assert cut.import_edge.call_count == 0
-    assert cut._smr_world.add_image_and_media_to_collection_and_self.call_count == 1
+    assert cut.add_image_and_media_to_collection.call_count == 1
+    assert len(cut.nodes_2_import) == 1
 
 
 @pytest.fixture
@@ -171,7 +177,8 @@ def xmind_importer_import_edge(active_xmind_importer, mocker):
     mocker.patch.object(importer, "_onto")
     mocker.patch.object(importer, "_mw")
     mocker.patch.object(importer, "import_node_if_concept")
-    mocker.patch.object(importer, "create_and_add_note")
+    mocker.patch.object(importer, "add_image_and_media_to_collection")
+    mocker.patch.object(importer, "generate_note_from_edge_id")
     return importer
 
 
@@ -182,20 +189,19 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     cut.import_edge(order_number=1, edge=cut._active_manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID), parent_node_ids=[
         cts.NEUROTRANSMITTERS_XMIND_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
     # then
-    assert cut._onto.concept_from_node_content.call_count == 1
-    assert cut._smr_world.add_xmind_edge.call_count == 1
+    assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
-    assert cut._smr_world.add_image_and_media_to_collection_and_self.call_count == 1
-    assert cut.create_and_add_note.call_count == 1
+    assert cut.add_image_and_media_to_collection.call_count == 1
+    assert len(cut.edges_2_import) == 1
 
 
 def assert_import_edge_not_executed(cut):
-    assert cut._onto.concept_from_node_content.call_count == 0
-    assert cut._smr_world.add_xmind_edge.call_count == 0
+    assert cut.onto.concept_from_node_content.call_count == 0
+    assert cut.smr_world.add_xmind_edge.call_count == 0
     assert cut.import_node_if_concept.call_count == 0
-    assert cut._running is False
-    assert cut._smr_world.add_image_and_media_to_collection_and_self.call_count == 0
-    assert cut.create_and_add_note.call_count == 0
+    assert cut.is_running is False
+    assert cut.generate_note_from_edge_id.call_count == 0
+    assert cut.add_image_and_media_to_collection.call_count == 0
 
 
 def test_import_edge_no_child_nodes(xmind_importer_import_edge, x_ontology, mocker):
@@ -237,11 +243,10 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge, x_o
     cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node['id']],
                     parent_concepts=[x_ontology.concept_from_node_content(get_node_content(parent_node))])
     # then
-    assert cut._onto.concept_from_node_content.call_count == 4
-    assert cut._smr_world.add_xmind_edge.call_count == 1
+    assert cut.onto.concept_from_node_content.call_count == 4
     assert cut.import_node_if_concept.call_count == 5
-    assert cut._smr_world.add_image_and_media_to_collection_and_self.call_count == 1
-    assert cut.create_and_add_note.call_count == 1
+    assert cut.add_image_and_media_to_collection.call_count == 1
+    assert len(cut.edges_2_import) == 1
 
 
 def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
@@ -253,48 +258,43 @@ def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node['id']],
                     parent_concepts=[x_ontology.concept_from_node_content(get_node_content(parent_node))])
     # then
-    assert cut._onto.concept_from_node_content.call_count == 1
-    assert cut._smr_world.add_xmind_edge.call_count == 1
+    assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
-    assert cut._smr_world.add_image_and_media_to_collection_and_self.call_count == 0
-    assert cut.create_and_add_note.call_count == 0
+    assert cut.add_image_and_media_to_collection.call_count == 0
+    assert len(cut.edges_2_import) == 1
 
 
-def test_create_and_add_note(mocker, active_xmind_importer, smr_world_for_tests):
+def test_generate_note_from_edge_id(mocker, active_xmind_importer, smr_world_for_tests):
     # given
     cut = active_xmind_importer
     cut._smr_world = smr_world_for_tests
     mocker.spy(cut._active_manager, "acquire_anki_tag")
     # when
-    cut.create_and_add_note(edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
+    note = cut.generate_note_from_edge_id(edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
     # then
-    assert cut._active_manager.acquire_anki_tag.call_count == 1
-    assert pickle.dumps(cut._notes_2_import[0]) == cts.EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE
+    assert cut.active_manager.acquire_anki_tag.call_count == 1
+    assert pickle.dumps(note) == cts.EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE
 
 
 def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
     # given
     cut = active_xmind_importer
-    cut._smr_world = smr_world_for_tests
+    cut.smr_world = smr_world_for_tests
     add_x_model(cut.col)
     cut.model = cut.col.models.byName(X_MODEL_NAME)
-    cut._deck_id = 1
-    mocker.patch.object(cut._smr_world, "add_smr_note")
-    mocker.patch.object(cut._smr_world, "update_smr_triples_card_id")
-    mocker.patch.object(cut._smr_world, "save")
+    cut.deck_id = 1
+    mocker.patch.object(cut, "import_notes_and_cards")
     for edge_id in [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
                     cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID]:
-        cut.create_and_add_note(edge_id)
+        cut.generate_note_from_edge_id(edge_id)
     # when
     cut.finish_import()
     # then
-    assert cut._smr_world.add_smr_note.call_count == 4
-    assert cut._smr_world.update_smr_triples_card_id.call_count == 7
-    assert cut._smr_world.save.call_count == 1
-    assert cut._mw.reset.call_count == 1
+    assert cut.import_notes_and_cards.call_count == 1
 
 
-def test_initialize_import_import_import_notes_to_correct_deck(mocker, set_up_empty_smr_world, empty_anki_collection_function):
+def test_initialize_import_import_import_notes_to_correct_deck(mocker, set_up_empty_smr_world,
+                                                               empty_anki_collection_function):
     # given
     mocker.patch("aqt.mw")
     aqt.mw.smr_world = set_up_empty_smr_world
@@ -309,6 +309,7 @@ def test_initialize_import_import_import_notes_to_correct_deck(mocker, set_up_em
     mocker.spy(cut, "import_file")
     # when
     cut.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=test_deck_id))
+    cut.finish_import()
     # then
     assert cut.import_file.call_count == 2
     assert cut.import_sheet.call_count == 3
@@ -328,13 +329,60 @@ def test_newData(xmind_importer, smr_world_for_tests):
     importer = xmind_importer
     add_x_model(importer.col)
     importer.model = importer.col.models.byName(X_MODEL_NAME)
+    importer.smr_world = smr_world_for_tests
+    # fields used in newData() that are not initialized on object creation
     importer._fmap = importer.col.models.fieldMap(importer.model)
     importer._nextID = next_note_id
     importer._ids = []
     importer._cards = []
-    importer._smr_world = smr_world_for_tests
     # when
-    importer.newData(foreign_note)
+    data = importer.newData(foreign_note)
     # then
-    assert importer._smr_world.graph.execute("SELECT * FROM smr_notes").fetchone()[:2] == (
-        next_note_id, cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
+    assert importer.smr_notes_2_add[0].edge_id == cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID
+    assert importer.smr_notes_2_add[0].note_id == next_note_id
+    assert len(data) == 11
+
+
+@pytest.fixture
+def add_image_and_media_importer(active_xmind_importer, mocker):
+    # given
+    importer = active_xmind_importer
+    mocker.spy(importer.col.media, "write_data")
+    mocker.spy(importer.col.media, "add_file")
+
+    yield importer
+
+
+def validate_add_image_and_media(cut: XmindImporter, add_file_call_count: int):
+    new_image = cut.media_2_anki_files_2_import[0].anki_file_name
+    assert cut.col.media.have(new_image)
+    assert new_image in cut.col.media.check().unused
+    assert cut.col.media.write_data.call_count == 1
+    assert cut.col.media.add_file.call_count == add_file_call_count
+
+
+def test_add_image_and_media_to_collection(add_image_and_media_importer):
+    # given
+    cut = add_image_and_media_importer
+    # when
+    cut.add_image_and_media_to_collection(content=cts.NEUROTRANSMITTERS_NODE_CONTENT)
+    # then
+    validate_add_image_and_media(cut=cut, add_file_call_count=0)
+
+
+def test_add_image_and_media_to_collection_with_media_attachment(add_image_and_media_importer):
+    # given
+    cut = add_image_and_media_importer
+    # when
+    cut.add_image_and_media_to_collection(content=cts.MEDIA_ATTACHMENT_NODE_CONTENT)
+    # then
+    validate_add_image_and_media(cut=cut, add_file_call_count=0)
+
+
+def test_add_image_and_media_to_collection_with_media_hyperlink(add_image_and_media_importer):
+    # given
+    cut = add_image_and_media_importer
+    # when
+    cut.add_image_and_media_to_collection(content=cts.MEDIA_HYPERLINK_NODE_CONTENT)
+    # then
+    validate_add_image_and_media(cut=cut, add_file_call_count=1)

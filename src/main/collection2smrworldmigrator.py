@@ -1,14 +1,15 @@
 import json
-from typing import Optional, Dict, List, Tuple
+import os
+from typing import Optional, Dict, List
 
-from anki import Collection
-from anki.utils import splitFields
-from main.smrworld import SmrWorld
-from main.xmanager import XManager, get_node_content, get_parent_node
-from main.xmindimport import XmindImporter
-from main.xnotemanager import XNoteManager, order_number_from_sort_id_character, FieldTranslator
-from main.xontology import XOntology, connect_concepts
 import main.consts as cts
+from anki.utils import splitFields, intTime
+from aqt import AnkiQt
+from main.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
+from main.smrworld import SmrWorld
+from main.xmindimport import XmindImporter
+from main.xnotemanager import XNoteManager, FieldTranslator
+from main.xontology import XOntology
 
 
 class Collection2SmrWorldMigrator:
@@ -16,12 +17,14 @@ class Collection2SmrWorldMigrator:
     This class serves for migrating old anki collections into the smr world.
     """
 
-    def __init__(self, col: Collection, smr_world: SmrWorld):
-        col.models.setCurrent(col.models.byName(cts.X_MODEL_NAME))
-        self._note_manager: XNoteManager = XNoteManager(col)
-        self._smr_world: SmrWorld = smr_world
+    def __init__(self, mw: AnkiQt):
+        mw.col.models.setCurrent(mw.col.models.byName(cts.X_MODEL_NAME))
+        self._collection = mw.col
+        self._note_manager: XNoteManager = XNoteManager(mw.col)
+        self._smr_world: SmrWorld = mw.smr_world
         self._field_translator = FieldTranslator()
         self._current_onto: Optional[XOntology] = None
+        self._mw = mw
 
     @staticmethod
     def _get_deck_data(smr_cards_in_deck: List[Dict]) -> Dict:
@@ -35,28 +38,19 @@ class Collection2SmrWorldMigrator:
             card['meta'] = json.loads(card['fields'][23])
             try:
                 # add card to note's card list
-                files[card['meta']['path']][card['meta']['sheetId']][card['note_id']]['cards'].append(card)
+                files[card['meta']['path']][card['meta']['questionId']]['cards'].append(card)
             except KeyError:
                 try:
-                    # if no note yet, add note and card to sheet's note dict
-                    files[card['meta']['path']][card['meta']['sheetId']][card['note_id']] = {'cards': [card]}
+                    files[card['meta']['path']][card['meta']['questionId']] = {'cards': [card]}
                 except KeyError:
-                    try:
-                        # if no sheet yet, add sheet, note, and card to file's sheet dict
-                        files[card['meta']['path']][card['meta']['sheetId']] = {card['note_id']: {'cards': [card]}}
-                    except KeyError:
-                        # if no file yet, add file, sheet, note, and card to file dict
-                        files[card['meta']['path']] = {card['meta']['sheetId']: {card['note_id']: {'cards': [card]}}}
-                finally:
-                    # if note was new for sheet, add note fields from card to note dict
-                    files[card['meta']['path']][card['meta']['sheetId']][card['note_id']][
-                        'fields'] = card['fields']
-                    files[card['meta']['path']][card['meta']['sheetId']][card['note_id']][
-                        'meta'] = card['meta']
-                    files[card['meta']['path']][card['meta']['sheetId']][card['note_id']][
-                        'last_modified'] = card['last_modified']
+                    files[card['meta']['path']] = {card['meta']['questionId']: {'cards': [card]}}
             finally:
-                # in all cases remove note fields from card dict
+                # add note fields from card to note dict
+                files[card['meta']['path']][card['meta']['questionId']]['fields'] = card['fields']
+                files[card['meta']['path']][card['meta']['questionId']]['meta'] = card['meta']
+                files[card['meta']['path']][card['meta']['questionId']]['last_modified'] = card['last_modified']
+                files[card['meta']['path']][card['meta']['questionId']]['note_id'] = card['note_id']
+                # remove note fields from card dict
                 del card['fields']
                 del card['note_id']
                 del card['last_modified']
@@ -68,11 +62,18 @@ class Collection2SmrWorldMigrator:
         """
         Finds all decks with anki notes and migrates each deck into the smr world
         """
+        self._mw.progress.start(immediate=True, label="Updating...")
         deck_names_and_ids = self._note_manager.col.decks.all_names_and_ids()
+        # empty dynamic decks to avoid xmind files being scattered over multiple decks
+        for deck_name_and_id in deck_names_and_ids:
+            if self._collection.decks.isDyn(deck_name_and_id.id):
+                self._collection.sched.emptyDyn(deck_name_and_id.id)
         for deck_name_and_id in deck_names_and_ids:
             self._migrate_deck_2_smr_world(deck_name_and_id.id)
         self._smr_world.save()
-        self._note_manager.save_col()
+        self._collection.save()
+        self._mw.reset(guiOnly=True)
+        self._mw.progress.finish()
 
     def _migrate_deck_2_smr_world(self, smr_deck_id: int) -> None:
         """
@@ -86,80 +87,32 @@ class Collection2SmrWorldMigrator:
         """
         self._current_onto = XOntology(smr_deck_id, self._smr_world)
         card_data = [{'note_id': row[0], 'fields': splitFields(row[1]), 'last_modified': row[2],
-                                          'card_id': row[3], 'card_order_number': row[4], 'tags': row[5]
-                                          } for
-                                         row in self._note_manager.col.db.execute("""SELECT DISTINCT 
+                      'card_id': row[3], 'card_order_number': row[4], 'tags': row[5]
+                      } for
+                     row in self._collection.db.execute("""SELECT DISTINCT 
         notes.id, flds, notes.mod, cards.id, cards.ord + 1, notes.tags
 FROM cards
          INNER JOIN notes ON cards.nid = notes.id
 WHERE did = ? and mid = ?""", smr_deck_id, self._note_manager.col.models.id_for_name(cts.X_MODEL_NAME))]
         files = self._get_deck_data(card_data)
-        for file_path, sheets in files.items():
-            importer = XmindImporter(col=self._note_manager.col, file=file_path)
-            # add file to smr world
-            x_manager = XManager(file_path)
-            self._smr_world.add_xmind_file(x_manager=x_manager, deck_id=self._current_onto.get_deck_id())
-            for sheet_id, notes in sheets.items():
-                sheet_name = next(sheet_name for sheet_name, sheet_content in x_manager.get_sheets().items() if
-                                  sheet_content['tag']['id'] == sheet_id)
-                # add sheets to smr world
-                self._smr_world.add_xmind_sheet(x_manager=x_manager, sheet_name=sheet_name)
-                # change tags to hierarchical tags
-                new_tag = x_manager.acquire_anki_tag(
-                    deck_name=self._note_manager.col.db.first("select name from decks where id = ?", smr_deck_id)[0],
-                    sheet_name=sheet_name)
-                self._note_manager.col.db.executemany("update notes set tags = ? where id = ?",
-                                                      [(new_tag, note_id) for note_id in notes.keys()])
-                # sort notes by sort field
-                notes = {k: v for k, v in sorted(notes.items(), key=lambda item: item[1]['fields'][22])}
-                # add root concept to ontology
-                parent_nodes = [get_parent_node(
-                    x_manager.get_tag_by_id(list(notes.values())[0]['meta']['questionId']))]
-                root_content = get_node_content(parent_nodes[0])
-                parent_concepts = [self._current_onto.concept_from_node_content(
-                    node_content=root_content, node_is_root=True)]
-                # add root concept media to smr world
-                self._smr_world.add_image_and_media_to_collection_and_self(
-                    content=root_content, collection=self._note_manager.col, x_manager=x_manager)
-                # add root concept to smr world
-                self._smr_world.add_xmind_node(
-                    node=parent_nodes[0], node_content=root_content, ontology_storid=parent_concepts[0].storid,
-                    sheet_id=sheet_id, order_number=1)
-                for note_id, note in notes.items():
-                    # add relationship to ontology
-                    edge = x_manager.get_tag_by_id(note['meta']['questionId'])
-                    edge_content = get_node_content(edge)
-                    relationship_class_name = self._field_translator.class_from_content(edge_content)
-                    relationship_property = self._current_onto.add_relation(relationship_class_name)
-                    # add edge image and media to the anki collection
-                    self._smr_world.add_image_and_media_to_collection_and_self(
-                        content=edge_content, collection=self._note_manager.col, x_manager=x_manager)
-                    # add edge to smr world
-                    self._smr_world.add_xmind_edge(
-                        edge=edge, edge_content=edge_content, sheet_id=sheet_id,
-                        order_number=order_number_from_sort_id_character(note['fields'][22][-1]),
-                        ontology_storid=relationship_property.storid)
-                    # add answer concepts to ontology
-                    child_nodes = [x_manager.get_tag_by_id(a['answerId']) for a in note['meta']['answers']]
-                    child_node_contents = [get_node_content(n) for n in child_nodes]
-                    child_concepts = [self._current_onto.concept_from_node_content(node_content=c, node_is_root=False)
-                                      for c in child_node_contents]
-                    for child_node, child_node_content, child_concept, card in zip(
-                            child_nodes, child_node_contents, child_concepts, note['cards']):
-                        # add node image and media to smr world and collection
-                        self._smr_world.add_image_and_media_to_collection_and_self(
-                            content=child_node_content, collection=self._note_manager.col, x_manager=x_manager)
-                        # add nodes to smr world
-                        self._smr_world.add_xmind_node(
-                            node=child_node, node_content=child_node_content, ontology_storid=child_concept.storid,
-                            sheet_id=sheet_id, order_number=card['card_order_number'])
-                        for pc, pn in zip(parent_concepts, parent_nodes):
-                            # connect parent and child in ontology
-                            connect_concepts(child_thing=child_concept, parent_thing=pc,
-                                             relationship_class_name=relationship_class_name)
-                            # add triples to smr world
-                            self._smr_world.add_smr_triple(parent_node_id=pn['id'], edge_id=edge['id'],
-                                                           child_node_id=child_node['id'], card_id=card['card_id'])
-                    # add note to smr world
-                    self._smr_world.add_smr_note(note_id=note_id, edge_id=edge['id'],
-                                                 last_modified=note['last_modified'])
+        for file_path, notes in files.items():
+            self._mw.progress.update(label="Registering file " + os.path.basename(file_path), maybeShow=False)
+            self._mw.app.processEvents()
+            importer = XmindImporter(col=self._collection, file=file_path, include_referenced_files=False)
+            importer.initialize_import(user_inputs=DeckSelectionDialogUserInputsDTO(deck_id=smr_deck_id))
+            notes_2_update = {n: importer.notes_2_import.pop(n) for n in list(importer.notes_2_import) if
+                              n in notes}
+            if notes_2_update:
+                importer.tagModified = 'yes'
+                importer.addUpdates(
+                    rows=[[intTime(), self._collection.usn(), n.fieldsStr, n.tags[0], notes[k]['note_id'], n.fieldsStr]
+                          for k, n in notes_2_update.items()])
+                for edge_id in notes_2_update:
+                    note_dict = notes[edge_id]
+                    note_id = note_dict['note_id']
+                    self._smr_world.add_smr_notes(note_id=note_id, edge_id=edge_id,
+                                                  last_modified=notes[edge_id]['last_modified'])
+                    for card in note_dict['cards']:
+                        self._smr_world.update_smr_triples_card_ids(note_id=note_id, order_number=card[
+                            'card_order_number'], card_id=card['card_id'])
+            importer.import_notes_and_cards()

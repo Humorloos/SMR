@@ -1,9 +1,13 @@
-from sqlite3 import IntegrityError
+from sqlite3 import IntegrityError, OperationalError
 
 import test.constants as cts
 import pytest
 
 from anki import Collection
+from main.dto.smrtripledto import SmrTripleDto
+from main.dto.xmindfiledto import XmindFileDto
+from main.dto.xmindnodedto import XmindNodeDto
+from main.dto.xmindsheetdto import XmindSheetDto
 from main.smrworld import SmrWorld
 from main.xmanager import get_node_content
 
@@ -25,12 +29,13 @@ def test_set_up(empty_smr_world, empty_anki_collection_session):
     assert smrworld_databases == expected_databases
 
 
-def test_add_xmind_file(smr_world_for_tests, x_manager):
-    expected_entry = (cts.EXAMPLE_MAP_PATH, 1595671089759, 1595687290.0, int(cts.TEST_DECK_ID))
+def test_add_xmind_files(smr_world_for_tests, x_manager):
+    expected_entry = (cts.EXAMPLE_MAP_PATH, 1595671089759, 1595687290.0, cts.TEST_DECK_ID)
     # given
     cut = smr_world_for_tests
     # when
-    cut.add_xmind_file(x_manager=x_manager, deck_id=cts.TEST_DECK_ID)
+    cut.add_xmind_files([XmindFileDto(path=cts.EXAMPLE_MAP_PATH, map_last_modified=1595671089759,
+                                      file_last_modified=1595687290.0, deck_id=cts.TEST_DECK_ID)])
     # then
     assert list(cut.graph.execute("SELECT * FROM main.xmind_files").fetchall())[1] == expected_entry
 
@@ -38,19 +43,22 @@ def test_add_xmind_file(smr_world_for_tests, x_manager):
 @pytest.fixture
 def x_manager_test_file(x_manager):
     manager = x_manager
-    default_file = x_manager.get_file()
+    default_file = x_manager.file
     manager._file = cts.TEST_FILE_PATH
     yield manager
     manager._file = default_file
 
 
-def test_add_xmind_sheet(smr_world_for_tests, x_manager_test_file):
+def test_add_xmind_sheets(smr_world_for_tests, x_manager_test_file):
     # given
     expected_entry = ('2485j5qgetfevlt00vhrn53961', cts.TEST_FILE_PATH, 1595671089759)
     cut = smr_world_for_tests
     manager = x_manager_test_file
+    sheet = 'biological psychology'
+    entities = [XmindSheetDto(sheet_id=manager.get_sheet_id(sheet), path=manager.file,
+                              last_modified=manager.get_sheet_last_modified(sheet))]
     # when
-    cut.add_xmind_sheet(x_manager=manager, sheet_name='biological psychology')
+    cut.add_xmind_sheets(entities)
     # then
     assert list(cut.graph.execute("SELECT * FROM main.xmind_sheets").fetchall())[1] == expected_entry
 
@@ -58,10 +66,10 @@ def test_add_xmind_sheet(smr_world_for_tests, x_manager_test_file):
 @pytest.fixture
 def x_manager_absent_file(x_manager):
     manager = x_manager
-    default_file = x_manager.get_file()
-    manager._file = 'wrong path'
+    default_file = x_manager.file
+    manager.file = 'wrong path'
     yield manager
-    manager._file = default_file
+    manager.file = default_file
 
 
 def test_add_xmind_sheet_wrong_path(smr_world_for_tests, x_manager_absent_file):
@@ -71,64 +79,69 @@ def test_add_xmind_sheet_wrong_path(smr_world_for_tests, x_manager_absent_file):
     # then
     with pytest.raises(IntegrityError):
         # when
-        cut.add_xmind_sheet(x_manager=manager, sheet_name='biological psychology')
+        cut.add_xmind_sheets([XmindSheetDto(path=manager.file, sheet_id=cts.TEST_SHEET_ID, last_modified=12345)])
 
 
-def test_add_xmind_node(smr_world_for_tests, x_manager):
+def test_add_xmind_nodes(smr_world_for_tests, x_manager):
     # given
     expected_entry = (cts.NEUROTRANSMITTERS_XMIND_ID, cts.TEST_SHEET_ID, 'neurotransmitters',
                       'attachments/629d18n2i73im903jkrjmr98fg.png', None, 153, 1578314907411, 1)
-    cut = smr_world_for_tests
-    # when
-    cut.add_xmind_node(node=x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID),
-                       node_content=cts.NEUROTRANSMITTERS_NODE_CONTENT, ontology_storid=cts.TEST_CONCEPT_STORID,
-                       sheet_id=cts.TEST_SHEET_ID, order_number=1)
     # then
-    assert list(cut.graph.execute(
-        "SELECT * FROM main.xmind_nodes WHERE node_id = '{}'".format(cts.NEUROTRANSMITTERS_XMIND_ID)).fetchall())[
-               0] == expected_entry
+    verify_add_xmind_node(expected_entry, smr_world_for_tests, x_manager, cts.NEUROTRANSMITTERS_XMIND_ID,
+                          cts.NEUROTRANSMITTERS_NODE_CONTENT)
 
 
-def test_add_xmind_node_with_media_hyperlink(smr_world_for_tests, x_manager):
+def test_add_xmind_nodes_with_media_hyperlink(smr_world_for_tests, x_manager):
     # given
     expected_entry = (cts.MEDIA_HYPERLINK_XMIND_ID, cts.TEST_SHEET_ID, '', None,
                       "C:/Users/lloos/OneDrive - bwedu/Projects/AnkiAddon/anki-addon-dev/addons21/XmindImport"
                       "/resources/serotonin.mp3", 153, 1595671089759, 1)
-    cut = smr_world_for_tests
+    # then
+    verify_add_xmind_node(expected_entry, smr_world_for_tests, x_manager, cts.MEDIA_HYPERLINK_XMIND_ID,
+                          cts.MEDIA_HYPERLINK_NODE_CONTENT)
+
+
+def verify_add_xmind_node(expected_entry, cut, x_manager, tag_id, node_content):
+    # given
+    node = x_manager.get_tag_by_id(tag_id)
     # when
-    cut.add_xmind_node(node=x_manager.get_tag_by_id(cts.MEDIA_HYPERLINK_XMIND_ID),
-                       node_content=cts.MEDIA_HYPERLINK_NODE_CONTENT, ontology_storid=cts.TEST_CONCEPT_STORID,
-                       sheet_id=cts.TEST_SHEET_ID, order_number=1)
+    cut.add_xmind_nodes([XmindNodeDto(
+        node_id=node['id'], sheet_id=cts.TEST_SHEET_ID, title=node_content.title, image=node_content.image,
+        link=node_content.media, ontology_storid=cts.TEST_CONCEPT_STORID, last_modified=node['timestamp'],
+        order_number=1)])
     # then
     assert list(cut.graph.execute(
-        "SELECT * FROM main.xmind_nodes WHERE node_id = '{}'".format(cts.MEDIA_HYPERLINK_XMIND_ID)).fetchall())[
-               0] == expected_entry
+        "SELECT * FROM main.xmind_nodes WHERE node_id = '{}'".format(tag_id)).fetchall())[0] == expected_entry
 
 
-def test_add_xmind_edge(smr_world_for_tests, x_manager):
+def test_add_xmind_edges(smr_world_for_tests, x_manager):
     # given
     expected_entry = (cts.TYPES_EDGE_XMIND_ID, cts.TEST_SHEET_ID, 'types', None, None, cts.TEST_RELATION_STORID,
                       1573032291149, 1)
     manager = x_manager
     edge = manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID)
+    edge_content = get_node_content(edge)
     cut = smr_world_for_tests
     # when
-    cut.add_xmind_edge(edge=edge, edge_content=get_node_content(edge), sheet_id=cts.TEST_SHEET_ID,
-                       order_number=1, ontology_storid=cts.TEST_RELATION_STORID)
+    cut.add_xmind_edges([XmindNodeDto(
+        node_id=edge['id'], sheet_id=cts.TEST_SHEET_ID,
+        title=edge_content.title, image=edge_content.image, link=edge_content.media,
+        ontology_storid=cts.TEST_RELATION_STORID, last_modified=edge['timestamp'], order_number=1)])
     # then
     assert list(cut.graph.execute(
         "SELECT * FROM main.xmind_edges WHERE edge_id = '{}'".format(cts.TYPES_EDGE_XMIND_ID)).fetchall())[
                0] == expected_entry
 
 
-def test_add_smr_triple(smr_world_for_tests):
+def test_add_smr_triples(smr_world_for_tests):
     # given
     test_edge_id = 'edge id'
     expected_entry = ('node id', test_edge_id, 'node id2', None)
     cut = smr_world_for_tests
     # when
-    cut.add_smr_triple(parent_node_id=cts.TEST_CONCEPT_NODE_ID, edge_id=cts.TEST_RELATION_EDGE_ID,
-                       child_node_id=cts.TEST_CONCEPT_2_NODE_ID, card_id=None)
+    cut.add_smr_triples([SmrTripleDto(
+        parent_node_id=cts.TEST_CONCEPT_NODE_ID, edge_id=cts.TEST_RELATION_EDGE_ID,
+        child_node_id=cts.TEST_CONCEPT_2_NODE_ID)])
     # then
     assert list(cut.graph.execute("SELECT * FROM main.smr_triples WHERE edge_id = '{}'".format(
         test_edge_id)).fetchall())[0] == expected_entry
@@ -203,64 +216,26 @@ def test_get_smr_note_sort_data(smr_world_for_tests):
     assert sort_field_data == [(1, 2), (1, 1), (1, 1), (1, 1), (1, 2)]
 
 
-def test_update_smr_triples_card_id(smr_world_for_tests):
+def test_update_smr_triples_card_ids(smr_world_for_tests, collection_4_migration):
     # given
     cut = smr_world_for_tests
-    card_id = 55115
     # when
-    cut.update_smr_triples_card_id(note_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_NOTE_ID, card_id=card_id, order_number=1)
+    cut.update_smr_triples_card_ids(data=[(1581184936757, 1)], collection=collection_4_migration)
     # then
     assert cut.graph.execute("select card_id from smr_triples where edge_id = ?",
-                             (cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID,)).fetchall() == 4 * [(55115,)]
+                             ('4kdqkutdha46uns1j8jndi43ht',)).fetchall() == [(1581184936819,), (None,)]
 
 
-@pytest.fixture
-def add_image_and_media_smr_world(set_up_empty_smr_world, mocker, x_manager, empty_anki_collection_session):
-    # given
-    smr_world = set_up_empty_smr_world
-    mocker.spy(smr_world, "add_xmind_media_to_anki_file")
-    col = empty_anki_collection_session
-    mocker.spy(col.media, "write_data")
-    mocker.spy(col.media, "add_file")
-
-    yield smr_world, x_manager, col
-
-
-def validate_add_image_and_media(col: Collection, cut: SmrWorld, add_file_call_count: int):
-    new_image = cut.add_xmind_media_to_anki_file.call_args[1]['anki_file_name']
-    assert col.media.have(new_image)
-    assert new_image in col.media.check().unused
-    assert col.media.write_data.call_count == 1
-    assert col.media.add_file.call_count == add_file_call_count
-
-
-def test_add_image_and_media_to_collection_and_self(add_image_and_media_smr_world):
-    # given
-    cut, x_manager, col = add_image_and_media_smr_world
+def test_attach_anki_collection(smr_world_for_tests, empty_anki_collection_session):
     # when
-    cut.add_image_and_media_to_collection_and_self(
-        content=cts.NEUROTRANSMITTERS_NODE_CONTENT, collection=col, x_manager=x_manager)
+    smr_world_for_tests.attach_anki_collection(empty_anki_collection_session)
     # then
-    validate_add_image_and_media(col=col, cut=cut, add_file_call_count=0)
-
-
-# noinspection DuplicatedCode
-def test_add_image_and_media_to_collection_and_self_with_media_attachment(add_image_and_media_smr_world):
-    # given
-    cut, x_manager, col = add_image_and_media_smr_world
+    assert len(smr_world_for_tests.graph.db.execute("select * from main.smr_triples, "
+                                                    "anki_collection.deck_config").fetchall()) > 0
     # when
-    cut.add_image_and_media_to_collection_and_self(
-        content=cts.MEDIA_ATTACHMENT_NODE_CONTENT, collection=col, x_manager=x_manager)
+    smr_world_for_tests.detach_anki_collection(empty_anki_collection_session)
     # then
-    validate_add_image_and_media(col=col, cut=cut, add_file_call_count=0)
-
-
-# noinspection DuplicatedCode
-def test_add_image_and_media_to_collection_and_self_with_media_hyperlink(add_image_and_media_smr_world):
-    # given
-    cut, x_manager, col = add_image_and_media_smr_world
-    # when
-    cut.add_image_and_media_to_collection_and_self(
-        content=cts.MEDIA_HYPERLINK_NODE_CONTENT, collection=col, x_manager=x_manager)
-    # then
-    validate_add_image_and_media(col=col, cut=cut, add_file_call_count=1)
+    with pytest.raises(OperationalError) as exception_info:
+        smr_world_for_tests.graph.db.execute("select * from main.smr_triples, anki_collection.deck_config").fetchall()
+    assert exception_info.value.args[0] == 'no such table: anki_collection.deck_config'
+    assert len(empty_anki_collection_session.db.execute('select * from main.deck_config')) == 1

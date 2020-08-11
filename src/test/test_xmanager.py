@@ -43,14 +43,11 @@
 #         act = manager.is_crosslink_node(tag)
 #         self.assertFalse(act)
 #
-import os
 
+import bs4
 import pytest
 
 import test.constants as cts
-import bs4
-
-from main.dto.nodecontentdto import NodeContentDTO
 from main.xmanager import is_empty_node, get_node_title, get_child_nodes, get_non_empty_sibling_nodes, get_parent_node, \
     get_node_content, get_node_image, get_node_hyperlink, XManager, NodeNotFoundError
 
@@ -63,8 +60,8 @@ def test_x_manager(x_manager):
     # when
     cut = x_manager
     # then
-    assert list(cut.get_sheets().keys()) == expected_sheets
-    assert cut.get_referenced_files() == expected_referenced_file
+    assert list(cut.sheets.keys()) == expected_sheets
+    assert cut.referenced_files == expected_referenced_file
 
 
 def test_x_manager_wrong_file_path():
@@ -218,3 +215,17 @@ def test_acquire_tag(x_manager):
     tag = x_manager.acquire_anki_tag(deck_name='my deck', sheet_name='biological_psychology')
     # then
     assert tag == ' my_deck::example_map::biological_psychology '
+
+
+def test_get_map_last_modified(x_manager):
+    # when
+    map_last_modified = x_manager.get_map_last_modified()
+    # then
+    assert map_last_modified == 1595671089759
+
+
+def test_get_sheet_last_modified(x_manager):
+    # when
+    sheet_last_modified = x_manager.get_sheet_last_modified('biological psychology')
+    # then
+    assert sheet_last_modified == 1595671089759

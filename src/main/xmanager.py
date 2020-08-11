@@ -4,7 +4,7 @@ import os
 import shutil
 import tempfile
 import urllib.parse
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from bs4 import BeautifulSoup, Tag
@@ -71,9 +71,13 @@ def get_node_title(node: Tag) -> str:
         return ''
 
 
-def get_os_mod(file):
-    os_mod = os.stat(file).st_mtime
-    return os_mod
+def get_os_mod(file: str) -> float:
+    """
+    Gets the operating system's timestamp of the last modification of the provided file
+    :param file: path of the file to get the modification timestamp for
+    :return: the modification timestamp as a float number
+    """
+    return os.stat(file).st_mtime
 
 
 def get_parent_a_topics(q_topic, parent_q):
@@ -226,7 +230,7 @@ class XManager:
     FILE_NOT_FOUND_MESSAGE = 'Xmind file "{}" not found.'
 
     def __init__(self, file):
-        self._file: str = file
+        self.file: str = file
         try:
             self.xZip: ZipFile = ZipFile(file, 'r')
         except FileNotFoundError:
@@ -234,25 +238,26 @@ class XManager:
         self._soup: BeautifulSoup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
         self.manifest: BeautifulSoup = BeautifulSoup(self.xZip.read("META-INF/manifest.xml"), features='html.parser')
         self.srcDir: str = tempfile.mkdtemp()
-        self._sheets: Optional[Dict[str, Dict]] = None
+        self.__sheets: Optional[Dict[str, Dict]] = None
         self._referenced_files = None
+        self.__referenced_x_managers: List[XManager] = []
         self.fileBin = []
         self.did_introduce_changes = False
         # tags are only loaded when needed
         self._node_dict: Optional[Dict[str, Tag]] = None
 
-    def get_referenced_files(self):
-        if not self._referenced_files:
-            self._register_referenced_files()
-        return self._referenced_files
+    def __get_referenced_x_managers(self) -> List['XManager']:
+        ref_managers: List[XManager] = [XManager(f) for f in self.referenced_files]
+        for manager in ref_managers:
+            ref_managers.extend(XManager.__get_referenced_x_managers(manager))
+        return ref_managers
 
-    def get_sheets(self):
-        if not self._sheets:
-            self._register_sheets()
-        return self._sheets
-
-    def get_file(self):
-        return self._file
+    def __get_sheets(self) -> Dict[Any, Dict[str, Any]]:
+        sheets = dict()
+        for sheet in self._soup('sheet'):
+            sheet_title = sheet('title', recursive=False)[0].text
+            sheets[sheet_title] = {'tag': sheet, 'nodes': sheet('topic')}
+        return sheets
 
     def get_sheet_id(self, sheet: str):
         """
@@ -260,13 +265,7 @@ class XManager:
         :param sheet: the name of the sheet to get the id for
         :return: the sheet's id
         """
-        return self.get_sheets()[sheet]['tag']['id']
-
-    def _register_sheets(self):
-        self._sheets = dict()
-        for sheet in self._soup('sheet'):
-            sheet_title = sheet('title', recursive=False)[0].text
-            self._sheets[sheet_title] = {'tag': sheet, 'nodes': sheet('topic')}
+        return self.sheets[sheet]['tag']['id']
 
     def content_by_id(self, x_id):
         topic = self.get_tag_by_id(x_id)
@@ -298,7 +297,7 @@ class XManager:
 
     # def get_remote_questions(self, sheet_id):
     #     remote_questions = dict()
-    #     for t in next(v for v in self.get_sheets().values() if
+    #     for t in next(v for v in self.sheets.values() if
     #                   v['tag']['id'] == sheet_id)['nodes']:
     #         if is_anki_question(t):
     #             answers = dict()
@@ -318,7 +317,7 @@ class XManager:
 
     def get_remote_sheets(self):
         content_keys = self.get_content_sheets()
-        content_sheets = [self.get_sheets()[s] for s in content_keys]
+        content_sheets = [self.sheets[s] for s in content_keys]
         sheets = dict()
         for s in content_sheets:
             sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
@@ -331,7 +330,7 @@ class XManager:
         valid tags
         :return: the tag
         """
-        return " " + "::".join((deck_name, os.path.basename(self.get_file()).replace('.xmind', ''),
+        return " " + "::".join((deck_name, os.path.basename(self.file).replace('.xmind', ''),
                                 sheet_name)).replace(" ", "_") + " "
 
     def get_tag_by_id(self, tag_id: str):
@@ -364,15 +363,15 @@ class XManager:
         Gets the internally saved timestamp of the last time the file was modified
         :return: the timestamp (integer value)
         """
-        return self._soup.find('xmap-content')['timestamp']
+        return int(self._soup.find('xmap-content')['timestamp'])
 
-    def get_sheet_last_modified(self, sheet: str):
+    def get_sheet_last_modified(self, sheet: str) -> int:
         """
         Gets the internally saved timestamp of the last time the sheet with the provided name was modified
         :param sheet: name of the sheet to get the timestamp for
         :return: the timestamp (integer)
         """
-        return self.get_sheets()[sheet]['tag']['timestamp']
+        return int(self.sheets[sheet]['tag']['timestamp'])
 
     def get_root_node(self, sheet: str):
         """
@@ -380,7 +379,7 @@ class XManager:
         :param sheet: the sheet to get the root topic for
         :return: the tag representing the root node
         """
-        return self.get_sheets()[sheet]['tag'].topic
+        return self.sheets[sheet]['tag'].topic
 
     def remove_node(self, a_id):
         tag = self.get_tag_by_id(a_id)
@@ -488,7 +487,7 @@ class XManager:
                         data=str(self.manifest))
 
     def get_content_sheets(self):
-        return [k for k in self.get_sheets().keys() if k != 'ref']
+        return [k for k in self.sheets.keys() if k != 'ref']
 
     def get_node_dict(self) -> Dict[str, Tag]:
         """
@@ -499,17 +498,44 @@ class XManager:
         if not self._node_dict:
             # Nested list comprehension explained:
             # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
-            self._node_dict = {t['id']: t for s in self.get_sheets().values() for t in s['nodes']}
+            self._node_dict = {t['id']: t for s in self.sheets.values() for t in s['nodes']}
         return self._node_dict
 
-    def _register_referenced_files(self):
+    def _get_referenced_files(self) -> List[str]:
         """
         Finds the names of files to which the XManager has references to. Files are referenced in a sheet titled "ref"
         """
-        self._referenced_files = []
-        for sheet in self.get_sheets().values():
+        referenced_files = []
+        for sheet in self.sheets.values():
             # Get reference sheets
             if sheet['tag']('title', recursive=False)[0].text == 'ref':
                 ref_tags = get_child_nodes(sheet['tag'].topic)
                 ref_paths = (get_node_hyperlink(t) for t in ref_tags)
-                self._referenced_files = [clean_ref_path(p) for p in ref_paths if p is not None]
+                referenced_files.extend(clean_ref_path(p) for p in ref_paths if p is not None)
+        return referenced_files
+
+    @property
+    def referenced_files(self) -> List[str]:
+        if not self._referenced_files:
+            self._referenced_files = self._get_referenced_files()
+        return self._referenced_files
+
+    @property
+    def sheets(self) -> Dict[Any, Dict[str, Any]]:
+        if not self.__sheets:
+            self.__sheets = self.__get_sheets()
+        return self.__sheets
+
+    @property
+    def referenced_x_managers(self) -> List['XManager']:
+        if not self.__referenced_x_managers:
+            self.__referenced_x_managers = self.__get_referenced_x_managers()
+        return self.__referenced_x_managers
+
+    @property
+    def file(self) -> str:
+        return self._file
+
+    @file.setter
+    def file(self, value):
+        self._file = value

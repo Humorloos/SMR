@@ -2,10 +2,17 @@ import os
 from typing import List, TextIO, Tuple, Optional
 
 from bs4 import Tag
+from sqlite3 import IntegrityError
 
 from anki import Collection
 from main.consts import ADDON_PATH, USER_PATH
 from main.dto.nodecontentdto import NodeContentDTO
+from main.dto.smrnotedto import SmrNoteDto
+from main.dto.smrtripledto import SmrTripleDto
+from main.dto.xmindfiledto import XmindFileDto
+from main.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
+from main.dto.xmindnodedto import XmindNodeDto
+from main.dto.xmindsheetdto import XmindSheetDto
 from owlready2.namespace import World
 from main.xmanager import XManager
 
@@ -91,125 +98,83 @@ class SmrWorld(World):
         c = self.graph.execute("SELECT c FROM ontologies WHERE iri = '{}'".format(ontology_base_iri)).fetchone()[0]
         self.graph.execute("INSERT INTO ontology_lives_in_deck VALUES (?, ?)", (int(deck_id), c))
 
-    def add_xmind_file(self, x_manager: XManager, deck_id: int) -> None:
+    def add_xmind_files(self, entities: List[XmindFileDto]) -> None:
         """
         Adds an entry for an xmind file to the relation xmind_files
-        :param x_manager: the x_manager that manages the file
-        :param deck_id: the id of the deck from anki (number in form of a string)
+        :param entities: List of entries to be inserted into the xmind_files relation
         """
-        self.graph.execute("INSERT INTO main.xmind_files VALUES (?, ?, ?, ?)", (
-            x_manager.get_file(), x_manager.get_map_last_modified(), x_manager.get_file_last_modified(), int(deck_id)))
+        self.graph.db.executemany("INSERT INTO main.xmind_files VALUES (?, ?, ?, ?)",
+                                  (tuple(e) for e in entities))
 
-    def add_xmind_sheet(self, x_manager: XManager, sheet_name: str) -> None:
+    def add_xmind_sheets(self, entities: List[XmindSheetDto]) -> None:
         """
         Adds an entry for an xmind sheet to the relation xmind_sheets
-        :param x_manager: the x_manager that manages the file
-        :param sheet_name: the name of the sheet to import
+        :param entities: List of entries to be inserted into the xmind_sheets relation
         """
-        self.graph.execute("INSERT INTO main.xmind_sheets VALUES (?, ?, ?)", (
-            x_manager.get_sheet_id(sheet_name), x_manager.get_file(), x_manager.get_sheet_last_modified(sheet_name)))
+        self.graph.db.executemany("INSERT INTO main.xmind_sheets VALUES (?, ?, ?)",
+                                  (tuple(e) for e in entities))
 
-    def add_xmind_node(self, node: Tag, node_content: NodeContentDTO, ontology_storid: int, sheet_id: str,
-                       order_number: int) -> None:
+    def add_xmind_nodes(self, entities: List[XmindNodeDto]) -> None:
         """
-        Adds an entry for an xmind node to the relation xmind_nodes
-        :param node: the tag representing the node to add
-        :param node_content: the node's content as a dictionary
-        :param ontology_storid: the storid of the concept in the ontology that represents the node
-        :param sheet_id: xmind id of the sheet that contains the node
-        :param order_number: order number of the node with respect to its siblings 
+        Adds entries for xmind nodes to the relation xmind_nodes
+        :param entities: List of entries for the xmind nodes relation
         """
-        self.graph.execute(
-            "INSERT INTO main.xmind_nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (
-                node['id'], sheet_id, node_content.title, node_content.image,
-                node_content.media, ontology_storid, node['timestamp'], order_number))
+        self.graph.db.executemany("INSERT INTO main.xmind_nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                  (tuple(e) for e in entities))
 
-    def add_xmind_edge(self, edge: Tag, edge_content: NodeContentDTO, sheet_id: str, order_number: int,
-                       ontology_storid: int) -> None:
+    def add_xmind_edges(self, entities: List[XmindNodeDto]) -> None:
         """
-        Adds an entry for an xmind edge to the relation xmind_edges
-        :param edge: the tag representing the edge to add
-        :param edge_content: the edge's content as a dictionary
-        :param sheet_id: xmind id of the sheet that contains the edge
-        :param order_number: order number of the edge with respect to its siblings
-        :param ontology_storid: storid of the respective relation in the ontology
+        Adds entries for xmind edges to the relation xmind_edges
+        :param entities: List of entries for the xmind edges relation
         """
-        self.graph.execute("INSERT INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (
-            edge['id'], sheet_id, edge_content.title, edge_content.image,
-            edge_content.media, ontology_storid, edge['timestamp'], order_number))
+        self.graph.db.executemany("INSERT INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                  (tuple(e) for e in entities))
 
-    def add_smr_triple(self, parent_node_id: str, edge_id: str, child_node_id: str, card_id: Optional[int]) -> None:
+    def add_smr_triples(self, entities: List[SmrTripleDto]) -> None:
         """
-        adds an entry for a triple of parent node, edge, and child node to the relation smr_triples
-        :param parent_node_id: the parent node's xmind id
-        :param edge_id: the edge's xmind id
-        :param child_node_id: the child node's xmind id
-        :param card_id: anki's id for the card that corresponds to this triple
+        adds entries for triples of parent node, edge, and child node to the relation smr_triples
+        :param entities: List of entries to add to the smr triples relation
         """
-        self.graph.execute("INSERT INTO main.smr_triples VALUES (?, ?, ?, ?)",
-                           (parent_node_id, edge_id, child_node_id, card_id))
+        self.graph.db.executemany("INSERT INTO main.smr_triples VALUES (?, ?, ?, ?)",
+                                  (tuple(e) for e in entities))
 
-    def update_smr_triples_card_id(self, note_id: int, order_number: int, card_id: int) -> None:
+    def update_smr_triples_card_ids(self, data: List[Tuple[int, int]], collection: Collection) -> None:
         """
-        updates the card id for all triples belonging to a certain answer in an smr note
-        :param note_id: anki's id of the note to which the triple belongs
-        :param order_number: order number of the child node in the triple (also indicates which answer the child node
-        represents in the note
-        :param card_id: anki's card id which is to be written to the smr triple
+        updates the card ids for all triples belonging to certain answers in smr notes
+        :param data: List of tuples containing the note_id of the note the card belongs to and the order_number of
+        the card with the card id to add to each triple
+        :param collection: The collection that contains the cards whose ids to add
         """
-        self.graph.execute("""WITH card_triples(edge_id, child_node_id) AS (
-    SELECT smr_triples.edge_id, child_node_id
-    FROM smr_triples
-             JOIN smr_notes USING (edge_id)
-             JOIN xmind_nodes ON smr_triples.child_node_id = xmind_nodes.node_id
-    WHERE note_id = ?
-      AND order_number = ?)
-UPDATE smr_triples
-SET card_id = ?
-WHERE edge_id IN (SELECT edge_id FROM card_triples)
-  AND child_node_id IN (SELECT child_node_id FROM card_triples);""", (note_id, order_number, card_id))
+        self.attach_anki_collection(collection)
+        self.graph.db.executemany("""with card_triples(edge_id, child_node_id, card_id) as (
+    select smr_triples.edge_id, child_node_id, cards.id
+    from smr_triples
+             join smr_notes using (edge_id)
+             join cards on smr_notes.note_id = cards.nid
+             join xmind_nodes on smr_triples.child_node_id = xmind_nodes.node_id
+    where note_id = ?
+      and order_number = ?
+      and ord = order_number - 1)
+update smr_triples
+set card_id = (select card_id from card_triples)
+where edge_id = (select edge_id from card_triples)
+  and child_node_id = (select child_node_id from card_triples)""", data)
+        self.detach_anki_collection(collection)
 
-    def add_image_and_media_to_collection_and_self(self, content: NodeContentDTO, collection: Collection,
-                                                   x_manager: XManager) -> None:
+    def add_xmind_media_to_anki_files(self, entities: List[XmindMediaToAnkiFilesDto]) -> None:
         """
-        - If present, adds media and image specified in the content DTO to the specified anki collection and media
-        folder
-        - Adds an entry in the smr world linking the potentially new file name to the media attachment /
-        hyperlink from the xmind map
-        :param content: the content of the xmind node to add the image and media for
-        :param collection: the anki collection to add the files to
-        :param x_manager: the xmind manager instance that manages the xmind file from which to get the files
+        adds entries linking xmind file uris to anki file names to the relation xmind_media_to_anki_files
+        :param entities: List containing the media to file entries to add to the relation
         """
-        if content.media:
-            # xmind 8 adds prefix attachments, xmind zen adds prefix resources
-            if content.media.startswith(('attachments', 'resources')):
-                new_media_name = collection.media.write_data(desired_fname=content.media,
-                                                             data=x_manager.read_attachment(content.media))
-            # if media file was not attached but only referenced via hyperlink
-            else:
-                new_media_name = collection.media.add_file(content.media)
-            self.add_xmind_media_to_anki_file(xmind_uri=content.media, anki_file_name=new_media_name)
-        if content.image:
-            new_image_name = collection.media.write_data(desired_fname=content.image,
-                                                         data=x_manager.read_attachment(content.image))
-            self.add_xmind_media_to_anki_file(xmind_uri=content.image, anki_file_name=new_image_name)
+        self.graph.db.executemany("INSERT INTO main.xmind_media_to_anki_files VALUES (?, ?) ON CONFLICT DO NOTHING",
+                                  (tuple(e) for e in entities))
 
-    def add_xmind_media_to_anki_file(self, xmind_uri: str, anki_file_name: str):
+    def add_smr_notes(self, entities: List[SmrNoteDto]):
         """
-        adds an entry linking an xmind file uri to an anki file name to the relation xmind_media_to_anki_files
-        :param xmind_uri: the uri the file is identified by in the xmind file (attachment or hyperlink)
-        :param anki_file_name: the filename by which the file is identified in anki
+        adds entries linking xmind edges to anki notes and saving the creation time in last_modified
+        :param entities: smr note entries to add to the relation
         """
-        self.graph.execute("INSERT INTO main.xmind_media_to_anki_files VALUES (?, ?)", (xmind_uri, anki_file_name))
-
-    def add_smr_note(self, note_id: int, edge_id: str, last_modified: int):
-        """
-        adds an entry linking an xmind edge to an anki note and saving the creation time in last_modified
-        :param note_id: the note's id from the anki collection
-        :param edge_id: the edge's id from the xmind file
-        :param last_modified: the time the note was created in epoch seconds
-        """
-        self.graph.execute("INSERT INTO main.smr_notes VALUES (?, ?, ?)", (note_id, edge_id, last_modified))
+        self.graph.db.executemany("INSERT INTO main.smr_notes VALUES (?, ?, ?)", (tuple(e) for e in entities))
 
     def get_smr_note_reference_data(self, edge_id: str) -> List[Tuple[str, str]]:
         """
@@ -218,7 +183,9 @@ WHERE edge_id IN (SELECT edge_id FROM card_triples)
         value is the field content of the edge following the node. The list contains all tuples up to the edge with
         the provided id.
         :param edge_id: id of the edge up to which to get the reference
-        :return: list of tuples containing the data to generate the reference for an smr note
+        :return: list of tuples containing the data to generate the reference for an smr note, consisting of Tuples
+        where the first element is a node's field content and the seconde element is the node's following edge's
+        field content
         """
         return self.graph.execute("""
         {hierarchy_recursive_cte_clause}
@@ -274,6 +241,19 @@ GROUP BY a.edge_id
 ORDER BY avg(a.level) DESC;""".format(hierarchy_recursive_cte_clause=get_xmind_hierarchy_recursive_cte_clause(
             edge_id))).fetchall()
 
-    def attach_anki_collection(self, anki_collection):
-        self.graph.execute("ATTACH DATABASE '{anki_collection_path}' as {anki_collection_db_name}".format(
-            anki_collection_path=anki_collection.path, anki_collection_db_name=ANKI_COLLECTION_DB_NAME))
+    def attach_anki_collection(self, anki_collection: Collection):
+        """
+        Attaches an anki collection to the smr world for joint queries to both databases
+        :param anki_collection: the anki collection to attach to the smr_world
+        """
+        anki_collection.close(save=True)
+        self.graph.execute("ATTACH DATABASE ? as ?", (anki_collection.path, ANKI_COLLECTION_DB_NAME))
+
+    def detach_anki_collection(self, anki_collection: Collection):
+        """
+        Detaches an anki collection from the smr world and reopens it
+        :param anki_collection: the anki collection to detach
+        """
+        self.graph.commit()
+        self.graph.execute("DETACH DATABASE ?", (ANKI_COLLECTION_DB_NAME,))
+        anki_collection.reopen()

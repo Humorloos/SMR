@@ -1,6 +1,6 @@
 """monkey patches"""
 import os
-from typing import Callable
+from typing import Callable, Union
 
 from anki.hooks import wrap
 from anki.importing.noteimp import NoteImporter
@@ -14,7 +14,8 @@ from main.xmindimport import XmindImporter
 IMPORT_CANCELED_MESSAGE = 'Import canceled'
 
 
-def patch_import_diaglog(self: ImportDialog, mw: AnkiQt, importer: NoteImporter, _old: Callable) -> None:
+def patch_import_diaglog(self: ImportDialog, mw: AnkiQt, importer: Union[NoteImporter, XmindImporter],
+                         _old: Callable) -> None:
     """
     Wraps around ImportDialog constructor to show the SMR deck selection dialog instead when importing an xmind file
     :param self: the ImportDialog around which this function wraps
@@ -24,12 +25,13 @@ def patch_import_diaglog(self: ImportDialog, mw: AnkiQt, importer: NoteImporter,
     """
     if type(importer) == XmindImporter:
         # noinspection PyUnresolvedReferences
-        deck_selection_dialog = DeckSelectionDialog(mw=mw, filename=os.path.basename(importer.get_x_managers()[
-                                                                                         0].get_file()))
+        deck_selection_dialog = DeckSelectionDialog(mw=mw, filename=os.path.basename(
+            importer.x_managers[0].file))
         user_inputs = deck_selection_dialog.get_inputs()
         if user_inputs.running:
             # noinspection PyUnresolvedReferences
             importer.initialize_import(deck_selection_dialog.get_inputs())
+            importer.finish_import()
             log = "\n".join(importer.log)
         else:
             log = IMPORT_CANCELED_MESSAGE

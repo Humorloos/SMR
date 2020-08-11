@@ -409,7 +409,7 @@ class FieldTranslator:
             'ximage_': '<img src="',
             'xmedia_': '[sound:',
             'xlparenthesis_': '(',
-            '_xrparenthesis': ')'
+            '_xrparenthesis': ')',
         }
         self.field_regex = re.compile("(%s)" % "|".join(
             self.field_re_dict.keys()))
@@ -442,3 +442,12 @@ class FieldTranslator:
         classified = self.inverse_regex.sub(
             lambda mo: self.inverse_dict[re.escape(mo.string[mo.start():mo.end()])], classified)
         return classified
+
+    def relation_class_from_content(self, content: NodeContentDTO) -> str:
+        """
+        converts a node content dictionary into a string that can be used as an ontology class name for a
+        relationship property (only difference to concepts is postfix "_xrelation"
+        :param content: xmind node content DTO
+        :return: a class name generated from the node's content
+        """
+        return self.class_from_content(content) + "_xrelation"

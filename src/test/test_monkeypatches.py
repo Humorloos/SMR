@@ -12,12 +12,14 @@ def test_patch_import_diaglog(xmind_importer, mocker):
     mocker.patch('main.monkeypatches.DeckSelectionDialog')
     mocker.patch('main.monkeypatches.tooltip')
     mocker.patch.object(importer, 'initialize_import')
+    mocker.patch.object(importer, "finish_import")
     # when
     aqt.importing.ImportDialog(mw=MagicMock(), importer=importer)
     # then
     assert aqt.importing.ImportDialog.exec_.call_count == 0
     assert main.monkeypatches.tooltip.call_count == 1
     assert importer.initialize_import.call_count == 1
+    assert importer.finish_import.call_count == 1
 
 
 def test_patch_import_diaglog_interrupts_if_deck_selection_dialog_not_running(xmind_importer, mocker):
