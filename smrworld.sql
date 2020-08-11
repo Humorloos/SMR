@@ -99,4 +99,14 @@ CREATE TABLE smr_triples
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+CREATE INDEX smr_triples_parent_node_id
+ON smr_triples(parent_node_id);
+CREATE INDEX smr_triples_edge_id
+ON smr_triples(edge_id);
+CREATE INDEX smr_triples_child_node_id
+ON smr_triples(child_node_id);
+CREATE INDEX smr_notes_edge_id
+ON smr_notes(edge_id);
+CREATE INDEX xmind_nodes_order_number
+ON xmind_nodes(order_number);
 COMMIT;

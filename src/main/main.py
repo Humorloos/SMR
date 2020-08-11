@@ -27,7 +27,7 @@ def on_profile_loaded():
             migration_dialog = SmrWorldMigrationDialog(mw)
             dialog_status = migration_dialog.exec()
             if dialog_status == int(migration_dialog.AcceptRole):
-                migrator = Collection2SmrWorldMigrator(mw=mw)
+                migrator = Collection2SmrWorldMigrator()
                 try:
                     migrator.migrate_collection_2_smr_world()
                     update_smr_version()

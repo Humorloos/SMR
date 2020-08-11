@@ -170,3 +170,9 @@ def patch_aqt_mw_empty_smr_world(mocker, set_up_empty_smr_world):
     aqt.mw.smr_world = set_up_empty_smr_world
     aqt.mw.return_value = aqt.mw
     yield aqt.mw
+
+
+@pytest.fixture
+def patch_aqt_mw_empty_smr_world_and_collection_4_migration(patch_aqt_mw_empty_smr_world, collection_4_migration):
+    aqt.mw.col = collection_4_migration
+    yield

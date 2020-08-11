@@ -293,11 +293,9 @@ def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
     assert cut.import_notes_and_cards.call_count == 1
 
 
-def test_initialize_import_import_import_notes_to_correct_deck(mocker, set_up_empty_smr_world,
-                                                               empty_anki_collection_function):
+def test_initialize_import_import_import_notes_to_correct_deck(
+        mocker, set_up_empty_smr_world, empty_anki_collection_function, patch_aqt_mw_empty_smr_world):
     # given
-    mocker.patch("aqt.mw")
-    aqt.mw.smr_world = set_up_empty_smr_world
     collection = empty_anki_collection_function
     add_x_model(collection)
     cut = XmindImporter(col=collection, file=cts.EXAMPLE_MAP_PATH)

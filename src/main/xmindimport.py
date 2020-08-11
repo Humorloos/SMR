@@ -44,6 +44,7 @@ class XmindImporter(NoteImporter):
         self.active_manager: Optional[XManager] = None
         self.current_sheet_import: str = ''
         self.edge_ids_2_make_notes_of: List[str] = []
+        self.notes_2_import: Dict[str, ForeignNote] = {}
         # entity lists for imports
         self.files_2_import: List[XmindFileDto] = []
         self.sheets_2_import: List[XmindSheetDto] = []
@@ -108,6 +109,10 @@ class XmindImporter(NoteImporter):
         self.mw.checkpoint("Import")
         for manager in self.x_managers:
             self.import_file(manager)
+        self._add_entities_2_smr_world()
+        # Create Notes from all edges
+        self.notes_2_import = {edge_id: self.generate_note_from_edge_id(edge_id) for edge_id in
+                               self.edge_ids_2_make_notes_of}
 
     def import_file(self, x_manager: XManager):
         """
@@ -339,6 +344,27 @@ class XmindImporter(NoteImporter):
         - Registers the notes in the smr world
         - Adds card ids from imported notes to the triples they belong to in the smr world
         """
+        # Add all notes to the collection
+        self.col.decks.select(self.deck_id)
+        deck = self.col.decks.get(self.deck_id)
+        deck['mid'] = self.model['id']
+        self.col.decks.save(deck)
+        self.model['did'] = self.deck_id
+        self.col.models.save(self.model)
+        self.importNotes(list(self.notes_2_import.values()))
+        # Link imported notes to edges
+        self.smr_world.add_smr_notes(self.smr_notes_2_add)
+        # remove log entries informing about duplicate fields
+        self.log = [self.log[-1]]
+        # Add card ids to smr triples relation in smr world
+        self.smr_world.update_smr_triples_card_ids(data=[(card[0], card[1] - 1) for card in self._cards],
+                                                   collection=self.col)
+
+    def _add_entities_2_smr_world(self) -> None:
+        """
+        Adds all entities in the respectives lists to the respective relations (except notes and cards since they
+        need to be imported to the anki collection first)
+        """
         # Add all files to the smr world
         self.smr_world.add_xmind_files(self.files_2_import)
         # Add all sheets to the smr world
@@ -351,26 +377,6 @@ class XmindImporter(NoteImporter):
         self.smr_world.add_xmind_edges(self.edges_2_import)
         # Add all triples to the smr world
         self.smr_world.add_smr_triples(self.triples_2_import)
-        # Create Notes from all edges
-        notes_2_import = [self.generate_note_from_edge_id(edge_id) for edge_id in self.edge_ids_2_make_notes_of]
-        # Add all notes to the collection
-        self.col.decks.select(self.deck_id)
-        deck = self.col.decks.get(self.deck_id)
-        deck['mid'] = self.model['id']
-        self.col.decks.save(deck)
-        self.model['did'] = self.deck_id
-        self.col.models.save(self.model)
-        self.importNotes(notes_2_import)
-        # Link imported notes to edges
-        self.smr_world.add_smr_notes(self.smr_notes_2_add)
-        # remove log entries informing about duplicate fields
-        self.log = [self.log[-1]]
-        # Add card ids to smr triples relation in smr world
-        self.smr_world.update_smr_triples_card_ids(data=[(card[0], card[1] - 1) for card in self._cards],
-                                                    collection=self.col)
-        # # manually set the deck until I find a better solution,
-        # # see https://forums.ankiweb.net/t/importnotes-always-adds-cards-to-default-deck/1690 for issue
-        # self.col.db.executemany("update cards set did = ? where id = ?", [(self.deck_id, card_id)])
 
     @property
     def deck_name(self):
@@ -383,11 +389,11 @@ class XmindImporter(NoteImporter):
         self._deck_name = value
 
     @property
-    def edge_ids_2_make_notes_of(self):
+    def edge_ids_2_make_notes_of(self) -> List[str]:
         return self._edge_ids_2_make_notes_of
 
     @edge_ids_2_make_notes_of.setter
-    def edge_ids_2_make_notes_of(self, value):
+    def edge_ids_2_make_notes_of(self, value: List[str]):
         self._edge_ids_2_make_notes_of = value
 
     @property
@@ -433,6 +439,14 @@ class XmindImporter(NoteImporter):
     @mw.setter
     def mw(self, value):
         self._mw = value
+
+    @property
+    def notes_2_import(self) -> Dict[str, ForeignNote]:
+        return self._notes_2_import
+
+    @notes_2_import.setter
+    def notes_2_import(self, value: Dict[str, ForeignNote]):
+        self._notes_2_import = value
 
     @property
     def x_managers(self) -> List[XManager]:

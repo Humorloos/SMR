@@ -152,8 +152,8 @@ class SmrWorld(World):
              join smr_notes using (edge_id)
              join cards on smr_notes.note_id = cards.nid
              join xmind_nodes on smr_triples.child_node_id = xmind_nodes.node_id
-    where note_id = ?
-      and order_number = ?
+    where smr_notes.note_id = ?
+      and xmind_nodes.order_number = ?
       and ord = order_number - 1)
 update smr_triples
 set card_id = (select card_id from card_triples)
