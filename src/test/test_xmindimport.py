@@ -16,7 +16,7 @@ from main.smrworld import SmrWorld
 from main.template import add_x_model
 from main.xmanager import get_node_content, get_non_empty_sibling_nodes, get_parent_node
 from main.xmindimport import XmindImporter
-from main.xnotemanager import get_smr_note_reference_fields
+from main.xnotemanager import get_smr_note_reference_fields, get_smr_note_sort_fields
 
 
 def test_xmind_importer(xmind_importer):
@@ -75,8 +75,8 @@ def test_import_file(xmind_importer, mocker, x_manager):
     cut.import_file(x_manager)
     # then
     assert cut.import_sheet.call_count == 2
-    assert cut.files_2_import == [XmindFileDto(path=cts.EXAMPLE_MAP_PATH, map_last_modified=1595671089759,
-                                               file_last_modified=1595687290.0, deck_id=cts.TEST_DECK_ID)]
+    assert cut.files_2_import[0].path == cts.EXAMPLE_MAP_PATH
+    assert cut.files_2_import[0].deck_id == cts.TEST_DECK_ID
 
 
 def test_import_sheet(xmind_importer, mocker, x_manager):
@@ -95,8 +95,8 @@ def test_import_sheet(xmind_importer, mocker, x_manager):
     assert cut.import_node_if_concept.call_count == 1
     assert cut.current_sheet_import == sheet_2_import
     assert cut.onto.concept_from_node_content.call_count == 1
-    assert cut.sheets_2_import == [
-        XmindSheetDto(sheet_id='2485j5qgetfevlt00vhrn53961', path=cts.EXAMPLE_MAP_PATH, last_modified=1595671089759)]
+    assert cut.sheets_2_import[0].sheet_id == '2485j5qgetfevlt00vhrn53961'
+    assert cut.sheets_2_import[0].path == cts.EXAMPLE_MAP_PATH
 
 
 @pytest.fixture
@@ -167,7 +167,7 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
         order_number=1)
     # then
     assert cut.import_triple.call_count == 4
-    assert cut.import_edge.call_count == 0
+    assert cut.import_edge.call_count == 1
     assert cut.add_image_and_media_to_collection.call_count == 1
     assert len(cut.nodes_2_import) == 1
 
@@ -272,9 +272,11 @@ def test_generate_note_from_edge_id(mocker, active_xmind_importer, smr_world_for
     cut._smr_world = smr_world_for_tests
     mocker.spy(cut._active_manager, "acquire_anki_tag")
     # when
-    note = cut.generate_note_from_edge_id(edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID,
-                                          reference_fields=get_smr_note_reference_fields(
-                                              smr_world_for_tests, [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]))
+    edge_ids = [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
+    note = cut.generate_note_from_edge_id(
+        edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID,
+        reference_fields=get_smr_note_reference_fields(smr_world_for_tests, edge_ids),
+        sort_fields=get_smr_note_sort_fields(smr_world_for_tests, edge_ids))
     # then
     assert cut.active_manager.acquire_anki_tag.call_count == 1
     assert pickle.dumps(note) == cts.EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE
@@ -288,12 +290,12 @@ def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
     cut.model = cut.col.models.byName(X_MODEL_NAME)
     cut.deck_id = 1
     mocker.patch.object(cut, "import_notes_and_cards")
-    reference_fields = get_smr_note_reference_fields(
-        smr_world_for_tests, [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
-                    cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID])
-    for edge_id in [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
-                    cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID]:
-        cut.generate_note_from_edge_id(edge_id, reference_fields)
+    edge_ids = [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
+                cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID]
+    reference_fields = get_smr_note_reference_fields(smr_world_for_tests, edge_ids)
+    sort_fields = get_smr_note_sort_fields(smr_world_for_tests, edge_ids)
+    for edge_id in edge_ids:
+        cut.generate_note_from_edge_id(edge_id, reference_fields, sort_fields)
     # when
     cut.finish_import()
     # then
@@ -312,18 +314,19 @@ def test_initialize_import_import_import_notes_to_correct_deck(
     mocker.spy(cut, "import_sheet")
     mocker.spy(cut, "import_triple")
     mocker.spy(cut, "import_file")
+    n_cards_example_map = 39
     # when
     cut.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=test_deck_id))
     cut.finish_import()
     # then
     assert cut.import_file.call_count == 2
     assert cut.import_sheet.call_count == 3
-    assert cut.import_edge.call_count == 32
-    assert cut.import_node_if_concept.call_count == 45
-    assert cut.import_triple.call_count == 44
+    assert cut.import_edge.call_count == 34
+    assert cut.import_node_if_concept.call_count == 47
+    assert cut.import_triple.call_count == 46
     assert len(cut.log) == 1
-    assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == 37
-    assert cut.col.db.execute('select type from cards') == 37 * [[0]]
+    assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == n_cards_example_map
+    assert cut.col.db.execute('select type from cards') == n_cards_example_map * [[0]]
 
 
 # noinspection PyPep8Naming

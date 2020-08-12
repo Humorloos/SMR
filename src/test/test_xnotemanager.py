@@ -1,7 +1,7 @@
 import pytest
 
 from main.dto.nodecontentdto import NodeContentDTO
-from main.xnotemanager import FieldTranslator, get_smr_note_reference_fields, get_smr_note_sort_field, \
+from main.xnotemanager import FieldTranslator, get_smr_note_reference_fields, get_smr_note_sort_fields, \
     sort_id_from_order_number, XNoteManager, image_from_field
 import test.constants as cts
 
@@ -51,33 +51,33 @@ def test_class_from_content_parentheses(field_translator):
     assert ontology_class == expected_class
 
 
-def test_get_smr_note_reference_fields(smr_world_for_tests):
+def test_get_smr_note_reference_fields(smr_world_with_example_map):
     # when
     reference_fields = get_smr_note_reference_fields(
-        smr_world=smr_world_for_tests, edge_ids=[
-            cts.PRONOUNCIATION_EDGE_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID,
-            cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, "7ipkhjdorhgcasdf12asd123ga"])
+        smr_world=smr_world_with_example_map, edge_ids=[
+            cts.PRONOUNCIATION_EDGE_XMIND_ID, '1soij3rlgbkct9eq3uo7117sa9', cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
     # then
     assert reference_fields == {
+        '1soij3rlgbkct9eq3uo7117sa9': 'biological psychology<li>investigates: information transfer and '
+                                      'processing</li><li>modulated by: enzymes</li><li>completely unrelated '
+                                      'animation:  (media)</li>',
         '4s27e1mvsb5jqoiuaqmnlo8m71': 'biological psychology<li>investigates: information transfer and '
                                       'processing</li><li>requires: neurotransmitters <img '
                                       'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic '
-                                      'amines</li><li><img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
+                                      'amines</li><li> <img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
                                       'Serotonin</li>',
         '6iivm8tpoqj2c0euaabtput14l': 'biological psychology<li>investigates: information transfer and '
                                       'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits '
-                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>',
-        '7ipkhjdorhgcasdf12asd123ga': 'biological psychology<li>investigates: perception</li><li>Pain</li><li>some '
-                                      'media edge title (media): answer to some media edge</li>',
-        '7ite3obkfmbcasdf12asd123ga': 'biological psychology<li>investigates: perception</li><li>Pain</li>'}
+                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>'}
 
 
-def test_get_smr_note_sort_field(smr_world_for_tests):
+def test_get_smr_note_sort_fields(smr_world_for_tests):
     # when
-    sort_field = get_smr_note_sort_field(smr_world=smr_world_for_tests,
-                                         edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
+    sort_fields = get_smr_note_sort_fields(
+        smr_world=smr_world_for_tests,
+        edge_ids=[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID])
     # then
-    assert sort_field == '|{|{{{|{'
+    assert sort_fields == {'6iivm8tpoqj2c0euaabtput14l': '|{|{{{|\x7f{', '7ite3obkfmbcasdf12asd123ga': '||{{{'}
 
 
 def test_sort_id_from_order_number():

@@ -21,7 +21,7 @@ from main.smrworld import SmrWorld
 from main.utils import get_edge_coordinates_from_parent_node
 from main.xmanager import get_child_nodes, is_empty_node, XManager, get_non_empty_sibling_nodes, \
     get_node_content, get_node_title
-from main.xnotemanager import FieldTranslator, get_smr_note_reference_fields, get_smr_note_sort_field
+from main.xnotemanager import FieldTranslator, get_smr_note_reference_fields, get_smr_note_sort_fields
 from main.xontology import XOntology, connect_concepts
 from owlready2 import ThingClass, ObjectPropertyClass
 
@@ -113,8 +113,10 @@ class XmindImporter(NoteImporter):
         # Create Notes from all edges
         reference_fields = get_smr_note_reference_fields(
             smr_world=self.smr_world, edge_ids=self.edge_ids_2_make_notes_of)
-        self.notes_2_import = {edge_id: self.generate_note_from_edge_id(edge_id, reference_fields) for edge_id in
-                               self.edge_ids_2_make_notes_of}
+        sort_fields = get_smr_note_sort_fields(smr_world=self.smr_world, edge_ids=self.edge_ids_2_make_notes_of)
+        self.notes_2_import = {edge_id: self.generate_note_from_edge_id(
+            edge_id=edge_id, reference_fields=reference_fields, sort_fields=sort_fields) for edge_id in
+            self.edge_ids_2_make_notes_of}
 
     def import_file(self, x_manager: XManager):
         """
@@ -305,9 +307,11 @@ class XmindImporter(NoteImporter):
                 parent_concepts=parent_concepts, parent_edge_id=edge['id'],
                 parent_relationship_class_name=relationship_class_name, order_number=order_number)
 
-    def generate_note_from_edge_id(self, edge_id: str, reference_fields: Dict[str, str]) -> ForeignNote:
+    def generate_note_from_edge_id(self, edge_id: str, reference_fields: Dict[str, str],
+                                   sort_fields: Dict[str, str]) -> ForeignNote:
         """
         Creates a Note to add to the collection and adds it to the list of notes to be imported
+        :param sort_fields: Dictionary of sort fields for all edge_ids
         :param reference_fields: Dictionary of reference fields for all edge_ids
         :param edge_id: Xmind id of the edge belonging to the note to be imported
         :returns the created note
@@ -315,9 +319,8 @@ class XmindImporter(NoteImporter):
         note = ForeignNote()
         question_field = [self.smr_world.get_smr_note_question_field(edge_id)]
         answer_fields = self.smr_world.get_smr_note_answer_fields(edge_id)
-        sort_field = [get_smr_note_sort_field(smr_world=self.smr_world, edge_id=edge_id)]
         note.fields = [reference_fields[edge_id]] + question_field + answer_fields + (
-                    X_MAX_ANSWERS - len(answer_fields)) * [''] + sort_field
+                X_MAX_ANSWERS - len(answer_fields)) * [''] + [sort_fields[edge_id]]
         note.tags.append(self.active_manager.acquire_anki_tag(
             deck_name=self.deck_name, sheet_name=self.current_sheet_import))
         # add the edge id to the tags list to be able to assign the note to the right edge during import

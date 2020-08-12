@@ -6,6 +6,7 @@ from main.dto.nodecontentdto import NodeContentDTO
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'src', 'test', 'support')
 SMR_WORLD_PATH = os.path.join(SUPPORT_PATH, "smr_world")
 SMR_WORLD_CSV_PATH = os.path.join(SMR_WORLD_PATH, "csv")
+SMR_WORLD_WITH_EXAMPLE_MAP_PATH = os.path.join(SMR_WORLD_PATH, "smr_world_with_example_map", "smr_world.sqlite3")
 EMPTY_SMR_WORLD_NAME = "empty_smr_world.sqlite3"
 TEST_COLLECTIONS_PATH = os.path.join(SUPPORT_PATH, 'collections')
 EMPTY_COLLECTION_PATH_SESSION = os.path.join(TEST_COLLECTIONS_PATH, 'empty_smr_col_session/empty_smr_col_session.anki2')
@@ -13,7 +14,7 @@ EMPTY_COLLECTION_PATH_FUNCTION = os.path.join(TEST_COLLECTIONS_PATH,
                                               'empty_smr_col_function', 'empty_smr_col_function.anki2')
 EXAMPLE_MAP_PATH = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
 ABSENT_XMIND_FILE_PATH = os.path.join(SUPPORT_PATH, 'absent_file.xmind')
-EXAMPLE_MAP_N_EDGES = 32
+EXAMPLE_MAP_N_EDGES = 34
 TEST_DECK_ID = 12345
 TEST_FILE_PATH = "path for test file"
 TEST_CONCEPT_STORID = 153

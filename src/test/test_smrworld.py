@@ -49,7 +49,6 @@ def x_manager_test_file(x_manager):
 
 def test_add_xmind_sheets(smr_world_for_tests, x_manager_test_file):
     # given
-    expected_entry = ('2485j5qgetfevlt00vhrn53961', cts.TEST_FILE_PATH, 1595671089759)
     cut = smr_world_for_tests
     manager = x_manager_test_file
     sheet = 'biological psychology'
@@ -58,7 +57,8 @@ def test_add_xmind_sheets(smr_world_for_tests, x_manager_test_file):
     # when
     cut.add_xmind_sheets(entities)
     # then
-    assert list(cut.graph.execute("SELECT * FROM main.xmind_sheets").fetchall())[1] == expected_entry
+    assert list(cut.graph.execute("SELECT * FROM main.xmind_sheets").fetchall())[1][0] == '2485j5qgetfevlt00vhrn53961'
+    assert list(cut.graph.execute("SELECT * FROM main.xmind_sheets").fetchall())[1][1] == cts.TEST_FILE_PATH
 
 
 @pytest.fixture
@@ -145,21 +145,28 @@ def test_add_smr_triples(smr_world_for_tests):
         test_edge_id)).fetchall())[0] == expected_entry
 
 
-def test_get_smr_note_references(smr_world_for_tests):
+def test_get_smr_note_references(smr_world_with_example_map):
     # when
-    reference = smr_world_for_tests.get_smr_note_references([
-        cts.PRONOUNCIATION_EDGE_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID, cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
+    reference = smr_world_with_example_map.get_smr_note_references([
+        cts.PRONOUNCIATION_EDGE_XMIND_ID, cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID,
+        '0eaob1gla0j1qriki94n2os9oe', '1soij3rlgbkct9eq3uo7117sa9'])
     # then
     assert reference == {
+        '0eaob1gla0j1qriki94n2os9oe': 'biological psychology<li>investigates: information transfer and '
+                                      'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits '
+                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li><li>are: biogenic '
+                                      'amines</li>',
+        '1soij3rlgbkct9eq3uo7117sa9': 'biological psychology<li>investigates: information transfer and '
+                                      'processing</li><li>modulated by: enzymes</li><li>completely unrelated '
+                                      'animation:  [sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]</li>',
         '4s27e1mvsb5jqoiuaqmnlo8m71': 'biological psychology<li>investigates: information transfer and '
                                       'processing</li><li>requires: neurotransmitters <img '
                                       'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic '
-                                      'amines</li><li><img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
+                                      'amines</li><li> <img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
                                       'Serotonin</li>',
         '6iivm8tpoqj2c0euaabtput14l': 'biological psychology<li>investigates: information transfer and '
                                       'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits '
-                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>',
-        '7ite3obkfmbcasdf12asd123ga': 'biological psychology<li>investigates: perception</li><li>Pain</li>'}
+                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>'}
 
 
 def test_get_smr_note_question_field_media_edge(smr_world_for_tests):
@@ -197,11 +204,12 @@ def test_get_smr_note_answer_fields_media(smr_world_for_tests):
     assert answers == ['[sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]']
 
 
-def test_get_smr_note_sort_data(smr_world_for_tests):
+def test_get_smr_notes_sort_data(smr_world_for_tests):
     # when
-    sort_field_data = smr_world_for_tests.get_smr_note_sort_data(cts.PRONOUNCIATION_EDGE_XMIND_ID)
+    sort_field_data = smr_world_for_tests.get_smr_notes_sort_data([
+        cts.PRONOUNCIATION_EDGE_XMIND_ID, cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
     # then
-    assert sort_field_data == [(1, 2), (1, 1), (1, 1), (1, 1), (1, 2)]
+    assert sort_field_data == {'4s27e1mvsb5jqoiuaqmnlo8m71': '211111112', '6iivm8tpoqj2c0euaabtput14l': '212111251'}
 
 
 def test_update_smr_triples_card_ids(smr_world_for_tests, collection_4_migration):
@@ -224,6 +232,7 @@ def test_attach_anki_collection(smr_world_for_tests, empty_anki_collection_sessi
     smr_world_for_tests.detach_anki_collection(empty_anki_collection_session)
     # then
     with pytest.raises(OperationalError) as exception_info:
-        smr_world_for_tests.graph.db.execute("select * from main.smr_triples, anki_collection.deck_config").fetchall()
+        smr_world_for_tests.graph.db.execute(
+            "select * from main.smr_triples, anki_collection.deck_config").fetchall()
     assert exception_info.value.args[0] == 'no such table: anki_collection.deck_config'
     assert len(empty_anki_collection_session.db.execute('select * from main.deck_config')) == 1

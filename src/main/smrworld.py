@@ -258,21 +258,39 @@ WHERE edge_id = ?
 ORDER BY n.order_number""".format(node_selection_clause=get_xmind_content_selection_clause('n')),
                                                  (edge_id,)).fetchall()]
 
-    def get_smr_note_sort_data(self, edge_id: str) -> List[Tuple[int, int]]:
+    def get_smr_notes_sort_data(self, edge_ids: List[str]) -> Dict[str, str]:
         """
-        gets the data for generating the sort field for the notde belonging to the specified edge id
-        :param edge_id: xmind id of the edge that belongs to the node to get the answer fields for
-        :return: the data for generating the sort field IN a list of tuples
+        gets the data for generating the sort field for the notds belonging to the specified edge ids
+        :param edge_ids: list of xmind ids of the edges that belong to the notes to get the sort fields for
+        :return: a dictionary where keys are the edge ids and values are the sort ids for the respective notes
         """
-        return self.graph.execute("""
-        {hierarchy_recursive_cte_clause}
-SELECT cast(count(DISTINCT n.order_number) > 1 AS INTEGER) + max(n.order_number), e.order_number
-FROM ancestor a
-         JOIN xmind_edges e ON a.edge_id = e.edge_id
-         JOIN xmind_nodes n ON a.parent_node_id = n.node_id
-GROUP BY a.edge_id
-ORDER BY avg(a.level) DESC;""".format(hierarchy_recursive_cte_clause=get_xmind_hierarchy_recursive_cte_clause(
-            edge_id))).fetchall()
+        sort_data = self.graph.execute(f"""-- noinspection SqlResolveForFile
+WITH ancestor AS (
+    SELECT t1.parent_node_id, t1.edge_id AS root_id, 0 AS level, n.order_number as node, e.order_number as edge
+    FROM smr_triples t1
+             JOIN xmind_edges e ON t1.edge_id = e.edge_id
+             JOIN xmind_nodes n ON t1.parent_node_id = n.node_id
+    WHERE t1.edge_id in ({"'" + "', '".join(edge_ids) + "'"})
+    UNION ALL
+    SELECT t.parent_node_id, a.root_id, a.level + 1, n.order_number, e.order_number
+    FROM smr_triples t
+             JOIN ancestor a ON a.parent_node_id = t.child_node_id
+             JOIN xmind_edges e ON t.edge_id = e.edge_id
+             JOIN xmind_nodes n ON t.parent_node_id = n.node_id),
+     ancestry as (SELECT distinct * from ancestor),
+     aggregated as (
+         select root_id, level, case when count(DISTINCT node) > 1 then max(node) + 1 else max(node) end as node, edge
+         from ancestry
+         group by root_id, level),
+     rows as (
+         select a1.level, a1.root_id, a1.edge || ifnull(a2.node, '') as row
+         from aggregated a1 left outer join aggregated a2 on a1.root_id = a2.root_id and a1.level = a2.level + 1
+         order by a1.root_id, a1.level desc
+     )
+select root_id, group_concat(row, '')
+from rows
+group by root_id""").fetchall()
+        return {row[0]: row[1] for row in sort_data}
 
     def attach_anki_collection(self, anki_collection: Collection):
         """

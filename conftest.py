@@ -101,6 +101,30 @@ def _smr_world_for_tests_session(empty_anki_collection_session):
 
 
 @pytest.fixture(scope="function")
+def smr_world_with_example_map():
+    test_world_name = "smr_world_with_example_map.sqlite3"
+    test_world_path = os.path.join(cts.SMR_WORLD_PATH, test_world_name)
+    try:
+        os.unlink(test_world_path)
+    except FileNotFoundError:
+        pass
+    shutil.copy(src=cts.SMR_WORLD_WITH_EXAMPLE_MAP_PATH,
+                dst=test_world_path)
+    standard_world_file_name = smrworld.FILE_NAME
+    standard_user_path = smrworld.USER_PATH
+    standard_user_path_config = config.USER_PATH
+    smrworld.FILE_NAME = test_world_name
+    smrworld.USER_PATH = cts.SMR_WORLD_PATH
+    config.USER_PATH = cts.SMR_WORLD_PATH
+    smr_world = smrworld.SmrWorld()
+    yield smr_world
+    smr_world.close()
+    smrworld.FILE_NAME = standard_world_file_name
+    smrworld.USER_PATH = standard_user_path
+    config.USER_PATH = standard_user_path_config
+
+
+@pytest.fixture(scope="function")
 def collection_4_migration():
     try:
         os.unlink(os.path.join(cts.EMPTY_COLLECTION_PATH_FUNCTION))

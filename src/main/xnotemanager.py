@@ -33,20 +33,16 @@ def sort_id_from_order_number(order_number: int) -> chr:
     return chr(order_number + 122)
 
 
-def get_smr_note_sort_field(smr_world: SmrWorld, edge_id: str) -> str:
+def get_smr_note_sort_fields(smr_world: SmrWorld, edge_ids: List[str]) -> Dict[str, str]:
     """
     gets the data for the sort field of the smr note belonging to the specified edge from the specified smr world and
     converts it into the string that is used to sort the smr notes belonging to a certain map
     :param smr_world: the smr world to get the data from
-    :param edge_id: xmind id of the edge representing the note to get the sort field for
+    :param edge_ids: xmind id of the edge representing the note to get the sort field for
     :return: the sort field's content
     """
-    sort_field_data = smr_world.get_smr_note_sort_data(edge_id)
-    sort_field = sort_id_from_order_number(sort_field_data[0][1])
-    for row in sort_field_data[1:]:
-        for order_number in row:
-            sort_field += sort_id_from_order_number(order_number)
-    return sort_field
+    sort_field_data = smr_world.get_smr_notes_sort_data(edge_ids)
+    return {key: ''.join(sort_id_from_order_number(int(c)) for c in value) for key, value in sort_field_data.items()}
 
 
 def order_number_from_sort_id_character(sort_id_character: str) -> int:

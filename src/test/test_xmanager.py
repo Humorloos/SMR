@@ -221,11 +221,11 @@ def test_get_map_last_modified(x_manager):
     # when
     map_last_modified = x_manager.get_map_last_modified()
     # then
-    assert map_last_modified == 1595671089759
+    assert map_last_modified > 15956710897
 
 
 def test_get_sheet_last_modified(x_manager):
     # when
     sheet_last_modified = x_manager.get_sheet_last_modified('biological psychology')
     # then
-    assert sheet_last_modified == 1595671089759
+    assert sheet_last_modified > 15956710897

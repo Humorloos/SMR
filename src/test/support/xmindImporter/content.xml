@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" xmlns:fo="http://www.w3.org/1999/XSL/Format"
               xmlns:svg="http://www.w3.org/2000/svg" xmlns:xhtml="http://www.w3.org/1999/xhtml"
-              xmlns:xlink="http://www.w3.org/1999/xlink" modified-by="lloos" timestamp="1597232836477" version="2.0">
+              xmlns:xlink="http://www.w3.org/1999/xlink" modified-by="lloos" timestamp="1597239510168" version="2.0">
     <sheet id="2485j5qgetfevlt00vhrn53961" modified-by="lloos" style-id="6r800am66oqdk93hlqqb9iku7u"
-           theme="3f1a763c722hdcr8bnodk70uco" timestamp="1597232836477">
+           theme="3f1a763c722hdcr8bnodk70uco" timestamp="1597239510168">
         <topic id="0pbme7b9sg9en8qqmmn9jj06od" modified-by="lloos" structure-class="org.xmind.ui.logic.right"
                timestamp="1573037764522">
             <title>biological psychology</title>
@@ -347,9 +347,32 @@
                                                                             <topics type="attached">
                                                                                 <topic id="23nu73chqkkkem455dit5p8stu"
                                                                                        modified-by="lloos"
-                                                                                       timestamp="1573031959463"
+                                                                                       timestamp="1597239458030"
                                                                                        xlink:href="xap:attachments/395ke7i9a6nkutu85fcpa66as2.mp4">
                                                                                     <title/>
+                                                                                    <children>
+                                                                                        <topics type="attached">
+                                                                                            <topic id="1soij3rlgbkct9eq3uo7117sa9"
+                                                                                                   modified-by="lloos"
+                                                                                                   style-id="4hpte0h6pn5hii04feijjp2mph"
+                                                                                                   timestamp="1597239510168">
+                                                                                                <title>means in
+                                                                                                    english
+                                                                                                </title>
+                                                                                                <children>
+                                                                                                    <topics type="attached">
+                                                                                                        <topic id="4q85gj7gitu8b8b54usvbdffv9"
+                                                                                                               modified-by="lloos"
+                                                                                                               timestamp="1597239501218">
+                                                                                                            <title>
+                                                                                                                virtue
+                                                                                                            </title>
+                                                                                                        </topic>
+                                                                                                    </topics>
+                                                                                                </children>
+                                                                                            </topic>
+                                                                                        </topics>
+                                                                                    </children>
                                                                                 </topic>
                                                                             </topics>
                                                                         </children>

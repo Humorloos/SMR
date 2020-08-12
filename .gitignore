@@ -1,13 +1,14 @@
 
 /desktop.ini
 /.idea/
-/src/test/support/smr_world/testworld.sqlite3
 /src/test/support/collections/empty_smr_col_function/
 /src/test/support/collections/empty_smr_col_session/
 /src/test/support/smr_world/smr_world_for_tests.sqlite3
 /src/test/support/smr_world/empty_smr_world.sqlite3
+/src/test/support/smr_world/smr_world_with_example_map.sqlite3
 /user_files/smrworld.sqlite3
 /user_files/smrworld.sqlite3-journal
 /user_files/status.json
 /user_files/1579442668731.rdf
 /src/test/support/collections/real_collection_version_0.0.1/collection.anki2
+/resources/example map - Copy.zip
