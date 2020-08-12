@@ -320,6 +320,7 @@ def test_initialize_import_import_import_notes_to_correct_deck(
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == n_cards_example_map
     assert cut.col.db.execute('select type from cards') == n_cards_example_map * [[0]]
+    assert len(cut.smr_world.graph.execute('select distinct card_id from main.smr_triples').fetchall()) == 40
 
 
 # noinspection PyPep8Naming
