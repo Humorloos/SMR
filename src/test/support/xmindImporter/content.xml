@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <xmap-content xmlns="urn:xmind:xmap:xmlns:content:2.0" xmlns:fo="http://www.w3.org/1999/XSL/Format"
               xmlns:svg="http://www.w3.org/2000/svg" xmlns:xhtml="http://www.w3.org/1999/xhtml"
-              xmlns:xlink="http://www.w3.org/1999/xlink" modified-by="lloos" timestamp="1595671089759" version="2.0">
+              xmlns:xlink="http://www.w3.org/1999/xlink" modified-by="lloos" timestamp="1597232836477" version="2.0">
     <sheet id="2485j5qgetfevlt00vhrn53961" modified-by="lloos" style-id="6r800am66oqdk93hlqqb9iku7u"
-           theme="3f1a763c722hdcr8bnodk70uco" timestamp="1595671089759">
+           theme="3f1a763c722hdcr8bnodk70uco" timestamp="1597232836477">
         <topic id="0pbme7b9sg9en8qqmmn9jj06od" modified-by="lloos" structure-class="org.xmind.ui.logic.right"
                timestamp="1573037764522">
             <title>biological psychology</title>
@@ -289,11 +289,39 @@
                                                                                                                             <topics type="attached">
                                                                                                                                 <topic id="3oqcv5qlqhn28u1opce5i27709"
                                                                                                                                        modified-by="lloos"
-                                                                                                                                       timestamp="1594823837351">
+                                                                                                                                       timestamp="1597232672459">
                                                                                                                                     <title>
                                                                                                                                         biogenic
                                                                                                                                         amines
                                                                                                                                     </title>
+                                                                                                                                    <children>
+                                                                                                                                        <topics type="attached">
+                                                                                                                                            <topic id="0eaob1gla0j1qriki94n2os9oe"
+                                                                                                                                                   modified-by="lloos"
+                                                                                                                                                   style-id="4hpte0h6pn5hii04feijjp2mph"
+                                                                                                                                                   timestamp="1597232833139">
+                                                                                                                                                <title>
+                                                                                                                                                    consist
+                                                                                                                                                    of
+                                                                                                                                                </title>
+                                                                                                                                                <children>
+                                                                                                                                                    <topics type="attached">
+                                                                                                                                                        <topic id="0s0is5027b7r6akh3he0nbu478"
+                                                                                                                                                               modified-by="lloos"
+                                                                                                                                                               timestamp="1597232836477">
+                                                                                                                                                            <title>
+                                                                                                                                                                one
+                                                                                                                                                                or
+                                                                                                                                                                more
+                                                                                                                                                                amine
+                                                                                                                                                                groups
+                                                                                                                                                            </title>
+                                                                                                                                                        </topic>
+                                                                                                                                                    </topics>
+                                                                                                                                                </children>
+                                                                                                                                            </topic>
+                                                                                                                                        </topics>
+                                                                                                                                    </children>
                                                                                                                                 </topic>
                                                                                                                             </topics>
                                                                                                                         </children>
@@ -396,7 +424,12 @@
                                                                                                                            modified-by="lloos"
                                                                                                                            style-id="4hpte0h6pn5hii04feijjp2mph"
                                                                                                                            timestamp="1573031007256">
-                                                                                                                        <title>can be triggered by</title>
+                                                                                                                        <title>
+                                                                                                                            can
+                                                                                                                            be
+                                                                                                                            triggered
+                                                                                                                            by
+                                                                                                                        </title>
                                                                                                                         <children>
                                                                                                                             <topics type="attached">
                                                                                                                                 <topic id="4igsvlhm7ql9g1lku7gp1s1trt"
