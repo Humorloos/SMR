@@ -16,6 +16,7 @@ from main.smrworld import SmrWorld
 from main.template import add_x_model
 from main.xmanager import get_node_content, get_non_empty_sibling_nodes, get_parent_node
 from main.xmindimport import XmindImporter
+from main.xnotemanager import get_smr_note_reference_fields
 
 
 def test_xmind_importer(xmind_importer):
@@ -126,6 +127,7 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, tag_
     assert cut.import_edge.call_count == 2
     assert cut.add_image_and_media_to_collection.call_count == 1
     assert len(cut.nodes_2_import) == 1
+
 
 def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept, x_ontology):
     # given
@@ -270,7 +272,9 @@ def test_generate_note_from_edge_id(mocker, active_xmind_importer, smr_world_for
     cut._smr_world = smr_world_for_tests
     mocker.spy(cut._active_manager, "acquire_anki_tag")
     # when
-    note = cut.generate_note_from_edge_id(edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
+    note = cut.generate_note_from_edge_id(edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID,
+                                          reference_fields=get_smr_note_reference_fields(
+                                              smr_world_for_tests, [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]))
     # then
     assert cut.active_manager.acquire_anki_tag.call_count == 1
     assert pickle.dumps(note) == cts.EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE
@@ -284,9 +288,12 @@ def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
     cut.model = cut.col.models.byName(X_MODEL_NAME)
     cut.deck_id = 1
     mocker.patch.object(cut, "import_notes_and_cards")
+    reference_fields = get_smr_note_reference_fields(
+        smr_world_for_tests, [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
+                    cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID])
     for edge_id in [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
                     cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID]:
-        cut.generate_note_from_edge_id(edge_id)
+        cut.generate_note_from_edge_id(edge_id, reference_fields)
     # when
     cut.finish_import()
     # then

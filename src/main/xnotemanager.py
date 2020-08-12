@@ -1,44 +1,32 @@
 import json
 import re
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from anki import Collection
+from anki.utils import splitFields, joinFields
 from main.consts import SMR_NOTE_FIELD_NAMES, X_MEDIA_EXTENSIONS, X_IMAGE_EXTENSIONS, X_MAX_ANSWERS
 from main.dto.nodecontentdto import NodeContentDTO
 from main.smrworld import SmrWorld
 from main.utils import replace_embedded_media, get_smr_model_id
 
-from anki.utils import splitFields, joinFields
 
-
-def get_smr_note_reference_field(smr_world: SmrWorld, edge_id: str) -> str:
+def get_smr_note_reference_fields(smr_world: SmrWorld, edge_ids: List[str]) -> Dict[str, str]:
     """
-    gets the data for the reference field from smr_world and converts it into the content for an smr note reference
-    field
-    :param smr_world: the smr world containing the data for the field
-    :param edge_id: the xmind id of the edge to to get the reference field for
-    :return: the reference field's content
+    gets the data for the reference fields from smr_world and replaces embedded media with the string (media)
+    :param smr_world: the smr world containing the data for the fields
+    :param edge_ids: the xmind ids of the edges to to get the reference fields for
+    :return: the reference fields' contents in a dictionary where the keys contain the edge_ids for which the
+    reference field was retrieved and values contain the cleaned up reference fields
     """
-    reference_data = smr_world.get_smr_note_reference_data(edge_id)
-    reference_field = reference_data[0][0]
-    for row_id, row in enumerate(reference_data[1:]):
-        reference_field += '<li>'
-        if reference_data[row_id][1]:
-            reference_field += reference_data[row_id][1]
-            if row[0]:
-                reference_field += ': '
-        if row[0]:
-            reference_field += row[0]
-        reference_field += '</li>'
-    reference_field = replace_embedded_media(reference_field)
-    return reference_field
+    reference_data = smr_world.get_smr_note_references(edge_ids)
+    return {key: replace_embedded_media(value) for key, value in reference_data.items()}
 
 
 def sort_id_from_order_number(order_number: int) -> chr:
     """
     converts the specified order number into a character used for sorting the notes generated from an xmind map. The
     returned characters are handled by anki so that a character belonging to a larger order number is sorted after
-    one belonging to a smaller order number
+    one belonging to a smaller order number.
     :param order_number: the number to convert into a character
     :return: the character for the sort field
     """

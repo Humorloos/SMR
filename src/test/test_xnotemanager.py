@@ -1,81 +1,7 @@
-# class TestXNoteManager(TestCase):
-#     def setUp(self):
-#         col = Collection(os.path.join(SUPPORT_PATH, 'syncer',
-#                                       'cols', 'no_changes', 'collection.anki2'))
-#         self.note_manager = XNoteManager(col)
-#
-#
-# class TestGetXmindFiles(TestXNoteManager):
-#     def test_get_xmind_files(self):
-#         act = self.note_manager.get_xmind_files()
-#         self.fail()
-#
-#
-# class TestGetLocal(TestXNoteManager):
-#     def test_get_local(self):
-#         manager = self.note_manager
-#         file = EXAMPLE_MAP_PATH
-#         act = manager.get_local(file=file)
-#         self.fail()
-#
-#     def test_changes_general_psycholog(self):
-#         col = Collection(os.path.join(SUPPORT_PATH, 'syncer',
-#                                       'cols', 'changes', 'collection.anki2'))
-#         manager = XNoteManager(col)
-#         file = EXAMPLE_MAP_PATH
-#         act = manager.get_local(file=file)
-#         self.fail()
-#
-# class FieldFromClass(TestFieldTranslator):
-#     def test_only_text(self):
-#         translator = self.field_translator
-#         content = 'MAO_is_not_a_neurotransmitter'
-#         act = translator.field_from_class(content)
-#         exp = 'MAO is not a neurotransmitter'
-#         self.assertEqual(exp, act)
-#
-#     def test_only_image(self):
-#         translator = self.field_translator
-#         content = 'ximage_09r2e442o8lppjfeblf7il2rmd_extension_png'
-#         act = translator.field_from_class(content)
-#         exp = '<img src="09r2e442o8lppjfeblf7il2rmd.png">'
-#         self.assertEqual(exp, act)
-#
-#     def test_only_media(self):
-#         translator = self.field_translator
-#         content = 'xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3'
-#         act = translator.field_from_class(content)
-#         exp = '[sound:3lv2k1fhghfb9ghfb8depnqvdt.mp3]'
-#         self.assertEqual(exp, act)
-#
-#     def test_all_three(self):
-#         translator = self.field_translator
-#         content = 'MAO_is_not_a_neurotransmitter=:media:3lv2k1fhghfb9ghfb8depnqvdt.mp3:==:img:09r2e442o8lppjfeblf7il2rmd.png:='
-#         act = translator.field_from_class(content)
-#         exp = 'MAO is not a neurotransmitter[sound:3lv2k1fhghfb9ghfb8depnqvdt.mp3]<br><img src="09r2e442o8lppjfeblf7il2rmd.png">'
-#         self.assertEqual(exp, act)
-#
-#     def test_parentheses(self):
-#         translator = self.field_translator
-#         class_name = 'biological_psychology_xlparenthesis_text_in_parenthses_xrparenthesis'
-#         act = translator.field_from_class(class_name)
-#         exp = 'biological psychology (text in parenthses)'
-#         self.assertEqual(exp, act)
-#
-# class TestContentFromField(TestCase):
-#     def test_content_from_field(self):
-#         field = 'MAO is not a neurotransmitter[sound:3lv2k1fhghfb9ghfb8depnqvdt.mp3]<br><img src="09r2e442o8lppjfeblf7il2rmd.png">'
-#         act = content_from_field(field)
-#         self.fail()
-#
-#     def test_only_text(self):
-#         field = 'former image'
-#         act = content_from_field(field)
-#         self.fail()
 import pytest
 
 from main.dto.nodecontentdto import NodeContentDTO
-from main.xnotemanager import FieldTranslator, get_smr_note_reference_field, get_smr_note_sort_field, \
+from main.xnotemanager import FieldTranslator, get_smr_note_reference_fields, get_smr_note_sort_field, \
     sort_id_from_order_number, XNoteManager, image_from_field
 import test.constants as cts
 
@@ -125,24 +51,25 @@ def test_class_from_content_parentheses(field_translator):
     assert ontology_class == expected_class
 
 
-def test_get_smr_note_reference_field(smr_world_for_tests):
+def test_get_smr_note_reference_fields(smr_world_for_tests):
     # when
-    reference_field = get_smr_note_reference_field(smr_world=smr_world_for_tests,
-                                                   edge_id=cts.PRONOUNCIATION_EDGE_XMIND_ID)
+    reference_fields = get_smr_note_reference_fields(
+        smr_world=smr_world_for_tests, edge_ids=[
+            cts.PRONOUNCIATION_EDGE_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID,
+            cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, "7ipkhjdorhgcasdf12asd123ga"])
     # then
-    assert reference_field == 'biological psychology<li>investigates: information transfer and ' \
-                              'processing</li><li>requires: neurotransmitters <img ' \
-                              'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic ' \
-                              'amines</li><li> <img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: Serotonin</li>'
-
-
-def test_get_smr_note_reference_field_replace_media(smr_world_for_tests):
-    # when
-    reference_field = get_smr_note_reference_field(smr_world=smr_world_for_tests,
-                                                   edge_id="7ipkhjdorhgcasdf12asd123ga")
-    # then
-    assert reference_field == 'biological psychology<li>investigates: perception</li><li>Pain</li><li>some media ' \
-                              'edge title (media): answer to some media edge</li>'
+    assert reference_fields == {
+        '4s27e1mvsb5jqoiuaqmnlo8m71': 'biological psychology<li>investigates: information transfer and '
+                                      'processing</li><li>requires: neurotransmitters <img '
+                                      'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic '
+                                      'amines</li><li><img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
+                                      'Serotonin</li>',
+        '6iivm8tpoqj2c0euaabtput14l': 'biological psychology<li>investigates: information transfer and '
+                                      'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits '
+                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>',
+        '7ipkhjdorhgcasdf12asd123ga': 'biological psychology<li>investigates: perception</li><li>Pain</li><li>some '
+                                      'media edge title (media): answer to some media edge</li>',
+        '7ite3obkfmbcasdf12asd123ga': 'biological psychology<li>investigates: perception</li><li>Pain</li>'}
 
 
 def test_get_smr_note_sort_field(smr_world_for_tests):

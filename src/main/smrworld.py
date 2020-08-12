@@ -1,12 +1,8 @@
 import os
-from typing import List, TextIO, Tuple, Optional
-
-from bs4 import Tag
-from sqlite3 import IntegrityError
+from typing import List, TextIO, Tuple, Dict
 
 from anki import Collection
 from main.consts import ADDON_PATH, USER_PATH
-from main.dto.nodecontentdto import NodeContentDTO
 from main.dto.smrnotedto import SmrNoteDto
 from main.dto.smrtripledto import SmrTripleDto
 from main.dto.xmindfiledto import XmindFileDto
@@ -14,7 +10,6 @@ from main.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from main.dto.xmindnodedto import XmindNodeDto
 from main.dto.xmindsheetdto import XmindSheetDto
 from owlready2.namespace import World
-from main.xmanager import XManager
 
 FILE_NAME = 'smrworld.sqlite3'
 SQL_FILE_NAME = 'smrworld.sql'
@@ -29,14 +24,26 @@ def get_xmind_content_selection_clause(relation_name: str) -> str:
     :param relation_name: the name of the relation in the smr world to get the content from
     :return: the select clause
     """
-    return """
-    ifnull({relation_name}.title, '') || IFNULL(' <img src="' || (
-    SELECT anki_file_name FROM xmind_media_to_anki_files WHERE xmind_uri = {relation_name}.image) || '">', '') ||
-                                      IFNULL(' [sound:' || (
-                                          SELECT anki_file_name
-                                          FROM xmind_media_to_anki_files
-                                          WHERE xmind_uri = {relation_name}.link) || ']', '')
-                                          """.format(relation_name=relation_name)
+    return f"""
+        ifnull({relation_name}.title, '') ||
+            case
+                when {relation_name}.image is null then ''
+                else case
+                         when {relation_name}.title is null then ''
+                         else ' ' end ||
+                     '<img src="' ||
+                     (SELECT anki_file_name FROM xmind_media_to_anki_files WHERE xmind_uri = {relation_name}.image) ||
+                     '">'
+                end ||
+            case
+                when {relation_name}.link is null then ''
+                else case
+                         when {relation_name}.title is null and {relation_name}.image is null then ''
+                         else ' ' end ||
+                     '[sound:' ||
+                     (SELECT anki_file_name FROM xmind_media_to_anki_files WHERE xmind_uri = {relation_name}.link) ||
+                     ']'
+                end"""
 
 
 def get_xmind_hierarchy_recursive_cte_clause(edge_id: str):
@@ -46,7 +53,7 @@ def get_xmind_hierarchy_recursive_cte_clause(edge_id: str):
     :param edge_id: the xmind id of the edge from where to start gathering parents' information
     :return: the cte clause
     """
-    return """
+    return f"""
 WITH ancestor AS (
     SELECT parent_node_id,
            edge_id,
@@ -62,7 +69,7 @@ WITH ancestor AS (
     FROM smr_triples t
              JOIN ancestor a
                   ON a.parent_node_id = t.child_node_id
-)""".format(edge_id=edge_id)
+)"""
 
 
 class SmrWorld(World):
@@ -176,29 +183,55 @@ where edge_id = (select edge_id from card_triples)
         """
         self.graph.db.executemany("INSERT INTO main.smr_notes VALUES (?, ?, ?)", (tuple(e) for e in entities))
 
-    def get_smr_note_reference_data(self, edge_id: str) -> List[Tuple[str, str]]:
+    def get_smr_note_references(self, edge_ids: List[str]) -> Dict[str, str]:
         """
-        gets the data needed to generate the reference for an smr note from the smr world. The returned data
-        consists of a List of tuples. In each tuple, the first value is the field content of a node and the second
-        value is the field content of the edge following the node. The list contains all tuples up to the edge with
-        the provided id.
-        :param edge_id: id of the edge up to which to get the reference
-        :return: list of tuples containing the data to generate the reference for an smr note, consisting of Tuples
-        where the first element is a node's field content and the seconde element is the node's following edge's
-        field content
+        gets a dictionary of reference fields for the notes belonging to the specified xmind edge ids. the keys in
+        the dictionary are the respective edge ids to which each reference field belongs
+        :param edge_ids: ids of the edges up to which to get the reference
+        :return: a dictionary in which keys are the provided edge ids and values are the respective reference fields
         """
-        return self.graph.execute("""
-        {hierarchy_recursive_cte_clause}
-    SELECT DISTINCT group_concat(DISTINCT {node_selection_clause}) AS node,
-                    group_concat(DISTINCT {edge_selection_clause}) AS edge
-    FROM ancestor a
-             JOIN xmind_edges e ON a.edge_id = e.edge_id
-             JOIN xmind_nodes n ON a.parent_node_id = n.node_id
-    GROUP BY a.edge_id
-    ORDER BY avg(a.level) DESC""".format(
-            hierarchy_recursive_cte_clause=get_xmind_hierarchy_recursive_cte_clause(edge_id),
+        reference_data = self.graph.execute("""-- noinspection SqlResolveForFile
+WITH ancestor AS (
+    SELECT t1.parent_node_id,
+           t1.edge_id AS root_id,
+           0          AS level,
+           {node_selection_clause}    AS node,
+           ''         as edge
+    FROM smr_triples t1
+             JOIN xmind_edges e ON t1.edge_id = e.edge_id
+             JOIN xmind_nodes n ON t1.parent_node_id = n.node_id
+    WHERE t1.edge_id in ({edge_ids})
+    UNION ALL
+    SELECT t.parent_node_id,
+           a.root_id,
+           a.level + 1,
+           {node_selection_clause},
+--            only this edge
+           {edge_selection_clause}
+    FROM smr_triples t
+             JOIN ancestor a
+                  ON a.parent_node_id = t.child_node_id
+             JOIN xmind_edges e ON t.edge_id = e.edge_id
+             JOIN xmind_nodes n ON t.parent_node_id = n.node_id),
+     ancestry as (SELECT distinct * from ancestor),
+     concatenated as (
+         select root_id, level, group_concat(node, ', ') as node, edge
+         from ancestry
+         group by root_id, level),
+     rows as (select c1.root_id, c1.level, case when c2.edge is null then '' else '<li>' end ||
+       case
+           when c2.edge is null or c2.edge = '' then ''
+           else c2.edge || case c1.node when '' then '' else ': ' end end || c1.node ||
+       case when c2.edge is null then '' else '</li>' end as row
+     from concatenated c1
+         left outer join concatenated c2 on c1.root_id = c2.root_id and c1.level = c2.level - 1
+     order by c1.root_id, c1.level desc
+)
+select root_id, group_concat(row, '') from rows group by root_id""".format(
+            edge_ids="'" + "', '".join(edge_ids) + "'",
             node_selection_clause=get_xmind_content_selection_clause('n'),
             edge_selection_clause=get_xmind_content_selection_clause('e'))).fetchall()
+        return {row[0]: row[1] for row in reference_data}
 
     def get_smr_note_question_field(self, edge_id: str) -> str:
         """

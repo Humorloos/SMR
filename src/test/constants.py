@@ -48,16 +48,16 @@ NEUROTRANSMITTERS_CLASS_NAME = 'neurotransmittersximage_629d18n2i73im903jkrjmr98
 EMPTY_NODE_TAG_ID = "6b0ho6vvcs4pcacchhsgju7513"
 
 EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE = \
-    b'\x80\x04\x95\x06\x03\x00\x00\x00\x00\x00\x00\x8c\x16anki.importing.noteimp\x94\x8c\x0bForeignNote\x94\x93\x94' \
-    b')\x81\x94}\x94(\x8c\x06fields\x94]\x94(\x8c\xc1biological psychology<li>investigates: information transfer and ' \
-    b'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up: dopamine,adrenaline,Serotonin,' \
-    b'noradrenaline</li>\x94\x8c\x03are\x94\x8c\x0fbiogenic ' \
+    b'\x80\x04\x95\x0c\x03\x00\x00\x00\x00\x00\x00\x8c\x16anki.importing.noteimp\x94\x8c\x0bForeignNote\x94\x93\x94' \
+    b')\x81\x94}\x94(\x8c\x06fields\x94]\x94(\x8c\xc4biological psychology<li>investigates: information transfer and ' \
+    b'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up: Serotonin, dopamine, ' \
+    b'adrenaline, noradrenaline</li>\x94\x8c\x03are\x94\x8c\x0fbiogenic ' \
     b'amines\x94\x8c\x00\x94h\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\n\x8c\t|{|{{{|\x7f{' \
     b'\x94e\x8c\x04tags\x94]\x94(\x8c- Default::example_map::biological_psychology ' \
     b'\x94\x8c\x1a6iivm8tpoqj2c0euaabtput14l\x94e\x8c\x04deck\x94N\x8c\x05cards\x94}\x94K\x01h\x00\x8c\x0bForeignCard' \
     b'\x94\x93\x94)\x81\x94}\x94(\x8c\x03due\x94K\x00\x8c\x03ivl\x94K\x01\x8c\x06factor\x94M\xc4\t\x8c\x04reps\x94K' \
-    b'\x00\x8c\x06lapses\x94K\x00ubs\x8c\tfieldsStr\x94\x8c\xf2biological psychology<li>investigates: information ' \
-    b'transfer and processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up: dopamine,' \
-    b'adrenaline,Serotonin,noradrenaline</li>\x1fare\x1fbiogenic ' \
+    b'\x00\x8c\x06lapses\x94K\x00ubs\x8c\tfieldsStr\x94\x8c\xf5biological psychology<li>investigates: information ' \
+    b'transfer and processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up: Serotonin, ' \
+    b'dopamine, adrenaline, noradrenaline</li>\x1fare\x1fbiogenic ' \
     b'amines\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f|{|{{{|\x7f{\x94ub.'
 EDGE_FOLLOWING_MULTIPLE_NODES_NOTE_ID = 12345

@@ -1,14 +1,12 @@
 from sqlite3 import IntegrityError, OperationalError
 
-import test.constants as cts
 import pytest
 
-from anki import Collection
+import test.constants as cts
 from main.dto.smrtripledto import SmrTripleDto
 from main.dto.xmindfiledto import XmindFileDto
 from main.dto.xmindnodedto import XmindNodeDto
 from main.dto.xmindsheetdto import XmindSheetDto
-from main.smrworld import SmrWorld
 from main.xmanager import get_node_content
 
 
@@ -147,31 +145,21 @@ def test_add_smr_triples(smr_world_for_tests):
         test_edge_id)).fetchall())[0] == expected_entry
 
 
-def test_get_smr_note_reference_data(smr_world_for_tests):
+def test_get_smr_note_references(smr_world_for_tests):
     # when
-    reference = smr_world_for_tests.get_smr_note_reference_data(cts.PRONOUNCIATION_EDGE_XMIND_ID)
+    reference = smr_world_for_tests.get_smr_note_references([
+        cts.PRONOUNCIATION_EDGE_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID, cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
     # then
-    assert reference == [('biological psychology', 'investigates'), ('information transfer and processing', 'requires'),
-                         ('neurotransmitters <img src="attachments629d18n2i73im903jkrjmr98fg.png">', 'types'),
-                         ('biogenic amines', ' <img src="attachments09r2e442o8lppjfeblf7il2rmd.png">'),
-                         ('Serotonin', 'pronounciation')]
-
-
-def test_get_smr_note_reference_data_with_edge_following_multiple_nodes(smr_world_for_tests):
-    # when
-    reference = smr_world_for_tests.get_smr_note_reference_data(cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
-    # then
-    assert reference == [('biological psychology', 'investigates'),
-                         ('information transfer and processing', 'modulated by'), ('enzymes', 'example'),
-                         ('MAO', 'splits up'), ('dopamine,adrenaline,Serotonin,noradrenaline', 'are')]
-
-
-def test_get_smr_note_reference_data_with_media(smr_world_for_tests):
-    # when
-    reference = smr_world_for_tests.get_smr_note_reference_data(cts.EDGE_WITH_MEDIA_XMIND_ID)
-    # then
-    assert reference == [('biological psychology', 'investigates'), ('perception', ''),
-                         ('Pain', 'some media edge title [sound:somemedia.mp3]')]
+    assert reference == {
+        '4s27e1mvsb5jqoiuaqmnlo8m71': 'biological psychology<li>investigates: information transfer and '
+                                      'processing</li><li>requires: neurotransmitters <img '
+                                      'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic '
+                                      'amines</li><li><img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
+                                      'Serotonin</li>',
+        '6iivm8tpoqj2c0euaabtput14l': 'biological psychology<li>investigates: information transfer and '
+                                      'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits '
+                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>',
+        '7ite3obkfmbcasdf12asd123ga': 'biological psychology<li>investigates: perception</li><li>Pain</li>'}
 
 
 def test_get_smr_note_question_field_media_edge(smr_world_for_tests):
@@ -185,7 +173,7 @@ def test_get_smr_note_question_field_only_image(smr_world_for_tests):
     # when
     question = smr_world_for_tests.get_smr_note_question_field("08eq1rdricsp1nt1b7aa181sq4")
     # then
-    assert question == ' <img src="attachments09r2e442o8lppjfeblf7il2rmd.png">'
+    assert question == '<img src="attachments09r2e442o8lppjfeblf7il2rmd.png">'
 
 
 def test_get_smr_note_answer_fields(smr_world_for_tests):
@@ -206,7 +194,7 @@ def test_get_smr_note_answer_fields_media(smr_world_for_tests):
     # when
     answers = smr_world_for_tests.get_smr_note_answer_fields("4vfsmbd1fmn6s0tqmlj4cei7pe")
     # then
-    assert answers == [' [sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]']
+    assert answers == ['[sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]']
 
 
 def test_get_smr_note_sort_data(smr_world_for_tests):
