@@ -39,7 +39,7 @@ def test_migrate_deck_2_smr_world_file_not_found(collection_2_smr_world_migrator
 
 
 @pytest.mark.skip(reason="This test takes far too for running it each time")
-def test_migrate_collection_2_smr_world(real_collection_4_migration, patch_aqt_mw_empty_smr_world):
+def test_migrate_collection_2_smr_world2(real_collection_4_migration, patch_aqt_mw_empty_smr_world):
     # given
     patch_aqt_mw_empty_smr_world.col = real_collection_4_migration
     cut = Collection2SmrWorldMigrator()
@@ -47,3 +47,15 @@ def test_migrate_collection_2_smr_world(real_collection_4_migration, patch_aqt_m
     cut.migrate_collection_2_smr_world()
     # then
     pass
+
+
+def test_migrate_collection_2_smr_world(collection_4_migration, patch_aqt_mw_empty_smr_world):
+    # given
+    patch_aqt_mw_empty_smr_world.col = collection_4_migration
+    cut = Collection2SmrWorldMigrator()
+    # when
+    cut.migrate_collection_2_smr_world()
+    # then
+    # make sure the right tags are assigned to the updated notes
+    assert len(cut.collection.db.list(
+        "select id from notes where tags = ' Example::example_map::biological_psychology '")) > 0
