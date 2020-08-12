@@ -3,16 +3,9 @@ import pickle
 import pytest
 from bs4 import Tag
 
-import aqt
 import test.constants as cts
-from anki import Collection
 from main.consts import X_MAX_ANSWERS, X_MODEL_NAME
 from main.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
-from main.dto.smrnotedto import SmrNoteDto
-from main.dto.xmindfiledto import XmindFileDto
-from main.dto.xmindnodedto import XmindNodeDto
-from main.dto.xmindsheetdto import XmindSheetDto
-from main.smrworld import SmrWorld
 from main.template import add_x_model
 from main.xmanager import get_node_content, get_non_empty_sibling_nodes, get_parent_node
 from main.xmindimport import XmindImporter
@@ -276,7 +269,7 @@ def test_generate_note_from_edge_id(mocker, active_xmind_importer, smr_world_for
     note = cut.generate_note_from_edge_id(
         edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID,
         reference_fields=get_smr_note_reference_fields(smr_world_for_tests, edge_ids),
-        sort_fields=get_smr_note_sort_fields(smr_world_for_tests, edge_ids))
+        sort_fields=get_smr_note_sort_fields(smr_world_for_tests, edge_ids), sheet_name='biological psychology')
     # then
     assert cut.active_manager.acquire_anki_tag.call_count == 1
     assert pickle.dumps(note) == cts.EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE
@@ -295,7 +288,7 @@ def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
     reference_fields = get_smr_note_reference_fields(smr_world_for_tests, edge_ids)
     sort_fields = get_smr_note_sort_fields(smr_world_for_tests, edge_ids)
     for edge_id in edge_ids:
-        cut.generate_note_from_edge_id(edge_id, reference_fields, sort_fields)
+        cut.generate_note_from_edge_id(edge_id, reference_fields, sort_fields, 'biological psychology')
     # when
     cut.finish_import()
     # then

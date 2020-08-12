@@ -43,7 +43,7 @@ class XmindImporter(NoteImporter):
         self.is_running: bool = True
         self.active_manager: Optional[XManager] = None
         self.current_sheet_import: str = ''
-        self.edge_ids_2_make_notes_of: List[str] = []
+        self.edges_2_make_notes_of: Dict[str, str] = {}
         self.notes_2_import: Dict[str, ForeignNote] = {}
         # entity lists for imports
         self.files_2_import: List[XmindFileDto] = []
@@ -112,11 +112,12 @@ class XmindImporter(NoteImporter):
         self._add_entities_2_smr_world()
         # Create Notes from all edges
         reference_fields = get_smr_note_reference_fields(
-            smr_world=self.smr_world, edge_ids=self.edge_ids_2_make_notes_of)
-        sort_fields = get_smr_note_sort_fields(smr_world=self.smr_world, edge_ids=self.edge_ids_2_make_notes_of)
+            smr_world=self.smr_world, edge_ids=list(self.edges_2_make_notes_of))
+        sort_fields = get_smr_note_sort_fields(smr_world=self.smr_world, edge_ids=list(self.edges_2_make_notes_of))
         self.notes_2_import = {edge_id: self.generate_note_from_edge_id(
-            edge_id=edge_id, reference_fields=reference_fields, sort_fields=sort_fields) for edge_id in
-            self.edge_ids_2_make_notes_of}
+            edge_id=edge_id, reference_fields=reference_fields, sort_fields=sort_fields, sheet_name=sheet_name) for edge_id,
+                                                                                                   sheet_name in
+            self.edges_2_make_notes_of.items()}
 
     def import_file(self, x_manager: XManager):
         """
@@ -297,7 +298,7 @@ class XmindImporter(NoteImporter):
             ontology_storid=relationship_property.storid, last_modified=edge['timestamp'], order_number=order_number))
         # if the edge is not empty, add it to the list of edges to make notes from
         if not edge_content.is_empty():
-            self.edge_ids_2_make_notes_of.append(edge['id'])
+            self.edges_2_make_notes_of[edge['id']] = self.current_sheet_import
         # import each child_node either with a list of the single concept or a list of all concepts if they are empty
         for order_number, (child_node, child_concepts) in enumerate(zip(
                 non_empty_child_nodes + empty_child_nodes,
@@ -308,9 +309,10 @@ class XmindImporter(NoteImporter):
                 parent_relationship_class_name=relationship_class_name, order_number=order_number)
 
     def generate_note_from_edge_id(self, edge_id: str, reference_fields: Dict[str, str],
-                                   sort_fields: Dict[str, str]) -> ForeignNote:
+                                   sort_fields: Dict[str, str], sheet_name: str) -> ForeignNote:
         """
         Creates a Note to add to the collection and adds it to the list of notes to be imported
+        :param sheet_name: the name of the sheet the note belongs to
         :param sort_fields: Dictionary of sort fields for all edge_ids
         :param reference_fields: Dictionary of reference fields for all edge_ids
         :param edge_id: Xmind id of the edge belonging to the note to be imported
@@ -321,8 +323,7 @@ class XmindImporter(NoteImporter):
         answer_fields = self.smr_world.get_smr_note_answer_fields(edge_id)
         note.fields = [reference_fields[edge_id]] + question_field + answer_fields + (
                 X_MAX_ANSWERS - len(answer_fields)) * [''] + [sort_fields[edge_id]]
-        note.tags.append(self.active_manager.acquire_anki_tag(
-            deck_name=self.deck_name, sheet_name=self.current_sheet_import))
+        note.tags.append(self.active_manager.acquire_anki_tag(deck_name=self.deck_name, sheet_name=sheet_name))
         # add the edge id to the tags list to be able to assign the note to the right edge during import
         note.tags.append(edge_id)
         # note.deck = self.deck_id
@@ -394,12 +395,12 @@ class XmindImporter(NoteImporter):
         self._deck_name = value
 
     @property
-    def edge_ids_2_make_notes_of(self) -> List[str]:
-        return self._edge_ids_2_make_notes_of
+    def edges_2_make_notes_of(self) -> Dict[str, str]:
+        return self._edges_2_make_notes_of
 
-    @edge_ids_2_make_notes_of.setter
-    def edge_ids_2_make_notes_of(self, value: List[str]):
-        self._edge_ids_2_make_notes_of = value
+    @edges_2_make_notes_of.setter
+    def edges_2_make_notes_of(self, value: Dict[str, str]):
+        self._edges_2_make_notes_of = value
 
     @property
     def current_sheet_import(self):

@@ -140,3 +140,4 @@ WHERE did = ? and mid = ?""", smr_deck_id, self.note_manager.col.models.id_for_n
                 self.smr_world.add_smr_notes(smr_notes_2_add)
                 self.smr_world.update_smr_triples_card_ids(data=smr_cards_2_update, collection=self.collection)
             importer.import_notes_and_cards()
+            importer.mw.progress.finish()
