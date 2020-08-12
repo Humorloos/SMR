@@ -1,6 +1,7 @@
-from main.statusmanager import StatusManager
+from anki import Collection
+from aqt import mw
 from main.utils import deep_merge
-from main.xmanager import get_topic_index, get_os_mod, XManager, get_parent_question_topic, get_parent_a_topics
+from main.xmanager import get_topic_index, XManager, get_parent_question_topic, get_parent_a_topics
 from main.xmindimport import XmindImporter
 from main.xnotemanager import field_by_name, XNoteManager, FieldTranslator, field_from_content, meta_from_fields, \
     content_from_field, title_from_field, image_from_field, change_dict, get_index_by_a_id, get_index_by_field_name, \
@@ -10,10 +11,8 @@ from main.xontology import XOntology
 
 def raise_sync_error(content, question_note, text_pre, text_post):
     tag = question_note.tags[0]
-    question_title = field_by_name(
-        question_note.fields, 'qt')
-    reference = field_by_name(
-        question_note.fields, 'rf')
+    question_title = field_by_name(question_note.fields, 'qt')
+    reference = field_by_name(question_note.fields, 'rf')
     raise ReferenceError(
         text_pre + content + '" to question "' + question_title +
         '" in map "' + tag + '" (reference "' + reference + '"). ' +
@@ -22,18 +21,85 @@ def raise_sync_error(content, question_note, text_pre, text_post):
 
 # Algorithm for synchronization was adopted from
 # https://unterwaditzer.net/2016/sync-algorithm.html
-class XSyncer:
-    def __init__(self, col, status_file=None):
-        self.col = col
-        self.note_manager = XNoteManager(col=col)
-        self.xmind_files = self.note_manager.get_xmind_files()
+class SmrSynchronizer:
+    def __init__(self):
+        self.col = mw.col
+        self.note_manager = XNoteManager(col=mw.col)
+        self.smr_world = mw.smr_world
         self.map_manager = None
-        self.onto = None
-        self.status_manager = StatusManager(status_file=status_file)
-        self.change_list = None
         self.current_sheet_sync = None
         self.warnings = []
         self.translator = FieldTranslator()
+
+    @property
+    def col(self) -> Collection:
+        return self._col
+
+    @col.setter
+    def col(self, value: Collection):
+        self._col = value
+
+    @property
+    def note_manager(self) -> XNoteManager:
+        return self._note_manager
+
+    @note_manager.setter
+    def note_manager(self, value: XNoteManager):
+        self._note_manager = value
+
+    @property
+    def smr_world(self) -> XOntology:
+        return self._smr_world
+
+    @smr_world.setter
+    def smr_world(self, value: XOntology):
+        self._smr_world = value
+
+    def synchronize(self):
+        local = {f: self.note_manager.get_local(f) for f in self.xmind_files}
+        status = {d['file']: d for d in self.status_manager.status}
+        x_decks = set(local[x_id]['deck'] for x_id in local)
+        for d in x_decks:
+            self.onto = None
+            for f in self.xmind_files:
+                self.change_list = {}
+                if f not in status:
+                    importer = XmindImporter(col=self.note_manager.col, file=f)
+                    # importer.initialize_import(deck_id=d, repair=False)
+                    continue
+                local_change = status[f]['ankiMod'] != local[f]['ankiMod']
+                if status[f]['osMod'] != os_file_mods[f]:
+                    self.map_manager = XManager(f)
+                    for file in self.map_manager.referenced_files:
+                        if file not in self.xmind_files:
+                            self.xmind_files.append(file)
+                    remote_file = self.map_manager.remote_file()
+                    remote_change = status[f]['xMod'] != remote_file['xMod']
+                    status[f]['osMod'] = os_file_mods[f]
+                else:
+                    remote_change = False
+                if not local_change and not remote_change:
+                    continue
+                elif local_change and not remote_change:
+                    if not self.onto:
+                        self.onto = XOntology(d)
+                    self.map_manager = XManager(f)
+                    self.process_local_changes(status=status[f]['sheets'],
+                                               local=local[f]['sheets'])
+
+                    # Adjust notes according to self.change_list
+                    self.process_change_list()
+                    self.map_manager.save_changes()
+                elif not local_change and remote_change:
+                    remote_sheets = self.map_manager.get_remote_sheets()
+                    # noinspection PyUnboundLocalVariable
+                    self.process_remote_changes(status=status[f]['sheets'],
+                                                remote=remote_sheets, deck_id=d)
+                else:
+                    print('')
+            if self.onto:
+                self.onto.save_changes()
+        self.note_manager.save_col()
 
     # TODO: implement add_answer()
     def add_answer(self, a_id, q_id, local):
@@ -249,11 +315,6 @@ class XSyncer:
         # Change answer in status
 
         # Adjust answer index for answers that have changed position
-        # TODO: do not forget to adjust AIndex field of ontology, sortid
-        #  field does not have to be adjusted, neither ref, they are rather
-        #  useless anyways and are only used once when importing. At some
-        #  point in time I should remove them...
-        # TODO: here we also want to register the change in sort_id_changes
         # Adjust ref of all following notes and set new fields
         # if note:
         #     if ref_changes:
@@ -331,53 +392,6 @@ class XSyncer:
 
         # Remove answer from status
         del status[answer]
-
-    def run(self):
-        local = {f: self.note_manager.get_local(f) for f in self.xmind_files}
-        os_file_mods = {f: get_os_mod(f) for f in self.xmind_files}
-        status = {d['file']: d for d in self.status_manager.status}
-        x_decks = set(local[x_id]['deck'] for x_id in local)
-        for d in x_decks:
-            self.onto = None
-            for f in self.xmind_files:
-                self.change_list = {}
-                if f not in status:
-                    importer = XmindImporter(col=self.note_manager.col, file=f)
-                    # importer.initialize_import(deck_id=d, repair=False)
-                    continue
-                local_change = status[f]['ankiMod'] != local[f]['ankiMod']
-                if status[f]['osMod'] != os_file_mods[f]:
-                    self.map_manager = XManager(f)
-                    for file in self.map_manager.referenced_files:
-                        if file not in self.xmind_files:
-                            self.xmind_files.append(file)
-                    remote_file = self.map_manager.remote_file()
-                    remote_change = status[f]['xMod'] != remote_file['xMod']
-                    status[f]['osMod'] = os_file_mods[f]
-                else:
-                    remote_change = False
-                if not local_change and not remote_change:
-                    continue
-                elif local_change and not remote_change:
-                    if not self.onto:
-                        self.onto = XOntology(d)
-                    self.map_manager = XManager(f)
-                    self.process_local_changes(status=status[f]['sheets'],
-                                               local=local[f]['sheets'])
-
-                    # Adjust notes according to self.change_list
-                    self.process_change_list()
-                    self.map_manager.save_changes()
-                elif not local_change and remote_change:
-                    remote_sheets = self.map_manager.get_remote_sheets()
-                    # noinspection PyUnboundLocalVariable
-                    self.process_remote_changes(status=status[f]['sheets'],
-                                                remote=remote_sheets, deck_id=d)
-                else:
-                    print('')
-            if self.onto:
-                self.onto.save_changes()
-        self.note_manager.save_col()
 
     def process_change_list(self):
         for sheet in self.change_list:

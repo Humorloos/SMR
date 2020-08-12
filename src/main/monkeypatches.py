@@ -1,14 +1,16 @@
 """monkey patches"""
 import os
-from typing import Callable, Union
+from typing import Callable, Union, Any
 
 from anki.hooks import wrap
 from anki.importing.noteimp import NoteImporter
-from aqt import importing
+from aqt import importing, deckbrowser
+from aqt.deckbrowser import DeckBrowser
 from aqt.importing import ImportDialog
 from aqt.main import AnkiQt
 from aqt.utils import tooltip, showText
 from main.deckselectiondialog import DeckSelectionDialog
+from main.smrsynchronizer import SmrSynchronizer
 from main.xmindimport import XmindImporter
 
 IMPORT_CANCELED_MESSAGE = 'Import canceled'
@@ -44,6 +46,23 @@ def patch_import_diaglog(self: ImportDialog, mw: AnkiQt, importer: Union[NoteImp
 
 
 importing.ImportDialog.__init__ = wrap(importing.ImportDialog.__init__, patch_import_diaglog, pos="around")
+
+
+# noinspection PyPep8Naming
+def patch__linkHandler(self, url: str, _old: Callable) -> Any:
+    if url == "sync":
+        synchronizer = SmrSynchronizer()
+        synchronizer.synchronize()
+    return _old(self, url)
+
+
+deckbrowser.DeckBrowser._linkHandler = wrap(DeckBrowser._linkHandler, patch__linkHandler, pos="around")
+# def onSync(self):
+#
+#
+#
+# AnkiQt.onSMRSync = onSync
+
 #
 # def showReviewer(self):
 #     self.mw.col.reset()
@@ -538,51 +557,3 @@ importing.ImportDialog.__init__ = wrap(importing.ImportDialog.__init__, patch_im
 #
 #
 # scheduler.Scheduler.getAnswerFurtherDown = getAnswerFurtherDown
-#
-#
-# # monkeypatches: ###############################################################
-# # noinspection PyUnresolvedReferences
-# def smr_linkhandler(self, url):
-#     if ":" in url:
-#         (cmd, arg) = url.split(":")
-#     else:
-#         cmd = url
-#     if cmd == "open":
-#         self._selDeck(arg)
-#     elif cmd == "opts":
-#         self._showOptions(arg)
-#     elif cmd == "shared":
-#         self._onShared()
-#     elif cmd == "import":
-#         self.mw.onImport()
-#     elif cmd == "lots":
-#         openHelp("using-decks-appropriately")
-#     elif cmd == "hidelots":
-#         self.mw.pm.profile['hideDeckLotsMsg'] = True
-#         self.refresh()
-#     elif cmd == "create":
-#         deck = getOnlyText(_("Name for deck:"))
-#         if deck:
-#             self.mw.col.decks.id(deck)
-#             self.refresh()
-#     elif cmd == "drag":
-#         draggedDeckDid, ontoDeckDid = arg.split(',')
-#         self._dragDeckOnto(draggedDeckDid, ontoDeckDid)
-#     elif cmd == "collapse":
-#         self._collapse(arg)
-#     ############################################################################
-#     elif cmd == "sync":
-#         self.mw.onSMRSync()
-#     ############################################################################
-#     return False
-#
-#
-# DeckBrowser._linkHandler = smr_linkhandler
-#
-#
-# def onSync(self):
-#     syncer = XSyncer(self.col)
-#     syncer.run()
-#
-#
-# AnkiQt.onSMRSync = onSync

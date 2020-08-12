@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from anki import Collection
 
-from main.sync import XSyncer
+from main.sync import SmrSynchronizer
 from main.consts import ADDON_PATH, USER_PATH
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support', 'syncer')
@@ -19,7 +19,7 @@ class TestRun(TestCase):
                                'collection.anki2')
         col = Collection(colPath)
 
-        self.syncer = XSyncer(col=col, status_file=self.status_file)
+        self.syncer = SmrSynchronizer(col=col, status_file=self.status_file)
         self.syncer.run()
         self.fail()
 
@@ -36,7 +36,7 @@ class TestRun(TestCase):
         col_path = os.path.join(SUPPORT_PATH, 'cols', 'changes',
                                 'collection.anki2')
         col = Collection(col_path)
-        self.syncer = XSyncer(col=col, status_file=self.status_file)
+        self.syncer = SmrSynchronizer(col=col, status_file=self.status_file)
 
         # Init test
         self.syncer.run()
@@ -76,7 +76,7 @@ class TestRun(TestCase):
         col_path = os.path.join(SUPPORT_PATH, 'cols', 'no_changes',
                                 'collection.anki2')
         col = Collection(col_path)
-        self.syncer = XSyncer(col=col, status_file=self.status_file)
+        self.syncer = SmrSynchronizer(col=col, status_file=self.status_file)
 
         # Init test
         self.syncer.run()
@@ -91,7 +91,7 @@ class TestRun(TestCase):
             SUPPORT_PATH, 'cols', 'non_leaf_answer_deletion_error',
             'collection.anki2')
         col = Collection(col_path)
-        self.syncer = XSyncer(col=col, status_file=self.status_file)
+        self.syncer = SmrSynchronizer(col=col, status_file=self.status_file)
         with self.assertRaises(ReferenceError):
             self.syncer.run()
 
@@ -100,6 +100,6 @@ class TestRun(TestCase):
             SUPPORT_PATH, 'cols', 'answer_added_error',
             'collection.anki2')
         col = Collection(col_path)
-        self.syncer = XSyncer(col=col, status_file=self.status_file)
+        self.syncer = SmrSynchronizer(col=col, status_file=self.status_file)
         with self.assertRaises(ReferenceError):
             self.syncer.run()

@@ -1,6 +1,8 @@
 import anki.importing as importing
 import aqt.deckbrowser as deckbrowser
 import main.consts as cts
+# noinspection PyUnresolvedReferences
+import main.monkeypatches
 from anki.hooks import addHook
 from anki.lang import _
 from aqt import mw
@@ -53,5 +55,4 @@ def on_profile_loaded():
 addHook("profileLoaded", on_profile_loaded)
 
 # Add xmind importer to importers
-importing.Importers = importing.Importers + \
-                      ((_("Xmind map (*.xmind)"), XmindImporter),)
+importing.Importers = importing.Importers + ((_("Xmind map (*.xmind)"), XmindImporter),)
