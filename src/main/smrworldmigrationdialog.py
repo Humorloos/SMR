@@ -20,15 +20,14 @@ class SmrWorldMigrationDialog(QMessageBox):
         self.setWindowTitle('Stepwise Map Retrieval addon update to version ' + cts.SMR_CONFIG['version'])
         self.setMinimumWidth(600)
         self.SUCCESSFUL_MIGRATION_REQUIREMENTS = \
-            'For the update to be successful, please make sure all notes in your collection that were imported from ' \
-            'xmind files are up to date and the xmind files are stored at the same place where they were stored ' \
-            'during the import. '
+            'For the update to be successful, please make sure that all of your imported xmind files are stored at ' \
+            'the same place where they were when you last imported them. '
         self.setText(
             'This update will make tags assigned to your concept maps compatible with the addon "hierarchical tags". '
-            'Stepwise Map Retrieval now also recognizes crosslinks between answers with the same content '\
-            'during review and considers them in the review order.\n\n' +
+            'Stepwise Map Retrieval will now match answers with the same content during review and considers them '\
+            'in the review order.\n\n' +
             self.SUCCESSFUL_MIGRATION_REQUIREMENTS +
-            '\n\nDue to the automatic recognition of crosslinks, this addon does not recognize hyperlinks '
+            '\n\nDue to the automatic recognition of crosslinks, this addon will not recognize hyperlinks '
             'in maps anymore. If you want to include crosslinks in your concept map, you need to use concepts with '
             'the same content now. For further explanations, refer to <link missing>')
         self.setStandardButtons(self.Cancel)
