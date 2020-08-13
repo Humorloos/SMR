@@ -4,8 +4,8 @@ from unittest import TestCase
 from consts import ADDON_PATH
 from smr import CGraph
 
-from pylib.anki import Collection
-from pylib.anki.collection import _Collection
+from anki import Collection
+from anki.collection import _Collection
 
 class TestCGraph(TestCase):
     def setUp(self):

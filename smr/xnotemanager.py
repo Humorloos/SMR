@@ -2,8 +2,8 @@ import json
 import re
 from typing import List, Optional, Dict
 
-from pylib.anki import Collection
-from pylib.anki.utils import splitFields, joinFields
+from anki import Collection
+from anki.utils import splitFields, joinFields
 from smr.consts import SMR_NOTE_FIELD_NAMES, X_MEDIA_EXTENSIONS, X_IMAGE_EXTENSIONS, X_MAX_ANSWERS
 from smr.dto.nodecontentdto import NodeContentDTO
 from smr.smrworld import SmrWorld

@@ -1,5 +1,5 @@
-from pylib.anki import Collection
-from qt.aqt import mw
+import aqt as aqt
+from anki import Collection
 from smr.utils import deep_merge
 from smr.xmanager import get_topic_index, XManager, get_parent_question_topic, get_parent_a_topics
 from smr.xmindimport import XmindImporter
@@ -23,9 +23,9 @@ def raise_sync_error(content, question_note, text_pre, text_post):
 # https://unterwaditzer.net/2016/sync-algorithm.html
 class SmrSynchronizer:
     def __init__(self):
-        self.col = mw.col
-        self.note_manager = XNoteManager(col=mw.col)
-        self.smr_world = mw.smr_world
+        self.col = aqt.mw.col
+        self.note_manager = XNoteManager(col=aqt.mw.col)
+        self.smr_world = aqt.mw.smr_world
         self.map_manager = None
         self.current_sheet_sync = None
         self.warnings = []

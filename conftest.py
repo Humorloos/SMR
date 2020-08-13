@@ -6,14 +6,14 @@ import bs4
 import pandas as pd
 import pytest
 
-import qt.aqt
+import aqt
 import smr.config as config
 import smr.smrworld as smrworld
 import smr.xmanager as xmanager
 import smr.xmindimport as xmindimport
 import smr.xontology as xontology
 import tests.constants as cts
-from pylib.anki import Collection
+from anki import Collection
 from smr.config import get_or_create_smr_world
 
 
@@ -184,19 +184,27 @@ def xmind_importer(mocker, empty_anki_collection_session) -> xmindimport.XmindIm
     """
     XmindImporter instance for file example map.xmind
     """
-    mocker.patch("qt.aqt.mw")
+    mocker.patch("aqt.mw")
     yield xmindimport.XmindImporter(col=empty_anki_collection_session, file=cts.EXAMPLE_MAP_PATH)
 
 
 @pytest.fixture
 def patch_aqt_mw_empty_smr_world(mocker, set_up_empty_smr_world):
-    mocker.patch('qt.aqt.mw')
-    qt.aqt.mw.smr_world = set_up_empty_smr_world
-    qt.aqt.mw.return_value = qt.aqt.mw
-    yield qt.aqt.mw
+    mocker.patch('aqt.mw')
+    aqt.mw.smr_world = set_up_empty_smr_world
+    aqt.mw.return_value = aqt.mw
+    yield aqt.mw
+
+
+@pytest.fixture
+def patch_aqt_mw_smr_world_and_col_with_example_map(mocker, smr_world_with_example_map):
+    mocker.patch('aqt.mw')
+    aqt.mw.smr_world = smr_world_with_example_map
+    aqt.mw.return_value = aqt.mw
+    yield aqt.mw
 
 
 @pytest.fixture
 def patch_aqt_mw_empty_smr_world_and_collection_4_migration(patch_aqt_mw_empty_smr_world, collection_4_migration):
-    qt.aqt.mw.col = collection_4_migration
+    aqt.mw.col = collection_4_migration
     yield

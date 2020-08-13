@@ -1,7 +1,7 @@
 import os
 from typing import List, TextIO, Tuple, Dict
 
-from pylib.anki import Collection
+from anki import Collection
 from owlready2.namespace import World
 from smr.consts import ADDON_PATH, USER_PATH
 from smr.dto.smrnotedto import SmrNoteDto
@@ -100,7 +100,7 @@ class SmrWorld(World):
         """
         Registers a deck for an imported ontology
         :param ontology_base_iri: base_iri of the imported ontology
-        :param deck_id: the id of the deck from pylib.anki (number in form of a string)
+        :param deck_id: the id of the deck from anki (number in form of a string)
         """
         c = self.graph.execute("SELECT c FROM ontologies WHERE iri = '{}'".format(ontology_base_iri)).fetchone()[0]
         self.graph.execute("INSERT INTO ontology_lives_in_deck VALUES (?, ?)", (int(deck_id), c))

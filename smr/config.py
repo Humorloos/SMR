@@ -1,7 +1,7 @@
 import os
 from typing import Dict, List
 
-from qt.aqt import mw
+from aqt import mw
 from smr.consts import X_MODEL_NAME, X_MODEL_VERSION, SMR_CONFIG, USER_PATH
 from smr.smrworld import SmrWorld, FILE_NAME
 from smr.template import update_x_model, add_x_model

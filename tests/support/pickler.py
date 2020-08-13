@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from PyQt5 import QtWidgets
 
 from tests.shared import getEmptyCol
-from pylib.anki import Collection
+from anki import Collection
 
 from consts import ADDON_PATH
 from xmindimport import XmindImporter

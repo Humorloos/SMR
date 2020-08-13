@@ -2,10 +2,10 @@ import json
 import os
 from typing import Dict, List
 
-import qt.aqt as aqt
+import aqt as aqt
 import smr.consts as cts
-from pylib.anki import Collection
-from pylib.anki.utils import splitFields, intTime
+from anki import Collection
+from anki.utils import splitFields, intTime
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.smrworld import SmrWorld

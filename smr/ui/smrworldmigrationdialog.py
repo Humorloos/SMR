@@ -4,7 +4,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QDesktopWidget, QMessageBox
 
 import smr.consts as cts
-from qt.aqt import AnkiQt
+from aqt import AnkiQt
 
 
 class SmrWorldMigrationDialog(QMessageBox):

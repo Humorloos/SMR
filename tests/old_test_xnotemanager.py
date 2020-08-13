@@ -2,7 +2,7 @@ import os
 
 from unittest import TestCase
 
-from pylib.anki import Collection
+from anki import Collection
 
 from consts import ADDON_PATH
 
@@ -78,38 +78,6 @@ class FieldFromClass(TestFieldTranslator):
         act = translator.field_from_class(class_name)
         exp = 'biological psychology (text in parenthses)'
         self.assertEqual(exp, act)
-
-
-class TestClassify(TestFieldTranslator):
-    def test_only_text(self):
-        content = {"content": "biological psychology",
-                   "media": {"image": None, "media": None}}
-        act = self.field_translator.class_from_content(content)
-        self.fail()
-
-    def test_only_image(self):
-        content = {"content": "", "media": {
-            "image": "attachments/09r2e442o8lppjfeblf7il2rmd.png",
-            "media": None}}
-        act = self.field_translator.class_from_content(content)
-        exp = 'ximage_09r2e442o8lppjfeblf7il2rmd_extension_png'
-        self.assertEqual(exp, act)
-
-    def test_only_media(self):
-        content = {"content": "", "media": {
-            "image": None,
-            "media": "attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3"}}
-        act = self.field_translator.class_from_content(content)
-        exp = 'xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3'
-        self.assertEqual(exp, act)
-
-    def test_parentheses(self):
-        content = {"content": "biological psychology (text in parenthses)",
-                   "media": {"image": None, "media": None}}
-        act = self.field_translator.class_from_content(content)
-        exp = 'biological_psychology_xlparenthesis_text_in_parenthses_xrparenthesis'
-        self.assertEqual(exp, act)
-
 
 class TestContentFromField(TestCase):
     def test_content_from_field(self):

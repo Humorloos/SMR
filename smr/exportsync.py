@@ -7,9 +7,9 @@ import zipfile
 
 from bs4 import BeautifulSoup
 
-import qt.aqt.main as sync
-from pylib.anki.utils import splitFields
-from qt.aqt.utils import tooltip
+import aqt.main as sync
+from anki.utils import splitFields
+from aqt.utils import tooltip
 from smr.utils import get_smr_model_id
 from smr.xmanager import get_node_title, get_node_image
 from smr.xmindimport import XmindImporter

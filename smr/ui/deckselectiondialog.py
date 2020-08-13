@@ -6,11 +6,11 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QDialog, QDesktopWidget
 
-from qt.aqt import AnkiQt
+from aqt import AnkiQt
 from smr.consts import ICONS_PATH
 
 import aqt
-from qt.aqt.deckchooser import DeckChooser
+from aqt.deckchooser import DeckChooser
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 
 

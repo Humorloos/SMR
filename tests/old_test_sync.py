@@ -2,7 +2,7 @@ import os, tempfile, shutil
 
 from unittest import TestCase
 
-from pylib.anki import Collection
+from anki import Collection
 
 from smr import SmrSynchronizer
 from consts import ADDON_PATH, USER_PATH

@@ -3,12 +3,12 @@ from typing import List, Optional, Dict, Collection
 
 import bs4
 
-import qt.aqt as aqt
+import aqt as aqt
 from owlready2 import ThingClass, ObjectPropertyClass
-from pylib.anki.importing.noteimp import NoteImporter, ForeignNote, ForeignCard, ADD_MODE
-from pylib.anki.models import NoteType
-from pylib.anki.utils import joinFields
-from qt.aqt.main import AnkiQt
+from anki.importing.noteimp import NoteImporter, ForeignNote, ForeignCard, ADD_MODE
+from anki.models import NoteType
+from anki.utils import joinFields
+from aqt.main import AnkiQt
 from smr.consts import X_MODEL_NAME, X_MAX_ANSWERS, SMR_NOTE_FIELD_NAMES
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.dto.nodecontentdto import NodeContentDTO

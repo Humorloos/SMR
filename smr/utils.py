@@ -1,10 +1,10 @@
 import re
 from typing import Optional
 
-from pylib.anki.models import ModelManager
+from anki.models import ModelManager
 from smr.consts import X_MODEL_NAME
 
-from pylib.anki.utils import ids2str
+from anki.utils import ids2str
 
 
 def get_smr_model_id(model_manager: ModelManager) -> Optional[int]:

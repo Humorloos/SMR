@@ -2,13 +2,13 @@
 import os
 from typing import Callable, Union, Any
 
-from pylib.anki.hooks import wrap
-from pylib.anki.importing.noteimp import NoteImporter
-from qt.aqt import importing, deckbrowser
-from qt.aqt.deckbrowser import DeckBrowser
-from qt.aqt.importing import ImportDialog
-from qt.aqt.main import AnkiQt
-from qt.aqt.utils import tooltip, showText
+from anki.hooks import wrap
+from anki.importing.noteimp import NoteImporter
+from aqt import importing, deckbrowser
+from aqt.deckbrowser import DeckBrowser
+from aqt.importing import ImportDialog
+from aqt.main import AnkiQt
+from aqt.utils import tooltip, showText
 from smr.ui.deckselectiondialog import DeckSelectionDialog
 from smr.smrsynchronizer import SmrSynchronizer
 from smr.xmindimport import XmindImporter

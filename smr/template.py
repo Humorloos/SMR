@@ -3,8 +3,8 @@ from typing import Dict, List
 from smr.consts import SMR_NOTE_FIELD_NAMES, SMR_FIELD_IDENTIFIERS, X_MODEL_NAME, X_CARD_NAMES, X_MODEL_VERSION, \
     X_MAX_ANSWERS, X_SORT_FIELD
 
-from pylib.anki import Collection
-from pylib.anki.models import ModelManager, NoteType
+from anki import Collection
+from anki.models import ModelManager, NoteType
 
 
 def get_answer_field_name(answer_id: int) -> str:

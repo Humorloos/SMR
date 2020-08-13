@@ -1,12 +1,12 @@
-import pylib.anki.importing as importing
-import qt.aqt.deckbrowser as deckbrowser
+import anki.importing as importing
+import aqt.deckbrowser as deckbrowser
 import smr.consts as cts
 # noinspection PyUnresolvedReferences
 import smr.monkeypatches
-from pylib.anki.hooks import addHook
-from pylib.anki.lang import _
-from qt.aqt import mw
-from qt.aqt.utils import showCritical, tooltip
+from anki.hooks import addHook
+from anki.lang import _
+from aqt import mw
+from aqt.utils import showCritical, tooltip
 from smr.collection2smrworldmigrator import Collection2SmrWorldMigrator
 from smr.config import create_or_update_model, update_smr_version, get_or_create_smr_world
 from smr.ui.smrworldmigrationdialog import SmrWorldMigrationDialog
@@ -25,7 +25,7 @@ def on_profile_loaded():
             current_version = LooseVersion(mw.col.get_config('smr')['version'])
         # if the version is below 0.1.0, show smr world migration dialog and migrate existing notes if the dialog is
         # accepted. Only update the version after the migration
-        if current_version < cts.SMR_WORLD_VERSION:
+        if current_version < cts.SMR_WORLD_VERSION and cts.X_MODEL_NAME in [m['name'] for m in mw.col.models.all()]:
             migration_dialog = SmrWorldMigrationDialog(mw)
             dialog_status = migration_dialog.exec()
             if dialog_status == int(migration_dialog.AcceptRole):
@@ -45,6 +45,7 @@ def on_profile_loaded():
             # Update version
             create_or_update_model()
             update_smr_version()
+            current_version = LooseVersion(cts.SMR_CONFIG['version'])
         # Add SMR Sync Button to Deckbrowser if the addon was already updated to version 0.1.0
         if current_version >= cts.SMR_WORLD_VERSION:
             deckbrowser.DeckBrowser.drawLinks.append(["", "sync", "SMR Sync"])
