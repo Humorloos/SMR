@@ -1,2 +1,2 @@
 # noinspection PyUnresolvedReferences
-from main import main
+import smr.main
