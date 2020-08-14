@@ -110,7 +110,7 @@ class SmrWorld(World):
         Adds an entry for an xmind file to the relation xmind_files
         :param entities: List of entries to be inserted into the xmind_files relation
         """
-        self.graph.db.executemany("INSERT INTO main.xmind_files VALUES (?, ?, ?, ?)",
+        self.graph.db.executemany("INSERT INTO main.xmind_files VALUES (?, ?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
     def add_xmind_sheets(self, entities: List[XmindSheetDto]) -> None:
@@ -118,7 +118,7 @@ class SmrWorld(World):
         Adds an entry for an xmind sheet to the relation xmind_sheets
         :param entities: List of entries to be inserted into the xmind_sheets relation
         """
-        self.graph.db.executemany("INSERT INTO main.xmind_sheets VALUES (?, ?, ?)",
+        self.graph.db.executemany("INSERT INTO main.xmind_sheets VALUES (?, ?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
     def add_xmind_nodes(self, entities: List[XmindNodeDto]) -> None:
@@ -152,8 +152,8 @@ class SmrWorld(World):
         the card with the card id to add to each triple
         :param collection: The collection that contains the cards whose ids to add
         """
-        self.attach_anki_collection(collection)
-        self.graph.db.executemany("""with card_triples(edge_id, child_node_id, card_id) as (
+        with AnkiCollectionAttachement(self, collection):
+            self.graph.db.executemany("""with card_triples(edge_id, child_node_id, card_id) as (
     select smr_triples.edge_id, child_node_id, cards.id
     from smr_triples
              join smr_notes using (edge_id)
@@ -166,7 +166,6 @@ update smr_triples
 set card_id = (select card_id from card_triples)
 where edge_id = (select edge_id from card_triples)
   and child_node_id = (select child_node_id from card_triples)""", data)
-        self.detach_anki_collection(collection)
 
     def add_xmind_media_to_anki_files(self, entities: List[XmindMediaToAnkiFilesDto]) -> None:
         """
@@ -233,30 +232,59 @@ select root_id, group_concat(row, '') from rows group by root_id""".format(
             edge_selection_clause=get_xmind_content_selection_clause('e'))).fetchall()
         return {row[0]: row[1] for row in reference_data}
 
-    def get_smr_note_question_field(self, edge_id: str) -> str:
+    def get_smr_note_question_fields(self, edge_ids: List[str]) -> Dict[str, str]:
         """
-        gets the content of an smr note's question field for the specified edge id
-        :param edge_id: the edge id of the edge that represents the question to get the content for
-        :return: the textual content for the note question field
+        gets the content of smr notes' question fields for the specified edge ids
+        :param edge_ids: the edge ids of the edges that represents the questions to get the content for
+        :return: the textual content for the note question fields in a dictionary where keys are the edge ids and
+        values are the question field contents
         """
-        return self.graph.execute("""
-SELECT {edge_selection_clause}
+        question_fields = self.graph.execute(f"""
+SELECT DISTINCT edge_id, {get_xmind_content_selection_clause('xmind_edges')}
 FROM xmind_edges
-WHERE edge_id = ?;
-        """.format(edge_selection_clause=get_xmind_content_selection_clause('xmind_edges')), (edge_id,)).fetchone()[0]
+WHERE edge_id in ({"'" + "', '".join(edge_ids) + "'"})
+        """).fetchall()
+        return {row[0]: row[1] for row in question_fields}
 
-    def get_smr_note_answer_fields(self, edge_id: str) -> List[str]:
+    def get_smr_note_tags(self, anki_collection: Collection, edge_ids: List[str]) -> Dict[str, str]:
         """
-        gets the contents of the answer fields of the smr note belonging to the specified edge id
-        :param edge_id: xmind id of the edge that belongs to the node to get the answer fields for
-        :return: answer fields as a llist of strings
+        Gets tags for all provided edges that are compatible with the hierarchical tags addon. The tag is built from
+        the deck to which notes are imported, the file name, and the xmind sheet to which the the note belongs,
+        replacing spaces with underscores to produce valid tags
+        :param anki_collection: the anki collection to get the deck name from
+        :param edge_ids: the xmind edge ids to get the tags for
+        :return: the tags in a dictionary where keys are the edge ids and values are the tags for the respective notes
         """
-        return [a[0] for a in self.graph.execute("""SELECT DISTINCT {node_selection_clause}
+        with AnkiCollectionAttachement(smr_world=self, anki_collection=anki_collection):
+            tags = self.graph.execute(f"""
+select xe.edge_id edge_id, ad.name || '::' || xf.file_name || '::' || xs.name tag
+from xmind_edges xe
+         join xmind_sheets xs on xe.sheet_id = xs.sheet_id
+         join xmind_files xf on xs.file_directory = xf.directory and xs.file_name = xf.file_name
+         join anki_collection.decks ad on xf.deck_id = ad.id
+where edge_id in ({"'" + "', '".join(edge_ids) + "'"})""").fetchall()
+            return {row[0]: " " + row[1].replace(" ", "_") + " " for row in tags}
+
+    def get_smr_note_answer_fields(self, edge_ids: List[str]) -> Dict[str, List[str]]:
+        """
+        gets the contents of the answer fields of the smr notes belonging to the specified edge ids
+        :param edge_ids: xmind id of the edge that belongs to the node to get the answer fields for
+        :return: A dictionary where keys are the edges to which answer fields belong and values are the answer fields
+        as a list of strings
+        """
+        answer_fields = self.graph.execute(f"""
+SELECT DISTINCT t.edge_id, {get_xmind_content_selection_clause('n')}
 FROM smr_triples t
          JOIN xmind_nodes n ON t.child_node_id = n.node_id
-WHERE edge_id = ?
-ORDER BY n.order_number""".format(node_selection_clause=get_xmind_content_selection_clause('n')),
-                                                 (edge_id,)).fetchall()]
+WHERE edge_id in ({"'" + "', '".join(edge_ids) + "'"})
+ORDER BY t.edge_id, n.order_number""").fetchall()
+        grouped_answer_fields = {}
+        for row in answer_fields:
+            try:
+                grouped_answer_fields[row[0]].append(row[1])
+            except KeyError:
+                grouped_answer_fields[row[0]] = [row[1]]
+        return grouped_answer_fields
 
     def get_smr_notes_sort_data(self, edge_ids: List[str]) -> Dict[str, str]:
         """
@@ -308,3 +336,18 @@ group by root_id""").fetchall()
         self.graph.commit()
         self.graph.execute("DETACH DATABASE ?", (ANKI_COLLECTION_DB_NAME,))
         anki_collection.reopen()
+
+
+class AnkiCollectionAttachement:
+    """
+    Context Manager for queries that use joins with the anki collection
+    """
+    def __init__(self, smr_world: SmrWorld, anki_collection: Collection):
+        self.world = smr_world
+        self.collection = anki_collection
+
+    def __enter__(self):
+        self.world.attach_anki_collection(self.collection)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.world.detach_anki_collection(self.collection)

@@ -71,10 +71,10 @@ def test_get_smr_note_reference_fields(smr_world_with_example_map):
                                       'up: Serotonin, dopamine, adrenaline, noradrenaline</li>'}
 
 
-def test_get_smr_note_sort_fields(smr_world_for_tests):
+def test_get_smr_note_sort_fields(smr_world_4_tests):
     # when
     sort_fields = get_smr_note_sort_fields(
-        smr_world=smr_world_for_tests,
+        smr_world=smr_world_4_tests,
         edge_ids=[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID])
     # then
     assert sort_fields == {'6iivm8tpoqj2c0euaabtput14l': '|{|{{{|\x7f{', '7ite3obkfmbcasdf12asd123ga': '||{{{'}

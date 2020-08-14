@@ -68,8 +68,9 @@ def test_import_file(xmind_importer, mocker, x_manager):
     cut.import_file(x_manager)
     # then
     assert cut.import_sheet.call_count == 2
-    assert cut.files_2_import[0].path == cts.EXAMPLE_MAP_PATH
+    assert cut.files_2_import[0].directory == cts.RESOURCES_PATH
     assert cut.files_2_import[0].deck_id == cts.TEST_DECK_ID
+    assert cut.files_2_import[0].file_name == cts.EXAMPLE_MAP_NAME
 
 
 def test_import_sheet(xmind_importer, mocker, x_manager):
@@ -89,7 +90,8 @@ def test_import_sheet(xmind_importer, mocker, x_manager):
     assert cut.current_sheet_import == sheet_2_import
     assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.sheets_2_import[0].sheet_id == '2485j5qgetfevlt00vhrn53961'
-    assert cut.sheets_2_import[0].path == cts.EXAMPLE_MAP_PATH
+    assert cut.sheets_2_import[0].file_directory == cts.RESOURCES_PATH
+    assert cut.sheets_2_import[0].file_name == cts.EXAMPLE_MAP_NAME
 
 
 @pytest.fixture
@@ -173,7 +175,7 @@ def xmind_importer_import_edge(active_xmind_importer, mocker):
     mocker.patch.object(importer, "_mw")
     mocker.patch.object(importer, "import_node_if_concept")
     mocker.patch.object(importer, "add_image_and_media_to_collection")
-    mocker.patch.object(importer, "generate_note_from_edge_id")
+    mocker.patch.object(importer, "generate_notes")
     return importer
 
 
@@ -195,7 +197,7 @@ def assert_import_edge_not_executed(cut):
     assert cut.smr_world.add_xmind_edge.call_count == 0
     assert cut.import_node_if_concept.call_count == 0
     assert cut.is_running is False
-    assert cut.generate_note_from_edge_id.call_count == 0
+    assert cut.generate_notes.call_count == 0
     assert cut.add_image_and_media_to_collection.call_count == 0
 
 
@@ -259,36 +261,35 @@ def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     assert len(cut.edges_2_import) == 1
 
 
-def test_generate_note_from_edge_id(mocker, active_xmind_importer, smr_world_for_tests):
+def test_generate_notes(active_xmind_importer, smr_world_4_tests, collection_4_migration):
     # given
     cut = active_xmind_importer
-    cut._smr_world = smr_world_for_tests
-    mocker.spy(cut._active_manager, "acquire_anki_tag")
+    cut.col = collection_4_migration
+    cut._smr_world = smr_world_4_tests
     # when
-    edge_ids = [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
-    note = cut.generate_note_from_edge_id(
-        edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID,
-        reference_fields=get_smr_note_reference_fields(smr_world_for_tests, edge_ids),
-        sort_fields=get_smr_note_sort_fields(smr_world_for_tests, edge_ids), sheet_name='biological psychology')
+    cut.edge_ids_2_make_notes_of = [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
+    cut.generate_notes()
     # then
-    assert cut.active_manager.acquire_anki_tag.call_count == 1
-    assert pickle.dumps(note) == cts.EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE
+    imported_note = cut.notes_2_import[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
+    assert imported_note.fieldsStr == 'biological psychology<li>investigates: information transfer and ' \
+                                      'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits ' \
+                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>arebiogenic ' \
+                                      'amines|{|{{{|{'
+    assert imported_note.tags == [' Example::test_file::test_sheet ', cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
 
 
-def test_finish_import(active_xmind_importer, smr_world_for_tests, mocker):
+def test_finish_import(active_xmind_importer, smr_world_4_tests, mocker, collection_4_migration):
     # given
     cut = active_xmind_importer
-    cut.smr_world = smr_world_for_tests
+    cut.smr_world = smr_world_4_tests
     add_x_model(cut.col)
     cut.model = cut.col.models.byName(X_MODEL_NAME)
     cut.deck_id = 1
     mocker.patch.object(cut, "import_notes_and_cards")
-    edge_ids = [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
-                cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID]
-    reference_fields = get_smr_note_reference_fields(smr_world_for_tests, edge_ids)
-    sort_fields = get_smr_note_sort_fields(smr_world_for_tests, edge_ids)
-    for edge_id in edge_ids:
-        cut.generate_note_from_edge_id(edge_id, reference_fields, sort_fields, 'biological psychology')
+    cut.col = collection_4_migration
+    cut.edge_ids_2_make_notes_of = [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
+                                    cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID]
+    cut.generate_notes()
     # when
     cut.finish_import()
     # then
@@ -324,14 +325,14 @@ def test_initialize_import_import_import_notes_to_correct_deck(
 
 
 # noinspection PyPep8Naming
-def test_newData(xmind_importer, smr_world_for_tests):
+def test_newData(xmind_importer, smr_world_4_tests):
     # given
     next_note_id = 1
     foreign_note = pickle.loads(cts.EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE)
     importer = xmind_importer
     add_x_model(importer.col)
     importer.model = importer.col.models.byName(X_MODEL_NAME)
-    importer.smr_world = smr_world_for_tests
+    importer.smr_world = smr_world_4_tests
     # fields used in newData() that are not initialized on object creation
     importer._fmap = importer.col.models.fieldMap(importer.model)
     importer._nextID = next_note_id

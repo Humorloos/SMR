@@ -75,7 +75,7 @@ def set_up_empty_smr_world(empty_smr_world):
 
 @pytest.fixture(scope="session")
 def _smr_world_for_tests_session(empty_anki_collection_session):
-    smrworld.FILE_NAME = "smr_world_for_tests.sqlite3"
+    smrworld.FILE_NAME = "smr_world_4_tests.sqlite3"
     smrworld.USER_PATH = cts.SMR_WORLD_PATH
     smr_world_path = os.path.join(cts.SMR_WORLD_PATH, smrworld.FILE_NAME)
     try:
@@ -151,7 +151,7 @@ def real_collection_4_migration():
 
 
 @pytest.fixture()
-def smr_world_for_tests(_smr_world_for_tests_session):
+def smr_world_4_tests(_smr_world_for_tests_session):
     smr_world = _smr_world_for_tests_session
     yield smr_world
     smr_world.graph.db.rollback()

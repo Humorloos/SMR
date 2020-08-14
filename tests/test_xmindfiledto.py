@@ -2,17 +2,19 @@ from smr.dto.xmindfiledto import XmindFileDto
 
 
 def test_xmind_file_dto():
-    entity = ('path', 123, 123.4, 567)
+    entity = ('directory', 'name', 123, 123.4, 567)
     # when
     cut = XmindFileDto(*entity)
     # then
-    assert cut == XmindFileDto('path', 123, 123.4, 567)
+    assert cut == XmindFileDto(
+        directory='directory', file_name='name', map_last_modified=123, file_last_modified=123.4, deck_id=567)
 
 
 def test_iter():
     # given
-    cut = XmindFileDto('path', 123, 123.4, 567)
+    cut = XmindFileDto(directory='directory', file_name='name', map_last_modified=123, file_last_modified=123.4,
+                       deck_id=567)
     # when
     entity = tuple(cut)
     # then
-    assert entity == ('path', 123, 123.4, 567)
+    assert entity == ('directory', 'name', 123, 123.4, 567)

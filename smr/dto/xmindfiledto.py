@@ -9,7 +9,8 @@ class XmindFileDto(EntityDto):
     """
     Data transfer object representing an entity from the xmind_files relation in the smr world
     """
-    path: str = ""
+    directory: str = ""
+    file_name: str = ""
     map_last_modified: Optional[int] = None
     file_last_modified: Optional[float] = None
     deck_id: Optional[int] = None

@@ -164,13 +164,6 @@ def test_extract_attachment(x_manager):
     assert type(attachment) == bytes
 
 
-def test_acquire_tag(x_manager):
-    # when
-    tag = x_manager.acquire_anki_tag(deck_name='my deck', sheet_name='biological_psychology')
-    # then
-    assert tag == ' my_deck::example_map::biological_psychology '
-
-
 def test_get_map_last_modified(x_manager):
     # when
     map_last_modified = x_manager.get_map_last_modified()

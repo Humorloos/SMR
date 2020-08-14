@@ -43,7 +43,7 @@ class XmindImporter(NoteImporter):
         self.is_running: bool = True
         self.active_manager: Optional[XManager] = None
         self.current_sheet_import: str = ''
-        self.edges_2_make_notes_of: Dict[str, str] = {}
+        self.edge_ids_2_make_notes_of: List[str] = []
         self.notes_2_import: Dict[str, ForeignNote] = {}
         # entity lists for imports
         self.files_2_import: List[XmindFileDto] = []
@@ -111,12 +111,7 @@ class XmindImporter(NoteImporter):
             self.import_file(manager)
         self._add_entities_2_smr_world()
         # Create Notes from all edges
-        reference_fields = get_smr_note_reference_fields(
-            smr_world=self.smr_world, edge_ids=list(self.edges_2_make_notes_of))
-        sort_fields = get_smr_note_sort_fields(smr_world=self.smr_world, edge_ids=list(self.edges_2_make_notes_of))
-        self.notes_2_import = {edge_id: self.generate_note_from_edge_id(
-            edge_id=edge_id, reference_fields=reference_fields, sort_fields=sort_fields, sheet_name=sheet_name) for
-            edge_id, sheet_name in self.edges_2_make_notes_of.items()}
+        self.generate_notes()
 
     def import_file(self, x_manager: XManager):
         """
@@ -125,26 +120,29 @@ class XmindImporter(NoteImporter):
         :param x_manager: the x_manager that manages the file
         """
         self.active_manager = x_manager
-        self.files_2_import.append(
-            XmindFileDto(path=x_manager.file, map_last_modified=x_manager.get_map_last_modified(),
-                         file_last_modified=x_manager.get_file_last_modified(), deck_id=self.deck_id))
+        directory, file_name = x_manager.get_directory_and_file_name()
+        self.files_2_import.append(XmindFileDto(
+            directory=directory, file_name=file_name,
+            map_last_modified=x_manager.get_map_last_modified(), file_last_modified=x_manager.get_file_last_modified(),
+            deck_id=self.deck_id))
         for sheet in x_manager.get_content_sheets():
             self.import_sheet(sheet)
 
     def import_sheet(self, sheet: str) -> None:
         """
-        imports the specified sheet and starts importing the map contained in that sheet starting from the root concept
+        Imports the specified sheet and starts importing the map contained in that sheet starting from the root concept
         :param sheet: name of the sheet to be imported
         """
         self.current_sheet_import = sheet
         self.mw.progress.update(label='importing %s' % sheet, maybeShow=False)
         self.mw.app.processEvents()
-        self.sheets_2_import.append(
-            XmindSheetDto(sheet_id=self.active_manager.get_sheet_id(sheet), path=self.active_manager.file,
-                          last_modified=self.active_manager.get_sheet_last_modified(sheet)))
+        directory, file_name = self.active_manager.get_directory_and_file_name()
+        self.sheets_2_import.append(XmindSheetDto(
+            sheet_id=self.active_manager.get_sheet_id(sheet), name=sheet, file_directory=directory, file_name=file_name,
+            last_modified=self.active_manager.get_sheet_last_modified(sheet)))
         root_node = self.active_manager.get_root_node(sheet=sheet)
-        self.import_node_if_concept(node=root_node,
-                                    concepts=[self.onto.concept_from_node_content(get_node_content(root_node))])
+        self.import_node_if_concept(
+            node=root_node, concepts=[self.onto.concept_from_node_content(get_node_content(root_node))])
 
     def import_node_if_concept(
             self, node: bs4.Tag, concepts: List[ThingClass], parent_node_ids: Optional[List[str]] = None,
@@ -297,7 +295,7 @@ class XmindImporter(NoteImporter):
             ontology_storid=relationship_property.storid, last_modified=edge['timestamp'], order_number=order_number))
         # if the edge is not empty, add it to the list of edges to make notes from
         if not edge_content.is_empty():
-            self.edges_2_make_notes_of[edge['id']] = self.current_sheet_import
+            self.edge_ids_2_make_notes_of.append(edge['id'])
         # import each child_node either with a list of the single concept or a list of all concepts if they are empty
         for order_number, (child_node, child_concepts) in enumerate(zip(
                 non_empty_child_nodes + empty_child_nodes,
@@ -307,28 +305,30 @@ class XmindImporter(NoteImporter):
                 parent_concepts=parent_concepts, parent_edge_id=edge['id'],
                 parent_relationship_class_name=relationship_class_name, order_number=order_number)
 
-    def generate_note_from_edge_id(self, edge_id: str, reference_fields: Dict[str, str],
-                                   sort_fields: Dict[str, str], sheet_name: str) -> ForeignNote:
+    def generate_notes(self) -> None:
         """
-        Creates a Note to add to the collection and adds it to the list of notes to be imported
-        :param sheet_name: the name of the sheet the note belongs to
-        :param sort_fields: Dictionary of sort fields for all edge_ids
-        :param reference_fields: Dictionary of reference fields for all edge_ids
-        :param edge_id: Xmind id of the edge belonging to the note to be imported
-        :returns the created note
+        Creates the Notes to add to the collection and adds them to the list of notes to be imported
         """
-        note = ForeignNote()
-        question_field = [self.smr_world.get_smr_note_question_field(edge_id)]
-        answer_fields = self.smr_world.get_smr_note_answer_fields(edge_id)
-        note.fields = [reference_fields[edge_id]] + question_field + answer_fields + (
-                X_MAX_ANSWERS - len(answer_fields)) * [''] + [sort_fields[edge_id]]
-        note.tags.append(self.active_manager.acquire_anki_tag(deck_name=self.deck_name, sheet_name=sheet_name))
-        # add the edge id to the tags list to be able to assign the note to the right edge during import
-        note.tags.append(edge_id)
-        # note.deck = self.deck_id
-        note.cards = {i: ForeignCard() for i, _ in enumerate(answer_fields, start=1)}
-        note.fieldsStr = joinFields(note.fields)
-        return note
+        reference_fields = get_smr_note_reference_fields(smr_world=self.smr_world,
+                                                         edge_ids=self.edge_ids_2_make_notes_of)
+        question_fields = self.smr_world.get_smr_note_question_fields(self.edge_ids_2_make_notes_of)
+        answer_fields_of_all_edges = self.smr_world.get_smr_note_answer_fields(self.edge_ids_2_make_notes_of)
+        sort_fields = get_smr_note_sort_fields(smr_world=self.smr_world, edge_ids=self.edge_ids_2_make_notes_of)
+        tags = self.smr_world.get_smr_note_tags(anki_collection=self.col, edge_ids=self.edge_ids_2_make_notes_of)
+        for edge_id in self.edge_ids_2_make_notes_of:
+            note = ForeignNote()
+            note_answer_fields = answer_fields_of_all_edges[edge_id]
+            note.fields = [reference_fields[edge_id]] \
+                          + [question_fields[edge_id]] \
+                          + note_answer_fields + (X_MAX_ANSWERS - len(note_answer_fields)) * [''] \
+                          + [sort_fields[edge_id]]
+            note.tags.append(tags[edge_id])
+            # add the edge id to the tags list to be able to assign the note to the right edge during import
+            note.tags.append(edge_id)
+            # note.deck = self.deck_id
+            note.cards = {i: ForeignCard() for i, _ in enumerate(note_answer_fields, start=1)}
+            note.fieldsStr = joinFields(note.fields)
+            self.notes_2_import[edge_id] = note
 
     def finish_import(self) -> None:
         """
@@ -394,11 +394,11 @@ class XmindImporter(NoteImporter):
         self._deck_name = value
 
     @property
-    def edges_2_make_notes_of(self) -> Dict[str, str]:
+    def edge_ids_2_make_notes_of(self) -> List[str]:
         return self._edges_2_make_notes_of
 
-    @edges_2_make_notes_of.setter
-    def edges_2_make_notes_of(self, value: Dict[str, str]):
+    @edge_ids_2_make_notes_of.setter
+    def edge_ids_2_make_notes_of(self, value: List[str]):
         self._edges_2_make_notes_of = value
 
     @property
@@ -492,8 +492,12 @@ class XmindImporter(NoteImporter):
         self._is_running = value
 
     @property
-    def smr_world(self):
+    def smr_world(self) -> SmrWorld:
         return self._smr_world
+
+    @smr_world.setter
+    def smr_world(self, value: SmrWorld):
+        self._smr_world = value
 
     @deck_id.setter
     def deck_id(self, value):
@@ -546,10 +550,6 @@ class XmindImporter(NoteImporter):
     @smr_notes_2_add.setter
     def smr_notes_2_add(self, value):
         self._smr_notes_2_add = value
-
-    @smr_world.setter
-    def smr_world(self, value):
-        self._smr_world = value
 
 # old code
 # def partial_import(self, seed_topic, sheet_id, deck_id, parent_q,

@@ -10,5 +10,7 @@ class XmindSheetDto(EntityDto):
     Data transfer object representing an entity from the xmind_sheets relation in the smr world
     """
     sheet_id: str = ""
-    path: str = ""
+    name: str = ""
+    file_directory: str = ""
+    file_name: str = ""
     last_modified: Optional[int] = None

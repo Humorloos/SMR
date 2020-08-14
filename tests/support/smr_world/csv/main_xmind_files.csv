@@ -1,2 +1,2 @@
-path,map_last_modified,file_last_modified,deck_id
-path for test file,1594823958217,1594823958.8585837,12345
+directory,file_name,map_last_modified,file_last_modified,deck_id
+mypath,test_file,1594823958217,1594823958.8585837,1579442668731

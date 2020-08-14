@@ -1,2 +1,2 @@
-sheet_id,path,last_modified
-sheet id,path for test file,1594823927933
+sheet_id,name,file_directory,file_name,last_modified
+sheet id,test sheet,mypath,test_file,1594823927933

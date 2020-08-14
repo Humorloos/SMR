@@ -4,7 +4,7 @@ import os
 import shutil
 import tempfile
 import urllib.parse
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from bs4 import BeautifulSoup, Tag
@@ -324,16 +324,6 @@ class XManager:
             sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
         return sheets
 
-    def acquire_anki_tag(self, deck_name, sheet_name) -> str:
-        """
-        Gets a tag that is compatible with the hierarchical tags addon. The tag built from the deck to which notes are
-        imported and the xmind sheet to which the the note belongs, replacing spaces with underscores to produce
-        valid tags
-        :return: the tag
-        """
-        return " " + "::".join((deck_name, os.path.basename(self.file).replace('.xmind', ''),
-                                sheet_name)).replace(" ", "_") + " "
-
     def get_tag_by_id(self, tag_id: str):
         """
         Gets the tag that
@@ -501,6 +491,15 @@ class XManager:
             # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
             self._node_dict = {t['id']: t for s in self.sheets.values() for t in s['nodes']}
         return self._node_dict
+
+    def get_directory_and_file_name(self) -> Tuple[str, str]:
+        """
+        Gets the directory and the file name from the manager's own path
+        :return: The directory and the file without extension as strings
+        """
+        directory, file_name = os.path.split(self.file)
+        file_name = os.path.splitext(file_name)[0]
+        return directory, file_name
 
     def _get_referenced_files(self) -> List[str]:
         """

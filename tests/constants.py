@@ -12,11 +12,15 @@ TEST_COLLECTIONS_PATH = os.path.join(SUPPORT_PATH, 'collections')
 EMPTY_COLLECTION_PATH_SESSION = os.path.join(TEST_COLLECTIONS_PATH, 'empty_smr_col_session/empty_smr_col_session.anki2')
 EMPTY_COLLECTION_PATH_FUNCTION = os.path.join(TEST_COLLECTIONS_PATH,
                                               'empty_smr_col_function', 'empty_smr_col_function.anki2')
-EXAMPLE_MAP_PATH = os.path.join(ADDON_PATH, 'resources', 'example map.xmind')
+RESOURCES_PATH = os.path.join(ADDON_PATH, 'resources')
+EXAMPLE_MAP_NAME = "example map"
+EXAMPLE_MAP_PATH = os.path.join(RESOURCES_PATH, EXAMPLE_MAP_NAME + '.xmind')
 ABSENT_XMIND_FILE_PATH = os.path.join(SUPPORT_PATH, 'absent_file.xmind')
 EXAMPLE_MAP_N_EDGES = 34
-TEST_DECK_ID = 12345
-TEST_FILE_PATH = "path for test file"
+TEST_DECK_ID = 1579442668731
+TEST_FILE_DIRECTORY = "mypath"
+TEST_FILE_NAME = "test_file"
+TEST_FILE_PATH = os.path.join(TEST_FILE_DIRECTORY, TEST_FILE_NAME + '.xmind')
 TEST_CONCEPT_STORID = 153
 TEST_CONCEPT_CLASS_NAME = "test_concept"
 TEST_CONCEPT_NODE_ID = "node id"
@@ -49,12 +53,12 @@ NEUROTRANSMITTERS_CLASS_NAME = 'neurotransmittersximage_629d18n2i73im903jkrjmr98
 EMPTY_NODE_TAG_ID = "6b0ho6vvcs4pcacchhsgju7513"
 
 EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE = \
-    b'\x80\x04\x95\x12\x03\x00\x00\x00\x00\x00\x00\x8c\x1canki.importing.noteimp\x94\x8c\x0bForeignNote\x94\x93' \
-    b'\x94)\x81\x94}\x94(\x8c\x06fields\x94]\x94(\x8c\xc4biological psychology<li>investigates: information transfer ' \
-    b'and processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up: Serotonin, dopamine, ' \
+    b'\x80\x04\x95\xff\x02\x00\x00\x00\x00\x00\x00\x8c\x16anki.importing.noteimp\x94\x8c\x0bForeignNote\x94\x93\x94' \
+    b')\x81\x94}\x94(\x8c\x06fields\x94]\x94(\x8c\xc4biological psychology<li>investigates: information transfer and ' \
+    b'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up: Serotonin, dopamine, ' \
     b'adrenaline, noradrenaline</li>\x94\x8c\x03are\x94\x8c\x0fbiogenic ' \
     b'amines\x94\x8c\x00\x94h\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\nh\n\x8c\t|{|{{{|\x7f{' \
-    b'\x94e\x8c\x04tags\x94]\x94(\x8c- Default::example_map::biological_psychology ' \
+    b'\x94e\x8c\x04tags\x94]\x94(\x8c  Example::test_file::test_sheet ' \
     b'\x94\x8c\x1a6iivm8tpoqj2c0euaabtput14l\x94e\x8c\x04deck\x94N\x8c\x05cards\x94}\x94K\x01h\x00\x8c\x0bForeignCard' \
     b'\x94\x93\x94)\x81\x94}\x94(\x8c\x03due\x94K\x00\x8c\x03ivl\x94K\x01\x8c\x06factor\x94M\xc4\t\x8c\x04reps\x94K' \
     b'\x00\x8c\x06lapses\x94K\x00ubs\x8c\tfieldsStr\x94\x8c\xf5biological psychology<li>investigates: information ' \

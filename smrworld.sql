@@ -9,10 +9,12 @@ CREATE TABLE ontology_lives_in_deck
 );
 CREATE TABLE xmind_files
 (
-    path               TEXT PRIMARY KEY,
+    directory          TEXT,
+    file_name          TEXT,
     map_last_modified  INTEGER,
     file_last_modified REAL,
     deck_id            INTEGER,
+    PRIMARY KEY (directory, file_name),
     FOREIGN KEY (deck_id) REFERENCES ontology_lives_in_deck (deck_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -20,16 +22,18 @@ CREATE TABLE xmind_files
 CREATE TABLE xmind_sheets
 (
     sheet_id      TEXT PRIMARY KEY,
-    path          TEXT,
+    name          TEXT,
+    file_directory TEXT,
+    file_name     TEXT,
     last_modified INTEGER,
-    FOREIGN KEY (path) REFERENCES xmind_files (path)
+    FOREIGN KEY (file_directory, file_name) REFERENCES xmind_files (directory, file_name)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
 
 CREATE TABLE xmind_media_to_anki_files
 (
-    xmind_uri TEXT PRIMARY KEY,
+    xmind_uri      TEXT PRIMARY KEY,
     anki_file_name TEXT
 );
 
@@ -100,13 +104,13 @@ CREATE TABLE smr_triples
         ON UPDATE CASCADE
 );
 CREATE INDEX smr_triples_parent_node_id
-ON smr_triples(parent_node_id);
+    ON smr_triples (parent_node_id);
 CREATE INDEX smr_triples_edge_id
-ON smr_triples(edge_id);
+    ON smr_triples (edge_id);
 CREATE INDEX smr_triples_child_node_id
-ON smr_triples(child_node_id);
+    ON smr_triples (child_node_id);
 CREATE INDEX smr_notes_edge_id
-ON smr_notes(edge_id);
+    ON smr_notes (edge_id);
 CREATE INDEX xmind_nodes_order_number
-ON xmind_nodes(order_number);
+    ON xmind_nodes (order_number);
 COMMIT;
