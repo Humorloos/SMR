@@ -1,6 +1,7 @@
 import pickle
 
 import pytest
+from assertpy import assert_that
 from bs4 import Tag
 
 import tests.constants as cts
@@ -25,19 +26,21 @@ def test_xmind_importer(xmind_importer):
     assert [x.file for x in cut.x_managers] == expected_x_manager_files
 
 
-def test_open_aborts_if_file_already_exists(mocker, xmind_importer):
+def test_open_aborts_if_file_already_exists(xmind_importer, smr_world_4_tests):
     """
     Test whether the import stops when the file to be imported is already in the world
     """
     # given
     cut = xmind_importer
-    mocker.patch.object(cut, "_mw")
+    cut.smr_world = smr_world_4_tests
+    cut.file = cts.TEST_FILE_PATH
     # when
     cut.open()
     # then
     assert cut.log == [
         "It seems like {seed_path} is already in your collection. Please choose a different file.".format(
-            seed_path=cts.EXAMPLE_MAP_PATH)]
+            seed_path=cts.TEST_FILE_PATH)]
+    assert_that(cut.is_running).is_false()
 
 
 def test_initialize_import(mocker, xmind_importer):

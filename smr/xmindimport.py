@@ -90,10 +90,13 @@ class XmindImporter(NoteImporter):
         Starts deck selection dialog and runs import sheets with selected sheets
         """
         # check whether the file has already been imported before
-        if self.smr_world.graph.execute("select * from xmind_files where path = '{seed_path}'".format(
-                seed_path=self.file)).fetchone():
-            self.log = ["It seems like {seed_path} is already in your collection. Please choose a different "
-                        "file.".format(seed_path=self.file)]
+        directory, file_name = os.path.split(self.file)
+        file_name = os.path.splitext(file_name)[0]
+        if self.smr_world.graph.execute(f"select * from xmind_files where directory = '{directory}' and "
+                                        f"file_name = '{file_name}'").fetchone():
+            self.log = [f"It seems like {self.file} is already in your collection. Please choose a different "
+                        "file."]
+            self.is_running = False
 
     def initialize_import(self, user_inputs: DeckSelectionDialogUserInputsDTO) -> None:
         """
