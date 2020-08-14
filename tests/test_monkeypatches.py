@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 import aqt.importing
 import smr.monkeypatches as monkeypatches
+from aqt.deckbrowser import DeckBrowser
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 
 
@@ -37,3 +38,23 @@ def test_patch_import_diaglog_interrupts_if_deck_selection_dialog_not_running(xm
     assert aqt.importing.ImportDialog.exec_.call_count == 0
     monkeypatches.tooltip.assert_called_once_with(monkeypatches.IMPORT_CANCELED_MESSAGE)
     assert importer.initialize_import.call_count == 0
+
+
+def test_patch__link_handler(mocker):
+    # given
+    cut = DeckBrowser(mw=MagicMock())
+    mocker.patch("smr.monkeypatches.SmrSynchronizer")
+    # when
+    cut._linkHandler("sync")
+    # then
+    assert monkeypatches.SmrSynchronizer.call_count == 1
+
+
+def test_patch__link_handler_no_synchronization(mocker):
+    # given
+    cut = DeckBrowser(mw=MagicMock())
+    mocker.patch("smr.monkeypatches.SmrSynchronizer")
+    # when
+    cut._linkHandler("other")
+    # then
+    assert monkeypatches.SmrSynchronizer.call_count == 0

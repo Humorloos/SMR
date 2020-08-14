@@ -50,18 +50,22 @@ importing.ImportDialog.__init__ = wrap(importing.ImportDialog.__init__, patch_im
 
 # noinspection PyPep8Naming
 def patch__linkHandler(self, url: str, _old: Callable) -> Any:
+    """
+    Wraps around Deckbrowser's method _linkHandler() to trigger smr synchronization when users click the smr sync
+    button in deckbrowser
+    :param self: the deckbrowser
+    :param url: the command the linkhandler is supposed to be called with
+    :param _old: The actual _linkHandler() method around which this function wraps
+    :return: Nothing when the called with "sync", else the _linkHandler()'s return value
+    """
     if url == "sync":
         synchronizer = SmrSynchronizer()
         synchronizer.synchronize()
+        return
     return _old(self, url)
 
 
 deckbrowser.DeckBrowser._linkHandler = wrap(DeckBrowser._linkHandler, patch__linkHandler, pos="around")
-# def onSync(self):
-#
-#
-#
-# AnkiQt.onSMRSync = onSync
 
 #
 # def showReviewer(self):
