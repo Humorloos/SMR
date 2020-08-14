@@ -119,28 +119,29 @@ def generate_card_template(answer_id: int):
     return [card_front, card_back]
 
 
-def add_x_model(col: Collection) -> Dict[str, List[str]]:
+def add_x_model(col: Collection) -> NoteType:
     """
     Adds the smr model to the collection and returns it
     :param col: anki's collection
     :return: the smr model
     """
-    models: ModelManager = col.models
-    x_model: NoteType = models.new(X_MODEL_NAME)
+    x_model: NoteType = col.models.new(X_MODEL_NAME)
     # Add fields:
     for field_identifier in SMR_FIELD_IDENTIFIERS:
-        fld: Dict = models.newField(SMR_NOTE_FIELD_NAMES[field_identifier])
-        models.addField(x_model, fld)
+        fld: Dict = col.models.newField(SMR_NOTE_FIELD_NAMES[field_identifier])
+        col.models.addField(x_model, fld)
     # Add templates
     for cid, name in enumerate(X_CARD_NAMES, start=1):
-        template: Dict = models.newTemplate(name)
+        template: Dict = col.models.newTemplate(name)
         card: List[str] = generate_card_template(cid)
         template['qfmt'] = card[0]
         template['afmt'] = card[1]
-        models.addTemplate(x_model, template)
+        col.models.addTemplate(x_model, template)
     col.models.set_sort_index(nt=x_model, idx=SMR_FIELD_IDENTIFIERS.index(X_SORT_FIELD))
     set_x_model_fields(x_model)
-    models.add(x_model)
+    # TODO: the sort field is set back to 0 after saving, but I have not figured out yet why. Wait for an answer in
+    #  the forum: https://forums.ankiweb.net/t/saving-a-model-sets-the-sort-field-index-to-0/2299
+    col.models.add(x_model)
     return x_model
 
 
