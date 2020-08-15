@@ -162,6 +162,21 @@ class SmrWorld(World):
         return [OntologyLivesInDeckDto(*row)
                 for row in self.graph.execute("select * from ontology_lives_in_deck").fetchall()]
 
+    def get_xmind_files_in_decks(self) -> Dict[int, List[XmindFileDto]]:
+        """
+        Gets all xmind file entries from the smr world with the deck in which they are located
+        :return: a Dictionary where keys are the files' deck ids and values are Lists xmind file dtos that belong to
+        the respective deck
+        """
+        xmind_files = [XmindFileDto(*row) for row in self.graph.execute("select * from xmind_files").fetchall()]
+        files_in_decks = {}
+        for xmind_file in xmind_files:
+            try:
+                files_in_decks[xmind_file.deck_id].append(xmind_file)
+            except KeyError:
+                files_in_decks[xmind_file.deck_id] = [xmind_file]
+        return files_in_decks
+
     def update_smr_triples_card_ids(self, data: List[Tuple[int, int]], collection: Collection) -> None:
         """
         updates the card ids for all triples belonging to certain answers in smr notes

@@ -18,7 +18,7 @@ class TestXNoteManager(TestCase):
 
 class TestGetXmindFiles(TestXNoteManager):
     def test_get_xmind_files(self):
-        act = self.note_manager.get_xmind_files()
+        act = self.note_manager.get_xmind_files_in_decks()
         self.fail()
 
 

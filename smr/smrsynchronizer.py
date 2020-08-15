@@ -1,5 +1,6 @@
 import aqt as aqt
 from anki import Collection
+from smr.smrworld import SmrWorld
 from smr.utils import deep_merge
 from smr.xmanager import get_topic_index, XManager, get_parent_question_topic, get_parent_a_topics
 from smr.xmindimport import XmindImporter
@@ -48,34 +49,30 @@ class SmrSynchronizer:
         self._note_manager = value
 
     @property
-    def smr_world(self) -> XOntology:
+    def smr_world(self) -> SmrWorld:
         return self._smr_world
 
     @smr_world.setter
-    def smr_world(self, value: XOntology):
+    def smr_world(self, value: SmrWorld):
         self._smr_world = value
 
     def synchronize(self):
         aqt.mw.progress.start(immediate=True, label="Synchronizing SMR changes...")
         smr_decks = self.smr_world.get_ontology_lives_in_deck()
-        for deck_name_and_id in deck_names_and_ids:
-
-            assert False
-            for f in self.xmind_files:
-                self.change_list = {}
-                if f not in status:
-                    importer = XmindImporter(col=self.note_manager.col, file=f)
-                    # importer.initialize_import(deck_id=d, repair=False)
-                    continue
-                local_change = status[f]['ankiMod'] != local[f]['ankiMod']
-                if status[f]['osMod'] != os_file_mods[f]:
-                    self.map_manager = XManager(f)
+        xmind_files_in_decks = self.smr_world.get_xmind_files_in_decks()
+        for smr_deck in smr_decks:
+            files_in_deck = xmind_files_in_decks[smr_deck.deck_id]
+            for xmind_file in files_in_deck:
+                assert False
+                # x_manager = XManager()
+                if status[xmind_file]['osMod'] != os_file_mods[xmind_file]:
+                    self.map_manager = XManager(xmind_file)
                     for file in self.map_manager.referenced_files:
                         if file not in self.xmind_files:
                             self.xmind_files.append(file)
                     remote_file = self.map_manager.remote_file()
-                    remote_change = status[f]['xMod'] != remote_file['xMod']
-                    status[f]['osMod'] = os_file_mods[f]
+                    remote_change = status[xmind_file]['xMod'] != remote_file['xMod']
+                    status[xmind_file]['osMod'] = os_file_mods[xmind_file]
                 else:
                     remote_change = False
                 if not local_change and not remote_change:
@@ -83,9 +80,9 @@ class SmrSynchronizer:
                 elif local_change and not remote_change:
                     if not self.onto:
                         self.onto = XOntology(d)
-                    self.map_manager = XManager(f)
-                    self.process_local_changes(status=status[f]['sheets'],
-                                               local=local[f]['sheets'])
+                    self.map_manager = XManager(xmind_file)
+                    self.process_local_changes(status=status[xmind_file]['sheets'],
+                                               local=local[xmind_file]['sheets'])
 
                     # Adjust notes according to self.change_list
                     self.process_change_list()
@@ -93,7 +90,7 @@ class SmrSynchronizer:
                 elif not local_change and remote_change:
                     remote_sheets = self.map_manager.get_remote_sheets()
                     # noinspection PyUnboundLocalVariable
-                    self.process_remote_changes(status=status[f]['sheets'],
+                    self.process_remote_changes(status=status[xmind_file]['sheets'],
                                                 remote=remote_sheets, deck_id=d)
                 else:
                     print('')

@@ -246,4 +246,14 @@ def test_get_ontology_lives_in_deck(smr_world_with_example_map):
     # when
     ontologies_and_decks = smr_world_with_example_map.get_ontology_lives_in_deck()
     # then
-    assert tuple(ontologies_and_decks[0]) == (1597424784989, 1)
+    assert ontologies_and_decks[0].ontology == 1
+
+
+def test_get_xmind_files_in_decks(smr_world_with_example_map):
+    # when
+    xmind_files_in_decks = smr_world_with_example_map.get_xmind_files_in_decks()
+    # then
+    files = list(xmind_files_in_decks.values())[0]
+    assert files[0].directory == cts.RESOURCES_PATH
+    assert files[0].file_name == cts.EXAMPLE_MAP_NAME
+    assert files[1].file_name == cts.GENERAL_PSYCHOLOGY_MAP_NAME
