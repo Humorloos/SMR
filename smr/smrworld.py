@@ -4,6 +4,7 @@ from typing import List, TextIO, Tuple, Dict
 from anki import Collection
 from owlready2.namespace import World
 from smr.consts import ADDON_PATH, USER_PATH
+from smr.dto.ontologylivesindeckdto import OntologyLivesInDeckDto
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.dto.smrtripledto import SmrTripleDto
 from smr.dto.xmindfiledto import XmindFileDto
@@ -145,6 +146,22 @@ class SmrWorld(World):
         self.graph.db.executemany("INSERT INTO main.smr_triples VALUES (?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
+    def add_xmind_media_to_anki_files(self, entities: List[XmindMediaToAnkiFilesDto]) -> None:
+        """
+        adds entries linking xmind file uris to anki file names to the relation xmind_media_to_anki_files
+        :param entities: List containing the media to file entries to add to the relation
+        """
+        self.graph.db.executemany("INSERT INTO main.xmind_media_to_anki_files VALUES (?, ?) ON CONFLICT DO NOTHING",
+                                  (tuple(e) for e in entities))
+
+    def get_ontology_lives_in_deck(self) -> List[OntologyLivesInDeckDto]:
+        """
+        Gets all entries for ontologies and decks in the smr world
+        :return: a list of OntologyLivesInDeckDto instances containing all entries of ontologies and decks
+        """
+        return [OntologyLivesInDeckDto(*row)
+                for row in self.graph.execute("select * from ontology_lives_in_deck").fetchall()]
+
     def update_smr_triples_card_ids(self, data: List[Tuple[int, int]], collection: Collection) -> None:
         """
         updates the card ids for all triples belonging to certain answers in smr notes
@@ -166,14 +183,6 @@ update smr_triples
 set card_id = (select card_id from card_triples)
 where edge_id = (select edge_id from card_triples)
   and child_node_id = (select child_node_id from card_triples)""", data)
-
-    def add_xmind_media_to_anki_files(self, entities: List[XmindMediaToAnkiFilesDto]) -> None:
-        """
-        adds entries linking xmind file uris to anki file names to the relation xmind_media_to_anki_files
-        :param entities: List containing the media to file entries to add to the relation
-        """
-        self.graph.db.executemany("INSERT INTO main.xmind_media_to_anki_files VALUES (?, ?) ON CONFLICT DO NOTHING",
-                                  (tuple(e) for e in entities))
 
     def add_smr_notes(self, entities: List[SmrNoteDto]):
         """

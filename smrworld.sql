@@ -2,7 +2,7 @@ BEGIN TRANSACTION;
 CREATE TABLE ontology_lives_in_deck
 (
     deck_id  INTEGER PRIMARY KEY,
-    ontology INT,
+    ontology INTEGER,
     FOREIGN KEY (ontology) REFERENCES ontologies (c)
         ON DELETE CASCADE
         ON UPDATE CASCADE

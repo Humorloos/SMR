@@ -240,3 +240,10 @@ def test_get_smr_note_tags(smr_world_4_tests, collection_4_migration):
     # then
     assert tag == {'6iivm8tpoqj2c0euaabtput14l': ' Example::test_file::test_sheet ',
                    'edge id': ' Example::test_file::test_sheet '}
+
+
+def test_get_ontology_lives_in_deck(smr_world_with_example_map):
+    # when
+    ontologies_and_decks = smr_world_with_example_map.get_ontology_lives_in_deck()
+    # then
+    assert tuple(ontologies_and_decks[0]) == (1597424784989, 1)

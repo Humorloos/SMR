@@ -56,11 +56,11 @@ class SmrSynchronizer:
         self._smr_world = value
 
     def synchronize(self):
-        local = {f: self.note_manager.get_local(f) for f in self.xmind_files}
-        status = {d['file']: d for d in self.status_manager.status}
-        x_decks = set(local[x_id]['deck'] for x_id in local)
-        for d in x_decks:
-            self.onto = None
+        aqt.mw.progress.start(immediate=True, label="Synchronizing SMR changes...")
+        smr_decks = self.smr_world.get_ontology_lives_in_deck()
+        for deck_name_and_id in deck_names_and_ids:
+
+            assert False
             for f in self.xmind_files:
                 self.change_list = {}
                 if f not in status:
