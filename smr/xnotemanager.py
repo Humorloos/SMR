@@ -1,8 +1,9 @@
 import json
 import re
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Sequence
 
 from anki import Collection
+from anki.backend_pb2 import NoteTypeNameID
 from anki.utils import splitFields, joinFields
 from smr.consts import SMR_NOTE_FIELD_NAMES, X_MEDIA_EXTENSIONS, X_IMAGE_EXTENSIONS, X_MAX_ANSWERS
 from smr.dto.nodecontentdto import NodeContentDTO
@@ -378,6 +379,18 @@ class XNoteManager:
                     new_ref = replace_ref_answer(ref=new_ref,
                                                  answer_dict=answer_dict)
                 self.set_ref(note=sheet_child_note, ref=new_ref)
+
+    def get_actual_deck_names_and_ids(self) -> Sequence[NoteTypeNameID]:
+        """
+        Empties dynamic decks and returns the names and ids of all actual decks in the collection
+        :return: Names and ids of all actual decks in the collection that are not dynamic decks
+        """
+        deck_names_and_ids = self.col.decks.all_names_and_ids()
+        # Empty dynamic decks to avoid xmind files being scattered over multiple decks
+        for deck_name_and_id in deck_names_and_ids:
+            if self.col.decks.isDyn(deck_name_and_id.id):
+                self.col.sched.emptyDyn(deck_name_and_id.id)
+        return deck_names_and_ids
 
     def rearrange_answers(self, note, index_dict):
         # TODO: complete this

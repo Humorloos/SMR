@@ -85,11 +85,7 @@ class Collection2SmrWorldMigrator:
         Finds all decks with anki notes and migrates each deck into the smr world
         """
         aqt.mw.progress.start(immediate=True, label="Updating...")
-        deck_names_and_ids = self.note_manager.col.decks.all_names_and_ids()
-        # empty dynamic decks to avoid xmind files being scattered over multiple decks
-        for deck_name_and_id in deck_names_and_ids:
-            if self.collection.decks.isDyn(deck_name_and_id.id):
-                self.collection.sched.emptyDyn(deck_name_and_id.id)
+        deck_names_and_ids = self.note_manager.get_actual_deck_names_and_ids()
         for deck_name_and_id in deck_names_and_ids:
             self._migrate_deck_2_smr_world(deck_name_and_id.id)
         self.smr_world.save()

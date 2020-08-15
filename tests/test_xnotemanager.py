@@ -88,8 +88,8 @@ def test_sort_id_from_order_number():
 
 
 @pytest.fixture
-def note_manager(collection_4_migration):
-    yield XNoteManager(collection_4_migration)
+def note_manager(collection_with_example_map):
+    yield XNoteManager(collection_with_example_map)
 
 
 def test_image_from_field():
@@ -105,3 +105,9 @@ def test_image_from_field_no_image():
     image = image_from_field('no image')
     # then
     assert image is None
+
+
+def test_get_actual_deck_names_and_ids(note_manager):
+    # when
+    deck_names_and_ids = note_manager.get_actual_deck_names_and_ids()
+    assert [(d.id, d.name) for d in deck_names_and_ids] == [(1, 'Default'), (1597482307594, 'testdeck')]
