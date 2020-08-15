@@ -13,8 +13,8 @@ from smr.dto.xmindsheetdto import XmindSheetDto
 
 FILE_NAME = 'smrworld.sqlite3'
 SQL_FILE_NAME = 'smrworld.sql'
-REFERENCE_FILE_NAME = 'reference.sql'
 ANKI_COLLECTION_DB_NAME = "anki_collection"
+SMR_WORLD_PATH = os.path.join(USER_PATH, FILE_NAME)
 
 
 def get_xmind_content_selection_clause(relation_name: str) -> str:
@@ -81,7 +81,7 @@ class SmrWorld(World):
 
     def __init__(self):
         super().__init__()
-        self.set_backend(filename=os.path.join(USER_PATH, FILE_NAME))
+        self.set_backend(filename=SMR_WORLD_PATH)
         self.graph.execute('PRAGMA foreign_keys = ON')
         self.save()
 
@@ -256,7 +256,7 @@ WHERE edge_id in ({"'" + "', '".join(edge_ids) + "'"})
         :return: the tags in a dictionary where keys are the edge ids and values are the tags for the respective notes
         """
         with AnkiCollectionAttachement(smr_world=self, anki_collection=anki_collection):
-            tags = self.graph.execute(f"""
+            tags = self.graph.execute(f"""-- noinspection SqlResolveForFile
 select xe.edge_id edge_id, ad.name || '::' || xf.file_name || '::' || xs.name tag
 from xmind_edges xe
          join xmind_sheets xs on xe.sheet_id = xs.sheet_id

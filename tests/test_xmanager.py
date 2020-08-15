@@ -9,8 +9,7 @@ from smr.xmanager import is_empty_node, get_node_title, get_child_nodes, get_non
 def test_x_manager(x_manager):
     # given
     expected_sheets = ['biological psychology', 'clinical psychology', 'ref']
-    expected_referenced_file = ['C:\\Users\\lloos\\OneDrive - bwedu\\Projects\\AnkiAddon\\anki-addon-dev\\addons21'
-                                '\\XmindImport\\resources\\example_general_psychology.xmind']
+    expected_referenced_file = [cts.GENERAL_PSYCHOLOGY_MAP_PATH]
     # when
     cut = x_manager
     # then

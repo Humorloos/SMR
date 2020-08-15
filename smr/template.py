@@ -137,11 +137,12 @@ def add_x_model(col: Collection) -> NoteType:
         template['qfmt'] = card[0]
         template['afmt'] = card[1]
         col.models.addTemplate(x_model, template)
-    col.models.set_sort_index(nt=x_model, idx=SMR_FIELD_IDENTIFIERS.index(X_SORT_FIELD))
     set_x_model_fields(x_model)
-    # TODO: the sort field is set back to 0 after saving, but I have not figured out yet why. Wait for an answer in
-    #  the forum: https://forums.ankiweb.net/t/saving-a-model-sets-the-sort-field-index-to-0/2299
     col.models.add(x_model)
+    # Set the sort index after adding the model and save again because it is reset to 0 otherwise (see
+    # https://forums.ankiweb.net/t/saving-a-model-sets-the-sort-field-index-to-0/2299)
+    col.models.set_sort_index(nt=x_model, idx=SMR_FIELD_IDENTIFIERS.index(X_SORT_FIELD))
+    col.models.save(x_model)
     return x_model
 
 

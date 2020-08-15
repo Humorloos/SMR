@@ -10,16 +10,11 @@ from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInpu
 from smr.template import add_x_model
 from smr.xmanager import get_node_content, get_non_empty_sibling_nodes, get_parent_node
 from smr.xmindimport import XmindImporter
-from smr.xnotemanager import get_smr_note_reference_fields, get_smr_note_sort_fields
 
 
 def test_xmind_importer(xmind_importer):
     # given
-    expected_x_manager_files = [
-        'C:\\Users\\lloos\\OneDrive - bwedu\\Projects\\AnkiAddon\\anki-addon-dev\\addons21\\XmindImport\\resources'
-        '\\example map.xmind',
-        'C:\\Users\\lloos\\OneDrive - bwedu\\Projects\\AnkiAddon\\anki-addon-dev\\addons21\\XmindImport\\resources'
-        '\\example_general_psychology.xmind']
+    expected_x_manager_files = [cts.EXAMPLE_MAP_PATH, cts.GENERAL_PSYCHOLOGY_MAP_PATH]
     # when
     cut = xmind_importer
     # then

@@ -38,7 +38,7 @@ def test_migrate_deck_2_smr_world_file_not_found(collection_2_smr_world_migrator
     assert exception_info.value.args[0] == XManager.FILE_NOT_FOUND_MESSAGE.format(cts.ABSENT_XMIND_FILE_PATH)
 
 
-# @pytest.mark.skip(reason="This test takes far too for running it each time")
+@pytest.mark.skip(reason="This test takes far too for running it each time")
 def test_migrate_collection_2_smr_world_real_collection(real_collection_4_migration, patch_aqt_mw_empty_smr_world):
     # given
     patch_aqt_mw_empty_smr_world.col = real_collection_4_migration

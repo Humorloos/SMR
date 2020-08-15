@@ -1,6 +1,6 @@
 import pytest
 
-from smr.consts import X_MODEL_NAME, X_MAX_ANSWERS, SMR_NOTE_FIELD_NAMES
+from smr.consts import X_MODEL_NAME, X_MAX_ANSWERS, SMR_NOTE_FIELD_NAMES, SMR_FIELD_IDENTIFIERS, X_SORT_FIELD
 from smr.template import generate_card_template, add_x_model, update_x_model
 
 
@@ -78,6 +78,7 @@ def test_add_x_model_then_update_x_model(empty_anki_collection_session, template
     assert len(act['flds']) == len(SMR_NOTE_FIELD_NAMES)
     assert len(act['tmpls']) == X_MAX_ANSWERS
     assert act['name'][:len(X_MODEL_NAME)] == X_MODEL_NAME
+    assert act['sortf'] == SMR_FIELD_IDENTIFIERS.index(X_SORT_FIELD)
 
     x_model = col.models.byName(X_MODEL_NAME)
     for tmpl in x_model['tmpls']:
