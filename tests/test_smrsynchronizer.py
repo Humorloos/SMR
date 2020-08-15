@@ -20,10 +20,15 @@ def test_smr_synchronizer(smr_synchronizer_no_changes):
     assert type(cut.col) == Collection
 
 
-def test_synchronize(smr_synchronizer_no_changes):
+def test_synchronize_no_changes(smr_synchronizer_no_changes, mocker):
     # given
     cut = smr_synchronizer_no_changes
+    mocker.spy(cut, 'process_local_changes')
+    mocker.spy(cut, 'process_remote_changes')
+    mocker.spy(cut, 'process_local_and_remote_changes')
     # when
     cut.synchronize()
     # then
-    assert False
+    assert cut.process_local_changes.call_count == 0
+    assert cut.process_remote_changes.call_count == 0
+    assert cut.process_local_and_remote_changes.call_count == 0

@@ -1,5 +1,9 @@
+from typing import List, Dict
+
 import aqt as aqt
 from anki import Collection
+from smr.dto.smrnotedto import SmrNoteDto
+from smr.dto.xmindfiledto import XmindFileDto
 from smr.smrworld import SmrWorld
 from smr.utils import deep_merge
 from smr.xmanager import get_topic_index, XManager, get_parent_question_topic, get_parent_a_topics
@@ -23,14 +27,19 @@ def raise_sync_error(content, question_note, text_pre, text_post):
 # Algorithm for synchronization was adopted from
 # https://unterwaditzer.net/2016/sync-algorithm.html
 class SmrSynchronizer:
+    """
+    Class for synchronizing changes in the anki collection and source xmind files
+    """
     def __init__(self):
         self.col = aqt.mw.col
         self.note_manager = XNoteManager(col=aqt.mw.col)
         self.smr_world = aqt.mw.smr_world
-        self.map_manager = None
+        self.x_manager = None
         self.current_sheet_sync = None
         self.warnings = []
         self.translator = FieldTranslator()
+        self.changed_xmind_files = []
+        self.changed_smr_notes = {}
 
     @property
     def col(self) -> Collection:
@@ -56,47 +65,61 @@ class SmrSynchronizer:
     def smr_world(self, value: SmrWorld):
         self._smr_world = value
 
+    @property
+    def changed_xmind_files(self) -> List[XmindFileDto]:
+        return self._changed_xmind_files
+
+    @changed_xmind_files.setter
+    def changed_xmind_files(self, value: List[XmindFileDto]):
+        self._changed_xmind_files = value
+
+    @property
+    def changed_smr_notes(self) -> Dict[str, SmrNoteDto]:
+        return self._changed_smr_notes
+
+    @changed_smr_notes.setter
+    def changed_smr_notes(self, value: Dict[str, SmrNoteDto]):
+        self._changed_smr_notes = value
+
+    @property
+    def x_manager(self) -> XManager:
+        return self._x_manager
+
+    @x_manager.setter
+    def x_manager(self, value: XManager):
+        self._x_manager = value
+
     def synchronize(self):
+        """
+        Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
+        respective synchronization methods in case there were changes
+        """
         aqt.mw.progress.start(immediate=True, label="Synchronizing SMR changes...")
         smr_decks = self.smr_world.get_ontology_lives_in_deck()
         xmind_files_in_decks = self.smr_world.get_xmind_files_in_decks()
+        self.changed_smr_notes = self.smr_world.get_changed_smr_notes(self.col)
         for smr_deck in smr_decks:
             files_in_deck = xmind_files_in_decks[smr_deck.deck_id]
             for xmind_file in files_in_deck:
-                assert False
-                # x_manager = XManager()
-                if status[xmind_file]['osMod'] != os_file_mods[xmind_file]:
-                    self.map_manager = XManager(xmind_file)
-                    for file in self.map_manager.referenced_files:
-                        if file not in self.xmind_files:
-                            self.xmind_files.append(file)
-                    remote_file = self.map_manager.remote_file()
-                    remote_change = status[xmind_file]['xMod'] != remote_file['xMod']
-                    status[xmind_file]['osMod'] = os_file_mods[xmind_file]
-                else:
-                    remote_change = False
+                self.x_manager = XManager(xmind_file)
+                remote_change = False
+                if xmind_file.file_last_modified != self.x_manager.file_last_modified:
+                    if xmind_file.map_last_modified != self.x_manager.map_last_modified:
+                        remote_change = True
+                    else:
+                        xmind_file.file_last_modified = self.x_manager.file_last_modified
+                        self.changed_xmind_files.append(xmind_file)
+                local_change = xmind_file.file_path in self.changed_smr_notes
                 if not local_change and not remote_change:
                     continue
                 elif local_change and not remote_change:
-                    if not self.onto:
-                        self.onto = XOntology(d)
-                    self.map_manager = XManager(xmind_file)
-                    self.process_local_changes(status=status[xmind_file]['sheets'],
-                                               local=local[xmind_file]['sheets'])
-
-                    # Adjust notes according to self.change_list
-                    self.process_change_list()
-                    self.map_manager.save_changes()
+                    self.process_local_changes(xmind_file)
                 elif not local_change and remote_change:
-                    remote_sheets = self.map_manager.get_remote_sheets()
-                    # noinspection PyUnboundLocalVariable
-                    self.process_remote_changes(status=status[xmind_file]['sheets'],
-                                                remote=remote_sheets, deck_id=d)
+                    self.process_remote_changes(xmind_file)
                 else:
-                    print('')
-            if self.onto:
-                self.onto.save_changes()
-        self.note_manager.save_col()
+                    self.process_local_and_remote_changes()
+        # self.note_manager.save_col()
+        aqt.mw.progress.finish()
 
     # TODO: implement add_answer()
     def add_answer(self, a_id, q_id, local):
@@ -417,13 +440,15 @@ class SmrSynchronizer:
             else:
                 continue
 
-    def process_local_changes(self, status, local):
-        for sheet in {**local, **status}:
-            if local[sheet]['ankiMod'] != status[sheet]['ankiMod']:
-                self.current_sheet_sync = sheet
-                self.change_list[sheet] = {}
-                self.process_local_questions(status=status[sheet]['questions'],
-                                             local=local[sheet]['questions'])
+    def process_local_changes(self, file: XmindFileDto):
+        ...
+        # for sheet in ...:
+        #     if local[sheet]['ankiMod'] != status[sheet]['ankiMod']:
+        #         self.current_sheet_sync = sheet
+        #         self.change_list[sheet] = {}
+        #         self.process_local_questions(status=status[sheet]['questions'],
+        #                                      local=local[sheet]['questions'])
+        # self.map_manager.save_changes()
 
     def process_local_questions(self, status, local):
         for question in {**local, **status}:
@@ -435,24 +460,25 @@ class SmrSynchronizer:
             print()
 
     def process_remote_changes(self, status, remote, deck_id):
-        for sheet in {**remote, **status}:
-            if sheet not in status:
-                importer = XmindImporter(self.note_manager.col,
-                                         self.map_manager.file)
-                # importer.import_map(sheet=sheet, deck_id=deck_id)
-                importer.finish_import()
-            elif sheet not in remote:
-                if not self.onto:
-                    self.onto = XOntology(deck_id)
-                self.remove_sheet(sheet, status)
-            elif remote[sheet]['xMod'] != status[sheet]['xMod']:
-                if not self.onto:
-                    self.onto = XOntology(deck_id)
-                print('process_remote_questions')
-                remote_questions = self.map_manager.get_remote_questions(sheet)
-                self.process_remote_questions(
-                    status=status[sheet]['questions'], remote=remote_questions,
-                    deck_id=deck_id, sheet_id=sheet)
+        pass
+        # for sheet in {**remote, **status}:
+        #     if sheet not in status:
+        #         importer = XmindImporter(self.note_manager.col,
+        #                                  self.map_manager.file)
+        #         # importer.import_map(sheet=sheet, deck_id=deck_id)
+        #         importer.finish_import()
+        #     elif sheet not in remote:
+        #         if not self.onto:
+        #             self.onto = XOntology(deck_id)
+        #         self.remove_sheet(sheet, status)
+        #     elif remote[sheet]['xMod'] != status[sheet]['xMod']:
+        #         if not self.onto:
+        #             self.onto = XOntology(deck_id)
+        #         print('process_remote_questions')
+        #         remote_questions = self.map_manager.get_remote_questions(sheet)
+        #         self.process_remote_questions(
+        #             status=status[sheet]['questions'], remote=remote_questions,
+        #             deck_id=deck_id, sheet_id=sheet)
 
     def process_remote_questions(self, status, remote, deck_id, sheet_id):
         note = None
@@ -565,3 +591,6 @@ class SmrSynchronizer:
         self.note_manager.remove_sheet(sheet)
         del status[sheet]
         self.onto.remove_sheet(sheet)
+
+    def process_local_and_remote_changes(self):
+        pass
