@@ -126,9 +126,9 @@ class XmindImporter(NoteImporter):
         directory, file_name = x_manager.get_directory_and_file_name()
         self.files_2_import.append(XmindFileDto(
             directory=directory, file_name=file_name,
-            map_last_modified=x_manager.get_map_last_modified(), file_last_modified=x_manager.get_file_last_modified(),
+            map_last_modified=x_manager.map_last_modified, file_last_modified=x_manager.file_last_modified,
             deck_id=self.deck_id))
-        for sheet in x_manager.get_content_sheets():
+        for sheet in x_manager.content_sheets:
             self.import_sheet(sheet)
 
     def import_sheet(self, sheet: str) -> None:

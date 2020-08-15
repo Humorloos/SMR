@@ -4,13 +4,14 @@ import os
 import shutil
 import tempfile
 import urllib.parse
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, Union
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from bs4 import BeautifulSoup, Tag
 
 from smr.consts import X_MEDIA_EXTENSIONS
 from smr.dto.nodecontentdto import NodeContentDTO
+from smr.dto.xmindfiledto import XmindFileDto
 
 
 def clean_ref_path(path: str) -> str:
@@ -70,15 +71,6 @@ def get_node_title(node: Tag) -> str:
         return node.find('title', recursive=False).text
     except AttributeError:
         return ''
-
-
-def get_os_mod(file: str) -> float:
-    """
-    Gets the operating system's timestamp of the last modification of the provided file
-    :param file: path of the file to get the modification timestamp for
-    :return: the modification timestamp as a float number
-    """
-    return os.stat(file).st_mtime
 
 
 def get_parent_a_topics(q_topic, parent_q):
@@ -230,35 +222,160 @@ class NodeNotFoundError(Exception):
 class XManager:
     FILE_NOT_FOUND_MESSAGE = 'Xmind file "{}" not found.'
 
-    def __init__(self, file):
-        self.file: str = file
-        try:
-            self.xZip: ZipFile = ZipFile(file, 'r')
-        except FileNotFoundError:
-            raise FileNotFoundError(self.FILE_NOT_FOUND_MESSAGE.format(file))
-        self._soup: BeautifulSoup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
-        self.manifest: BeautifulSoup = BeautifulSoup(self.xZip.read("META-INF/manifest.xml"), features='html.parser')
-        self.srcDir: str = tempfile.mkdtemp()
-        self.__sheets: Optional[Dict[str, Dict]] = None
-        self._referenced_files = None
-        self.__referenced_x_managers: List[XManager] = []
-        self.fileBin = []
+    def __init__(self, file: Union[str, XmindFileDto]):
+        self.file = file
+        self.file_last_modified = None
+        self.map_last_modified = None
+        self.zip_file = None
+        self.soup = None
+        self.manifest = None
+        self.sheets = None
+        self.content_sheets = None
+        self.referenced_files = None
+        self.referenced_x_managers = []
+        self.file_bin = []
         self.did_introduce_changes = False
-        # tags are only loaded when needed
-        self._node_dict: Optional[Dict[str, Tag]] = None
+        self.node_dict = None
 
-    def __get_referenced_x_managers(self) -> List['XManager']:
-        ref_managers: List[XManager] = [XManager(f) for f in self.referenced_files]
+    @property
+    def file(self) -> str:
+        return self._file
+
+    @file.setter
+    def file(self, value: Union[str, XmindFileDto]):
+        if type(value) == XmindFileDto:
+            self._file = os.path.join(value.directory, value.file_name + '.xmind')
+        else:
+            self._file = value
+
+    @property
+    def zip_file(self) -> ZipFile:
+        if not self._zip_file:
+            try:
+                self.zip_file: ZipFile = ZipFile(self.file, 'r')
+            except FileNotFoundError:
+                raise FileNotFoundError(self.FILE_NOT_FOUND_MESSAGE.format(self.file))
+        return self._zip_file
+
+    @zip_file.setter
+    def zip_file(self, value: ZipFile):
+        self._zip_file = value
+
+    @property
+    def soup(self) -> BeautifulSoup:
+        if not self._soup:
+            self.soup = BeautifulSoup(self.zip_file.read('content.xml'), features='html.parser')
+        return self._soup
+
+    @soup.setter
+    def soup(self, value: BeautifulSoup):
+        self._soup = value
+
+    @property
+    def manifest(self) -> BeautifulSoup:
+        if not self._manifest:
+            self.manifest = BeautifulSoup(self.zip_file.read("META-INF/manifest.xml"), features='html.parser')
+        return self._manifest
+
+    @manifest.setter
+    def manifest(self, value: BeautifulSoup):
+        self._manifest = value
+
+    @property
+    def sheets(self) -> Dict[str, Dict[str, Union[Tag, List[Tag]]]]:
+        if not self._sheets:
+            sheets = {}
+            for sheet in self.soup('sheet'):
+                sheets[sheet('title', recursive=False)[0].text] = {'tag': sheet, 'nodes': sheet('topic')}
+            self.sheets = sheets
+        return self._sheets
+
+    @sheets.setter
+    def sheets(self, value: Dict[str, Dict[str, Union[Tag, List[Tag]]]]):
+        self._sheets = value
+
+    @property
+    def referenced_x_managers(self) -> List['XManager']:
+        if not self._referenced_x_managers:
+            self.referenced_x_managers = self._get_referenced_x_managers()
+        return self._referenced_x_managers
+
+    @referenced_x_managers.setter
+    def referenced_x_managers(self, value: List['XManager']):
+        self._referenced_x_managers = value
+
+    def _get_referenced_x_managers(self) -> List['XManager']:
+        ref_managers = [XManager(f) for f in self.referenced_files]
         for manager in ref_managers:
-            ref_managers.extend(XManager.__get_referenced_x_managers(manager))
+            ref_managers.extend(XManager._get_referenced_x_managers(manager))
         return ref_managers
 
-    def __get_sheets(self) -> Dict[Any, Dict[str, Any]]:
-        sheets = dict()
-        for sheet in self._soup('sheet'):
-            sheet_title = sheet('title', recursive=False)[0].text
-            sheets[sheet_title] = {'tag': sheet, 'nodes': sheet('topic')}
-        return sheets
+    @property
+    def referenced_files(self) -> List[str]:
+        if not self._referenced_files:
+            referenced_files = []
+            for sheet in self.sheets.values():
+                # Get reference sheets
+                if sheet['tag']('title', recursive=False)[0].text == 'ref':
+                    ref_tags = get_child_nodes(sheet['tag'].topic)
+                    ref_paths = (get_node_hyperlink(t) for t in ref_tags)
+                    referenced_files.extend(clean_ref_path(p) for p in ref_paths if p is not None)
+            self.referenced_files = referenced_files
+        return self._referenced_files
+
+    @referenced_files.setter
+    def referenced_files(self, value: List[str]):
+        self._referenced_files = value
+
+    @property
+    def file_bin(self) -> List:
+        return self. _file_bin
+
+    @file_bin.setter
+    def file_bin(self, value: List):
+        self._file_bin = value
+
+    @property
+    def node_dict(self) -> Dict[str, Tag]:
+        if not self._node_dict:
+            # Nested list comprehension explained:
+            # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
+            self.node_dict = {t['id']: t for s in self.sheets.values() for t in s['nodes']}
+        return self._node_dict
+
+    @node_dict.setter
+    def node_dict(self, value: Dict[str, Tag]):
+        self._node_dict = value
+
+    @property
+    def content_sheets(self) -> List[str]:
+        if not self._content_sheets:
+            self.content_sheets = [sheet_name for sheet_name in self.sheets.keys() if sheet_name != 'ref']
+        return self._content_sheets
+
+    @content_sheets.setter
+    def content_sheets(self, value: List[str]):
+        self._content_sheets = value
+
+    @property
+    def file_last_modified(self) -> float:
+        if not self._file_last_modified:
+            self.file_last_modified = os.stat(self.file).st_mtime
+        return self._file_last_modified
+
+    @file_last_modified.setter
+    def file_last_modified(self, value: float):
+        self._file_last_modified = value
+
+    @property
+    def map_last_modified(self) -> int:
+        if not self._map_last_modified:
+            self.map_last_modified = int(self.soup.find('xmap-content')['timestamp'])
+        return self._map_last_modified
+
+    @map_last_modified.setter
+    def map_last_modified(self, value: int):
+        self._map_last_modified = value
 
     def get_sheet_id(self, sheet: str):
         """
@@ -268,23 +385,34 @@ class XManager:
         """
         return self.sheets[sheet]['tag']['id']
 
-    def content_by_id(self, x_id):
-        topic = self.get_tag_by_id(x_id)
-        return get_node_content(topic)
-
-    # def get_answer_nodes(self, tag):
-    #     return [{'src': n, 'crosslink': '' if not is_crosslink_node(n)
-    #     else self.get_tag_by_id(getNodeCrosslink(n))} for n in
-    #             get_child_nodes(tag) if not is_empty_node(n)]
-
     def read_attachment(self, attachment_uri: str) -> bytes:
         """
         extracts an attachment from the manager's file and saves it to the specified directory
         :param attachment_uri: uri of the attachment (of the form attachment/filename)
         :return: the attachment as binary data
         """
-        with self.xZip.open(attachment_uri) as attachment:
+        with self.zip_file.open(attachment_uri) as attachment:
             return attachment.read()
+
+    def get_tag_by_id(self, tag_id: str):
+        """
+        Gets the tag that
+        :param tag_id: the id property of the tag
+        :return: the tag containing the Id
+        """
+        try:
+            return self.node_dict[tag_id]
+        except KeyError as exception_info:
+            raise NodeNotFoundError(exception_info.args[0])
+
+    def get_directory_and_file_name(self) -> Tuple[str, str]:
+        """
+        Gets the directory and the file name from the manager's own path
+        :return: The directory and the file without extension as strings
+        """
+        directory, file_name = os.path.split(self.file)
+        file_name = os.path.splitext(file_name)[0]
+        return directory, file_name
 
     def get_remote(self):
         remote_sheets = self.get_remote_sheets()
@@ -295,6 +423,10 @@ class XManager:
 
         remote = self.remote_file(remote_sheets)
         return remote
+
+    def content_by_id(self, x_id):
+        topic = self.get_tag_by_id(x_id)
+        return get_node_content(topic)
 
     # def get_remote_questions(self, sheet_id):
     #     remote_questions = dict()
@@ -324,38 +456,6 @@ class XManager:
             sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
         return sheets
 
-    def get_tag_by_id(self, tag_id: str):
-        """
-        Gets the tag that
-        :param tag_id: the id property of the tag
-        :return: the tag containing the Id
-        """
-        try:
-            return self.get_node_dict()[tag_id]
-        except KeyError as exception_info:
-            raise NodeNotFoundError(exception_info.args[0])
-
-    def remote_file(self, sheets=None):
-        doc_mod = self.get_map_last_modified()
-        os_mod = self.get_file_last_modified()
-        remote = {'file': self._file, 'xMod': doc_mod, 'osMod': os_mod,
-                  'sheets': sheets}
-        return remote
-
-    def get_file_last_modified(self):
-        """
-        Gets the timestamp of the last time the XManagers file was edited according to the file system
-        :return: the timestamp (Real value)
-        """
-        return get_os_mod(self._file)
-
-    def get_map_last_modified(self):
-        """
-        Gets the internally saved timestamp of the last time the file was modified
-        :return: the timestamp (integer value)
-        """
-        return int(self._soup.find('xmap-content')['timestamp'])
-
     def get_sheet_last_modified(self, sheet: str) -> int:
         """
         Gets the internally saved timestamp of the last time the sheet with the provided name was modified
@@ -376,13 +476,13 @@ class XManager:
         tag = self.get_tag_by_id(a_id)
         if not get_child_nodes(tag):
             tag.decompose()
-            del self._node_dict[a_id]
+            del self.node_dict[a_id]
             self.did_introduce_changes = True
         else:
             raise AttributeError('Topic has subtopics, can not remove.')
 
     def save_changes(self):
-        self.xZip.close()
+        self.zip_file.close()
         if self.did_introduce_changes:
             self.updateZip()
         # Remove temp dir and its files
@@ -410,7 +510,7 @@ class XManager:
             imgTag = tag.find('xhtml:img')
             imgTag.decompose()
             fullPath = nodeImg[4:]
-            self.fileBin.append(fullPath)
+            self.file_bin.append(fullPath)
             self.manifest.find('file-entry',
                                attrs={"full-path": fullPath}).decompose()
             return
@@ -431,7 +531,7 @@ class XManager:
             return
         # change image
         fullPath = nodeImg[4:]
-        self.fileBin.append(fullPath)
+        self.file_bin.append(fullPath)
         fileEntry = self.manifest.find('file-entry',
                                        attrs={"full-path": fullPath})
         fileEntry['full-path'] = newFullPath
@@ -443,99 +543,36 @@ class XManager:
         try:
             tag.find('title', recursive=False).string = title
         except AttributeError:
-            title_tag = self._soup.new_tag(name='title')
+            title_tag = self.soup.new_tag(name='title')
             title_tag.string = title
             tag.append(title_tag)
 
     def updateZip(self):
         """ taken from https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file-using-python, replaces one file in a zipfile"""
         # generate a temp file
-        tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(self._file))
+        tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(self.file))
         os.close(tmpfd)
 
         # create a temp copy of the archive without filename
-        with ZipFile(self._file, 'r') as zin:
+        with ZipFile(self.file, 'r') as zin:
             with ZipFile(tmpname, 'w') as zout:
                 zout.comment = zin.comment  # preserve the comment
                 for item in zin.infolist():
                     if item.filename not in ['content.xml',
                                              'META-INF/manifest.xml'] + \
-                            self.fileBin:
+                            self.file_bin:
                         zout.writestr(item, zin.read(item.filename))
 
         # replace with the temp archive
-        os.remove(self._file)
-        os.rename(tmpname, self._file)
+        os.remove(self.file)
+        os.rename(tmpname, self.file)
 
         # now add filename with its new data
-        with ZipFile(self._file, mode='a',
+        with ZipFile(self.file, mode='a',
                      compression=ZIP_DEFLATED) as zf:
-            zf.writestr('content.xml', str(self._soup))
+            zf.writestr('content.xml', str(self.soup))
             for file in os.listdir(self.srcDir):
                 zf.write(filename=os.path.join(self.srcDir, file),
                          arcname=os.path.join('attachments', file))
             zf.writestr(zinfo_or_arcname='META-INF/manifest.xml',
                         data=str(self.manifest))
-
-    def get_content_sheets(self):
-        return [k for k in self.sheets.keys() if k != 'ref']
-
-    def get_node_dict(self) -> Dict[str, Tag]:
-        """
-        If the tag_list has not been computed yet computes it and returns it. The tag_list is a list of all tags
-        contained in all sheets managed by this XManager
-        :return: the tag_list
-        """
-        if not self._node_dict:
-            # Nested list comprehension explained:
-            # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
-            self._node_dict = {t['id']: t for s in self.sheets.values() for t in s['nodes']}
-        return self._node_dict
-
-    def get_directory_and_file_name(self) -> Tuple[str, str]:
-        """
-        Gets the directory and the file name from the manager's own path
-        :return: The directory and the file without extension as strings
-        """
-        directory, file_name = os.path.split(self.file)
-        file_name = os.path.splitext(file_name)[0]
-        return directory, file_name
-
-    def _get_referenced_files(self) -> List[str]:
-        """
-        Finds the names of files to which the XManager has references to. Files are referenced in a sheet titled "ref"
-        """
-        referenced_files = []
-        for sheet in self.sheets.values():
-            # Get reference sheets
-            if sheet['tag']('title', recursive=False)[0].text == 'ref':
-                ref_tags = get_child_nodes(sheet['tag'].topic)
-                ref_paths = (get_node_hyperlink(t) for t in ref_tags)
-                referenced_files.extend(clean_ref_path(p) for p in ref_paths if p is not None)
-        return referenced_files
-
-    @property
-    def referenced_files(self) -> List[str]:
-        if not self._referenced_files:
-            self._referenced_files = self._get_referenced_files()
-        return self._referenced_files
-
-    @property
-    def sheets(self) -> Dict[Any, Dict[str, Any]]:
-        if not self.__sheets:
-            self.__sheets = self.__get_sheets()
-        return self.__sheets
-
-    @property
-    def referenced_x_managers(self) -> List['XManager']:
-        if not self.__referenced_x_managers:
-            self.__referenced_x_managers = self.__get_referenced_x_managers()
-        return self.__referenced_x_managers
-
-    @property
-    def file(self) -> str:
-        return self._file
-
-    @file.setter
-    def file(self, value):
-        self._file = value
