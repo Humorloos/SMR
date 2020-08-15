@@ -257,3 +257,12 @@ def test_get_xmind_files_in_decks(smr_world_with_example_map):
     assert files[0].directory == cts.RESOURCES_PATH
     assert files[0].file_name == cts.EXAMPLE_MAP_NAME
     assert files[1].file_name == cts.GENERAL_PSYCHOLOGY_MAP_NAME
+
+
+def test_get_changed_smr_notes(smr_world_with_example_map, changed_collection_with_example_map):
+    # when
+    changed_smr_notes = smr_world_with_example_map.get_changed_smr_notes(changed_collection_with_example_map)
+    # then
+    assert list(changed_smr_notes.keys()) == [cts.EXAMPLE_MAP_PATH, cts.GENERAL_PSYCHOLOGY_MAP_PATH]
+    assert len(list(changed_smr_notes.values())[0]) == 8
+    assert len(list(changed_smr_notes.values())[1]) == 1

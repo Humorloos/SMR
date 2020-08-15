@@ -177,6 +177,29 @@ class SmrWorld(World):
                 files_in_decks[xmind_file.deck_id] = [xmind_file]
         return files_in_decks
 
+    def get_changed_smr_notes(self, collection: Collection) -> Dict[str, List[SmrNoteDto]]:
+        """
+        Gets all notes belonging to xmind files that were changed since the last smr synchronization
+        :return: Dictionary where keys are xmind file names and values are Lists of smr note dtos for the changed notes
+        """
+        with AnkiCollectionAttachement(self, collection):
+            data = self.graph.execute("""
+            select xs.file_directory, xs.file_name || '.xmind', note_id, sn.edge_id, mod
+from smr_notes sn
+         join anki_collection.notes cn on sn.note_id = cn.id and
+                                          sn.last_modified < cn.mod
+         join xmind_edges xe on sn.edge_id = xe.edge_id
+         join xmind_sheets xs on xe.sheet_id = xs.sheet_id""").fetchall()
+        smr_notes_in_files = {}
+        for row in data:
+            file_path = os.path.join(row[0], row[1])
+            smr_note = SmrNoteDto(*row[2:])
+            try:
+                smr_notes_in_files[file_path].append(smr_note)
+            except KeyError:
+                smr_notes_in_files[file_path] = [smr_note]
+        return smr_notes_in_files
+
     def update_smr_triples_card_ids(self, data: List[Tuple[int, int]], collection: Collection) -> None:
         """
         updates the card ids for all triples belonging to certain answers in smr notes

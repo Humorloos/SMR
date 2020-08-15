@@ -111,6 +111,10 @@ CREATE INDEX smr_triples_child_node_id
     ON smr_triples (child_node_id);
 CREATE INDEX smr_notes_edge_id
     ON smr_notes (edge_id);
+CREATE INDEX smr_notes_last_modified
+    ON smr_notes (last_modified);
 CREATE INDEX xmind_nodes_order_number
     ON xmind_nodes (order_number);
+CREATE INDEX xmind_edges_sheet_id
+    ON xmind_edges (sheet_id);
 COMMIT;
