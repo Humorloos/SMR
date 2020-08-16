@@ -1,7 +1,7 @@
 import os
 
 from smr.consts import ADDON_PATH
-from smr.dto.nodecontentdto import NodeContentDTO
+from smr.dto.nodecontentdto import NodeContentDto
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 SMR_WORLD_PATH = os.path.join(SUPPORT_PATH, "smr_world")
@@ -12,6 +12,9 @@ TEST_COLLECTIONS_PATH = os.path.join(SUPPORT_PATH, 'collections')
 EMPTY_COLLECTION_PATH_SESSION = os.path.join(TEST_COLLECTIONS_PATH, 'empty_smr_col_session/empty_smr_col_session.anki2')
 EMPTY_COLLECTION_PATH_FUNCTION = os.path.join(TEST_COLLECTIONS_PATH,
                                               'empty_smr_col_function', 'empty_smr_col_function.anki2')
+CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(TEST_COLLECTIONS_PATH, "changed_col_with_example_map")
+CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(
+    CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY, "changed_col_with_example_map.anki2")
 RESOURCES_PATH = os.path.join(ADDON_PATH, 'resources')
 EXAMPLE_MAP_NAME = "example map"
 EXAMPLE_MAP_PATH = os.path.join(RESOURCES_PATH, EXAMPLE_MAP_NAME + '.xmind')
@@ -45,12 +48,12 @@ TYPES_EDGE_XMIND_ID = '485fcs7jl72gtqesace4v8igf0'
 # nodes
 NEUROTRANSMITTERS_XMIND_ID = "4r6avbt0pbuam4fg07jod0ubec"
 MEDIA_HYPERLINK_XMIND_ID = '1s7h0rvsclrnvs8qq9u71acml5'
-NEUROTRANSMITTERS_NODE_CONTENT = NodeContentDTO(image='attachments/629d18n2i73im903jkrjmr98fg.png',
+NEUROTRANSMITTERS_NODE_CONTENT = NodeContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
                                                 title='neurotransmitters')
-MEDIA_HYPERLINK_NODE_CONTENT = NodeContentDTO(
-    media="C:/Users/lloos/OneDrive - bwedu/Projects/AnkiAddon/anki-addon-dev/addons21/XmindImport/resources"
-          "/serotonin.mp3")
-MEDIA_ATTACHMENT_NODE_CONTENT: NodeContentDTO = NodeContentDTO(media='attachments/395ke7i9a6nkutu85fcpa66as2.mp4')
+# Media hyperlink path as saved in content.xml, replace backslash with slash, since xmind saves paths with slashes
+MEDIA_HYPERLINK_PATH = os.path.join(RESOURCES_PATH, "serotonin.mp3").replace("\\", "/")
+MEDIA_HYPERLINK_NODE_CONTENT = NodeContentDto(media=MEDIA_HYPERLINK_PATH)
+MEDIA_ATTACHMENT_NODE_CONTENT: NodeContentDto = NodeContentDto(media='attachments/395ke7i9a6nkutu85fcpa66as2.mp4')
 NEUROTRANSMITTERS_CLASS_NAME = 'neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png'
 EMPTY_NODE_TAG_ID = "6b0ho6vvcs4pcacchhsgju7513"
 

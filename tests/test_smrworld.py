@@ -264,5 +264,9 @@ def test_get_changed_smr_notes(smr_world_with_example_map, changed_collection_wi
     changed_smr_notes = smr_world_with_example_map.get_changed_smr_notes(changed_collection_with_example_map)
     # then
     assert list(changed_smr_notes.keys()) == [cts.EXAMPLE_MAP_PATH, cts.GENERAL_PSYCHOLOGY_MAP_PATH]
-    assert len(list(changed_smr_notes.values())[0]) == 8
-    assert len(list(changed_smr_notes.values())[1]) == 1
+    values = list(changed_smr_notes.values())
+    assert list(values[0].keys()) == ['biological psychology', 'clinical psychology']
+    assert list(values[1].keys()) == ['general psychology']
+    assert len(list(values[0].values())[0]) == 4
+    assert len(list(values[0].values())[0]) == 4
+    assert len(list(values[1].values())[0]) == 1

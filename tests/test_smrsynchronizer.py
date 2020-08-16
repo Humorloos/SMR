@@ -11,6 +11,11 @@ def smr_synchronizer_no_changes(patch_aqt_mw_smr_world_and_col_with_example_map)
     return SmrSynchronizer()
 
 
+@pytest.fixture
+def smr_synchronizer_local_changes(patch_aqt_mw_smr_world_and_changed_col_with_example_map):
+    return SmrSynchronizer()
+
+
 def test_smr_synchronizer(smr_synchronizer_no_changes):
     # when
     cut = smr_synchronizer_no_changes
@@ -23,12 +28,24 @@ def test_smr_synchronizer(smr_synchronizer_no_changes):
 def test_synchronize_no_changes(smr_synchronizer_no_changes, mocker):
     # given
     cut = smr_synchronizer_no_changes
-    mocker.spy(cut, 'process_local_changes')
+    mocker.spy(cut, '_process_local_changes')
     mocker.spy(cut, 'process_remote_changes')
     mocker.spy(cut, 'process_local_and_remote_changes')
     # when
     cut.synchronize()
     # then
-    assert cut.process_local_changes.call_count == 0
+    assert cut._process_local_changes.call_count == 0
     assert cut.process_remote_changes.call_count == 0
     assert cut.process_local_and_remote_changes.call_count == 0
+
+
+def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker):
+    # given
+    cut = smr_synchronizer_local_changes
+    mocker.spy(cut, '_process_local_changes')
+    mocker.spy(cut, 'process_remote_changes')
+    mocker.spy(cut, 'process_local_and_remote_changes')
+    # when
+    cut.synchronize()
+    # then
+    assert False

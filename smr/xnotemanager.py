@@ -4,11 +4,15 @@ from typing import List, Optional, Dict, Sequence
 
 from anki import Collection
 from anki.backend_pb2 import NoteTypeNameID
+from anki.models import ModelManager
 from anki.utils import splitFields, joinFields
-from smr.consts import SMR_NOTE_FIELD_NAMES, X_MEDIA_EXTENSIONS, X_IMAGE_EXTENSIONS, X_MAX_ANSWERS
-from smr.dto.nodecontentdto import NodeContentDTO
+import smr.consts as cts
+from smr.dto.nodecontentdto import NodeContentDto
 from smr.smrworld import SmrWorld
 from smr.utils import replace_embedded_media, get_smr_model_id
+
+IMAGE_REGEX = r'<img src=\"(.*\.(' + '|'.join(cts.X_IMAGE_EXTENSIONS) + '))\">'
+MEDIA_REGEX = r'\[sound:(.*\.(' + '|'.join(cts.X_MEDIA_EXTENSIONS) + r'))]'
 
 
 def get_smr_note_reference_fields(smr_world: SmrWorld, edge_ids: List[str]) -> Dict[str, str]:
@@ -95,8 +99,27 @@ def change_dict(old, new):
     return {'old': old, 'new': new}
 
 
-def field_by_name(fields, name):
-    return fields[get_index_by_field_name(name)]
+def field_by_identifier(fields: List[str], identifier: str) -> str:
+    """
+    Given an anki fields list an an index identifier from the smr constants, gets the field that belongs to the
+    identifier from the fields list
+    :param fields: A list of smr note fields as returned by splitFields() applied to a fields string of an smr note
+    :param identifier: The identifier from the SMR_FIELD_IDENTIFIERS list that identifies the desired field
+    :return: the field's content as a string
+    """
+    return fields[cts.SMR_FIELD_IDENTIFIERS.index(identifier)]
+
+
+def field_content_by_identifier(fields: List[str], identifier: str, smr_world: SmrWorld) -> NodeContentDto:
+    """
+    Given an anki fields list an an index identifier from the smr constants, gets the content of the field that
+    belongs to the identifier from the fields list
+    :param fields: A list of smr note fields as returned by splitFields() applied to a fields string of an smr note
+    :param identifier: The identifier from the SMR_FIELD_IDENTIFIERS list that identifies the desired field
+    :param smr_world: the smr world to get the xmind file uris from for images and media
+    :return: the field's content as a string
+    """
+    return content_from_field(field=field_by_identifier(fields=fields, identifier=identifier), smr_world=smr_world)
 
 
 def field_from_content(content):
@@ -119,77 +142,85 @@ def field_from_content(content):
     return field
 
 
-def get_index_by_field_name(name):
-    if name not in SMR_NOTE_FIELD_NAMES:
-        raise NameError('Name not in X_FLDS, valid names are ' +
-                        SMR_NOTE_FIELD_NAMES.keys())
-    return list(SMR_NOTE_FIELD_NAMES.keys()).index(name)
-
-
-def get_index_by_a_id(note, a_id):
-    a_metas = meta_from_fields(note.fields)['answers']
-    a_index = next(a_metas.index(d) for d in a_metas if d['answerId'] ==
-                   a_id) + 1
-    return get_index_by_field_name('a' + str(a_index))
+def content_from_field(field: str, smr_world:SmrWorld) -> NodeContentDto:
+    """
+    Converts the string from an anki question or answer field to a node content dto
+    :param field: an anki question or answer field
+    :param smr_world: the smr world to get the xmind file uris from for images and media
+    :return: a node content dto that represents the field's content
+    """
+    return NodeContentDto(image=image_from_field(field=field, smr_world=smr_world),
+                          media=media_from_field(field=field, smr_world=smr_world),
+                          title=title_from_field(field))
+#
+#
+# def get_index_by_a_id(note, a_id):
+#     a_metas = meta_from_fields(note.fields)['answers']
+#     a_index = next(a_metas.index(d) for d in a_metas if d['answerId'] ==
+#                    a_id) + 1
+#     return get_field_index_by_field_name('a' + str(a_index))
 
 
 def get_n_answers(note):
-    answers = [field_by_name(note.fields, 'a' + str(i)) != '' for i in
-               range(1, X_MAX_ANSWERS + 1)]
+    answers = [field_by_identifier(note.fields, 'a' + str(i)) != '' for i in
+               range(1, cts.X_MAX_ANSWERS + 1)]
     return sum(answers)
 
 
-def image_from_field(field: str) -> Optional[str]:
+def title_from_field(field: str) -> str:
     """
-    Extracts an image filename from an anki note field and returns it
+    Extracts the title from an anki note field
+    :param field: the anki note field to extract the title from
+    :return: the title of the field
+    """
+    return re.sub(IMAGE_REGEX + "|" + MEDIA_REGEX, "", field)
+
+
+def image_from_field(field: str, smr_world: SmrWorld) -> Optional[str]:
+    """
+    Extracts an image filename from an anki note field and returns the xmind uri that is linked to that anki file name.
+    If no xmind uri was found, returns the anki filename instead
     :param field: the content of the anki note field to extract the image from
-    :return: the image filename, None if the field does not contain an image
+    :param smr_world: the smr_world to get the xmind file uri from
+    :return: the xmind file uri
+    - None if the field does not contain an image
+    - The anki file name if the file was not yet registered in the relation
     """
     try:
-        return re.search('<img src=\"(.*\.(' + '|'.join(X_IMAGE_EXTENSIONS) +
-                         '))\">', field).group(1)
+        anki_file_name = re.search(IMAGE_REGEX, field).group(1)
     except AttributeError:
         return None
+    xmind_uri = smr_world.get_xmind_uri_from_anki_file_name(anki_file_name)
+    if not xmind_uri:
+        return anki_file_name
+    else:
+        return xmind_uri
 
 
-def media_from_field(field):
+def media_from_field(field: str, smr_world: SmrWorld) -> Optional[str]:
+    """
+    Extracts a media filename from an anki note field and returns the xmind uri that is linked to that anki file name
+    :param field: the content of the anki note field to extract the media from
+    :param smr_world: the smr_world to get the xmind file uri from
+    :return: the xmind file uri, None if the field does not contain any media
+    """
     try:
-        return re.search('\[sound:(.*\.(' + '|'.join(X_MEDIA_EXTENSIONS) +
-                         '))\]', field).group(1)
+        anki_file_name = re.search(MEDIA_REGEX, field).group(1)
     except AttributeError:
         return None
+    return smr_world.get_xmind_uri_from_anki_file_name(anki_file_name)
 
 
 def meta_from_fields(fields):
-    return json.loads(field_by_name(fields, 'mt'))
+    return json.loads(field_by_identifier(fields, 'mt'))
 
 
 def meta_from_flds(flds):
     return meta_from_fields(splitFields(flds))
 
 
-def title_from_field(field):
-    return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", field)
-
-
 def update_sort_id(previousId, idToAppend):
     return previousId + sort_id_from_order_number(idToAppend)
-
-
-def content_from_field(field) -> NodeContentDTO:
-    content = NodeContentDTO
-    image = image_from_field(field)
-    if image:
-        image = 'attachments/' + image
-    media = media_from_field(field)
-    if media:
-        media = 'attachments/' + media
-
-    return {'content': title_from_field(field),
-            'media': {
-                'image': image,
-                'media': media
-            }}
 
 
 def local_answer_dict(anki_mod, answers, field, a_id):
@@ -199,9 +230,37 @@ def local_answer_dict(anki_mod, answers, field, a_id):
 
 class XNoteManager:
     def __init__(self, col: Collection):
-        self.col: Collection = col
-        self.model = get_smr_model_id(self.col.models)
-        self.media_dir = re.sub(r"(?i)\.(anki2)$", ".media", self.col.path)
+        self.col = col
+        self.model = None
+        self.media_directory = None
+
+    @property
+    def col(self) -> Collection:
+        return self._col
+
+    @col.setter
+    def col(self, value: Collection):
+        self._col = value
+
+    @property
+    def media_directory(self) -> str:
+        if not self._media_directory:
+            self.media_directory = re.sub(r"(?i)\.(anki2)$", ".media", self.col.path)
+        return self._media_directory
+
+    @media_directory.setter
+    def media_directory(self, value: str):
+        self._media_directory = value
+
+    @property
+    def model(self) -> ModelManager:
+        if not self._model:
+            self.model = get_smr_model_id(self.col.models)
+        return self._model
+
+    @model.setter
+    def model(self, value: ModelManager):
+        self._model = value
 
     def get_fields_from_qId(self, qId):
         return splitFields(self.col.db.first(
@@ -238,7 +297,7 @@ class XNoteManager:
                 self.model)
                      if meta_from_flds(r[0])['path'] == file]
         for n in doc_notes:
-            n['meta'] = json.loads(field_by_name(n['flds'], 'mt'))
+            n['meta'] = json.loads(field_by_identifier(n['flds'], 'mt'))
         sheet_ids = set(n['meta']['sheetId'] for n in doc_notes)
         sheet_notes = {i: {n['meta']['questionId']: n for n in doc_notes if
                            n['meta']['sheetId'] == i} for i in sheet_ids}
@@ -255,10 +314,10 @@ class XNoteManager:
                 question = sheet_note[n]
                 questions[question['meta']['questionId']] = {
                     'ankiMod': question['ankiMod'],
-                    'content': field_by_name(question['flds'], 'qt'),
+                    'content': field_by_identifier(question['flds'], 'qt'),
                     'answers': answers}
                 for x, a in enumerate(self.get_answer_cards(question['id'])):
-                    field = field_by_name(question['flds'], 'a' + str(x + 1))
+                    field = field_by_identifier(question['flds'], 'a' + str(x + 1))
                     try:
                         a_id = question['meta']['answers'][x]['answerId']
 
@@ -292,7 +351,7 @@ class XNoteManager:
         :return: All notes that are children of the given note
         """
         tag = ' ' + note.tags[0] + ' '
-        sort_id = field_by_name(note.fields, 'id') + sort_id_from_order_number(a_index)
+        sort_id = field_by_identifier(note.fields, 'id') + sort_id_from_order_number(a_index)
         all_child_nids = self.col.db.list(
             'select id from notes where tags is ? and sfld '
             'like ? and length(sfld) > ?', tag, sort_id + '%', len(sort_id))
@@ -338,11 +397,11 @@ class XNoteManager:
                             flds, note.id)
 
     def set_meta(self, note, meta):
-        note.fields[get_index_by_field_name('mt')] = json.dumps(meta)
+        note.fields[get_field_index_by_field_name('mt')] = json.dumps(meta)
         self.save_note(note)
 
     def set_ref(self, note, ref):
-        note.fields[get_index_by_field_name('rf')] = ref
+        note.fields[get_field_index_by_field_name('rf')] = ref
         self.save_note(note)
 
     def update_ref(self, note, changes, meta=None):
@@ -370,7 +429,7 @@ class XNoteManager:
             if a_id in changes:
                 answer_dict[changes[a_id]['old']] = changes[a_id]['new']
             for sheet_child_note in sheet_child_notes:
-                old_ref = field_by_name(sheet_child_note.fields, 'rf')
+                old_ref = field_by_identifier(sheet_child_note.fields, 'rf')
                 new_ref = old_ref
                 if question_dict:
                     new_ref = replace_ref_question(
@@ -418,12 +477,12 @@ class FieldTranslator:
     def field_from_class(self, class_name):
         class_name = re.sub('(.)(ximage_)', '\\1<br>\\2', class_name)
         class_name = self.field_regex.sub(lambda mo: self.field_re_dict[mo.string[mo.start():mo.end()]], class_name)
-        class_name = re.sub('(_extension_)(' + '|'.join(X_IMAGE_EXTENSIONS) + ')', '.\\2">', class_name)
-        class_name = re.sub('(_extension_)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')', '.\\2]', class_name)
+        class_name = re.sub('(_extension_)(' + '|'.join(cts.X_IMAGE_EXTENSIONS) + ')', '.\\2">', class_name)
+        class_name = re.sub('(_extension_)(' + '|'.join(cts.X_MEDIA_EXTENSIONS) + ')', '.\\2]', class_name)
         class_name = class_name.replace("_", " ")
         return class_name
 
-    def class_from_content(self, content: NodeContentDTO) -> str:
+    def class_from_content(self, content: NodeContentDto) -> str:
         """
         converts a node content dictionary into a string that can be used as an ontology class name
         :param content: xmind node content DTO
@@ -432,15 +491,15 @@ class FieldTranslator:
         classified: str = content.title.replace(" ", "_")
         if content.image:
             classified += "ximage_" + re.sub('attachments/', '', content.image)
-            classified = re.sub('(\\.)(' + '|'.join(X_IMAGE_EXTENSIONS) + ')', '_extension_\\2', classified)
+            classified = re.sub('(\\.)(' + '|'.join(cts.X_IMAGE_EXTENSIONS) + ')', '_extension_\\2', classified)
         if content.media:
             classified += "xmedia_" + re.sub('attachments/', '', content.media)
-            classified = re.sub('(\\.)(' + '|'.join(X_MEDIA_EXTENSIONS) + ')', '_extension_\\2', classified)
+            classified = re.sub('(\\.)(' + '|'.join(cts.X_MEDIA_EXTENSIONS) + ')', '_extension_\\2', classified)
         classified = self.inverse_regex.sub(
             lambda mo: self.inverse_dict[re.escape(mo.string[mo.start():mo.end()])], classified)
         return classified
 
-    def relation_class_from_content(self, content: NodeContentDTO) -> str:
+    def relation_class_from_content(self, content: NodeContentDto) -> str:
         """
         converts a node content dictionary into a string that can be used as an ontology class name for a
         relationship property (only difference to concepts is postfix "_xrelation"

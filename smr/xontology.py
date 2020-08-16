@@ -4,7 +4,7 @@ import types
 
 import owlready2
 from smr.consts import X_MAX_ANSWERS, USER_PATH
-from smr.dto.nodecontentdto import NodeContentDTO
+from smr.dto.nodecontentdto import NodeContentDto
 from smr.smrworld import SmrWorld
 from owlready2 import ThingClass
 from owlready2.namespace import Ontology
@@ -123,8 +123,7 @@ class XOntology(Ontology):
     def get_deck_id(self):
         return self._deck_id
 
-    def add_answer(self, a_id, answer_field, rel_dict, question_class,
-                   parents=None):
+    def add_answer(self, a_id, answer_field, rel_dict, question_class, parents=None):
         """
         Adds an answer to a given question to the ontology
         :param parents: Set of parent concepts of the question for the answer
@@ -145,7 +144,7 @@ class XOntology(Ontology):
                               parent_thing=parent, rel_dict=rel_dict)
         return answer_concept
 
-    def concept_from_node_content(self, node_content: NodeContentDTO, node_is_root: bool = False) -> ThingClass:
+    def concept_from_node_content(self, node_content: NodeContentDto, node_is_root: bool = False) -> ThingClass:
         """
         Adds a new concept to the ontology and returns it
         :param node_content: node content DTO containing concept's title, image, and media.

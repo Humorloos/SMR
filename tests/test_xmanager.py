@@ -175,3 +175,12 @@ def test_get_sheet_last_modified(x_manager):
     sheet_last_modified = x_manager.get_sheet_last_modified('biological psychology')
     # then
     assert sheet_last_modified > 15956710897
+
+
+def test_set_node_title(x_manager, tag_for_tests):
+    # given
+    title = 'new title'
+    # when
+    x_manager.set_node_title(tag_for_tests, title)
+    # then
+    assert get_node_title(tag_for_tests) == title

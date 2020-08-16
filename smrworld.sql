@@ -21,11 +21,11 @@ CREATE TABLE xmind_files
 );
 CREATE TABLE xmind_sheets
 (
-    sheet_id      TEXT PRIMARY KEY,
-    name          TEXT,
+    sheet_id       TEXT PRIMARY KEY,
+    name           TEXT,
     file_directory TEXT,
-    file_name     TEXT,
-    last_modified INTEGER,
+    file_name      TEXT,
+    last_modified  INTEGER,
     FOREIGN KEY (file_directory, file_name) REFERENCES xmind_files (directory, file_name)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -117,4 +117,6 @@ CREATE INDEX xmind_nodes_order_number
     ON xmind_nodes (order_number);
 CREATE INDEX xmind_edges_sheet_id
     ON xmind_edges (sheet_id);
+CREATE INDEX xmind_media_to_anki_files_anki_file_name
+    ON xmind_media_to_anki_files (anki_file_name);
 COMMIT;

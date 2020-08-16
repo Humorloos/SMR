@@ -10,7 +10,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from bs4 import BeautifulSoup, Tag
 
 from smr.consts import X_MEDIA_EXTENSIONS
-from smr.dto.nodecontentdto import NodeContentDTO
+from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 
 
@@ -182,13 +182,13 @@ def is_empty_node(tag: Tag):
     return True
 
 
-def get_node_content(tag: Tag) -> NodeContentDTO:
+def get_node_content(tag: Tag) -> NodeContentDto:
     """
     Gets the content of the node represented by the specified Tag in a dictionary
     :param tag: the tag representing the node to get the content of
     :return: a NodeContentDTO containing the contents of the node
     """
-    node_content = NodeContentDTO()
+    node_content = NodeContentDto()
     node_content.title = get_node_title(tag)
 
     # if necessary add image
@@ -221,6 +221,7 @@ class NodeNotFoundError(Exception):
 
 class XManager:
     FILE_NOT_FOUND_MESSAGE = 'Xmind file "{}" not found.'
+    MANAGED_FILES_NAMES = ['content.xml', 'META-INF/manifest.xml']
 
     def __init__(self, file: Union[str, XmindFileDto]):
         self.file = file
@@ -233,6 +234,7 @@ class XManager:
         self.content_sheets = None
         self.referenced_files = None
         self.referenced_x_managers = []
+        self.notes_2_add = []
         self.file_bin = []
         self.did_introduce_changes = False
         self.node_dict = None
@@ -328,11 +330,11 @@ class XManager:
         self._referenced_files = value
 
     @property
-    def file_bin(self) -> List:
+    def file_bin(self) -> List[str]:
         return self. _file_bin
 
     @file_bin.setter
-    def file_bin(self, value: List):
+    def file_bin(self, value: List[str]):
         self._file_bin = value
 
     @property
@@ -376,6 +378,22 @@ class XManager:
     @map_last_modified.setter
     def map_last_modified(self, value: int):
         self._map_last_modified = value
+
+    @property
+    def notes_2_add(self) -> List[bytes]:
+        return self._notes_2_add
+
+    @notes_2_add.setter
+    def notes_2_add(self, value: List[bytes]):
+        self._notes_2_add = value
+
+    @property
+    def did_introduce_changes(self) -> bool:
+        return self._did_introduce_changes
+
+    @did_introduce_changes.setter
+    def did_introduce_changes(self, value: bool):
+        self._did_introduce_changes = value
 
     def get_sheet_id(self, sheet: str):
         """
@@ -484,95 +502,98 @@ class XManager:
     def save_changes(self):
         self.zip_file.close()
         if self.did_introduce_changes:
-            self.updateZip()
-        # Remove temp dir and its files
-        shutil.rmtree(self.srcDir)
+            self._update_zip()
 
-    def set_node_content(self, x_id, title, img, media_dir):
-        tag = self.get_tag_by_id(x_id)
-        if title != get_node_title(tag):
-            self.setNodeTitle(tag=tag, title=title)
-
-        nodeImg = get_node_image(tag)
-
-        # If the note has an image and the tag not or the image is different
-        # or the image was deleted, change it
-        if (img and not nodeImg or img and img not in nodeImg) or \
-                nodeImg and not img:
-            self.set_node_img(tag=tag, noteImg=img, nodeImg=nodeImg,
-                              media_dir=media_dir)
+    def set_node_content(self, node_id: str, content: NodeContentDto, media_directory: str):
+        tag = self.get_tag_by_id(node_id)
+        if content.title != get_node_title(tag):
+            self.set_node_title(tag=tag, title=content.title)
+        # change the image if
+        # - the note has an image and the node not
+        # - the images of note and tag are different or
+        # - the image was removed
+        node_image = get_node_image(tag)
+        if (content.image and not node_image or content.image and content.image != node_image) or \
+                node_image and not content.image:
+            self.set_node_img(tag=tag, note_image=content.image, node_image=node_image, media_dir=media_directory)
         self.did_introduce_changes = True
 
-    def set_node_img(self, tag, noteImg, nodeImg, media_dir):
-        if not noteImg:
-            # remove image node from Map, i do not know why decompose() has
-            # to be called twice but it only works this way
-            imgTag = tag.find('xhtml:img')
-            imgTag.decompose()
-            fullPath = nodeImg[4:]
-            self.file_bin.append(fullPath)
-            self.manifest.find('file-entry',
-                               attrs={"full-path": fullPath}).decompose()
+    def set_node_img(self, tag: Tag, note_image: Optional[str], node_image: Optional[str], media_directory: str):
+        # only remove the image if no note_image was specified
+        if not note_image:
+            image_tag = tag.find('xhtml:img')
+            image_tag.decompose()
+            full_image_path = node_image[4:]
+            self.manifest.find('file-entry', attrs={"full-path": full_image_path}).decompose()
+            self.file_bin.append(full_image_path)
+            self.did_introduce_changes = True
             return
         # move image from note to the directory of images to add
-        imgPath = os.path.join(media_dir, noteImg)
-        shutil.copy(src=imgPath, dst=self.srcDir)
-        newFullPath = 'attachments/' + noteImg
-        newMediaType = "image/" + os.path.splitext(noteImg)[1][1:]
-        if not nodeImg:
+        image_path = os.path.join(media_directory, note_image)
+        with open(image_path) as image:
+            self.files_2_add.append(image)
+        xmind_uri = 'attachments/' + note_image
+        newMediaType = "image/" + os.path.splitext(note_image)[1][1:]
+        if not node_image:
             # create a new image tag and add it to the node Tag
-            imgTag = self.manifest.new_tag(name='xhtml:img', align='bottom')
+            image_tag = self.manifest.new_tag(name='xhtml:img', align='bottom')
             fileEntry = self.manifest.new_tag(name='file-entry')
-            imgTag['xhtml:src'] = 'xap:' + newFullPath
-            fileEntry['full-path'] = newFullPath
+            image_tag['xhtml:src'] = 'xap:' + xmind_uri
+            fileEntry['full-path'] = xmind_uri
             fileEntry['media-type'] = newMediaType
             self.manifest.find('manifest').append(fileEntry)
-            tag.append(imgTag)
+            tag.append(image_tag)
             return
         # change image
-        fullPath = nodeImg[4:]
-        self.file_bin.append(fullPath)
+        full_image_path = node_image[4:]
+        self.file_bin.append(full_image_path)
         fileEntry = self.manifest.find('file-entry',
-                                       attrs={"full-path": fullPath})
-        fileEntry['full-path'] = newFullPath
+                                       attrs={"full-path": full_image_path})
+        fileEntry['full-path'] = xmind_uri
         fileEntry['media-type'] = newMediaType
-        imgTag = tag.find('xhtml:img')
-        imgTag['xhtml:src'] = 'xap:' + newFullPath
+        image_tag = tag.find('xhtml:img')
+        image_tag['xhtml:src'] = 'xap:' + xmind_uri
 
-    def setNodeTitle(self, tag, title):
+    def set_node_title(self, tag: Tag, title: str):
+        """
+        Sets the title of an xmind node
+        :param tag: the tag representing the node to set the title for
+        :param title: the title to set for the node
+        """
         try:
             tag.find('title', recursive=False).string = title
         except AttributeError:
             title_tag = self.soup.new_tag(name='title')
             title_tag.string = title
             tag.append(title_tag)
+        self.did_introduce_changes = True
 
-    def updateZip(self):
-        """ taken from https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file-using-python, replaces one file in a zipfile"""
+    def _update_zip(self):
+        """
+        - replaces the content.xml file in the xmind file with the manager's content soup
+        - replaces the manifest.xml with the manager's manifest soup
+        - removes all files in the file_bin from the xmind file
+        - adds all files in files_to_add to the xmind file
+        code was adopted from
+        https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file-using-python,
+        """
         # generate a temp file
-        tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(self.file))
-        os.close(tmpfd)
-
-        # create a temp copy of the archive without filename
-        with ZipFile(self.file, 'r') as zin:
-            with ZipFile(tmpname, 'w') as zout:
-                zout.comment = zin.comment  # preserve the comment
-                for item in zin.infolist():
-                    if item.filename not in ['content.xml',
-                                             'META-INF/manifest.xml'] + \
-                            self.file_bin:
-                        zout.writestr(item, zin.read(item.filename))
-
-        # replace with the temp archive
+        temp_file_directory, temp_file_name = tempfile.mkstemp(dir=os.path.dirname(self.file))
+        os.close(temp_file_directory)
+        # create a temporary copy of the archive without filename
+        with ZipFile(self.file, 'r') as zip_file_in:
+            with ZipFile(temp_file_name, 'w') as zip_file_out:
+                zip_file_out.comment = zip_file_in.comment  # preserve the comment
+                for item in zip_file_in.infolist():
+                    # keep all files that are not managed by the manager and that are not in the file bin
+                    if item.filename not in self.MANAGED_FILES_NAMES + self.file_bin:
+                        zip_file_out.writestr(item, zip_file_in.read(item.filename))
+        # Replace managed file with temporary file
         os.remove(self.file)
-        os.rename(tmpname, self.file)
-
+        os.rename(temp_file_name, self.file)
         # now add filename with its new data
-        with ZipFile(self.file, mode='a',
-                     compression=ZIP_DEFLATED) as zf:
-            zf.writestr('content.xml', str(self.soup))
-            for file in os.listdir(self.srcDir):
-                zf.write(filename=os.path.join(self.srcDir, file),
-                         arcname=os.path.join('attachments', file))
-            zf.writestr(zinfo_or_arcname='META-INF/manifest.xml',
-                        data=str(self.manifest))
+        with ZipFile(self.file, mode='a', compression=ZIP_DEFLATED) as zip_file:
+            zip_file.writestr('content.xml', str(self.soup))
+            for file in os.listdir(self.files_to_add):
+                zip_file.write(filename=os.path.join(self.srcDir, file), arcname=os.path.join('attachments', file))
+            zip_file.writestr(zinfo_or_arcname='META-INF/manifest.xml', data=str(self.manifest))

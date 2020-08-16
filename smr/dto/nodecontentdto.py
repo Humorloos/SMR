@@ -3,7 +3,7 @@ from typing import Optional
 
 
 @dc.dataclass
-class NodeContentDTO:
+class NodeContentDto:
     """
     Data transfer object for storing xmind nodes' content which consists of the title, optional image, and media
     """

@@ -1,23 +1,26 @@
-from typing import List, Dict
+from typing import List, Dict, Union, Any
 
 import aqt as aqt
 from anki import Collection
+from anki.utils import splitFields
+from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.dto.xmindfiledto import XmindFileDto
+from smr.dto.xmindnodedto import XmindNodeDto
 from smr.smrworld import SmrWorld
 from smr.utils import deep_merge
 from smr.xmanager import get_topic_index, XManager, get_parent_question_topic, get_parent_a_topics
 from smr.xmindimport import XmindImporter
-from smr.xnotemanager import field_by_name, XNoteManager, FieldTranslator, field_from_content, meta_from_fields, \
-    content_from_field, title_from_field, image_from_field, change_dict, get_index_by_a_id, get_index_by_field_name, \
-    sort_id_from_order_number
+from smr.xnotemanager import field_by_identifier, XNoteManager, FieldTranslator, field_from_content, meta_from_fields, \
+    content_from_field, title_from_field, image_from_field, change_dict, sort_id_from_order_number, \
+    field_content_by_identifier
 from smr.xontology import XOntology
 
 
 def raise_sync_error(content, question_note, text_pre, text_post):
     tag = question_note.tags[0]
-    question_title = field_by_name(question_note.fields, 'qt')
-    reference = field_by_name(question_note.fields, 'rf')
+    question_title = field_by_identifier(question_note.fields, 'qt')
+    reference = field_by_identifier(question_note.fields, 'rf')
     raise ReferenceError(
         text_pre + content + '" to question "' + question_title +
         '" in map "' + tag + '" (reference "' + reference + '"). ' +
@@ -30,6 +33,7 @@ class SmrSynchronizer:
     """
     Class for synchronizing changes in the anki collection and source xmind files
     """
+
     def __init__(self):
         self.col = aqt.mw.col
         self.note_manager = XNoteManager(col=aqt.mw.col)
@@ -40,6 +44,7 @@ class SmrSynchronizer:
         self.translator = FieldTranslator()
         self.changed_xmind_files = []
         self.changed_smr_notes = {}
+        self.onto = None
 
     @property
     def col(self) -> Collection:
@@ -89,6 +94,14 @@ class SmrSynchronizer:
     def x_manager(self, value: XManager):
         self._x_manager = value
 
+    @property
+    def onto(self) -> XOntology:
+        return self._onto
+
+    @onto.setter
+    def onto(self, value: XOntology):
+        self._onto = value
+
     def synchronize(self):
         """
         Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
@@ -113,7 +126,7 @@ class SmrSynchronizer:
                 if not local_change and not remote_change:
                     continue
                 elif local_change and not remote_change:
-                    self.process_local_changes(xmind_file)
+                    self._process_local_changes(xmind_file)
                 elif not local_change and remote_change:
                     self.process_remote_changes(xmind_file)
                 else:
@@ -152,7 +165,7 @@ class SmrSynchronizer:
 
         # Add answer to ontology
         if not q_content:
-            q_content = content_from_field(field_by_name(
+            q_content = content_from_field(field_by_identifier(
                 import_dict['note'].fields, 'qt'))
         q_class = self.translator.class_from_content(q_content)
         rel_dict = get_rel_dict(
@@ -160,8 +173,8 @@ class SmrSynchronizer:
             image=q_content['media']['image'],
             media=q_content['media']['media'],
             x_id=q_id,
-            ref=field_by_name(import_dict['note'].fields, 'rf'),
-            sortId=field_by_name(import_dict['note'].fields, 'id'),
+            ref=field_by_identifier(import_dict['note'].fields, 'rf'),
+            sortId=field_by_identifier(import_dict['note'].fields, 'id'),
             doc=self.map_manager.file,
             sheet=import_dict['meta']['sheetId'],
             tag=import_dict['note'].tags[0]
@@ -194,7 +207,7 @@ class SmrSynchronizer:
         img = image_from_field(local[answer]['content'])
         x_id = answer
         self.map_manager.set_node_content(
-            img=img, title=title, x_id=x_id,
+            img=img, title=title, node_id=x_id,
             media_dir=self.note_manager.media_dir)
 
         # Change answer in Ontology
@@ -224,7 +237,7 @@ class SmrSynchronizer:
                     note=import_dict['note'], a_id=a_id)]
                 if not a_field == old_field:
                     import_dict['note'].fields[
-                        get_index_by_field_name('a' + str(
+                        get_field_index_by_field_name('a' + str(
                             remote[a_id]['index']))] = a_field
                     old_content = content_from_field(old_field)
                     self.maybe_add_media(content=a_content,
@@ -285,7 +298,7 @@ class SmrSynchronizer:
             note = self.note_manager.get_note_from_q_id(q_id)
             q_content = self.map_manager.content_by_id(q_id)
             new_q_field = field_from_content(q_content)
-            q_index = get_index_by_field_name('qt')
+            q_index = get_field_index_by_field_name('qt')
 
             # Add change to changes dict
             import_dict['ref_changes']['question'] = change_dict(
@@ -347,14 +360,17 @@ class SmrSynchronizer:
         #     importer.finish_import()
         # print('change note in anki and status and put changes in change_list')
 
-    def change_remote_question(self, question, status, local):
+    def change_remote_question(self, note_data: Dict[str, Union[SmrNoteDto, XmindNodeDto, str, Dict[int, Union[
+        NodeContentDto, Any]]]], question_content_local: NodeContentDto):
+        """
+
+        :param note_data:
+        :param question_content_local:
+        :return:
+        """
         # Change question in map
-        title = title_from_field(local[question]['content'])
-        img = image_from_field(local[question]['content'])
-        self.map_manager.set_node_content(
-            img=img, title=title, x_id=question,
-            media_dir=self.note_manager.media_dir
-        )
+        self.x_manager.set_node_content(node_id=note_data['edge'].node_id, content=note_data['edge'].content,
+                                        media_directory=self.note_manager.media_directory)
 
         # Change question in ontology
         self.onto.change_question(x_id=question,
@@ -440,24 +456,27 @@ class SmrSynchronizer:
             else:
                 continue
 
-    def process_local_changes(self, file: XmindFileDto):
-        ...
-        # for sheet in ...:
-        #     if local[sheet]['ankiMod'] != status[sheet]['ankiMod']:
-        #         self.current_sheet_sync = sheet
-        #         self.change_list[sheet] = {}
-        #         self.process_local_questions(status=status[sheet]['questions'],
-        #                                      local=local[sheet]['questions'])
-        # self.map_manager.save_changes()
+    def _process_local_changes(self, file: XmindFileDto):
+        for sheet_name in self.changed_smr_notes[file.file_path]:
+            self._process_local_questions(file, sheet_name)
+        self.x_manager.save_changes()
+        assert False
 
-    def process_local_questions(self, status, local):
-        for question in {**local, **status}:
-            if local[question]['content'] != status[question]['content']:
-                self.change_remote_question(question, status, local)
-            self.process_local_answers(status=status[question]['answers'],
-                                       local=local[question]['answers'],
-                                       question=question)
-            print()
+    def _process_local_questions(self, file, sheet_name):
+        for note_id, note_data in self.changed_smr_notes[file.file_path][sheet_name].items():
+            fields = splitFields(note_data['note_fields'])
+            question_content_local = field_content_by_identifier(fields=fields, identifier='qt',
+                                                                 smr_world=self.smr_world)
+            if question_content_local != note_data['edge'].content:
+                self.change_remote_question(note_data, question_content_local)
+            question_content_status = n
+            assert False
+            # if local[question]['content'] != status[question]['content']:
+            #     self.change_remote_question(question, status, local)
+            # self.process_local_answers(status=status[question]['answers'],
+            #                            local=local[question]['answers'],
+            #                            question=question)
+            # print()
 
     def process_remote_changes(self, status, remote, deck_id):
         pass
@@ -577,7 +596,7 @@ class SmrSynchronizer:
             # Remove answer from note fields
             if not import_dict['note']:
                 import_dict['note'] = self.note_manager.get_note_from_q_id(q_id)
-            import_dict['note'].fields[get_index_by_field_name(
+            import_dict['note'].fields[get_field_index_by_field_name(
                 'a' + str(status[a_id]['index']))] = ''
 
             # Remove answer from ontology

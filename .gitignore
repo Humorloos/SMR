@@ -6,6 +6,7 @@
 /tests/support/smr_world/smr_world_for_tests.sqlite3
 /tests/support/smr_world/empty_smr_world.sqlite3
 /tests/support/smr_world/smr_world_with_example_map.sqlite3
+/tests/support/smr_world/smr_world_with_example_map.sqlite3-journal
 /tests/support/smr_world/smr_world_4_tests.sqlite3
 /tests/.pytest_cache/
 /tests/UI tests/.pytest_cache/

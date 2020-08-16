@@ -150,7 +150,7 @@ def smr_world_4_tests(_smr_world_for_tests_session):
 
 
 @pytest.fixture(scope="session")
-def x_manager():
+def x_manager() -> xmanager.XManager:
     yield xmanager.XManager(cts.EXAMPLE_MAP_PATH)
 
 
@@ -204,12 +204,12 @@ def collection_with_example_map():
 @pytest.fixture
 def changed_collection_with_example_map():
     try:
-        os.unlink(os.path.join(cts.EMPTY_COLLECTION_PATH_FUNCTION))
+        os.unlink(os.path.join(cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH))
     except FileNotFoundError:
         pass
     shutil.copy(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_with_example_map_changes', 'collection.anki2'),
-                dst=cts.EMPTY_COLLECTION_PATH_FUNCTION)
-    col = Collection(cts.EMPTY_COLLECTION_PATH_FUNCTION)
+                dst=cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    col = Collection(cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
     yield col
     col.close()
 
@@ -219,6 +219,16 @@ def patch_aqt_mw_smr_world_and_col_with_example_map(mocker, smr_world_with_examp
     mocker.patch('aqt.mw')
     aqt.mw.smr_world = smr_world_with_example_map
     aqt.mw.col = collection_with_example_map
+    aqt.mw.return_value = aqt.mw
+    yield aqt.mw
+
+
+@pytest.fixture
+def patch_aqt_mw_smr_world_and_changed_col_with_example_map(mocker, smr_world_with_example_map,
+                                                            changed_collection_with_example_map):
+    mocker.patch('aqt.mw')
+    aqt.mw.smr_world = smr_world_with_example_map
+    aqt.mw.col = changed_collection_with_example_map
     aqt.mw.return_value = aqt.mw
     yield aqt.mw
 

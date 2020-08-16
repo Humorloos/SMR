@@ -11,7 +11,7 @@ from anki.utils import joinFields
 from aqt.main import AnkiQt
 from smr.consts import X_MODEL_NAME, X_MAX_ANSWERS, SMR_NOTE_FIELD_NAMES
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
-from smr.dto.nodecontentdto import NodeContentDTO
+from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.dto.smrtripledto import SmrTripleDto
 from smr.dto.xmindfiledto import XmindFileDto
@@ -197,7 +197,7 @@ class XmindImporter(NoteImporter):
             self.import_edge(order_number=order_number, edge=following_relationship,
                              parent_node_ids=node_ids_preceding_next_edge, parent_concepts=concepts)
 
-    def add_image_and_media_to_collection(self, content: NodeContentDTO) -> None:
+    def add_image_and_media_to_collection(self, content: NodeContentDto) -> None:
         """
         - If present, adds media and image specified in the content DTO to the anki collection and media folder
         - Records an entry linking the potentially new file name to the media attachment / hyperlink from the xmind map
@@ -250,7 +250,7 @@ class XmindImporter(NoteImporter):
         :param parent_node_ids: list of xmind ids of parent nodes
         :param parent_concepts: list of concepts of parent nodes
         """
-        edge_content: NodeContentDTO = get_node_content(edge)
+        edge_content: NodeContentDto = get_node_content(edge)
         child_nodes: List[bs4.Tag] = get_child_nodes(edge)
         # stop execution and warn if an edge is not followed by any nodes
         if len(child_nodes) == 0:

@@ -1,9 +1,11 @@
 import os
-from typing import List, TextIO, Tuple, Dict
+from collections import namedtuple
+from typing import List, TextIO, Tuple, Dict, Any, Union, Optional
 
 from anki import Collection
 from owlready2.namespace import World
 from smr.consts import ADDON_PATH, USER_PATH
+from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.ontologylivesindeckdto import OntologyLivesInDeckDto
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.dto.smrtripledto import SmrTripleDto
@@ -11,6 +13,7 @@ from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from smr.dto.xmindnodedto import XmindNodeDto
 from smr.dto.xmindsheetdto import XmindSheetDto
+from smr.utils import get_smr_model_id
 
 FILE_NAME = 'smrworld.sqlite3'
 SQL_FILE_NAME = 'smrworld.sql'
@@ -177,28 +180,85 @@ class SmrWorld(World):
                 files_in_decks[xmind_file.deck_id] = [xmind_file]
         return files_in_decks
 
-    def get_changed_smr_notes(self, collection: Collection) -> Dict[str, List[SmrNoteDto]]:
+    def get_changed_smr_notes(self, collection: Collection) -> Dict[str, Dict[str, Dict[str, Dict[str, Union[
+        SmrNoteDto, XmindNodeDto, str, Dict[int, Union[NodeContentDto, Any]]]]]]]:
         """
         Gets all notes belonging to xmind files that were changed since the last smr synchronization
-        :return: Dictionary where keys are xmind file names and values are Lists of smr note dtos for the changed notes
+        :return: A hierarchical structure of dictionaries
+        - on the first level, keys are xmind file paths
+        - on the second level, keys are sheet names in the respective files
+        - on the third level, keys are anki note_ids of the changed smr_notes and values are
+           - an Smr Note Dto for changing the smr notes relation
+           - an xmind node dto for changing the smind edges relation
+        - on the fourth level, keys are order numbers of child nodes for the respective edge and values are Xmind
+        node dtos for adjusting the xmind node relation
         """
         with AnkiCollectionAttachement(self, collection):
-            data = self.graph.execute("""
-            select xs.file_directory, xs.file_name || '.xmind', note_id, sn.edge_id, mod
+            data = self._get_records(f"""
+-- noinspection SqlResolve
+select xs.file_directory,
+       xs.file_name || '.xmind' file_name,
+       xs.name                  sheet_name,
+       sn.note_id,
+       sn.edge_id,
+       mod                      last_modified,
+       xe.title                 edge_title,
+       xe.image                 edge_image,
+       xe.link                  edge_link,
+       xn.title                 node_title,
+       xn.image                 node_image,
+       xn.link                  node_link,
+       xn.node_id,
+       xn.order_number,
+       cn.flds                  note_fields
 from smr_notes sn
-         join anki_collection.notes cn on sn.note_id = cn.id and
+         left join anki_collection.notes cn on sn.note_id = cn.id and
                                           sn.last_modified < cn.mod
          join xmind_edges xe on sn.edge_id = xe.edge_id
-         join xmind_sheets xs on xe.sheet_id = xs.sheet_id""").fetchall()
+         join xmind_sheets xs on xe.sheet_id = xs.sheet_id
+         join smr_triples st on xe.edge_id = st.edge_id
+         join xmind_nodes xn on st.child_node_id = xn.node_id""")
         smr_notes_in_files = {}
-        for row in data:
-            file_path = os.path.join(row[0], row[1])
-            smr_note = SmrNoteDto(*row[2:])
+        for record in data:
+            file_path = os.path.join(record.file_directory, record.file_name)
+            node = XmindNodeDto(image=record.node_image, link=record.node_link, title=record.node_title,
+                                node_id=record.node_id)
             try:
-                smr_notes_in_files[file_path].append(smr_note)
+                smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
+                    record.order_number] = node
             except KeyError:
-                smr_notes_in_files[file_path] = [smr_note]
+                edge = XmindNodeDto(image=record.edge_image, link=record.edge_link, title=record.edge_title,
+                                    node_id=record.edge_id)
+                smr_note = SmrNoteDto(*record[3:6])
+                edge_dict = {'note': smr_note, 'edge': edge, 'note_fields': record.note_fields,
+                             'answers': {record.order_number: node}}
+                try:
+                    smr_notes_in_files[file_path][record.sheet_name][record.note_id] = edge_dict
+                except KeyError:
+                    sheet_dict = {record.note_id: edge_dict}
+                    try:
+                        smr_notes_in_files[file_path][record.sheet_name] = sheet_dict
+                    except KeyError:
+                        smr_notes_in_files[file_path] = {record.sheet_name: sheet_dict}
         return smr_notes_in_files
+
+    def _get_records(self, sql: str) -> List['Record']:
+        """
+        Executes the sql query and returns the results as a list of named tuples
+        :param sql: The sql query to execute
+        :return: The data as a list of named tuples where keys are column names and values are the query results
+        """
+        cursor = self.graph.execute(sql)
+        Record = namedtuple('Record', next(zip(*cursor.description)))
+
+        # noinspection PyUnusedLocal
+        def record_factory(cur, row):
+            # noinspection PyArgumentList
+            return Record(*row)
+
+        cursor.row_factory = record_factory
+        data = cursor.fetchall()
+        return data
 
     def update_smr_triples_card_ids(self, data: List[Tuple[int, int]], collection: Collection) -> None:
         """
@@ -367,6 +427,18 @@ from rows
 group by root_id""").fetchall()
         return {row[0]: row[1] for row in sort_data}
 
+    def get_xmind_uri_from_anki_file_name(self, anki_file_name: str) -> Optional[str]:
+        """
+        Gets the xmind_uri stored in the relation xmind_media_to_anki_files for the provided anki file name
+        :param anki_file_name: the anki file name to get the xmind uri for
+        :return: the xmind file uri, None if there is no entry for the file yet
+        """
+        try:
+            return self.graph.execute("SELECT xmind_uri FROM xmind_media_to_anki_files WHERE anki_file_name = ?",
+                                      (anki_file_name,)).fetchone()[0]
+        except TypeError:
+            return None
+
     def attach_anki_collection(self, anki_collection: Collection):
         """
         Attaches an anki collection to the smr world for joint queries to both databases
@@ -389,6 +461,7 @@ class AnkiCollectionAttachement:
     """
     Context Manager for queries that use joins with the anki collection
     """
+
     def __init__(self, smr_world: SmrWorld, anki_collection: Collection):
         self.world = smr_world
         self.collection = anki_collection

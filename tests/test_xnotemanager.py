@@ -1,9 +1,9 @@
 import pytest
 
 import tests.constants as cts
-from smr.dto.nodecontentdto import NodeContentDTO
+from smr.dto.nodecontentdto import NodeContentDto
 from smr.xnotemanager import FieldTranslator, get_smr_note_reference_fields, get_smr_note_sort_fields, \
-    sort_id_from_order_number, XNoteManager, image_from_field
+    sort_id_from_order_number, XNoteManager, image_from_field, media_from_field, title_from_field, content_from_field
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def field_translator():
 def test_class_from_content(field_translator):
     # given
     expected_class = 'biological_psychology'
-    content = NodeContentDTO(title="biological psychology")
+    content = NodeContentDto(title="biological psychology")
     # when
     ontology_class = field_translator.class_from_content(content)
     # then
@@ -24,7 +24,7 @@ def test_class_from_content(field_translator):
 def test_class_from_content_only_image(field_translator):
     # given
     expected_class = 'ximage_09r2e442o8lppjfeblf7il2rmd_extension_png'
-    content = NodeContentDTO(image="attachments/09r2e442o8lppjfeblf7il2rmd.png")
+    content = NodeContentDto(image="attachments/09r2e442o8lppjfeblf7il2rmd.png")
     # when
     ontology_class = field_translator.class_from_content(content)
     # then
@@ -34,7 +34,7 @@ def test_class_from_content_only_image(field_translator):
 def test_class_from_content_only_media(field_translator):
     # given
     expected_class = 'xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3'
-    content = NodeContentDTO(media="attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3")
+    content = NodeContentDto(media="attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3")
     # when
     ontology_class = field_translator.class_from_content(content)
     # then
@@ -44,7 +44,7 @@ def test_class_from_content_only_media(field_translator):
 def test_class_from_content_parentheses(field_translator):
     # given
     expected_class = 'biological_psychology_xlparenthesis_text_in_parenthses_xrparenthesis'
-    content = NodeContentDTO(title="biological psychology (text in parenthses)")
+    content = NodeContentDto(title="biological psychology (text in parenthses)")
     # when
     ontology_class = field_translator.class_from_content(content)
     # then
@@ -92,22 +92,62 @@ def note_manager(collection_with_example_map):
     yield XNoteManager(collection_with_example_map)
 
 
-def test_image_from_field():
+def test_image_from_field(smr_world_with_example_map):
     # when
-    image = image_from_field('MAO is not a neurotransmitter[sound:3lv2k1fhghfb9ghfb8depnqvdt.mp3]<br><img '
-                             'src="09r2e442o8lppjfeblf7il2rmd.png">')
+    image = image_from_field('MAO is not a neurotransmitter[sound:serotonin.mp3]<br><img '
+                             'src="attachments629d18n2i73im903jkrjmr98fg.png">', smr_world_with_example_map)
     # then
-    assert image == '09r2e442o8lppjfeblf7il2rmd.png'
+    assert image == 'attachments/629d18n2i73im903jkrjmr98fg.png'
 
 
-def test_image_from_field_no_image():
+def test_image_from_field_image_not_registered(smr_world_with_example_map):
     # when
-    image = image_from_field('no image')
+    image = image_from_field('no image<img src="some_image.png">', smr_world_with_example_map)
+    # then
+    assert image == "some_image.png"
+
+
+def test_image_from_field_image_no_image(smr_world_with_example_map):
+    # when
+    image = image_from_field('note title', smr_world_with_example_map)
     # then
     assert image is None
+
+
+def test_media_from_field(smr_world_with_example_map):
+    # when
+    media = media_from_field('MAO is not a neurotransmitter[sound:serotonin.mp3]<br><img '
+                             'src="attachments629d18n2i73im903jkrjmr98fg.png">', smr_world_with_example_map)
+    # then
+    assert media == cts.MEDIA_HYPERLINK_PATH
+
+
+def test_media_from_field_no_media(smr_world_with_example_map):
+    # when
+    media = media_from_field('no image', smr_world_with_example_map)
+    # then
+    assert media is None
 
 
 def test_get_actual_deck_names_and_ids(note_manager):
     # when
     deck_names_and_ids = note_manager.get_actual_deck_names_and_ids()
     assert [(d.id, d.name) for d in deck_names_and_ids] == [(1, 'Default'), (1597482307594, 'testdeck')]
+
+
+def test_title_from_field():
+    # when
+    title = title_from_field('MAO is not a neurotransmitter[sound:serotonin.mp3]<img '
+                             'src="attachments629d18n2i73im903jkrjmr98fg.png">')
+    # then
+    assert title == 'MAO is not a neurotransmitter'
+
+
+def test_content_from_field(smr_world_with_example_map):
+    # when
+    content = content_from_field('MAO is not a neurotransmitter[sound:serotonin.mp3]<img '
+                                 'src="attachments629d18n2i73im903jkrjmr98fg.png">', smr_world_with_example_map)
+    # then
+    assert content == NodeContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
+                                     media=cts.MEDIA_HYPERLINK_PATH,
+                                     title='MAO is not a neurotransmitter')
