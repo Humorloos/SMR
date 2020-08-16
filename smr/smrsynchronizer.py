@@ -369,7 +369,7 @@ class SmrSynchronizer:
         :return:
         """
         # Change question in map
-        self.x_manager.set_node_content(node_id=note_data['edge'].node_id, content=note_data['edge'].content,
+        self.x_manager.set_node_content(node_id=note_data['edge'].node_id, content=question_content_local,
                                         media_directory=self.note_manager.media_directory)
 
         # Change question in ontology

@@ -1,3 +1,5 @@
+import urllib
+
 import bs4
 import pytest
 
@@ -18,9 +20,11 @@ def test_x_manager(x_manager):
 
 
 def test_x_manager_wrong_file_path():
+    # given
+    cut = XManager(file=cts.ABSENT_XMIND_FILE_PATH)
     # when
     with pytest.raises(FileNotFoundError) as exception_info:
-        XManager(file=cts.ABSENT_XMIND_FILE_PATH)
+        _ = cut.zip_file
     # then
     assert exception_info.value.args[0] == XManager.FILE_NOT_FOUND_MESSAGE.format(cts.ABSENT_XMIND_FILE_PATH)
 
@@ -152,8 +156,7 @@ def test_get_node_hyperlink(x_manager):
     # when
     node_media = get_node_hyperlink(tag)
     # then
-    assert node_media == "file://C:/Users/lloos/OneDrive%20-%20bwedu/Projects/AnkiAddon/anki-addon-dev/addons21" \
-                         "/XmindImport/resources/serotonin.mp3"
+    assert urllib.parse.unquote(node_media[7:]) == cts.MEDIA_HYPERLINK_PATH
 
 
 def test_extract_attachment(x_manager):
@@ -163,9 +166,9 @@ def test_extract_attachment(x_manager):
     assert type(attachment) == bytes
 
 
-def test_get_map_last_modified(x_manager):
+def test_map_last_modified(x_manager):
     # when
-    map_last_modified = x_manager.get_map_last_modified()
+    map_last_modified = x_manager.map_last_modified
     # then
     assert map_last_modified > 15956710897
 
@@ -184,3 +187,49 @@ def test_set_node_title(x_manager, tag_for_tests):
     x_manager.set_node_title(tag_for_tests, title)
     # then
     assert get_node_title(tag_for_tests) == title
+
+
+def test_set_node_image_remove(x_manager, changed_collection_with_example_map, smr_world_with_example_map):
+    tag = x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID)
+    node_image = get_node_image(tag)
+    # when
+    x_manager.set_node_image(tag=tag, note_image=None, node_image=node_image,
+                             media_directory=cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+                             smr_world=smr_world_with_example_map)
+    # then
+    assert get_node_image(tag) is None
+    with pytest.raises(TypeError) as error_info:
+        smr_world_with_example_map.get_anki_file_name_from_xmind_uri(node_image[4:])
+    assert error_info.value.args[0] == '\'NoneType\' object is not subscriptable'
+    assert x_manager.did_introduce_changes is True
+    assert x_manager.file_bin[0] == node_image[4:]
+
+
+def test_set_node_image_add(x_manager, changed_collection_with_example_map, smr_world_with_example_map, tag_for_tests):
+    tag = tag_for_tests
+    expected_image = 'xap:paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg'
+    # when
+    x_manager.set_node_image(tag=tag, note_image=cts.NEW_IMAGE_NAME, node_image=None,
+                             media_directory=cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+                             smr_world=smr_world_with_example_map)
+    # then
+    assert get_node_image(tag) == expected_image
+    assert smr_world_with_example_map.get_anki_file_name_from_xmind_uri(expected_image[4:]) == expected_image[4:]
+    assert x_manager.did_introduce_changes is True
+    assert len(x_manager.file_bin) == 0
+
+
+def test_set_node_image_change(x_manager, changed_collection_with_example_map, smr_world_with_example_map,
+                               tag_for_tests):
+    tag = x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID)
+    expected_image = 'xap:paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg'
+    old_image = get_node_image(tag)
+    # when
+    x_manager.set_node_image(tag=tag, note_image=cts.NEW_IMAGE_NAME, node_image=old_image,
+                             media_directory=cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+                             smr_world=smr_world_with_example_map)
+    # then
+    assert get_node_image(tag) == expected_image
+    assert smr_world_with_example_map.get_anki_file_name_from_xmind_uri(expected_image[4:]) == expected_image[4:]
+    assert x_manager.did_introduce_changes is True
+    assert x_manager.file_bin[0] == old_image[4:]

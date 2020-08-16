@@ -1,10 +1,9 @@
 # class for reading and writing xmind files
 
 import os
-import shutil
 import tempfile
 import urllib.parse
-from typing import Dict, List, Optional, Any, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from bs4 import BeautifulSoup, Tag
@@ -12,6 +11,8 @@ from bs4 import BeautifulSoup, Tag
 from smr.consts import X_MEDIA_EXTENSIONS
 from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.xmindfiledto import XmindFileDto
+from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
+from smr.smrworld import SmrWorld
 
 
 def clean_ref_path(path: str) -> str:
@@ -234,7 +235,7 @@ class XManager:
         self.content_sheets = None
         self.referenced_files = None
         self.referenced_x_managers = []
-        self.notes_2_add = []
+        self.files_2_add = []
         self.file_bin = []
         self.did_introduce_changes = False
         self.node_dict = None
@@ -331,7 +332,7 @@ class XManager:
 
     @property
     def file_bin(self) -> List[str]:
-        return self. _file_bin
+        return self._file_bin
 
     @file_bin.setter
     def file_bin(self, value: List[str]):
@@ -380,12 +381,12 @@ class XManager:
         self._map_last_modified = value
 
     @property
-    def notes_2_add(self) -> List[bytes]:
-        return self._notes_2_add
+    def files_2_add(self) -> List[bytes]:
+        return self._files_2_add
 
-    @notes_2_add.setter
-    def notes_2_add(self, value: List[bytes]):
-        self._notes_2_add = value
+    @files_2_add.setter
+    def files_2_add(self, value: List[bytes]):
+        self._files_2_add = value
 
     @property
     def did_introduce_changes(self) -> bool:
@@ -504,7 +505,15 @@ class XManager:
         if self.did_introduce_changes:
             self._update_zip()
 
-    def set_node_content(self, node_id: str, content: NodeContentDto, media_directory: str):
+    def set_node_content(self, node_id: str, content: NodeContentDto, media_directory: str,
+                         smr_world: SmrWorld) -> None:
+        """
+        Sets an xmind node's title and image to the ones specified in the content dto
+        :param node_id: the node's xmind_id
+        :param content: the node's content
+        :param media_directory: the anki's collection.media directory to get images from
+        :param smr_world: the smr world to register newly added and removed images
+        """
         tag = self.get_tag_by_id(node_id)
         if content.title != get_node_title(tag):
             self.set_node_title(tag=tag, title=content.title)
@@ -515,44 +524,58 @@ class XManager:
         node_image = get_node_image(tag)
         if (content.image and not node_image or content.image and content.image != node_image) or \
                 node_image and not content.image:
-            self.set_node_img(tag=tag, note_image=content.image, node_image=node_image, media_dir=media_directory)
-        self.did_introduce_changes = True
+            self.set_node_image(tag=tag, note_image=content.image, node_image=node_image,
+                                media_directory=media_directory, smr_world=smr_world)
 
-    def set_node_img(self, tag: Tag, note_image: Optional[str], node_image: Optional[str], media_directory: str):
-        # only remove the image if no note_image was specified
+    def set_node_image(self, tag: Tag, note_image: Optional[str], node_image: Optional[str], media_directory: str,
+                       smr_world: SmrWorld) -> None:
+        """
+        Sets the image of an xmind node.
+        - If no note image is specified, removes the image from the specified node
+        - If no node image is specified, adds the note image to the specified node
+        - If both note and node image are specified, changes the node's image to the note's image
+        :param tag: the tag representing the node for which to set the image
+        :param note_image: an xmind uri acquired from the note's field that specifies the image to set or None if you
+        want to remove the image
+        :param node_image: the current image of the node that is to be removed, with 'xap:' prefix, None if you only
+        want to add an image
+        :param media_directory: anki's collection.media directory where all media files are saved
+        :param smr_world: the smr world to get the anki file name from and in which to save a new entry for new files
+        :return:
+        """
+        self.did_introduce_changes = True
+        # only remove the image from the map if no note_image was specified
         if not note_image:
-            image_tag = tag.find('xhtml:img')
-            image_tag.decompose()
-            full_image_path = node_image[4:]
-            self.manifest.find('file-entry', attrs={"full-path": full_image_path}).decompose()
-            self.file_bin.append(full_image_path)
-            self.did_introduce_changes = True
+            tag.find('xhtml:img', recursive=False).decompose()
+            xmind_uri = node_image[4:]
+            self.manifest.find('file-entry', attrs={"full-path": xmind_uri}).decompose()
+            self.file_bin.append(xmind_uri)
+            smr_world.remove_xmind_media_to_anki_file(xmind_uri=xmind_uri)
             return
-        # move image from note to the directory of images to add
-        image_path = os.path.join(media_directory, note_image)
-        with open(image_path) as image:
-            self.files_2_add.append(image)
-        xmind_uri = 'attachments/' + note_image
-        newMediaType = "image/" + os.path.splitext(note_image)[1][1:]
+        # Add image to list of images to add
+        with open(os.path.join(media_directory, note_image), "rb") as image:
+            self.files_2_add.append(image.read())
+        new_media_type = "image/" + os.path.splitext(note_image)[1][1:]
+        # Only create a new image tag and add it to the node Tag if the node does not have an image yet
         if not node_image:
-            # create a new image tag and add it to the node Tag
             image_tag = self.manifest.new_tag(name='xhtml:img', align='bottom')
-            fileEntry = self.manifest.new_tag(name='file-entry')
-            image_tag['xhtml:src'] = 'xap:' + xmind_uri
-            fileEntry['full-path'] = xmind_uri
-            fileEntry['media-type'] = newMediaType
-            self.manifest.find('manifest').append(fileEntry)
+            file_entry = self.manifest.new_tag(name='file-entry')
+            image_tag['xhtml:src'] = 'xap:' + note_image
+            file_entry['full-path'] = note_image
+            file_entry['media-type'] = new_media_type
+            self.manifest.find('manifest').append(file_entry)
             tag.append(image_tag)
+            smr_world.add_xmind_media_to_anki_files([XmindMediaToAnkiFilesDto(*2 * [note_image])])
             return
-        # change image
-        full_image_path = node_image[4:]
-        self.file_bin.append(full_image_path)
-        fileEntry = self.manifest.find('file-entry',
-                                       attrs={"full-path": full_image_path})
-        fileEntry['full-path'] = xmind_uri
-        fileEntry['media-type'] = newMediaType
-        image_tag = tag.find('xhtml:img')
-        image_tag['xhtml:src'] = 'xap:' + xmind_uri
+        # Change the image if the node already has an image
+        xmind_uri = node_image[4:]
+        file_entry = self.manifest.find('file-entry', attrs={"full-path": xmind_uri})
+        self.file_bin.append(xmind_uri)
+        file_entry['full-path'] = note_image
+        file_entry['media-type'] = new_media_type
+        tag.find('xhtml:img', recursive=False)['xhtml:src'] = 'xap:' + note_image
+        smr_world.remove_xmind_media_to_anki_file(xmind_uri=xmind_uri)
+        smr_world.add_xmind_media_to_anki_files([XmindMediaToAnkiFilesDto(*2 * [note_image])])
 
     def set_node_title(self, tag: Tag, title: str):
         """

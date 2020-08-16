@@ -149,7 +149,7 @@ def smr_world_4_tests(_smr_world_for_tests_session):
     smr_world.graph.db.rollback()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def x_manager() -> xmanager.XManager:
     yield xmanager.XManager(cts.EXAMPLE_MAP_PATH)
 
@@ -209,6 +209,12 @@ def changed_collection_with_example_map():
         pass
     shutil.copy(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_with_example_map_changes', 'collection.anki2'),
                 dst=cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    try:
+        shutil.rmtree(cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
+    except FileNotFoundError:
+        pass
+    shutil.copytree(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_with_example_map_changes',
+                                     'collection.media'), dst=cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
     col = Collection(cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
     yield col
     col.close()

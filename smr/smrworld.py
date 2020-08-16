@@ -439,6 +439,15 @@ group by root_id""").fetchall()
         except TypeError:
             return None
 
+    def get_anki_file_name_from_xmind_uri(self, xmind_uri: str) -> Optional[str]:
+        """
+        Gets the anki file name stored in the relation xmind_media_to_anki_files for the provided xmind uri
+        :param xmind_uri: the xmind uri to get the anki filename for
+        :return: the anki file name
+        """
+        return self.graph.execute("SELECT anki_file_name FROM xmind_media_to_anki_files WHERE xmind_uri = ?",
+                                  (xmind_uri,)).fetchone()[0]
+
     def attach_anki_collection(self, anki_collection: Collection):
         """
         Attaches an anki collection to the smr world for joint queries to both databases
@@ -455,6 +464,13 @@ group by root_id""").fetchall()
         self.graph.commit()
         self.graph.execute("DETACH DATABASE ?", (ANKI_COLLECTION_DB_NAME,))
         anki_collection.reopen()
+
+    def remove_xmind_media_to_anki_file(self, xmind_uri: str) -> None:
+        """
+        Removes an entry from the xmind_media_to_anki_files relation
+        :param xmind_uri: the uri that identifies the entry to delete
+        """
+        self.graph.execute("DELETE FROM main.xmind_media_to_anki_files WHERE xmind_uri = ?", (xmind_uri,))
 
 
 class AnkiCollectionAttachement:
