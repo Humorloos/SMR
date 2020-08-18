@@ -65,7 +65,7 @@ def getOntologyBiologicalPsychology():
     col = Collection(colPath)
     map = EXAMPLE_MAP_PATH
     importer = XmindImporter(col=col, file=map)
-    importer._deck_id = '1'
+    importer.deck_id = '1'
     importer._current_sheet_import = 'biological psychology'
     importer._active_manager = importer._x_managers[0]
     importer._x_managers.append(
@@ -87,7 +87,7 @@ def getNoteData():
     col = Collection(colPath)
     map = EXAMPLE_MAP_PATH
     importer = XmindImporter(col=col, file=map)
-    importer._deck_id = '1'
+    importer.deck_id = '1'
     importer._current_sheet_import = 'biological psychology'
     importer._active_manager = importer._x_managers[0]
     importer._x_managers.append(

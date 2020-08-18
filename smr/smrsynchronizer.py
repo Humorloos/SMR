@@ -1,4 +1,4 @@
-from typing import List, Dict, Union, Any
+from typing import List, Dict, Union, Any, Set
 
 import aqt as aqt
 from anki import Collection
@@ -13,18 +13,8 @@ from smr.xmanager import get_topic_index, XManager, get_parent_question_topic, g
 from smr.xmindimport import XmindImporter
 from smr.xnotemanager import field_by_identifier, XNoteManager, FieldTranslator, field_from_content, meta_from_fields, \
     content_from_field, title_from_field, image_from_field, change_dict, sort_id_from_order_number, \
-    field_content_by_identifier
+    field_content_by_identifier, get_smr_note_reference_fields
 from smr.xontology import XOntology
-
-
-def raise_sync_error(content, question_note, text_pre, text_post):
-    tag = question_note.tags[0]
-    question_title = field_by_identifier(question_note.fields, 'qt')
-    reference = field_by_identifier(question_note.fields, 'rf')
-    raise ReferenceError(
-        text_pre + content + '" to question "' + question_title +
-        '" in map "' + tag + '" (reference "' + reference + '"). ' +
-        text_post)
 
 
 # Algorithm for synchronization was adopted from
@@ -42,8 +32,11 @@ class SmrSynchronizer:
         self.current_sheet_sync = None
         self.warnings = []
         self.translator = FieldTranslator()
-        self.changed_xmind_files = []
+        self.xmind_files_2_update = []
+        self.xmind_edges_2_update = []
+        self.anki_notes_2_update = []
         self.changed_smr_notes = {}
+        self.log = []
         self.onto = None
 
     @property
@@ -71,12 +64,28 @@ class SmrSynchronizer:
         self._smr_world = value
 
     @property
-    def changed_xmind_files(self) -> List[XmindFileDto]:
-        return self._changed_xmind_files
+    def xmind_files_2_update(self) -> List[XmindFileDto]:
+        return self._xmind_files_2_update
 
-    @changed_xmind_files.setter
-    def changed_xmind_files(self, value: List[XmindFileDto]):
-        self._changed_xmind_files = value
+    @xmind_files_2_update.setter
+    def xmind_files_2_update(self, value: List[XmindFileDto]):
+        self._xmind_files_2_update = value
+
+    @property
+    def xmind_edges_2_update(self) -> List[XmindNodeDto]:
+        return self._xmind_edges_2_update
+
+    @xmind_edges_2_update.setter
+    def xmind_edges_2_update(self, value: List[XmindNodeDto]):
+        self._xmind_edges_2_update = value
+
+    @property
+    def anki_notes_2_update(self) -> List[SmrNoteDto]:
+        return self._anki_notes_2_update
+
+    @anki_notes_2_update.setter
+    def anki_notes_2_update(self, value: List[SmrNoteDto]):
+        self._anki_notes_2_update = value
 
     @property
     def changed_smr_notes(self) -> Dict[str, SmrNoteDto]:
@@ -102,6 +111,14 @@ class SmrSynchronizer:
     def onto(self, value: XOntology):
         self._onto = value
 
+    @property
+    def log(self) -> List[str]:
+        return self._log
+
+    @log.setter
+    def log(self, value: List[str]):
+        self._log = value
+
     def synchronize(self):
         """
         Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
@@ -113,6 +130,7 @@ class SmrSynchronizer:
         self.changed_smr_notes = self.smr_world.get_changed_smr_notes(self.col)
         for smr_deck in smr_decks:
             files_in_deck = xmind_files_in_decks[smr_deck.deck_id]
+            self.onto = XOntology(smr_deck.deck_id, self.smr_world)
             for xmind_file in files_in_deck:
                 self.x_manager = XManager(xmind_file)
                 remote_change = False
@@ -121,7 +139,7 @@ class SmrSynchronizer:
                         remote_change = True
                     else:
                         xmind_file.file_last_modified = self.x_manager.file_last_modified
-                        self.changed_xmind_files.append(xmind_file)
+                        self.xmind_files_2_update.append(xmind_file)
                 local_change = xmind_file.file_path in self.changed_smr_notes
                 if not local_change and not remote_change:
                     continue
@@ -131,6 +149,7 @@ class SmrSynchronizer:
                     self.process_remote_changes(xmind_file)
                 else:
                     self.process_local_and_remote_changes()
+        # process changes in smr world
         # self.note_manager.save_col()
         aqt.mw.progress.finish()
 
@@ -138,8 +157,6 @@ class SmrSynchronizer:
     def add_answer(self, a_id, q_id, local):
         print('add answer to map')
         print('add answer to ontology')
-        print('add answer to meta')
-        print('add answer to status')
         question_note = self.note_manager.get_note_from_q_id(q_id)
         raise_sync_error(
             content=local[a_id]['content'], question_note=question_note,
@@ -308,7 +325,7 @@ class SmrSynchronizer:
             note.fields[q_index] = new_q_field
 
             # Change question in ontology
-            self.onto.change_question(x_id=q_id, new_question=new_q_field)
+            self.onto.change_relationship_class_name(x_id=q_id, new_question_content=new_q_field)
 
             # Adjust question in status
             status['xMod'] = remote['xMod']
@@ -360,31 +377,34 @@ class SmrSynchronizer:
         #     importer.finish_import()
         # print('change note in anki and status and put changes in change_list')
 
-    def change_remote_question(self, note_data: Dict[str, Union[SmrNoteDto, XmindNodeDto, str, Dict[int, Union[
-        NodeContentDto, Any]]]], question_content_local: NodeContentDto):
+    def _change_remote_question(self, note_data: Dict[str, Union[SmrNoteDto, XmindNodeDto, str, List[int], Dict[
+            int, Union[NodeContentDto, Any]]]], question_content_local: NodeContentDto):
         """
-
-        :param note_data:
-        :param question_content_local:
-        :return:
+        - Changes the content of the xmind edge that belongs to the specified note data to the local question content
+        - Changes the relationship class name in the ontology according to the new content
+        - Adds the edge to the xmind edges to update at the end of the synchronization
+        :param note_data: A Dictionary containing
+        - the smr note from the smr world
+        - the xmind edge from the smr world
+        - the fields string from the anki note
+        - a List of ontology storids of the edge's parent nodes
+        - dictionarys for answers belonging to the specified note
+        :param question_content_local: the content of the anki note
         """
-        # Change question in map
+        # Change edge in map
         self.x_manager.set_node_content(node_id=note_data['edge'].node_id, content=question_content_local,
-                                        media_directory=self.note_manager.media_directory)
+                                        media_directory=self.note_manager.media_directory, smr_world=self.smr_world)
 
         # Change question in ontology
-        self.onto.change_question(x_id=question,
-                                  new_question=local[question]['content'])
+        note_data['edge'].ontology_storid = self.onto.change_relationship_class_name(
+            parent_storids=note_data['parents'], relation_storid=note_data['edge'].ontology_storid,
+            child_storids=[a.ontology_storid for a in note_data['answers'].values()],
+            new_question_content=question_content_local).storid
 
-        # Remember this change for final note adjustments
-        self.change_list[self.current_sheet_sync][question] = {
-            'question': change_dict(
-                old=status[question]['content'],
-                new=local[question]['content'])}
+        # Add edge to edges to be updated
+        self.xmind_edges_2_update.append(note_data['edge'])
+        # Add relation to relations to be updated
 
-        # Change question in status
-        status[question]['ankiMod'] = local[question]['ankiMod']
-        status[question]['content'] = local[question]['content']
 
     def maybe_add_media(self, content, importer, old_content=None):
         a_media = content['media']
@@ -402,32 +422,27 @@ class SmrSynchronizer:
                 importer.media.append(a_media['media'])
         return importer
 
-    def maybe_remove_answer(self, answer, question, status):
+    def try_to_remove_answer(self, xmind_edge: XmindNodeDto, xmind_node: XmindNodeDto):
         question_note = self.note_manager.get_note_from_q_id(question)
-
         # Remove answer from map
         try:
-            self.map_manager.remove_node(a_id=answer)
+            self.map_manager.remove_node(node_id=xmind_node.node_id)
+            # Remove answer from ontology
+            self.onto.remove_answer(question, answer)
+            # Remove answer from note meta
+            meta = meta_from_fields(question_note.fields)
+            meta['answers'].remove(
+                next(a for a in meta['answers'] if a['answerId'] == answer))
+            meta['nAnswers'] -= 1
+            self.note_manager.set_meta(note=question_note, meta=meta)
+            # Remove answer from status
+            del status[answer]
         except AttributeError:
-            raise_sync_error(
-                content=status[answer]['content'], question_note=question_note,
-                text_pre='Detected invalid deletion: Cannot delete answer "',
-                text_post='Please restore the answer and try synchronizing '
-                          'again. You can delete this answer in the xmind file '
-                          'directly.')
-
-        # Remove answer from ontology
-        self.onto.remove_answer(question, answer)
-
-        # Remove answer from note meta
-        meta = meta_from_fields(question_note.fields)
-        meta['answers'].remove(
-            next(a for a in meta['answers'] if a['answerId'] == answer))
-        meta['nAnswers'] -= 1
-        self.note_manager.set_meta(note=question_note, meta=meta)
-
-        # Remove answer from status
-        del status[answer]
+            self.log.append(
+                f"Invalid answer removal: Cannot remove answer {field_from_content(xmind_node.content)} to question "
+                f"{field_from_content(xmind_edge.content)} (reference "
+                f"{get_smr_note_reference_fields(self.smr_world, [xmind_edge.node_id])[xmind_edge.node_id]}), "
+                f"answer was restored.")
 
     def process_change_list(self):
         for sheet in self.change_list:
@@ -439,23 +454,6 @@ class SmrSynchronizer:
                 self.note_manager.update_ref(note=note, changes=changes,
                                              meta=meta)
 
-    def process_local_answers(self, status, local, question):
-        for answer in {**local, **status}:
-
-            # If the answer was removed it is still contained in local
-            # (since the id was not removed) but has an empty string as content
-            if not local[answer]['content']:
-                self.maybe_remove_answer(answer, question, status)
-
-            elif answer not in status:
-                self.add_answer(a_id=answer, q_id=question, local=local)
-                continue
-            elif not status[answer]['content'] == local[answer]['content']:
-                self.change_answer(answer=answer, question=question,
-                                   local=local, status=status)
-            else:
-                continue
-
     def _process_local_changes(self, file: XmindFileDto):
         for sheet_name in self.changed_smr_notes[file.file_path]:
             self._process_local_questions(file, sheet_name)
@@ -464,19 +462,30 @@ class SmrSynchronizer:
 
     def _process_local_questions(self, file, sheet_name):
         for note_id, note_data in self.changed_smr_notes[file.file_path][sheet_name].items():
+            anki_note_was_changed = False
             fields = splitFields(note_data['note_fields'])
-            question_content_local = field_content_by_identifier(fields=fields, identifier='qt',
-                                                                 smr_world=self.smr_world)
+            question_content_local = field_content_by_identifier(
+                fields=fields, identifier='qt', smr_world=self.smr_world)
             if question_content_local != note_data['edge'].content:
-                self.change_remote_question(note_data, question_content_local)
-            question_content_status = n
-            assert False
-            # if local[question]['content'] != status[question]['content']:
-            #     self.change_remote_question(question, status, local)
-            # self.process_local_answers(status=status[question]['answers'],
-            #                            local=local[question]['answers'],
-            #                            question=question)
-            # print()
+                self._change_remote_question(note_data, question_content_local)
+                anki_note_was_changed = True
+            for answer_id, xmind_node in note_data['answers'].items():
+                answer_content_local = field_content_by_identifier(
+                    fields=fields, identifier='a' + answer_id, smr_world=self.smr_world)
+                if not answer_content_local:
+                    self.try_to_remove_answer(xmind_edge=note_data['edge'], xmind_node=xmind_node)
+
+                elif answer not in status:
+                    self.add_answer(a_id=answer, q_id=question, local=local)
+                    continue
+                elif not status[answer]['content'] == local[answer]['content']:
+                    self.change_answer(answer=answer, question=question,
+                                       local=local, status=status)
+                else:
+                    continue
+
+            if anki_note_was_changed:
+                self.anki_notes_2_update.append(note_data['note'])
 
     def process_remote_changes(self, status, remote, deck_id):
         pass

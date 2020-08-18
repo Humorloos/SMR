@@ -233,3 +233,21 @@ def test_set_node_image_change(x_manager, changed_collection_with_example_map, s
     assert smr_world_with_example_map.get_anki_file_name_from_xmind_uri(expected_image[4:]) == expected_image[4:]
     assert x_manager.did_introduce_changes is True
     assert x_manager.file_bin[0] == old_image[4:]
+
+
+def test_remove_node(x_manager):
+    # given
+    node_id = '3nb97928e68dcu5512pft7gkcg'
+    # when
+    x_manager.remove_node(node_id)
+    # then
+    with pytest.raises(NodeNotFoundError):
+        x_manager.get_tag_by_id(node_id)
+
+
+def test_remove_node_invalid_removal(x_manager):
+    # when
+    with pytest.raises(AttributeError) as error_info:
+        x_manager.remove_node(cts.NEUROTRANSMITTERS_XMIND_ID)
+    # then
+    assert error_info.value.args[0] == 'Topic has subtopics, can not remove.'

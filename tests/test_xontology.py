@@ -1,5 +1,9 @@
+import pytest
+
 import smr.xontology as xontology
 import tests.constants as cts
+from owlready2 import ThingClass, ObjectPropertyClass
+from smr.dto.nodecontentdto import NodeContentDto
 
 
 def test_xontology(x_ontology):
@@ -57,3 +61,45 @@ def test_connect_concepts(x_ontology):
     # then
     assert cut.parent.relationship == [child_1_concept, child_2_concept]
     assert cut.child.Parent == [parent_concept, parent_2_concept]
+
+
+@pytest.fixture
+def ontology_with_example_map(smr_world_with_example_map) -> xontology.XOntology:
+    yield xontology.XOntology(deck_id=1597504882385, smr_world=smr_world_with_example_map)
+
+
+def test_get_concept(ontology_with_example_map):
+    # when
+    concept = ontology_with_example_map.get(cts.MULTIPLE_PARENTS_CHILD_STORID)
+    # then
+    assert isinstance(concept, ontology_with_example_map.Concept)
+
+
+def test_get_relationship_property(ontology_with_example_map):
+    # when
+    concept = ontology_with_example_map.get(cts.MULTIPLE_PARENTS_RELATION_STORID)
+    # then
+    assert isinstance(concept, ObjectPropertyClass)
+
+
+def test_remove_relations(ontology_with_example_map):
+    # given
+    onto = ontology_with_example_map
+    child = onto.get(cts.MULTIPLE_PARENTS_CHILD_STORID)
+    parents = {onto.get(i) for i in cts.MULTIPLE_PARENTS_STORIDS}
+    relation_name = onto.get(cts.MULTIPLE_PARENTS_RELATION_STORID).name
+    # when
+    xontology.remove_relations(children={child}, parents=parents, relation_name=relation_name)
+    # then
+    assert [getattr(p, relation_name) for p in parents] == 4 * [[]]
+    assert len(child.Parent) == 1
+
+
+def test_change_relationship_class_name(ontology_with_example_map):
+    # when
+    new_property = ontology_with_example_map.change_relationship_class_name(
+        parent_storids=cts.MULTIPLE_PARENTS_STORIDS, relation_storid=cts.MULTIPLE_PARENTS_RELATION_STORID,
+        child_storids=[cts.MULTIPLE_PARENTS_CHILD_STORID],
+        new_question_content=NodeContentDto(title='new question', image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI))
+    # then
+    assert new_property.name == 'new_question_ximage_09r2e442o8lppjfeblf7il2rmd_extension_png_xrelation'

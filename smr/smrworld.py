@@ -100,14 +100,14 @@ class SmrWorld(World):
             self.graph.execute(statement)
         self.save()
 
-    def add_ontology_lives_in_deck(self, ontology_base_iri: str, deck_id: str) -> None:
+    def add_ontology_lives_in_deck(self, ontology_base_iri: str, deck_id: int) -> None:
         """
         Registers a deck for an imported ontology
         :param ontology_base_iri: base_iri of the imported ontology
         :param deck_id: the id of the deck from anki (number in form of a string)
         """
         c = self.graph.execute("SELECT c FROM ontologies WHERE iri = '{}'".format(ontology_base_iri)).fetchone()[0]
-        self.graph.execute("INSERT INTO ontology_lives_in_deck VALUES (?, ?)", (int(deck_id), c))
+        self.graph.execute("INSERT INTO ontology_lives_in_deck VALUES (?, ?)", (deck_id, c))
 
     def add_xmind_files(self, entities: List[XmindFileDto]) -> None:
         """
@@ -194,8 +194,7 @@ class SmrWorld(World):
         node dtos for adjusting the xmind node relation
         """
         with AnkiCollectionAttachement(self, collection):
-            data = self._get_records(f"""
--- noinspection SqlResolve
+            data = self._get_records(f"""-- noinspection SqlResolve
 select xs.file_directory,
        xs.file_name || '.xmind' file_name,
        xs.name                  sheet_name,
@@ -205,33 +204,37 @@ select xs.file_directory,
        xe.title                 edge_title,
        xe.image                 edge_image,
        xe.link                  edge_link,
-       xn.title                 node_title,
-       xn.image                 node_image,
-       xn.link                  node_link,
-       xn.node_id,
-       xn.order_number,
+       xe.ontology_storid       edge_storid,
+       xcn.title                node_title,
+       xcn.image                node_image,
+       xcn.link                 node_link,
+       xcn.node_id,
+       xcn.order_number,
+       xcn.ontology_storid      child_node_storid,
+       xpn.ontology_storid      parent_node_storid,
        cn.flds                  note_fields
 from smr_notes sn
-         left join anki_collection.notes cn on sn.note_id = cn.id and
-                                          sn.last_modified < cn.mod
+         left join anki_collection.notes cn on sn.note_id = cn.id
          join xmind_edges xe on sn.edge_id = xe.edge_id
          join xmind_sheets xs on xe.sheet_id = xs.sheet_id
          join smr_triples st on xe.edge_id = st.edge_id
-         join xmind_nodes xn on st.child_node_id = xn.node_id""")
+         join xmind_nodes xcn on st.child_node_id = xcn.node_id
+         join xmind_nodes xpn on st.parent_node_id = xpn.node_id
+where sn.last_modified < cn.mod""")
         smr_notes_in_files = {}
         for record in data:
             file_path = os.path.join(record.file_directory, record.file_name)
             node = XmindNodeDto(image=record.node_image, link=record.node_link, title=record.node_title,
-                                node_id=record.node_id)
+                                node_id=record.node_id, ontology_storid=record.child_node_storid)
             try:
                 smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
                     record.order_number] = node
             except KeyError:
                 edge = XmindNodeDto(image=record.edge_image, link=record.edge_link, title=record.edge_title,
-                                    node_id=record.edge_id)
+                                    node_id=record.edge_id, ontology_storid=record.edge_storid)
                 smr_note = SmrNoteDto(*record[3:6])
                 edge_dict = {'note': smr_note, 'edge': edge, 'note_fields': record.note_fields,
-                             'answers': {record.order_number: node}}
+                             'answers': {record.order_number: node}, 'parents': set()}
                 try:
                     smr_notes_in_files[file_path][record.sheet_name][record.note_id] = edge_dict
                 except KeyError:
@@ -240,6 +243,9 @@ from smr_notes sn
                         smr_notes_in_files[file_path][record.sheet_name] = sheet_dict
                     except KeyError:
                         smr_notes_in_files[file_path] = {record.sheet_name: sheet_dict}
+            finally:
+                smr_notes_in_files[file_path][record.sheet_name][record.note_id]['parents'].add(
+                    record.parent_node_storid)
         return smr_notes_in_files
 
     def _get_records(self, sql: str) -> List['Record']:

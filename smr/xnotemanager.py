@@ -142,7 +142,7 @@ def field_from_content(content):
     return field
 
 
-def content_from_field(field: str, smr_world:SmrWorld) -> NodeContentDto:
+def content_from_field(field: str, smr_world: SmrWorld) -> NodeContentDto:
     """
     Converts the string from an anki question or answer field to a node content dto
     :param field: an anki question or answer field
@@ -152,6 +152,8 @@ def content_from_field(field: str, smr_world:SmrWorld) -> NodeContentDto:
     return NodeContentDto(image=image_from_field(field=field, smr_world=smr_world),
                           media=media_from_field(field=field, smr_world=smr_world),
                           title=title_from_field(field))
+
+
 #
 #
 # def get_index_by_a_id(note, a_id):
@@ -467,20 +469,9 @@ class FieldTranslator:
             'xlparenthesis_': '(',
             '_xrparenthesis': ')',
         }
-        self.field_regex = re.compile("(%s)" % "|".join(
-            self.field_re_dict.keys()))
-        self.inverse_dict = {re.escape(self.field_re_dict[k]): k for k in
-                             self.field_re_dict}
-        self.inverse_regex = re.compile("(%s)" % "|".join(
-            self.inverse_dict.keys()))
-
-    def field_from_class(self, class_name):
-        class_name = re.sub('(.)(ximage_)', '\\1<br>\\2', class_name)
-        class_name = self.field_regex.sub(lambda mo: self.field_re_dict[mo.string[mo.start():mo.end()]], class_name)
-        class_name = re.sub('(_extension_)(' + '|'.join(cts.X_IMAGE_EXTENSIONS) + ')', '.\\2">', class_name)
-        class_name = re.sub('(_extension_)(' + '|'.join(cts.X_MEDIA_EXTENSIONS) + ')', '.\\2]', class_name)
-        class_name = class_name.replace("_", " ")
-        return class_name
+        self.field_regex = re.compile("(%s)" % "|".join(self.field_re_dict.keys()))
+        self.inverse_dict = {re.escape(self.field_re_dict[k]): k for k in self.field_re_dict}
+        self.inverse_regex = re.compile("(%s)" % "|".join(self.inverse_dict.keys()))
 
     def class_from_content(self, content: NodeContentDto) -> str:
         """
@@ -495,8 +486,8 @@ class FieldTranslator:
         if content.media:
             classified += "xmedia_" + re.sub('attachments/', '', content.media)
             classified = re.sub('(\\.)(' + '|'.join(cts.X_MEDIA_EXTENSIONS) + ')', '_extension_\\2', classified)
-        classified = self.inverse_regex.sub(
-            lambda mo: self.inverse_dict[re.escape(mo.string[mo.start():mo.end()])], classified)
+        classified = self.inverse_regex.sub(lambda mo: self.inverse_dict[re.escape(mo.string[mo.start():mo.end()])],
+                                            classified)
         return classified
 
     def relation_class_from_content(self, content: NodeContentDto) -> str:

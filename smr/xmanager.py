@@ -491,11 +491,15 @@ class XManager:
         """
         return self.sheets[sheet]['tag'].topic
 
-    def remove_node(self, a_id):
-        tag = self.get_tag_by_id(a_id)
+    def remove_node(self, node_id: str):
+        """
+        Removes the node with the specified xmind id from the map
+        :param node_id: the xmind node id of the node to remove
+        """
+        tag = self.get_tag_by_id(node_id)
         if not get_child_nodes(tag):
             tag.decompose()
-            del self.node_dict[a_id]
+            del self.node_dict[node_id]
             self.did_introduce_changes = True
         else:
             raise AttributeError('Topic has subtopics, can not remove.')

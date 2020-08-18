@@ -1,6 +1,7 @@
 import json
 import os
 import types
+from typing import List, Union, Set
 
 import owlready2
 from smr.consts import X_MAX_ANSWERS, USER_PATH
@@ -14,7 +15,6 @@ from smr.xnotemanager import FieldTranslator, content_from_field
 
 
 def get_question_sets(q_id_elements):
-
     # Sort triples by question id for Triples pertaining to the same
     # question to appear next to each other
     ascendingQId = sorted(q_id_elements, key=lambda t: t['q_id'])
@@ -64,26 +64,19 @@ def remove_question(question_elements, q_id):
         remove_answer_concept(answer_concept=answer, q_id=q_id)
 
 
-def remove_relations(answers, parents, question_triples):
+def remove_relations(parents: Set[ThingClass], relation_name: str, children: Set[ThingClass]):
     """
-    Removes relations from parents to answers
-    :param answers: List of object concepts the relations refer to
+    Removes the specified relation from parents to children and the Parent relation from children to parents
     :param parents: List of subject concepts the relations refer to
-    :param question_triples: List of concept triples that represent the
-    relations to remove
+    :param relation_name: name of the relations to remove
+    :param children: List of object concepts the relations refer to
     """
-    question = question_triples[0]['p']
-
-    # Remove old question for all parents
+    # Remove old relation for all parents
     for parent in parents:
-        left_answers = [a for a in getattr(parent, question.name) if
-                        a not in answers]
-        setattr(parent, question.name, left_answers)
-
+        setattr(parent, relation_name, list(set(getattr(parent, relation_name)) - children))
     # Remove old parents for all answers
-    for answer in answers:
-        left_parents = [p for p in answer.Parent if p not in parents]
-        answer.Parent = left_parents
+    for child in children:
+        child.Parent = list(set(child.Parent) - parents)
 
 
 def connect_concepts(child_thing: ThingClass, parent_thing: ThingClass, relationship_class_name: str) -> None:
@@ -94,8 +87,6 @@ def connect_concepts(child_thing: ThingClass, parent_thing: ThingClass, relation
     :param parent_thing: the parent concept in the relation
     :param relationship_class_name: the relation's class name
     """
-    if relationship_class_name == 'Verwendungsmoeglichkeiten':
-        assert True
     current_children = getattr(parent_thing, relationship_class_name)
     new_children = current_children + [child_thing]
     setattr(parent_thing, relationship_class_name, new_children)
@@ -107,21 +98,66 @@ def connect_concepts(child_thing: ThingClass, parent_thing: ThingClass, relation
 class XOntology(Ontology):
     CHILD_CLASS_NAME = 'Child'
 
-    def __init__(self, deck_id, smr_world):
-        self._smr_world: SmrWorld = smr_world
-        self._deck_id = deck_id
-        base_iri = os.path.join(USER_PATH, str(deck_id) + '#')
-        Ontology.__init__(self, world=self._smr_world, base_iri=base_iri)
+    def __init__(self, deck_id: int, smr_world: SmrWorld):
+        self.smr_world = smr_world
+        self.deck_id = deck_id
+        self.field_translator = None
+        # set base_iri eagerly because checking whether base iri is initiated via if not self._base_iri is not
+        # possible for an ontology because _base_iri would be considered an Ontology object
+        self.base_iri = os.path.join(USER_PATH, str(self.deck_id) + '#')
+        Ontology.__init__(self, world=self.smr_world, base_iri=self.base_iri)
         # set up classes and register ontology only if the ontology has not been set up before
         try:
             next(self.classes())
         except StopIteration:
             self._set_up_classes()
-            self._smr_world.add_ontology_lives_in_deck(ontology_base_iri=base_iri, deck_id=deck_id)
-        self.field_translator = FieldTranslator()
+            self.smr_world.add_ontology_lives_in_deck(ontology_base_iri=self.base_iri, deck_id=self.deck_id)
+
+    @property
+    def smr_world(self) -> SmrWorld:
+        return self._smr_world
+
+    @smr_world.setter
+    def smr_world(self, value: SmrWorld):
+        self._smr_world = value
+
+    @property
+    def deck_id(self) -> int:
+        return self._deck_id
+
+    @deck_id.setter
+    def deck_id(self, value: int):
+        self._deck_id = value
+
+    @property
+    def base_iri(self) -> str:
+        return self._base_iri
+
+    @base_iri.setter
+    def base_iri(self, value: str):
+        self._base_iri = value
+
+    @property
+    def field_translator(self) -> FieldTranslator:
+        if not self._field_translator:
+            self.field_translator = FieldTranslator()
+        return self._field_translator
+
+    @field_translator.setter
+    def field_translator(self, value: FieldTranslator):
+        self._field_translator = value
+
+    def get(self, storid: int) -> Union[ObjectPropertyClass, ThingClass]:
+        """
+        Gets the relationship property or concept identified by the specified storid
+        :param storid: The storid of the object to get
+        :return: The relationship property or Concept identified by the specified storid
+        """
+        # noinspection PyProtectedMember
+        return self.world._get_by_storid(storid)
 
     def get_deck_id(self):
-        return self._deck_id
+        return self.deck_id
 
     def add_answer(self, a_id, answer_field, rel_dict, question_class, parents=None):
         """
@@ -201,40 +237,44 @@ class XOntology(Ontology):
             self.add_relation(child_thing=o['child'], relationship_class_name=o['class_text'],
                               parent_thing=new_answer, rel_dict=o['rel_dict'])
 
-    def change_question(self, x_id, new_question):
+    def change_relationship_class_name(self, parent_storids: List[int], relation_storid: int,
+                                       child_storids: List[int],
+                                       new_question_content: NodeContentDto) -> ObjectPropertyClass:
         """
-        Changes a question in the ontology
-        :param x_id: Xmind id of the question
-        :param new_question: Field string of the new question
+        - Changes a relation in the ontology by removing the old relation from parents and children and adding the new
+        relation specified by new_question_field to them
+        - Returns the newly assigned relationship property
+        :param relation_storid: the ontology storid of the relationship property to
+        :param child_storids: ontology storids of the children to assign the new relation to
+        :param parent_storids: ontology storids of the parents to assign the new relation to
+        :param new_question_content: Content dto of the question representing the new relation that is to be set
+        :return the newly assigned relationship property
         """
-        question_triples = self.get_question(x_id)
-        answers = set(t['o'] for t in question_triples)
-        parents = set(t['s'] for t in question_triples)
-
-        remove_relations(answers, parents, question_triples)
-
-        # Add new relationship
-        class_text = self.field_translator.class_from_content(content_from_field(
-            new_question))
+        parents = {self.get(storid) for storid in parent_storids}
+        children = {self.get(storid) for storid in child_storids}
+        # Remove old relation
+        remove_relations(parents=parents,
+                         relation_name=self.get(relation_storid).name,
+                         children=children)
+        # Add new relation
+        class_text = self.field_translator.relation_class_from_content(new_question_content)
+        new_relation = self.add_relation(class_text)
         for parent in parents:
-            for child in answers:
-                self.relation_from_triple(
-                    child=child, class_text=class_text, parent=parent,
-                    question_triple=question_triples[0])
+            for child in children:
+                connect_concepts(parent_thing=parent, relationship_class_name=class_text, child_thing=child)
+        return new_relation
 
-    def relation_from_triple(self, child, class_text, parent, question_triple):
+    def relation_from_triple(self, parent: ThingClass, relation_name: str, child: ThingClass):
         """
         Creates a new relation between the child and the parent with the
         given name and the attributes of the relation described in
         question_triple
         :param child: Object concept (answer)
-        :param class_text: Name of the relation to add (question name)
+        :param relation_name: Name of the relation to add (question name)
         :param parent: Subject concept (parent to question)
-        :param question_triple: Dictionary of three concepts that provides the
-        attributes of the question relation
         """
         self.add_relation(
-            child_thing=child, relationship_class_name=class_text, parent_thing=parent,
+            child_thing=child, relationship_class_name=relation_name, parent_thing=parent,
             rel_dict=self.rel_dict_from_triple(question_triple=question_triple))
 
     def get_answer_by_a_id(self, a_id, q_id):

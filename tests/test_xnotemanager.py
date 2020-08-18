@@ -24,7 +24,7 @@ def test_class_from_content(field_translator):
 def test_class_from_content_only_image(field_translator):
     # given
     expected_class = 'ximage_09r2e442o8lppjfeblf7il2rmd_extension_png'
-    content = NodeContentDto(image="attachments/09r2e442o8lppjfeblf7il2rmd.png")
+    content = NodeContentDto(image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI)
     # when
     ontology_class = field_translator.class_from_content(content)
     # then
