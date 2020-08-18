@@ -23,7 +23,7 @@ from smr.utils import get_edge_coordinates_from_parent_node
 from smr.xmanager import get_child_nodes, is_empty_node, XManager, get_non_empty_sibling_nodes, \
     get_node_content, get_node_title
 from smr.xnotemanager import FieldTranslator, get_smr_note_reference_fields, get_smr_note_sort_fields
-from smr.xontology import XOntology, connect_concepts
+from smr.xontology import XOntology
 
 
 class XmindImporter(NoteImporter):
@@ -144,8 +144,9 @@ class XmindImporter(NoteImporter):
             sheet_id=self.active_manager.get_sheet_id(sheet), name=sheet, file_directory=directory, file_name=file_name,
             last_modified=self.active_manager.get_sheet_last_modified(sheet)))
         root_node = self.active_manager.get_root_node(sheet=sheet)
-        self.import_node_if_concept(
-            node=root_node, concepts=[self.onto.concept_from_node_content(get_node_content(root_node))])
+        root_concept = self.onto.concept_from_node_content(get_node_content(root_node), node_id=root_node['id'],
+                                                           node_is_root=True)
+        self.import_node_if_concept(node=root_node, concepts=[root_concept])
 
     def import_node_if_concept(
             self, node: bs4.Tag, concepts: List[ThingClass], parent_node_ids: Optional[List[str]] = None,
@@ -232,8 +233,8 @@ class XmindImporter(NoteImporter):
         :param child_node_id: xmind id of the child node
         :param child_thing: ontology concept representing the child node
         """
-        connect_concepts(child_thing=child_thing, relationship_class_name=relationship_class_name,
-                         parent_thing=parent_thing)
+        self.onto.connect_concepts(child_thing=child_thing, relationship_class_name=relationship_class_name,
+                                   parent_thing=parent_thing, edge_id=edge_id)
         self.triples_2_import.append(SmrTripleDto(
             parent_node_id=parent_node_id, edge_id=edge_id, child_node_id=child_node_id))
 
@@ -280,9 +281,8 @@ class XmindImporter(NoteImporter):
             return
         # create the concepts for the next iteration beforehand to be able to assign a list of all sibling concepts
         # to empty nodes for creating relationships following multiple concepts
-        node_contents = [get_node_content(n) for n in non_empty_child_nodes]
-        all_child_concepts = [self.onto.concept_from_node_content(node_content=n, node_is_root=False) for n in
-                              node_contents]
+        all_child_concepts = [self.onto.concept_from_node_content(
+            node_content=get_node_content(n), node_id=n['id'], node_is_root=False) for n in non_empty_child_nodes]
         single_child_concepts = [[concept] for concept in all_child_concepts]
         # add the relation to the ontology
         relationship_class_name = self.onto.CHILD_CLASS_NAME if edge_content.is_empty() else self._translator \

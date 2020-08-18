@@ -14,13 +14,19 @@ def test_xontology(x_ontology):
     assert cut.field_translator is not None
 
 
-def test_add_concept(x_ontology):
+def test_concept_from_node_content(x_ontology):
     # given
     cut = x_ontology
+    id_1 = 'my_id'
+    id_2 = 'my_other_id'
     # when
-    cut.concept_from_node_content(node_content=cts.NEUROTRANSMITTERS_NODE_CONTENT)
+    concept = cut.concept_from_node_content(node_content=cts.NEUROTRANSMITTERS_NODE_CONTENT, node_id=id_1)
     # then
     assert isinstance(getattr(cut, cts.NEUROTRANSMITTERS_CLASS_NAME), cut.Concept)
+    assert concept.XmindId[0] == id_1
+    # when
+    concept = cut.concept_from_node_content(node_content=cts.NEUROTRANSMITTERS_NODE_CONTENT, node_id=id_2)
+    assert concept.XmindId == [id_1, id_2]
 
 
 def test_add_relation(x_ontology):
@@ -43,24 +49,28 @@ def test_connect_concepts(x_ontology):
     child_1_concept = cut.Concept('child')
     child_2_concept = cut.Concept('child2')
     relationship_class_name = 'relationship'
+    edge_id = 'some_edge_id'
     x_ontology.add_relation(relationship_class_name)
     # when
-    xontology.connect_concepts(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
-                               child_thing=child_1_concept)
+    cut.connect_concepts(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
+                         child_thing=child_1_concept, edge_id=edge_id)
     # then
     assert cut.parent.relationship == [child_1_concept]
     assert cut.child.Parent == [parent_concept]
     # when
-    xontology.connect_concepts(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
-                               child_thing=child_2_concept)
+    cut.connect_concepts(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
+                         child_thing=child_2_concept, edge_id=edge_id)
     # then
     assert cut.parent.relationship == [child_1_concept, child_2_concept]
     # when
-    xontology.connect_concepts(parent_thing=parent_2_concept, relationship_class_name=relationship_class_name,
-                               child_thing=child_1_concept)
+    cut.connect_concepts(parent_thing=parent_2_concept, relationship_class_name=relationship_class_name,
+                         child_thing=child_1_concept, edge_id=edge_id)
     # then
     assert cut.parent.relationship == [child_1_concept, child_2_concept]
     assert cut.child.Parent == [parent_concept, parent_2_concept]
+    assert cut.XmindId[child_1_concept, getattr(cut, relationship_class_name), parent_concept][0] == edge_id
+    assert cut.XmindId[child_2_concept, getattr(cut, relationship_class_name), parent_concept][0] == edge_id
+    assert cut.XmindId[child_1_concept, getattr(cut, relationship_class_name), parent_2_concept][0] == edge_id
 
 
 @pytest.fixture

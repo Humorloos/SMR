@@ -79,22 +79,6 @@ def remove_relations(parents: Set[ThingClass], relation_name: str, children: Set
         child.Parent = list(set(child.Parent) - parents)
 
 
-def connect_concepts(child_thing: ThingClass, parent_thing: ThingClass, relationship_class_name: str) -> None:
-    """
-    - assigns the child concept to the parent concept with the specified relation
-    - assigns the parent concept to the child concept with the relation 'Parent'
-    :param child_thing: the child concept in the relation
-    :param parent_thing: the parent concept in the relation
-    :param relationship_class_name: the relation's class name
-    """
-    current_children = getattr(parent_thing, relationship_class_name)
-    new_children = current_children + [child_thing]
-    setattr(parent_thing, relationship_class_name, new_children)
-    current_parents = getattr(child_thing, 'Parent')
-    new_parents = current_parents + [parent_thing]
-    setattr(child_thing, 'Parent', new_parents)
-
-
 class XOntology(Ontology):
     CHILD_CLASS_NAME = 'Child'
 
@@ -180,10 +164,31 @@ class XOntology(Ontology):
                               parent_thing=parent, rel_dict=rel_dict)
         return answer_concept
 
-    def concept_from_node_content(self, node_content: NodeContentDto, node_is_root: bool = False) -> ThingClass:
+    def connect_concepts(self, child_thing: ThingClass, parent_thing: ThingClass, relationship_class_name: str,
+                         edge_id: str) -> None:
+        """
+        - assigns the child concept to the parent concept with the specified relation
+        - assigns the parent concept to the child concept with the relation 'Parent'
+        :param child_thing: the child concept in the relation
+        :param parent_thing: the parent concept in the relation
+        :param relationship_class_name: the relation's class name
+        :param edge_id: id of the xmind edge that belongs to the added relation
+        """
+        current_children = getattr(parent_thing, relationship_class_name)
+        new_children = current_children + [child_thing]
+        setattr(parent_thing, relationship_class_name, new_children)
+        self.XmindId[child_thing, getattr(self, relationship_class_name), parent_thing].append(edge_id)
+        current_parents = getattr(child_thing, 'Parent')
+        new_parents = current_parents + [parent_thing]
+        setattr(child_thing, 'Parent', new_parents)
+        self.XmindId[child_thing, self.Parent, parent_thing].append(edge_id)
+
+    def concept_from_node_content(self, node_content: NodeContentDto, node_id: str,
+                                  node_is_root: bool = False) -> ThingClass:
         """
         Adds a new concept to the ontology and returns it
         :param node_content: node content DTO containing concept's title, image, and media.
+        :param node_id: xmind id of the node for which to create the concept
         :param node_is_root: Whether the concept is the xmind file's root or not
         :return: the concept
         """
@@ -196,6 +201,7 @@ class XOntology(Ontology):
             concept: ThingClass = generate_concept(self.field_translator.class_from_content(node_content))
         except TypeError:
             raise NameError('Invalid concept name')
+        concept.XmindId.append(node_id)
         return concept
 
     def add_relation(self, relationship_class_name: str) -> ObjectPropertyClass:
@@ -555,4 +561,7 @@ class XOntology(Ontology):
                 pass
 
             class Child(Concept >> Concept):
+                pass
+
+            class XmindId(owlready2.AnnotationProperty):
                 pass
