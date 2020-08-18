@@ -49,21 +49,21 @@ def x_manager_test_file(x_manager):
     manager._file = default_file
 
 
-def test_add_xmind_sheets(smr_world_4_tests, x_manager_test_file):
+def test_add_xmind_sheets(smr_world_4_tests):
     # given
     cut = smr_world_4_tests
-    manager = x_manager_test_file
-    sheet = 'biological psychology'
-    directory, file_name = manager.get_directory_and_file_name()
-    entities = [XmindSheetDto(sheet_id=manager.get_sheet_id(sheet), file_directory=directory, file_name=file_name,
-                              last_modified=manager.get_sheet_last_modified(sheet))]
+    sheet_id = 'new_sheet_id'
+    file_directory = cts.TEST_FILE_DIRECTORY
+    file_name = cts.TEST_FILE_NAME
+    entities = [
+        XmindSheetDto(sheet_id=sheet_id, file_directory=file_directory, file_name=file_name, last_modified=12345)]
     # when
     cut.add_xmind_sheets(entities)
     # then
-    sheet_entity = list(cut.graph.execute("SELECT * FROM main.xmind_sheets").fetchall())[1]
-    assert sheet_entity[0] == '2485j5qgetfevlt00vhrn53961'
-    assert sheet_entity[2] == cts.TEST_FILE_DIRECTORY
-    assert sheet_entity[3] == cts.TEST_FILE_NAME
+    sheet_entity = list(cut.graph.execute(f"SELECT * FROM main.xmind_sheets WHERE sheet_id = '{sheet_id}'").fetchone())
+    assert sheet_entity[0] == sheet_id
+    assert sheet_entity[2] == file_directory
+    assert sheet_entity[3] == file_name
 
 
 @pytest.fixture
@@ -89,8 +89,8 @@ def test_add_xmind_sheet_wrong_path(smr_world_4_tests, x_manager_absent_file):
 
 def test_add_xmind_nodes(smr_world_4_tests, x_manager):
     # given
-    expected_entry = (cts.NEUROTRANSMITTERS_XMIND_ID, cts.TEST_SHEET_ID, 'neurotransmitters',
-                      'attachments/629d18n2i73im903jkrjmr98fg.png', None, 153, 1578314907411, 1)
+    expected_entry = XmindNodeDto(node_id=cts.NEUROTRANSMITTERS_XMIND_ID, title='neurotransmitters',
+                                  image='attachments/629d18n2i73im903jkrjmr98fg.png', link=None)
     # then
     verify_add_xmind_node(expected_entry, smr_world_4_tests, x_manager, cts.NEUROTRANSMITTERS_XMIND_ID,
                           cts.NEUROTRANSMITTERS_NODE_CONTENT)
@@ -98,9 +98,8 @@ def test_add_xmind_nodes(smr_world_4_tests, x_manager):
 
 def test_add_xmind_nodes_with_media_hyperlink(smr_world_4_tests, x_manager):
     # given
-    expected_entry = (cts.MEDIA_HYPERLINK_XMIND_ID, cts.TEST_SHEET_ID, '', None,
-                      "C:/Users/lloos/OneDrive - bwedu/Projects/AnkiAddon/anki-addon-dev/addons21/XmindImport"
-                      "/resources/serotonin.mp3", 153, 1595671089759, 1)
+    expected_entry = XmindNodeDto(node_id=cts.MEDIA_HYPERLINK_XMIND_ID, title='', link=cts.MEDIA_HYPERLINK_PATH,
+                                  image=None)
     # then
     verify_add_xmind_node(expected_entry, smr_world_4_tests, x_manager, cts.MEDIA_HYPERLINK_XMIND_ID,
                           cts.MEDIA_HYPERLINK_NODE_CONTENT)
@@ -115,8 +114,11 @@ def verify_add_xmind_node(expected_entry, cut, x_manager, tag_id, node_content):
         link=node_content.media, ontology_storid=cts.TEST_CONCEPT_STORID, last_modified=node['timestamp'],
         order_number=1)])
     # then
-    assert list(cut.graph.execute(
-        "SELECT * FROM main.xmind_nodes WHERE node_id = '{}'".format(tag_id)).fetchall())[0] == expected_entry
+    xmind_node = cut._get_records("SELECT * FROM main.xmind_nodes WHERE node_id = '{}'".format(tag_id))[0]
+    assert xmind_node.image == expected_entry.image
+    assert xmind_node.title == expected_entry.title
+    assert xmind_node.node_id == expected_entry.node_id
+    assert xmind_node.link == expected_entry.link
 
 
 def test_add_xmind_edges(smr_world_4_tests, x_manager):

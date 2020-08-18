@@ -126,14 +126,14 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
     # given
     cut = xmind_importer_import_node_if_concept
     node = cut._x_managers[0].get_tag_by_id(cts.EMPTY_NODE_TAG_ID)
-    concepts = [x_ontology.concept_from_node_content(get_node_content(t)) for t in
+    concepts = [x_ontology.concept_from_node_content(get_node_content(t), node_id='some_id') for t in
                 get_non_empty_sibling_nodes(node)]
     parent_edge = get_parent_node(node)
     parent_node = get_parent_node(parent_edge)
     # when
     cut.import_node_if_concept(
         node=node, concepts=concepts, parent_node_ids=[parent_node['id']],
-        parent_concepts=[x_ontology.concept_from_node_content(get_node_content(parent_node))],
+        parent_concepts=[x_ontology.concept_from_node_content(get_node_content(parent_node), node_id='some_id')],
         parent_edge_id=parent_edge['id'],
         parent_relationship_class_name=x_ontology.field_translator.class_from_content(get_node_content(parent_edge)),
         order_number=5)
@@ -148,13 +148,14 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
     # given
     cut = xmind_importer_import_node_if_concept
     node = cut._x_managers[0].get_tag_by_id("3oqcv5qlqhn28u1opce5i27709")
-    concepts = [x_ontology.concept_from_node_content(get_node_content(node))]
+    concepts = [x_ontology.concept_from_node_content(get_node_content(node), node_id='some_id')]
     parent_edge = get_parent_node(node)
     parent_nodes = get_non_empty_sibling_nodes(get_parent_node(parent_edge))
     # when
     cut.import_node_if_concept(
         node=node, concepts=concepts, parent_node_ids=[n['id'] for n in parent_nodes],
-        parent_concepts=[x_ontology.concept_from_node_content(get_node_content(n)) for n in parent_nodes],
+        parent_concepts=[x_ontology.concept_from_node_content(get_node_content(n), node_id='some_id') for n in
+                         parent_nodes],
         parent_edge_id=parent_edge['id'],
         parent_relationship_class_name=x_ontology.field_translator.class_from_content(get_node_content(parent_edge)),
         order_number=1)
@@ -236,7 +237,8 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge, x_o
     parent_node = get_parent_node(edge)
     # when
     cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node['id']],
-                    parent_concepts=[x_ontology.concept_from_node_content(get_node_content(parent_node))])
+                    parent_concepts=[
+                        x_ontology.concept_from_node_content(get_node_content(parent_node), node_id='some_id')])
     # then
     assert cut.onto.concept_from_node_content.call_count == 4
     assert cut.import_node_if_concept.call_count == 5
@@ -251,7 +253,8 @@ def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     parent_node = get_parent_node(edge)
     # when
     cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node['id']],
-                    parent_concepts=[x_ontology.concept_from_node_content(get_node_content(parent_node))])
+                    parent_concepts=[
+                        x_ontology.concept_from_node_content(get_node_content(parent_node), node_id='some_id')])
     # then
     assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
@@ -265,10 +268,9 @@ def test_generate_notes(active_xmind_importer, smr_world_4_tests, collection_4_m
     cut.col = collection_4_migration
     cut._smr_world = smr_world_4_tests
     # when
-    cut.edge_ids_2_make_notes_of = [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
-    cut.generate_notes()
+    notes = cut.generate_notes([cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
     # then
-    imported_note = cut.notes_2_import[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
+    imported_note = notes[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
     assert imported_note.fieldsStr == 'biological psychology<li>investigates: information transfer and ' \
                                       'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits ' \
                                       'up: Serotonin, dopamine, adrenaline, noradrenaline</li>arebiogenic ' \
@@ -285,9 +287,9 @@ def test_finish_import(active_xmind_importer, smr_world_4_tests, mocker, collect
     cut.deck_id = 1
     mocker.patch.object(cut, "import_notes_and_cards")
     cut.col = collection_4_migration
-    cut.edge_ids_2_make_notes_of = [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
-                                    cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID]
-    cut.generate_notes()
+    cut.notes_2_import = cut.generate_notes(
+        [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
+         cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID])
     # when
     cut.finish_import()
     # then

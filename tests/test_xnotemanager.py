@@ -132,7 +132,9 @@ def test_media_from_field_no_media(smr_world_with_example_map):
 def test_get_actual_deck_names_and_ids(note_manager):
     # when
     deck_names_and_ids = note_manager.get_actual_deck_names_and_ids()
-    assert [(d.id, d.name) for d in deck_names_and_ids] == [(1, 'Default'), (1597482307594, 'testdeck')]
+    decks = [(d.id, d.name) for d in deck_names_and_ids]
+    assert decks[0] == (1, 'Default')
+    assert decks[1][1] == 'testdeck'
 
 
 def test_title_from_field():

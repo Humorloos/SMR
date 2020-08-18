@@ -64,21 +64,6 @@ def remove_question(question_elements, q_id):
         remove_answer_concept(answer_concept=answer, q_id=q_id)
 
 
-def remove_relations(parents: Set[ThingClass], relation_name: str, children: Set[ThingClass]):
-    """
-    Removes the specified relation from parents to children and the Parent relation from children to parents
-    :param parents: List of subject concepts the relations refer to
-    :param relation_name: name of the relations to remove
-    :param children: List of object concepts the relations refer to
-    """
-    # Remove old relation for all parents
-    for parent in parents:
-        setattr(parent, relation_name, list(set(getattr(parent, relation_name)) - children))
-    # Remove old parents for all answers
-    for child in children:
-        child.Parent = list(set(child.Parent) - parents)
-
-
 class XOntology(Ontology):
     CHILD_CLASS_NAME = 'Child'
 
@@ -177,7 +162,7 @@ class XOntology(Ontology):
         current_children = getattr(parent_thing, relationship_class_name)
         new_children = current_children + [child_thing]
         setattr(parent_thing, relationship_class_name, new_children)
-        self.XmindId[child_thing, getattr(self, relationship_class_name), parent_thing].append(edge_id)
+        self.XmindId[parent_thing, getattr(self, relationship_class_name), child_thing].append(edge_id)
         current_parents = getattr(child_thing, 'Parent')
         new_parents = current_parents + [parent_thing]
         setattr(child_thing, 'Parent', new_parents)
@@ -244,8 +229,8 @@ class XOntology(Ontology):
                               parent_thing=new_answer, rel_dict=o['rel_dict'])
 
     def change_relationship_class_name(self, parent_storids: List[int], relation_storid: int,
-                                       child_storids: List[int],
-                                       new_question_content: NodeContentDto) -> ObjectPropertyClass:
+                                       child_storids: List[int], new_question_content: NodeContentDto,
+                                       edge_id: str) -> ObjectPropertyClass:
         """
         - Changes a relation in the ontology by removing the old relation from parents and children and adding the new
         relation specified by new_question_field to them
@@ -254,21 +239,48 @@ class XOntology(Ontology):
         :param child_storids: ontology storids of the children to assign the new relation to
         :param parent_storids: ontology storids of the parents to assign the new relation to
         :param new_question_content: Content dto of the question representing the new relation that is to be set
+        :param edge_id: xmind id of the whose relationship name is to be changed
         :return the newly assigned relationship property
         """
-        parents = {self.get(storid) for storid in parent_storids}
-        children = {self.get(storid) for storid in child_storids}
+        parents = [self.get(storid) for storid in parent_storids]
+        children = [self.get(storid) for storid in child_storids]
         # Remove old relation
-        remove_relations(parents=parents,
-                         relation_name=self.get(relation_storid).name,
-                         children=children)
+        self.remove_relations(parents=parents, relation_name=self.get(relation_storid).name, children=children,
+                              edge_id=edge_id)
         # Add new relation
         class_text = self.field_translator.relation_class_from_content(new_question_content)
         new_relation = self.add_relation(class_text)
         for parent in parents:
             for child in children:
-                connect_concepts(parent_thing=parent, relationship_class_name=class_text, child_thing=child)
+                self.connect_concepts(parent_thing=parent, relationship_class_name=class_text, child_thing=child,
+                                      edge_id=edge_id)
         return new_relation
+
+    def remove_relations(self, parents: List[ThingClass], relation_name: str, children: List[ThingClass],
+                         edge_id: str):
+        """
+        For both the specified relation from parents to children and the parent relations from children to parents:
+        - removes the edge_id from the relation triples
+        - if there are no more edge_ids associated with the triple, removes the relation triple
+        :param parents: List of subject concepts the relations refer to
+        :param relation_name: name of the relations to remove
+        :param children: List of object concepts the relations refer to
+        :param edge_id: xmind id of the edge for which to remove the relations
+        """
+        for parent in parents:
+            for child in children:
+                # Remove edge from edge list for this relation
+                relation_triples = self.XmindId[parent, getattr(self, relation_name), child]
+                relation_triples.remove(edge_id)
+                # If edge list has become empty, remove the relation
+                if not relation_triples:
+                    getattr(parent, relation_name).remove(child)
+                # Remove edge from edge list for parent relation
+                parent_triples = self.XmindId[child, self.Parent, parent]
+                parent_triples.remove(edge_id)
+                # If edge list has become empty remove parent relation
+                if not parent_triples:
+                    child.Parent.remove(parent)
 
     def relation_from_triple(self, parent: ThingClass, relation_name: str, child: ThingClass):
         """

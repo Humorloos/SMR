@@ -2,7 +2,6 @@ import dataclasses as dc
 from typing import Optional
 
 from smr.dto.entitydto import EntityDto
-from smr.dto.xmindnodedto import XmindNodeDto
 
 
 @dc.dataclass
@@ -13,4 +12,3 @@ class SmrNoteDto(EntityDto):
     note_id: Optional[int] = None
     edge_id: str = ""
     last_modified: Optional[int] = None
-    edge: XmindNodeDto = None

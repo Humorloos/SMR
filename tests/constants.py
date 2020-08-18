@@ -2,22 +2,43 @@ import os
 
 from smr.consts import ADDON_PATH
 from smr.dto.nodecontentdto import NodeContentDto
+from smr.xnotemanager import FieldTranslator
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 SMR_WORLD_PATH = os.path.join(SUPPORT_PATH, "smr_world")
 SMR_WORLD_CSV_PATH = os.path.join(SMR_WORLD_PATH, "csv")
-SMR_WORLD_WITH_EXAMPLE_MAP_PATH = os.path.join(SMR_WORLD_PATH, "smr_world_with_example_map", "smr_world.sqlite3")
+ORIGINAL_SMR_WORLD_WITH_EXAMPLE_MAP_PATH = os.path.join(SMR_WORLD_PATH, "smr_world_with_example_map",
+                                                        "smr_world.sqlite3")
 EMPTY_SMR_WORLD_NAME = "empty_smr_world.sqlite3"
 TEST_COLLECTIONS_PATH = os.path.join(SUPPORT_PATH, 'collections')
 EMPTY_COLLECTION_PATH_SESSION = os.path.join(TEST_COLLECTIONS_PATH, 'empty_smr_col_session/empty_smr_col_session.anki2')
-EMPTY_COLLECTION_PATH_FUNCTION = os.path.join(TEST_COLLECTIONS_PATH,
-                                              'empty_smr_col_function', 'empty_smr_col_function.anki2')
-CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(TEST_COLLECTIONS_PATH, "changed_col_with_example_map")
-CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME = "changed_col_with_example_map"
-CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(
-    CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY, CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + ".anki2")
-CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(
-    CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY, CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + ".media")
+EMPTY_COLLECTION_FUNCTION_NAME = 'empty_smr_col_function'
+EMPTY_COLLECTION_FUNCTION_DIRECTORY = os.path.join(TEST_COLLECTIONS_PATH, EMPTY_COLLECTION_FUNCTION_NAME)
+EMPTY_COLLECTION_FUNCTION_PATH = os.path.join(EMPTY_COLLECTION_FUNCTION_DIRECTORY, EMPTY_COLLECTION_FUNCTION_NAME +
+                                              '.anki2')
+EMPTY_COLLECTION_FUNCTION_MEDIA = os.path.join(EMPTY_COLLECTION_FUNCTION_DIRECTORY, EMPTY_COLLECTION_FUNCTION_NAME +
+                                               '.media')
+ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(TEST_COLLECTIONS_PATH, 'collection_with_example_map')
+ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_NAME = 'collection'
+ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
+                                                         ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.anki2')
+ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
+                                                         ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.media')
+ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(
+    TEST_COLLECTIONS_PATH, 'collection_with_example_map_changes')
+ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME = 'collection'
+ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(
+    ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
+    ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.anki2')
+ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(
+    ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
+    ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.media')
+COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(TEST_COLLECTIONS_PATH, "changed_col_with_example_map")
+COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME = "changed_col_with_example_map"
+COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(
+    COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY, COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + ".anki2")
+COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(
+    COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY, COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + ".media")
 NEW_IMAGE_NAME = "paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg"
 NEUROTRANSMITTERS_IMAGE_XMIND_URI = "attachments/09r2e442o8lppjfeblf7il2rmd.png"
 NEUROTRANSMITTERS_IMAGE_ANKI_FILE_NAME = "attachments09r2e442o8lppjfeblf7il2rmd.png"
@@ -77,6 +98,10 @@ EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE = \
     b'dopamine, adrenaline, noradrenaline</li>\x1fare\x1fbiogenic ' \
     b'amines\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f|{|{{{|\x7f{\x94ub.'
 EDGE_FOLLOWING_MULTIPLE_NODES_NOTE_ID = 12345
-MULTIPLE_PARENTS_STORIDS = [316, 332, 333, 334]
-MULTIPLE_PARENTS_CHILD_STORID = 314
-MULTIPLE_PARENTS_RELATION_STORID = 336
+MULTIPLE_PARENTS_CONTENTS = [NodeContentDto(title=i) for i in ["Serotonin", "dopamine", "adrenaline", "noradrenaline"]]
+MULTIPLE_PARENTS_CLASS_NAMES = [FieldTranslator().class_from_content(i) for i in MULTIPLE_PARENTS_CONTENTS]
+MULTIPLE_PARENTS_CHILD_CONTENT = NodeContentDto(title="biogenic amines")
+MULTIPLE_PARENTS_CHILD_CLASS_NAME = FieldTranslator().class_from_content(MULTIPLE_PARENTS_CHILD_CONTENT)
+MULTIPLE_PARENTS_RELATION_CONTENT = NodeContentDto(title="are")
+MULTIPLE_PARENTS_RELATION_CLASS_NAME = FieldTranslator().relation_class_from_content(MULTIPLE_PARENTS_RELATION_CONTENT)
+

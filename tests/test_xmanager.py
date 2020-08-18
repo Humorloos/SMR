@@ -194,7 +194,7 @@ def test_set_node_image_remove(x_manager, changed_collection_with_example_map, s
     node_image = get_node_image(tag)
     # when
     x_manager.set_node_image(tag=tag, note_image=None, node_image=node_image,
-                             media_directory=cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+                             media_directory=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
                              smr_world=smr_world_with_example_map)
     # then
     assert get_node_image(tag) is None
@@ -210,7 +210,7 @@ def test_set_node_image_add(x_manager, changed_collection_with_example_map, smr_
     expected_image = 'xap:paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg'
     # when
     x_manager.set_node_image(tag=tag, note_image=cts.NEW_IMAGE_NAME, node_image=None,
-                             media_directory=cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+                             media_directory=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
                              smr_world=smr_world_with_example_map)
     # then
     assert get_node_image(tag) == expected_image
@@ -226,7 +226,7 @@ def test_set_node_image_change(x_manager, changed_collection_with_example_map, s
     old_image = get_node_image(tag)
     # when
     x_manager.set_node_image(tag=tag, note_image=cts.NEW_IMAGE_NAME, node_image=old_image,
-                             media_directory=cts.CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+                             media_directory=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
                              smr_world=smr_world_with_example_map)
     # then
     assert get_node_image(tag) == expected_image

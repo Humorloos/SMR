@@ -74,20 +74,23 @@ def test_connect_concepts(x_ontology):
 
 
 @pytest.fixture
-def ontology_with_example_map(smr_world_with_example_map) -> xontology.XOntology:
-    yield xontology.XOntology(deck_id=1597504882385, smr_world=smr_world_with_example_map)
+def ontology_with_example_map(smr_world_with_example_map, collection_with_example_map) -> xontology.XOntology:
+    yield xontology.XOntology(
+        deck_id=collection_with_example_map.decks.id('testdeck', create=False), smr_world=smr_world_with_example_map)
 
 
 def test_get_concept(ontology_with_example_map):
+    storid = getattr(ontology_with_example_map, cts.MULTIPLE_PARENTS_CHILD_CLASS_NAME).storid
     # when
-    concept = ontology_with_example_map.get(cts.MULTIPLE_PARENTS_CHILD_STORID)
+    concept = ontology_with_example_map.get(storid)
     # then
     assert isinstance(concept, ontology_with_example_map.Concept)
 
 
 def test_get_relationship_property(ontology_with_example_map):
+    storid = getattr(ontology_with_example_map, cts.MULTIPLE_PARENTS_RELATION_CLASS_NAME).storid
     # when
-    concept = ontology_with_example_map.get(cts.MULTIPLE_PARENTS_RELATION_STORID)
+    concept = ontology_with_example_map.get(storid)
     # then
     assert isinstance(concept, ObjectPropertyClass)
 
@@ -95,21 +98,26 @@ def test_get_relationship_property(ontology_with_example_map):
 def test_remove_relations(ontology_with_example_map):
     # given
     onto = ontology_with_example_map
-    child = onto.get(cts.MULTIPLE_PARENTS_CHILD_STORID)
-    parents = {onto.get(i) for i in cts.MULTIPLE_PARENTS_STORIDS}
-    relation_name = onto.get(cts.MULTIPLE_PARENTS_RELATION_STORID).name
+    child = getattr(onto, cts.MULTIPLE_PARENTS_CHILD_CLASS_NAME)
+    parents = [getattr(onto, i) for i in cts.MULTIPLE_PARENTS_CLASS_NAMES]
+    relation_name = cts.MULTIPLE_PARENTS_RELATION_CLASS_NAME
     # when
-    xontology.remove_relations(children={child}, parents=parents, relation_name=relation_name)
+    onto.remove_relations(children=[child], parents=parents, relation_name=relation_name,
+                          edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
     # then
     assert [getattr(p, relation_name) for p in parents] == 4 * [[]]
     assert len(child.Parent) == 1
 
 
 def test_change_relationship_class_name(ontology_with_example_map):
+    onto = ontology_with_example_map
+    parent_storids = [getattr(onto, i).storid for i in cts.MULTIPLE_PARENTS_CLASS_NAMES]
+    relation_storid = getattr(onto, cts.MULTIPLE_PARENTS_RELATION_CLASS_NAME).storid
+    child_storid = getattr(onto, cts.MULTIPLE_PARENTS_CHILD_CLASS_NAME).storid
     # when
     new_property = ontology_with_example_map.change_relationship_class_name(
-        parent_storids=cts.MULTIPLE_PARENTS_STORIDS, relation_storid=cts.MULTIPLE_PARENTS_RELATION_STORID,
-        child_storids=[cts.MULTIPLE_PARENTS_CHILD_STORID],
-        new_question_content=NodeContentDto(title='new question', image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI))
+        parent_storids=parent_storids, relation_storid=relation_storid, child_storids=[child_storid],
+        new_question_content=NodeContentDto(title='new question', image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI),
+        edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
     # then
-    assert new_property.name == 'new_question_ximage_09r2e442o8lppjfeblf7il2rmd_extension_png_xrelation'
+    assert new_property.name == 'new_questionximage_09r2e442o8lppjfeblf7il2rmd_extension_png_xrelation'
