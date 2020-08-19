@@ -4,6 +4,7 @@ import smr.xontology as xontology
 import tests.constants as cts
 from owlready2 import ThingClass, ObjectPropertyClass
 from smr.dto.nodecontentdto import NodeContentDto
+from smr.dto.xmindnodedto import XmindNodeDto
 
 
 def test_xontology(x_ontology):
@@ -68,9 +69,9 @@ def test_connect_concepts(x_ontology):
     # then
     assert cut.parent.relationship == [child_1_concept, child_2_concept]
     assert cut.child.Parent == [parent_concept, parent_2_concept]
-    assert cut.XmindId[child_1_concept, getattr(cut, relationship_class_name), parent_concept][0] == edge_id
-    assert cut.XmindId[child_2_concept, getattr(cut, relationship_class_name), parent_concept][0] == edge_id
-    assert cut.XmindId[child_1_concept, getattr(cut, relationship_class_name), parent_2_concept][0] == edge_id
+    assert cut.XmindId[parent_concept, getattr(cut, relationship_class_name), child_1_concept][0] == edge_id
+    assert cut.XmindId[parent_concept, getattr(cut, relationship_class_name), child_2_concept][0] == edge_id
+    assert cut.XmindId[parent_2_concept, getattr(cut, relationship_class_name), child_1_concept][0] == edge_id
 
 
 @pytest.fixture
@@ -110,14 +111,42 @@ def test_remove_relations(ontology_with_example_map):
 
 
 def test_change_relationship_class_name(ontology_with_example_map):
-    onto = ontology_with_example_map
-    parent_storids = [getattr(onto, i).storid for i in cts.MULTIPLE_PARENTS_CLASS_NAMES]
-    relation_storid = getattr(onto, cts.MULTIPLE_PARENTS_RELATION_CLASS_NAME).storid
-    child_storid = getattr(onto, cts.MULTIPLE_PARENTS_CHILD_CLASS_NAME).storid
+    # given
+    cut = ontology_with_example_map
+    parent_storids = [getattr(cut, i).storid for i in cts.MULTIPLE_PARENTS_CLASS_NAMES]
+    relation_storid = getattr(cut, cts.MULTIPLE_PARENTS_RELATION_CLASS_NAME).storid
+    child_storid = getattr(cut, cts.MULTIPLE_PARENTS_CHILD_CLASS_NAME).storid
     # when
-    new_property = ontology_with_example_map.change_relationship_class_name(
+    new_property = cut.change_relationship_class_name(
         parent_storids=parent_storids, relation_storid=relation_storid, child_storids=[child_storid],
         new_question_content=NodeContentDto(title='new question', image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI),
         edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
     # then
     assert new_property.name == 'new_questionximage_09r2e442o8lppjfeblf7il2rmd_extension_png_xrelation'
+
+
+def test_remove_node(ontology_with_example_map):
+    # given
+    cut = ontology_with_example_map
+    storid = cut.one_or_more_amine_groups.storid
+    # when
+    cut.remove_node(xmind_node=XmindNodeDto(ontology_storid=storid, node_id='0s0is5027b7r6akh3he0nbu478'),
+                    xmind_edge=XmindNodeDto(), parent_concept_storids=[])
+    # then
+    assert not cut.one_or_more_amine_groups
+    assert not cut.biogenic_amines.consist_of_xrelation
+
+
+def test_remove_node_does_not_remove_concept_if_nodes_left(ontology_with_example_map):
+    # given
+    cut = ontology_with_example_map
+    storid = cut.Serotonin.storid
+    # when
+    cut.remove_node(xmind_node=XmindNodeDto(ontology_storid=storid, node_id='3732cbg8qsmr8u4hn0bvljso06'),
+                    xmind_edge=XmindNodeDto(title="can be inhibited by", node_id="1scualcvt0scjd9iaoblg568ld"),
+                    parent_concept_storids=[cut.Pain.storid])
+    # then
+    assert type(cut.Serotonin) == cut.Concept
+    assert not cut.Pain.can_be_inhibited_by_xrelation
+
+

@@ -427,22 +427,22 @@ class SmrSynchronizer:
         # Remove answer from map
         try:
             self.map_manager.remove_node(node_id=xmind_node.node_id)
-            # Remove answer from ontology
-            self.onto.remove_answer(question, answer)
-            # Remove answer from note meta
-            meta = meta_from_fields(question_note.fields)
-            meta['answers'].remove(
-                next(a for a in meta['answers'] if a['answerId'] == answer))
-            meta['nAnswers'] -= 1
-            self.note_manager.set_meta(note=question_note, meta=meta)
-            # Remove answer from status
-            del status[answer]
         except AttributeError:
             self.log.append(
                 f"Invalid answer removal: Cannot remove answer {field_from_content(xmind_node.content)} to question "
                 f"{field_from_content(xmind_edge.content)} (reference "
                 f"{get_smr_note_reference_fields(self.smr_world, [xmind_edge.node_id])[xmind_edge.node_id]}), "
                 f"answer was restored.")
+        # Remove answer from ontology
+        self.onto.remove_node()
+        # Remove answer from note meta
+        meta = meta_from_fields(question_note.fields)
+        meta['answers'].remove(
+            next(a for a in meta['answers'] if a['answerId'] == answer))
+        meta['nAnswers'] -= 1
+        self.note_manager.set_meta(note=question_note, meta=meta)
+        # Remove answer from status
+        del status[answer]
 
     def process_change_list(self):
         for sheet in self.change_list:
@@ -456,36 +456,33 @@ class SmrSynchronizer:
 
     def _process_local_changes(self, file: XmindFileDto):
         for sheet_name in self.changed_smr_notes[file.file_path]:
-            self._process_local_questions(file, sheet_name)
+            for note_id, note_data in self.changed_smr_notes[file.file_path][sheet_name].items():
+                anki_note_was_changed = False
+                fields = splitFields(note_data['note_fields'])
+                # change question if necessary
+                question_content_local = field_content_by_identifier(
+                    fields=fields, identifier='qt', smr_world=self.smr_world)
+                if question_content_local != note_data['edge'].content:
+                    self._change_remote_question(note_data, question_content_local)
+                    anki_note_was_changed = True
+                for answer_id, xmind_node in note_data['answers'].items():
+                    # change answers if necessary
+                    answer_content_local = field_content_by_identifier(
+                        fields=fields, identifier='a' + answer_id, smr_world=self.smr_world)
+                    if not answer_content_local:
+                        self.try_to_remove_answer(xmind_edge=note_data['edge'], xmind_node=xmind_node)
+                    elif answer not in status:
+                        self.add_answer(a_id=answer, q_id=question, local=local)
+                        continue
+                    elif not status[answer]['content'] == local[answer]['content']:
+                        self.change_answer(answer=answer, question=question,
+                                           local=local, status=status)
+                    else:
+                        continue
+                if anki_note_was_changed:
+                    self.anki_notes_2_update.append(note_data['note'])
         self.x_manager.save_changes()
         assert False
-
-    def _process_local_questions(self, file, sheet_name):
-        for note_id, note_data in self.changed_smr_notes[file.file_path][sheet_name].items():
-            anki_note_was_changed = False
-            fields = splitFields(note_data['note_fields'])
-            question_content_local = field_content_by_identifier(
-                fields=fields, identifier='qt', smr_world=self.smr_world)
-            if question_content_local != note_data['edge'].content:
-                self._change_remote_question(note_data, question_content_local)
-                anki_note_was_changed = True
-            for answer_id, xmind_node in note_data['answers'].items():
-                answer_content_local = field_content_by_identifier(
-                    fields=fields, identifier='a' + answer_id, smr_world=self.smr_world)
-                if not answer_content_local:
-                    self.try_to_remove_answer(xmind_edge=note_data['edge'], xmind_node=xmind_node)
-
-                elif answer not in status:
-                    self.add_answer(a_id=answer, q_id=question, local=local)
-                    continue
-                elif not status[answer]['content'] == local[answer]['content']:
-                    self.change_answer(answer=answer, question=question,
-                                       local=local, status=status)
-                else:
-                    continue
-
-            if anki_note_was_changed:
-                self.anki_notes_2_update.append(note_data['note'])
 
     def process_remote_changes(self, status, remote, deck_id):
         pass
@@ -609,7 +606,7 @@ class SmrSynchronizer:
                 'a' + str(status[a_id]['index']))] = ''
 
             # Remove answer from ontology
-            self.onto.remove_answer(q_id=q_id, a_id=a_id)
+            self.onto.remove_node(q_id=q_id, a_id=a_id)
 
             # Remove answer from status
             del status[a_id]

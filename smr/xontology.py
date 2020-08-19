@@ -6,6 +6,7 @@ from typing import List, Union, Set
 import owlready2
 from smr.consts import X_MAX_ANSWERS, USER_PATH
 from smr.dto.nodecontentdto import NodeContentDto
+from smr.dto.xmindnodedto import XmindNodeDto
 from smr.smrworld import SmrWorld
 from owlready2 import ThingClass
 from owlready2.namespace import Ontology
@@ -40,28 +41,13 @@ def get_question_sets(q_id_elements):
     return questionList
 
 
-def remove_answer_concept(answer_concept, q_id):
-    """
-    Removes the answer's x_id from concept or destroy the concept if no
-    x_ids are left
-    :param answer_concept: Concept of the answer to remove
-    :param q_id: Xmind ID of the question that belongs to this answer
-    """
-    id_dict = json.loads(answer_concept.Xid[0])
-    del id_dict[q_id]
-    if id_dict:
-        answer_concept.Xid[0] = json.dumps(id_dict)
-    else:
-        destroy_entity(answer_concept)
-
-
 def remove_question(question_elements, q_id):
     answers = set(t['o'] for t in question_elements)
     parents = set(t['s'] for t in question_elements)
     remove_relations(answers=answers, parents=parents,
                      question_triples=question_elements)
     for answer in answers:
-        remove_answer_concept(answer_concept=answer, q_id=q_id)
+        remove_concept(concept_storid=answer, q_id=q_id)
 
 
 class XOntology(Ontology):
@@ -124,9 +110,6 @@ class XOntology(Ontology):
         """
         # noinspection PyProtectedMember
         return self.world._get_by_storid(storid)
-
-    def get_deck_id(self):
-        return self.deck_id
 
     def add_answer(self, a_id, answer_field, rel_dict, question_class, parents=None):
         """
@@ -204,6 +187,28 @@ class XOntology(Ontology):
                 relationship_property.range = [self.Concept]
         return relationship_property
 
+    def remove_node(self, xmind_node: XmindNodeDto, xmind_edge: XmindNodeDto, parent_concept_storids: List[int]):
+        """
+        Removes the node's xmind id from the respective concept
+         - if there are more nodes left belonging to the concept, removes the relations between parent nodes and
+         specified node
+         - if there are no more nodes left belonging to the concept, destroys the concept
+        :param xmind_node: xmind node dto belonging to the node to be deleted
+        :param xmind_edge: xmind node dto belonging to the parent edge of the node to be deleted
+        :param parent_concept_storids: list of storids belonging to the concepts belonging to the
+        parent nodes of the node to be deleted
+        """
+        concept = self.get(xmind_node.ontology_storid)
+        currently_associated_ids = concept.XmindId
+        currently_associated_ids.remove(xmind_node.node_id)
+        if not currently_associated_ids:
+            destroy_entity(concept)
+        else:
+            # remove the relations between the node and it's parents in case the concept itself is not removed
+            self.remove_relations(parents=[self.get(i) for i in parent_concept_storids],
+                                  relation_name=self.field_translator.relation_class_from_content(xmind_edge.content),
+                                  children=[concept], edge_id=xmind_edge.node_id)
+
     def change_answer(self, q_id, a_id, a_field):
         answer = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
         answer_triples = [t for t in self.get_question(q_id) if t['o'] ==
@@ -218,7 +223,7 @@ class XOntology(Ontology):
         question_class = answer_triples[0]['p'].name
         parents = set(t['s'] for t in answer_triples)
         rel_dict = self.rel_dict_from_triple(answer_triples[0])
-        self.remove_answer(q_id=q_id, a_id=a_id)
+        self.remove_node(q_id=q_id, a_id=a_id)
 
         new_answer = self.add_answer(
             parents=parents, a_id=a_id, answer_field=a_field,
@@ -507,7 +512,7 @@ class XOntology(Ontology):
     def q_id_elements(self, elements):
         return {'triple': elements, 'q_id': self.get_trpl_x_id(elements)}
 
-    def remove_answer(self, q_id, a_id):
+    def remove_answer(self, concept_storid: int, node_id: str):
         question_triples = self.get_question(q_id)
         parents = set(t['s'] for t in question_triples)
         answer = next(t['o'] for t in question_triples if
@@ -517,7 +522,7 @@ class XOntology(Ontology):
         remove_relations(answers=[answer], parents=parents,
                          question_triples=question_triples)
 
-        remove_answer_concept(answer_concept=answer, q_id=q_id)
+        remove_concept(concept_storid=answer, q_id=q_id)
 
     def remove_questions(self, q_ids):
         question_elements = {q: self.get_question(q) for q in q_ids}
@@ -543,11 +548,8 @@ class XOntology(Ontology):
                 q_id=next(s['q_id'] for s in question_set))
         else:
             # Remove root
-            remove_answer_concept(
-                answer_concept=question_sets[-1][0]['triple']['s'], q_id='root')
-
-    def save_changes(self):
-        self.save(file=self.name + '.rdf', format='rdfxml')
+            remove_concept(
+                concept_storid=question_sets[-1][0]['triple']['s'], q_id='root')
 
     def set_trpl_a_index(self, a_id, q_id, a_index):
         q_trpls = self.get_question(q_id)
