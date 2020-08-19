@@ -8,13 +8,13 @@ import tests.constants as cts
 from smr.consts import X_MAX_ANSWERS, X_MODEL_NAME
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.template import add_x_model
-from smr.xmanager import get_node_content, get_non_empty_sibling_nodes, get_parent_node
+from smr.xmanager import get_non_empty_sibling_nodes, get_parent_node
 from smr.xmindimport import XmindImporter
 
 
 def test_xmind_importer(xmind_importer):
     # given
-    expected_x_manager_files = [cts.EXAMPLE_MAP_PATH, cts.GENERAL_PSYCHOLOGY_MAP_PATH]
+    expected_x_manager_files = [cts.ORIGINAL_EXAMPLE_MAP_PATH, cts.ORIGINAL_GENERAL_PSYCHOLOGY_MAP_PATH]
     # when
     cut = xmind_importer
     # then
@@ -114,7 +114,7 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, tag_
     cut = xmind_importer_import_node_if_concept
     # when
     cut.import_node_if_concept(node=tag_for_tests, concepts=[x_ontology.Root(
-        x_ontology.field_translator.class_from_content(get_node_content(tag_for_tests)))])
+        x_ontology.field_translator.class_from_content(cut.active_manager.get_node_content(tag_for_tests)))])
     # then
     assert cut.import_triple.call_count == 0
     assert cut.import_edge.call_count == 2
@@ -126,17 +126,18 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
     # given
     cut = xmind_importer_import_node_if_concept
     node = cut._x_managers[0].get_tag_by_id(cts.EMPTY_NODE_TAG_ID)
-    concepts = [x_ontology.concept_from_node_content(get_node_content(t), node_id='some_id') for t in
+    concepts = [x_ontology.concept_from_node_content(cut.active_manager.get_node_content(t), node_id='some_id') for t in
                 get_non_empty_sibling_nodes(node)]
     parent_edge = get_parent_node(node)
     parent_node = get_parent_node(parent_edge)
     # when
     cut.import_node_if_concept(
         node=node, concepts=concepts, parent_node_ids=[parent_node['id']],
-        parent_concepts=[x_ontology.concept_from_node_content(get_node_content(parent_node), node_id='some_id')],
+        parent_concepts=[x_ontology.concept_from_node_content(cut.active_manager.get_node_content(parent_node),
+                                                              node_id='some_id')],
         parent_edge_id=parent_edge['id'],
-        parent_relationship_class_name=x_ontology.field_translator.class_from_content(get_node_content(parent_edge)),
-        order_number=5)
+        parent_relationship_class_name=x_ontology.field_translator.class_from_content(
+            cut.active_manager.get_node_content(parent_edge)), order_number=5)
     # then
     assert cut.import_triple.call_count == 0
     assert cut._smr_world.add_xmind_nodes.call_count == 0
@@ -148,16 +149,18 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
     # given
     cut = xmind_importer_import_node_if_concept
     node = cut._x_managers[0].get_tag_by_id("3oqcv5qlqhn28u1opce5i27709")
-    concepts = [x_ontology.concept_from_node_content(get_node_content(node), node_id='some_id')]
+    concepts = [x_ontology.concept_from_node_content(cut.active_manager.get_node_content(node), node_id='some_id')]
     parent_edge = get_parent_node(node)
     parent_nodes = get_non_empty_sibling_nodes(get_parent_node(parent_edge))
     # when
     cut.import_node_if_concept(
         node=node, concepts=concepts, parent_node_ids=[n['id'] for n in parent_nodes],
-        parent_concepts=[x_ontology.concept_from_node_content(get_node_content(n), node_id='some_id') for n in
+        parent_concepts=[x_ontology.concept_from_node_content(cut.active_manager.get_node_content(n),
+                                                              node_id='some_id') for n in
                          parent_nodes],
         parent_edge_id=parent_edge['id'],
-        parent_relationship_class_name=x_ontology.field_translator.class_from_content(get_node_content(parent_edge)),
+        parent_relationship_class_name=x_ontology.field_translator.class_from_content(
+            cut.active_manager.get_node_content(parent_edge)),
         order_number=1)
     # then
     assert cut.import_triple.call_count == 4
@@ -238,7 +241,8 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge, x_o
     # when
     cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node['id']],
                     parent_concepts=[
-                        x_ontology.concept_from_node_content(get_node_content(parent_node), node_id='some_id')])
+                        x_ontology.concept_from_node_content(cut.active_manager.get_node_content(parent_node),
+                                                             node_id='some_id')])
     # then
     assert cut.onto.concept_from_node_content.call_count == 4
     assert cut.import_node_if_concept.call_count == 5
@@ -254,7 +258,8 @@ def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     # when
     cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node['id']],
                     parent_concepts=[
-                        x_ontology.concept_from_node_content(get_node_content(parent_node), node_id='some_id')])
+                        x_ontology.concept_from_node_content(cut.active_manager.get_node_content(parent_node),
+                                                             node_id='some_id')])
     # then
     assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
@@ -301,7 +306,7 @@ def test_initialize_import_import_import_notes_to_correct_deck(
     # given
     collection = empty_anki_collection_function
     add_x_model(collection)
-    cut = XmindImporter(col=collection, file=cts.EXAMPLE_MAP_PATH)
+    cut = XmindImporter(col=collection, file=cts.ORIGINAL_EXAMPLE_MAP_PATH)
     test_deck_id = cut.col.decks.id(name="test_deck")
     mocker.spy(cut, "import_edge")
     mocker.spy(cut, "import_node_if_concept")

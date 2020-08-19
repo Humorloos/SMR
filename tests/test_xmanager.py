@@ -5,13 +5,13 @@ import pytest
 
 import tests.constants as cts
 from smr.xmanager import is_empty_node, get_node_title, get_child_nodes, get_non_empty_sibling_nodes, get_parent_node, \
-    get_node_content, get_node_image, get_node_hyperlink, XManager, NodeNotFoundError
+    get_node_image, get_node_hyperlink, XManager, NodeNotFoundError
 
 
 def test_x_manager(x_manager):
     # given
     expected_sheets = ['biological psychology', 'clinical psychology', 'ref']
-    expected_referenced_file = [cts.GENERAL_PSYCHOLOGY_MAP_PATH]
+    expected_referenced_file = [cts.ORIGINAL_GENERAL_PSYCHOLOGY_MAP_PATH]
     # when
     cut = x_manager
     # then
@@ -71,9 +71,9 @@ def test_get_tag_by_id_tag_not_found(x_manager):
     assert exception_info.value.message == NodeNotFoundError.ERROR_MESSAGE.format(node_id)
 
 
-def test_get_node_content(tag_for_tests):
+def test_get_node_content(x_manager, tag_for_tests):
     # when
-    node_content = get_node_content(tag=tag_for_tests)
+    node_content = x_manager.get_node_content(tag=tag_for_tests)
     # then
     assert node_content.title == 'biological psychology'
     assert node_content.image is None
@@ -84,7 +84,7 @@ def test_get_node_content_with_image(x_manager):
     # given
     tag = x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID)
     # when
-    node_content = get_node_content(tag=tag)
+    node_content = x_manager.get_node_content(tag=tag)
     # then
     assert node_content == cts.NEUROTRANSMITTERS_NODE_CONTENT
 
@@ -93,7 +93,7 @@ def test_get_node_content_with_media(x_manager):
     # given
     tag = x_manager.get_tag_by_id('23nu73chqkkkem455dit5p8stu')
     # when
-    node_content = get_node_content(tag=tag)
+    node_content = x_manager.get_node_content(tag=tag)
     # then
     assert node_content == cts.MEDIA_ATTACHMENT_NODE_CONTENT
 
@@ -102,7 +102,7 @@ def test_get_node_content_with_media_via_hyperlink(x_manager):
     # given
     tag = x_manager.get_tag_by_id(cts.MEDIA_HYPERLINK_XMIND_ID)
     # when
-    node_content = get_node_content(tag=tag)
+    node_content = x_manager.get_node_content(tag=tag)
     # then
     assert node_content == cts.MEDIA_HYPERLINK_NODE_CONTENT
 
@@ -156,7 +156,7 @@ def test_get_node_hyperlink(x_manager):
     # when
     node_media = get_node_hyperlink(tag)
     # then
-    assert urllib.parse.unquote(node_media[7:]) == cts.MEDIA_HYPERLINK_PATH
+    assert urllib.parse.unquote(node_media[5:]) == cts.HYPERLINK_MEDIA_NAME
 
 
 def test_extract_attachment(x_manager):
@@ -251,3 +251,23 @@ def test_remove_node_invalid_removal(x_manager):
         x_manager.remove_node(cts.NEUROTRANSMITTERS_XMIND_ID)
     # then
     assert error_info.value.args[0] == 'Topic has subtopics, can not remove.'
+
+
+def test_get_hyperlink_uri(x_manager):
+    # given
+    cut = x_manager
+    tag = x_manager.get_tag_by_id("1s7h0rvsclrnvs8qq9u71acml5")
+    # when
+    uri = cut.get_hyperlink_uri(tag)
+    # then
+    assert uri == cts.ORIGINAL_HYPERLINK_MEDIA_PATH
+
+
+def test_get_hyperlink_uri_embedded_file(x_manager):
+    # given
+    cut = x_manager
+    tag = x_manager.get_tag_by_id("23nu73chqkkkem455dit5p8stu")
+    # when
+    uri = cut.get_hyperlink_uri(tag)
+    # then
+    assert uri == 'attachments/395ke7i9a6nkutu85fcpa66as2.mp4'

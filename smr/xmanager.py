@@ -15,18 +15,6 @@ from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from smr.smrworld import SmrWorld
 
 
-def clean_ref_path(path: str) -> str:
-    """
-    converts a path from the format that is provided in xmind files into the standard os format
-    :param path: the path from the xmind file
-    :return: the clean path in os format
-    """
-    path_elements: List[str] = path.replace('file://', '').replace('%20', ' ').split('/')
-    path_elements[0] = path_elements[0] + '\\'
-    clean_path: str = os.path.join(*path_elements)
-    return clean_path
-
-
 def get_ancestry(topic, descendants):
     if topic.parent.name == 'sheet':
         descendants.reverse()
@@ -183,32 +171,6 @@ def is_empty_node(tag: Tag):
     return True
 
 
-def get_node_content(tag: Tag) -> NodeContentDto:
-    """
-    Gets the content of the node represented by the specified Tag in a dictionary
-    :param tag: the tag representing the node to get the content of
-    :return: a NodeContentDTO containing the contents of the node
-    """
-    node_content = NodeContentDto()
-    node_content.title = get_node_title(tag)
-
-    # if necessary add image
-    node_image = get_node_image(node=tag)
-    if node_image:
-        node_content.image = node_image[4:]
-
-    # if necessary add sound
-    href = get_node_hyperlink(tag)
-    if href.endswith(X_MEDIA_EXTENSIONS):
-        # for media that was referenced via hyperlink
-        if href.startswith('file'):
-            media = urllib.parse.unquote(href[7:])
-        else:
-            media = href[4:]
-        node_content.media = media
-    return node_content
-
-
 class NodeNotFoundError(Exception):
     """
     Exception that occurs when a node is not found in the manager's node dict.
@@ -321,8 +283,7 @@ class XManager:
                 # Get reference sheets
                 if sheet['tag']('title', recursive=False)[0].text == 'ref':
                     ref_tags = get_child_nodes(sheet['tag'].topic)
-                    ref_paths = (get_node_hyperlink(t) for t in ref_tags)
-                    referenced_files.extend(clean_ref_path(p) for p in ref_paths if p is not None)
+                    referenced_files.extend(self.get_hyperlink_uri(t) for t in ref_tags)
             self.referenced_files = referenced_files
         return self._referenced_files
 
@@ -395,6 +356,47 @@ class XManager:
     @did_introduce_changes.setter
     def did_introduce_changes(self, value: bool):
         self._did_introduce_changes = value
+
+    def get_hyperlink_uri(self, node: Tag) -> Optional[str]:
+        """
+        converts a path from the format that is provided in xmind files into the standard os format
+        :param node: the node to get the uri from
+        :return: the clean path in os format, a relative identifier if the hyperlink is embedded, and None if the
+        node has no hyperlink
+        """
+        href = get_node_hyperlink(node)
+        if not href:
+            return
+        # for media that was referenced via hyperlink, return an absolute path
+        if href.startswith('file'):
+            if href[5:7] == "//":
+                uri = os.path.normpath(urllib.parse.unquote(href[7:]))
+            else:
+                uri = os.path.join(os.path.split(self.file)[0], urllib.parse.unquote(href[5:]))
+        # for embedded media, return the relative path
+        else:
+            uri = href[4:]
+        return uri
+
+    def get_node_content(self, tag: Tag) -> NodeContentDto:
+        """
+        Gets the content of the node represented by the specified Tag in a dictionary
+        :param tag: the tag representing the node to get the content of
+        :return: a NodeContentDTO containing the contents of the node
+        """
+        node_content = NodeContentDto()
+        node_content.title = get_node_title(tag)
+
+        # if necessary add image
+        node_image = get_node_image(node=tag)
+        if node_image:
+            node_content.image = node_image[4:]
+
+        # if necessary add sound
+        hyperlink_uri = self.get_hyperlink_uri(tag)
+        if hyperlink_uri and hyperlink_uri.endswith(X_MEDIA_EXTENSIONS):
+            node_content.media = hyperlink_uri
+        return node_content
 
     def get_sheet_id(self, sheet: str):
         """
@@ -504,7 +506,10 @@ class XManager:
         else:
             raise AttributeError('Topic has subtopics, can not remove.')
 
-    def save_changes(self):
+    def save_changes(self) -> None:
+        """
+        Closes the map and saves changes if they were made
+        """
         self.zip_file.close()
         if self.did_introduce_changes:
             self._update_zip()

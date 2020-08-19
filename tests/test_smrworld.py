@@ -8,7 +8,6 @@ from smr.dto.smrtripledto import SmrTripleDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindnodedto import XmindNodeDto
 from smr.dto.xmindsheetdto import XmindSheetDto
-from smr.xmanager import get_node_content
 
 
 def test_set_up(empty_smr_world, empty_anki_collection_session):
@@ -89,6 +88,7 @@ def test_add_xmind_sheet_wrong_path(smr_world_4_tests, x_manager_absent_file):
 
 def test_add_xmind_nodes(smr_world_4_tests, x_manager):
     # given
+    # noinspection PyTypeChecker
     expected_entry = XmindNodeDto(node_id=cts.NEUROTRANSMITTERS_XMIND_ID, title='neurotransmitters',
                                   image='attachments/629d18n2i73im903jkrjmr98fg.png', link=None)
     # then
@@ -98,8 +98,9 @@ def test_add_xmind_nodes(smr_world_4_tests, x_manager):
 
 def test_add_xmind_nodes_with_media_hyperlink(smr_world_4_tests, x_manager):
     # given
-    expected_entry = XmindNodeDto(node_id=cts.MEDIA_HYPERLINK_XMIND_ID, title='', link=cts.MEDIA_HYPERLINK_PATH,
-                                  image=None)
+    # noinspection PyTypeChecker
+    expected_entry = XmindNodeDto(node_id=cts.MEDIA_HYPERLINK_XMIND_ID, title='',
+                                  link=cts.ORIGINAL_HYPERLINK_MEDIA_PATH, image=None)
     # then
     verify_add_xmind_node(expected_entry, smr_world_4_tests, x_manager, cts.MEDIA_HYPERLINK_XMIND_ID,
                           cts.MEDIA_HYPERLINK_NODE_CONTENT)
@@ -127,7 +128,7 @@ def test_add_xmind_edges(smr_world_4_tests, x_manager):
                       1573032291149, 1)
     manager = x_manager
     edge = manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID)
-    edge_content = get_node_content(edge)
+    edge_content = manager.get_node_content(edge)
     cut = smr_world_4_tests
     # when
     cut.add_xmind_edges([XmindNodeDto(
@@ -265,11 +266,11 @@ def test_get_changed_smr_notes(smr_world_with_example_map, changed_collection_wi
     # when
     changed_smr_notes = smr_world_with_example_map.get_changed_smr_notes(changed_collection_with_example_map)
     # then
-    assert list(changed_smr_notes.keys()) == [cts.EXAMPLE_MAP_PATH, cts.GENERAL_PSYCHOLOGY_MAP_PATH]
+    assert list(changed_smr_notes.keys()) == [cts.ORIGINAL_EXAMPLE_MAP_PATH, cts.ORIGINAL_GENERAL_PSYCHOLOGY_MAP_PATH]
     values = list(changed_smr_notes.values())
     assert list(values[0].keys()) == ['biological psychology', 'clinical psychology']
     assert list(values[1].keys()) == ['general psychology']
-    example_map_sheets = changed_smr_notes[cts.EXAMPLE_MAP_PATH]
+    example_map_sheets = changed_smr_notes[cts.ORIGINAL_EXAMPLE_MAP_PATH]
     assert len(example_map_sheets['biological psychology']) == 5
     assert len(example_map_sheets['clinical psychology']) == 4
     assert len(list(values[1].values())[0]) == 1

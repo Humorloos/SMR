@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 import aqt
 import tests.constants as cts
 from anki import Collection
+from conftest import generate_new_file
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.template import add_x_model
 from smr.xmindimport import XmindImporter
@@ -14,6 +15,13 @@ import smr.config as config
 
 
 def main():
+    # Get a copy of the original map files
+    generate_new_file(src=cts.ORIGINAL_EXAMPLE_MAP_PATH, dst=cts.DEFAULT_EXAMPLE_MAP_PATH)
+    generate_new_file(src=cts.ORIGINAL_GENERAL_PSYCHOLOGY_MAP_PATH, dst=cts.DEFAULT_GENERAL_PSYCHOLOGY_MAP_PATH)
+    generate_new_file(src=cts.ORIGINAL_HYPERLINK_MEDIA_PATH, dst=cts.DEFAULT_HYPERLINK_MEDIA_PATH)
+    generate_new_file(src=cts.DEFAULT_EXAMPLE_MAP_PATH, dst=cts.TEMPORARY_EXAMPLE_MAP_PATH)
+    generate_new_file(src=cts.DEFAULT_GENERAL_PSYCHOLOGY_MAP_PATH, dst=cts.TEMPORARY_GENERAL_PSYCHOLOGY_MAP_PATH)
+    generate_new_file(src=cts.DEFAULT_HYPERLINK_MEDIA_PATH, dst=cts.TEMPORARY_HYPERLINK_MEDIA_PATH)
     # Get an empty anki collection
     try:
         os.unlink(os.path.join(cts.EMPTY_COLLECTION_FUNCTION_PATH))
@@ -39,7 +47,7 @@ def main():
     smr_world.set_up()
     aqt.mw.smr_world = smr_world
     aqt.mw.return_value = aqt.mw
-    importer = XmindImporter(col=collection, file=cts.EXAMPLE_MAP_PATH)
+    importer = XmindImporter(col=collection, file=cts.TEMPORARY_EXAMPLE_MAP_PATH)
     importer.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=deck_id))
     importer.finish_import()
     # Save smr world to smr world with example map
@@ -96,11 +104,7 @@ def main():
 
 def save_collection(collection, media_dir, collection_path):
     collection.close()
-    try:
-        os.unlink(os.path.join(collection_path))
-    except FileNotFoundError:
-        pass
-    shutil.copy(src=collection.path, dst=collection_path)
+    generate_new_file(src=collection.path, dst=collection_path)
     try:
         shutil.rmtree(media_dir)
     except FileNotFoundError:

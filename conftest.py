@@ -150,7 +150,7 @@ def smr_world_4_tests(_smr_world_for_tests_session):
 
 @pytest.fixture(scope="function")
 def x_manager() -> xmanager.XManager:
-    yield xmanager.XManager(cts.EXAMPLE_MAP_PATH)
+    yield xmanager.XManager(cts.ORIGINAL_EXAMPLE_MAP_PATH)
 
 
 @pytest.fixture
@@ -176,7 +176,7 @@ def xmind_importer(mocker, empty_anki_collection_session) -> xmindimport.XmindIm
     XmindImporter instance for file example map.xmind
     """
     mocker.patch("aqt.mw")
-    yield xmindimport.XmindImporter(col=empty_anki_collection_session, file=cts.EXAMPLE_MAP_PATH)
+    yield xmindimport.XmindImporter(col=empty_anki_collection_session, file=cts.ORIGINAL_EXAMPLE_MAP_PATH)
 
 
 @pytest.fixture
@@ -241,3 +241,11 @@ def patch_aqt_mw_smr_world_and_changed_col_with_example_map(mocker, smr_world_wi
 def patch_aqt_mw_empty_smr_world_and_collection_4_migration(patch_aqt_mw_empty_smr_world, collection_4_migration):
     aqt.mw.col = collection_4_migration
     yield
+
+
+def generate_new_file(src: str, dst: str):
+    try:
+        os.unlink(os.path.join(dst))
+    except FileNotFoundError:
+        pass
+    shutil.copy(src=src, dst=dst)

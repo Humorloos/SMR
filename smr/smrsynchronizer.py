@@ -169,10 +169,12 @@ class SmrSynchronizer:
                     self.process_remote_changes(xmind_file)
                 else:
                     self.process_local_and_remote_changes()
+                self.x_manager.save_changes()
         # process changes in smr world
         # self.note_manager.save_col()
         aqt.mw.progress.finish()
 
+    # TODO: Implement this
     def add_answer(self, answer_content: NodeContentDto, xmind_edge: XmindNodeDto):
         print('add answer to map')
         print('add answer to ontology')
@@ -180,8 +182,8 @@ class SmrSynchronizer:
             f"Invalid added answer: Cannot add answer {field_from_content(answer_content)} to question "
             f"{field_from_content(xmind_edge.content)} (reference "
             f"{get_smr_note_reference_fields(self.smr_world, [xmind_edge.node_id])[xmind_edge.node_id]}), "
-            f"adding answers through anki is not yet supported. Instead, add the answer in your xmind map.")
-
+            f"adding answers through anki is not yet supported. I removed the answer from the note again. Instead, "
+            f"add the answer in your xmind map.")
 
     def add_remote_a(self, q_content, q_id, remote, status, a_tag, import_dict):
         a_content = self.map_manager.get_node_content(a_tag)
@@ -235,14 +237,14 @@ class SmrSynchronizer:
                 q_id=q_id, remote=remote, status=status, a_tag=a_tag)
         return import_dict
 
-    def change_answer(self, xmind_edge: XmindNodeDto,
-                      parent_node_storids: List[int], xmind_node: XmindNodeDto, child_edge_storids: List[int]):
+    def change_answer(self, xmind_edge: XmindNodeDto, parent_node_storids: List[int], xmind_node: XmindNodeDto,
+                      child_triples: Dict[str, Dict[str, Union[int, List[int]]]]):
         # Change answer in map
         self.x_manager.set_node_content(node_id=xmind_node.node_id, content=xmind_node.content,
                                         media_directory=self.note_manager.media_directory, smr_world=self.smr_world)
         # Change answer in Ontology
-        self.onto.rename_node(q_id=question, a_id=answer,
-                              a_field=local[answer]['content'])
+        self.onto.rename_node(xmind_node=xmind_node, xmind_edge=xmind_edge, parent_node_storids=parent_node_storids,
+                              child_triples=child_triples)
 
         # Remember this change for final note adjustments
         self.change_list[self.current_sheet_sync].update(
@@ -422,8 +424,8 @@ class SmrSynchronizer:
                 importer.media.append(a_media['media'])
         return importer
 
-    def try_to_remove_answer(self, xmind_edge: XmindNodeDto, xmind_node: XmindNodeDto,
-                             parent_concept_storids: List[int]):
+    def _try_to_remove_answer(self, xmind_edge: XmindNodeDto, xmind_node: XmindNodeDto,
+                              parent_concept_storids: List[int]):
         """
         checks whether an answer is a leave node and if it is, removes it from the xmind map and the ontology
         :param xmind_edge: xmind node dto of the edge preceding the node to delete
@@ -441,7 +443,7 @@ class SmrSynchronizer:
                 f"answer was restored.")
         # Remove node from ontology
         self.onto.remove_node(xmind_node=xmind_node, xmind_edge=xmind_edge,
-                              parent_concept_storids=parent_concept_storids)
+                              parent_concept_storids=parent_concept_storids, child_triples={})
         # Add node to answers to remove
         self.xmind_nodes_2_remove.append(xmind_node)
 
@@ -476,25 +478,31 @@ class SmrSynchronizer:
                 sorted(note_data['answers'].items(), key=lambda k, v: k)
                 for local_answer_field, (answer_id, answer_data) in zip_longest(
                         local_answer_fields, sorted(note_data['answers'].items(), key=lambda item: item[0])):
+                    # stop if no more answers left
                     if not local_answer_field and not answer_id:
                         break
+                    # try to remove answer from remote if not present in anki anymore
                     elif not local_answer_field:
-                        self.try_to_remove_answer(xmind_edge=note_data['edge'], xmind_node=answer_data['node'],
-                                                  parent_concept_storids=note_data['parents'])
+                        self._try_to_remove_answer(xmind_edge=note_data['edge'], xmind_node=answer_data['node'],
+                                                   parent_concept_storids=note_data['parents'])
                     else:
                         local_answer_content = content_from_field(field=local_answer_field, smr_world=self.smr_world)
+                        # TODO: add answer to remote if added in anki (not implemented yet)
                         if not answer_id:
                             self.add_answer(answer_content=local_answer_content, xmind_edge=note_data['edge'])
+                            anki_note_was_changed = True
+                        # change answer if content was changed
                         elif local_answer_content != answer_data['node'].content:
                             answer_data['node'].content = local_answer_content
-                            self.change_answer(answer=answer, question=question, local=local, status=status)
-                            self.xmind_nodes_2_update.append(xmind_node)
+                            self.change_answer(xmind_edge=note_data['edge'], parent_node_storids=note_data['parents'],
+                                               xmind_node=answer_data['node'], child_triples=answer_data['children'])
+                            self.xmind_nodes_2_update.append(answer_data['node'])
+                            anki_note_was_changed = True
+                        # do nothing if answer has not changed
                         else:
                             continue
                 if anki_note_was_changed:
                     self.anki_notes_2_update.append(note_data['note'])
-        self.x_manager.save_changes()
-        assert False
 
     def process_remote_changes(self, status, remote, deck_id):
         pass

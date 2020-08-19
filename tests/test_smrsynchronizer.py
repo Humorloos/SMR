@@ -1,6 +1,7 @@
 import pytest
 
 from anki import Collection
+from conftest import generate_new_file
 from smr.smrsynchronizer import SmrSynchronizer
 from smr.smrworld import SmrWorld
 from smr.xnotemanager import XNoteManager
@@ -13,7 +14,7 @@ def smr_synchronizer_no_changes(patch_aqt_mw_smr_world_and_col_with_example_map)
 
 @pytest.fixture
 def smr_synchronizer_local_changes(patch_aqt_mw_smr_world_and_changed_col_with_example_map):
-    return SmrSynchronizer()
+    yield SmrSynchronizer()
 
 
 def test_smr_synchronizer(smr_synchronizer_no_changes):
@@ -40,7 +41,7 @@ def test_synchronize_no_changes(smr_synchronizer_no_changes, mocker):
     assert cut.process_local_and_remote_changes.call_count == 0
 
 
-# @pytest.mark.skip
+@pytest.mark.skip
 def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker):
     # given
     cut = smr_synchronizer_local_changes
