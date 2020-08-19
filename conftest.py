@@ -99,11 +99,7 @@ def _smr_world_for_tests_session(empty_anki_collection_session):
 @pytest.fixture(scope="function")
 def smr_world_with_example_map():
     test_world_path = os.path.join(cts.SMR_WORLD_PATH, "smr_world_with_example_map.sqlite3")
-    try:
-        os.unlink(test_world_path)
-    except FileNotFoundError:
-        pass
-    shutil.copy(src=cts.ORIGINAL_SMR_WORLD_WITH_EXAMPLE_MAP_PATH, dst=test_world_path)
+    generate_new_file(src=cts.ORIGINAL_SMR_WORLD_WITH_EXAMPLE_MAP_PATH, dst=test_world_path)
     standard_world_path = smrworld.SMR_WORLD_PATH
     standard_user_path_config = config.USER_PATH
     smrworld.SMR_WORLD_PATH = test_world_path
@@ -117,12 +113,8 @@ def smr_world_with_example_map():
 
 @pytest.fixture(scope="function")
 def collection_4_migration():
-    try:
-        os.unlink(os.path.join(cts.EMPTY_COLLECTION_FUNCTION_PATH))
-    except FileNotFoundError:
-        pass
-    shutil.copy(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_version_0.0.1', 'collection.anki2'),
-                dst=cts.EMPTY_COLLECTION_FUNCTION_PATH)
+    generate_new_file(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_version_0.0.1', 'collection.anki2'),
+                      dst=cts.EMPTY_COLLECTION_FUNCTION_PATH)
     col = Collection(cts.EMPTY_COLLECTION_FUNCTION_PATH)
     yield col
     col.close()
@@ -130,12 +122,8 @@ def collection_4_migration():
 
 @pytest.fixture(scope="function")
 def real_collection_4_migration():
-    try:
-        os.unlink(os.path.join(cts.EMPTY_COLLECTION_FUNCTION_PATH))
-    except FileNotFoundError:
-        pass
-    shutil.copy(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'real_collection_version_0.0.1', 'collection.anki2'),
-                dst=cts.EMPTY_COLLECTION_FUNCTION_PATH)
+    generate_new_file(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'real_collection_version_0.0.1', 'collection.anki2'),
+                      dst=cts.EMPTY_COLLECTION_FUNCTION_PATH)
     col = Collection(cts.EMPTY_COLLECTION_FUNCTION_PATH)
     yield col
     col.close()
@@ -150,7 +138,7 @@ def smr_world_4_tests(_smr_world_for_tests_session):
 
 @pytest.fixture(scope="function")
 def x_manager() -> xmanager.XManager:
-    yield xmanager.XManager(cts.ORIGINAL_EXAMPLE_MAP_PATH)
+    yield xmanager.XManager(cts.TEMPORARY_EXAMPLE_MAP_PATH)
 
 
 @pytest.fixture
@@ -164,7 +152,7 @@ def tag_for_tests():
 @pytest.fixture()
 def x_ontology(mocker, patch_empty_smr_world) -> xontology.XOntology:
     mocker.spy(xontology.XOntology, "_set_up_classes")
-    x_ontology = xontology.XOntology("99999", get_or_create_smr_world())
+    x_ontology = xontology.XOntology(99999, get_or_create_smr_world())
     yield x_ontology
     # noinspection PyProtectedMember
     x_ontology.smr_world.close()
@@ -176,7 +164,8 @@ def xmind_importer(mocker, empty_anki_collection_session) -> xmindimport.XmindIm
     XmindImporter instance for file example map.xmind
     """
     mocker.patch("aqt.mw")
-    yield xmindimport.XmindImporter(col=empty_anki_collection_session, file=cts.ORIGINAL_EXAMPLE_MAP_PATH)
+    yield xmindimport.XmindImporter(col=empty_anki_collection_session,
+                                    file=cts.TEMPORARY_EXAMPLE_MAP_PATH)
 
 
 @pytest.fixture
@@ -189,11 +178,7 @@ def patch_aqt_mw_empty_smr_world(mocker, set_up_empty_smr_world):
 
 @pytest.fixture
 def collection_with_example_map():
-    try:
-        os.unlink(os.path.join(cts.EMPTY_COLLECTION_FUNCTION_PATH))
-    except FileNotFoundError:
-        pass
-    shutil.copy(src=cts.ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_PATH, dst=cts.EMPTY_COLLECTION_FUNCTION_PATH)
+    generate_new_file(src=cts.ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_PATH, dst=cts.EMPTY_COLLECTION_FUNCTION_PATH)
     col = Collection(cts.EMPTY_COLLECTION_FUNCTION_PATH)
     yield col
     col.close()
@@ -201,18 +186,10 @@ def collection_with_example_map():
 
 @pytest.fixture
 def changed_collection_with_example_map():
-    try:
-        os.unlink(os.path.join(cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH))
-    except FileNotFoundError:
-        pass
-    shutil.copy(src=cts.ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH,
-                dst=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
-    try:
-        shutil.rmtree(cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
-    except FileNotFoundError:
-        pass
-    shutil.copytree(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_with_example_map_changes',
-                                     'collection.media'), dst=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
+    generate_new_file(src=cts.ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH,
+                      dst=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    generate_new_tree(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_with_example_map_changes',
+                                       'collection.media'), dst=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
     col = Collection(cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
     yield col
     col.close()
@@ -249,3 +226,11 @@ def generate_new_file(src: str, dst: str):
     except FileNotFoundError:
         pass
     shutil.copy(src=src, dst=dst)
+
+
+def generate_new_tree(src: str, dst: str):
+    try:
+        shutil.rmtree(dst)
+    except FileNotFoundError:
+        pass
+    shutil.copytree(src=src, dst=dst)

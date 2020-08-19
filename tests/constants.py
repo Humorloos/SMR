@@ -50,8 +50,8 @@ CHANGED_MAPS_DIRECTORY = os.path.join(MAPS_DIRECTORY, 'changes')
 TEMPORARY_MAPS_DIRECTORY = os.path.join(MAPS_DIRECTORY, 'temporary')
 EXAMPLE_MAP_NAME = "example map"
 ORIGINAL_EXAMPLE_MAP_PATH = os.path.join(RESOURCES_PATH, EXAMPLE_MAP_NAME + '.xmind')
-DEFAULT_EXAMPLE_MAP_PATH = os.path.join(DEFAULT_MAPS_DIRECTORY, EXAMPLE_MAP_NAME)
-TEMPORARY_EXAMPLE_MAP_PATH = os.path.join(TEMPORARY_MAPS_DIRECTORY, EXAMPLE_MAP_NAME)
+DEFAULT_EXAMPLE_MAP_PATH = os.path.join(DEFAULT_MAPS_DIRECTORY, EXAMPLE_MAP_NAME + '.xmind')
+TEMPORARY_EXAMPLE_MAP_PATH = os.path.join(TEMPORARY_MAPS_DIRECTORY, EXAMPLE_MAP_NAME + '.xmind')
 GENERAL_PSYCHOLOGY_MAP_NAME = 'example_general_psychology'
 ORIGINAL_GENERAL_PSYCHOLOGY_MAP_PATH = os.path.join(RESOURCES_PATH, GENERAL_PSYCHOLOGY_MAP_NAME + '.xmind')
 DEFAULT_GENERAL_PSYCHOLOGY_MAP_PATH = os.path.join(DEFAULT_MAPS_DIRECTORY, GENERAL_PSYCHOLOGY_MAP_NAME + '.xmind')
@@ -92,8 +92,8 @@ MEDIA_HYPERLINK_XMIND_ID = '1s7h0rvsclrnvs8qq9u71acml5'
 NEUROTRANSMITTERS_NODE_CONTENT = NodeContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
                                                 title='neurotransmitters')
 # Media hyperlink path as saved in content.xml, replace backslash with slash, since xmind saves paths with slashes
-UNIX_HYPERLINK_MEDIA_PATH = ORIGINAL_HYPERLINK_MEDIA_PATH.replace("\\", "/")
-MEDIA_HYPERLINK_NODE_CONTENT = NodeContentDto(media=ORIGINAL_HYPERLINK_MEDIA_PATH)
+UNIX_HYPERLINK_MEDIA_PATH = TEMPORARY_HYPERLINK_MEDIA_PATH.replace("\\", "/")
+MEDIA_HYPERLINK_NODE_CONTENT = NodeContentDto(media=TEMPORARY_HYPERLINK_MEDIA_PATH)
 MEDIA_ATTACHMENT_NODE_CONTENT: NodeContentDto = NodeContentDto(media='attachments/395ke7i9a6nkutu85fcpa66as2.mp4')
 NEUROTRANSMITTERS_CLASS_NAME = 'neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png'
 EMPTY_NODE_TAG_ID = "6b0ho6vvcs4pcacchhsgju7513"

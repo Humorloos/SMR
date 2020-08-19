@@ -100,7 +100,7 @@ def test_add_xmind_nodes_with_media_hyperlink(smr_world_4_tests, x_manager):
     # given
     # noinspection PyTypeChecker
     expected_entry = XmindNodeDto(node_id=cts.MEDIA_HYPERLINK_XMIND_ID, title='',
-                                  link=cts.ORIGINAL_HYPERLINK_MEDIA_PATH, image=None)
+                                  link=cts.TEMPORARY_HYPERLINK_MEDIA_PATH, image=None)
     # then
     verify_add_xmind_node(expected_entry, smr_world_4_tests, x_manager, cts.MEDIA_HYPERLINK_XMIND_ID,
                           cts.MEDIA_HYPERLINK_NODE_CONTENT)
@@ -115,6 +115,7 @@ def verify_add_xmind_node(expected_entry, cut, x_manager, tag_id, node_content):
         link=node_content.media, ontology_storid=cts.TEST_CONCEPT_STORID, last_modified=node['timestamp'],
         order_number=1)])
     # then
+    # noinspection PyProtectedMember
     xmind_node = cut._get_records("SELECT * FROM main.xmind_nodes WHERE node_id = '{}'".format(tag_id))[0]
     assert xmind_node.image == expected_entry.image
     assert xmind_node.title == expected_entry.title
@@ -257,7 +258,7 @@ def test_get_xmind_files_in_decks(smr_world_with_example_map):
     xmind_files_in_decks = smr_world_with_example_map.get_xmind_files_in_decks()
     # then
     files = list(xmind_files_in_decks.values())[0]
-    assert files[0].directory == cts.RESOURCES_PATH
+    assert files[0].directory == cts.TEMPORARY_MAPS_DIRECTORY
     assert files[0].file_name == cts.EXAMPLE_MAP_NAME
     assert files[1].file_name == cts.GENERAL_PSYCHOLOGY_MAP_NAME
 
@@ -266,11 +267,11 @@ def test_get_changed_smr_notes(smr_world_with_example_map, changed_collection_wi
     # when
     changed_smr_notes = smr_world_with_example_map.get_changed_smr_notes(changed_collection_with_example_map)
     # then
-    assert list(changed_smr_notes.keys()) == [cts.ORIGINAL_EXAMPLE_MAP_PATH, cts.ORIGINAL_GENERAL_PSYCHOLOGY_MAP_PATH]
+    assert list(changed_smr_notes.keys()) == [cts.TEMPORARY_EXAMPLE_MAP_PATH, cts.TEMPORARY_GENERAL_PSYCHOLOGY_MAP_PATH]
     values = list(changed_smr_notes.values())
     assert list(values[0].keys()) == ['biological psychology', 'clinical psychology']
     assert list(values[1].keys()) == ['general psychology']
-    example_map_sheets = changed_smr_notes[cts.ORIGINAL_EXAMPLE_MAP_PATH]
+    example_map_sheets = changed_smr_notes[cts.TEMPORARY_EXAMPLE_MAP_PATH]
     assert len(example_map_sheets['biological psychology']) == 5
     assert len(example_map_sheets['clinical psychology']) == 4
     assert len(list(values[1].values())[0]) == 1

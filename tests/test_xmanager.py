@@ -11,7 +11,7 @@ from smr.xmanager import is_empty_node, get_node_title, get_child_nodes, get_non
 def test_x_manager(x_manager):
     # given
     expected_sheets = ['biological psychology', 'clinical psychology', 'ref']
-    expected_referenced_file = [cts.ORIGINAL_GENERAL_PSYCHOLOGY_MAP_PATH]
+    expected_referenced_file = [cts.TEMPORARY_GENERAL_PSYCHOLOGY_MAP_PATH]
     # when
     cut = x_manager
     # then
@@ -260,7 +260,7 @@ def test_get_hyperlink_uri(x_manager):
     # when
     uri = cut.get_hyperlink_uri(tag)
     # then
-    assert uri == cts.ORIGINAL_HYPERLINK_MEDIA_PATH
+    assert uri == cts.TEMPORARY_HYPERLINK_MEDIA_PATH
 
 
 def test_get_hyperlink_uri_embedded_file(x_manager):

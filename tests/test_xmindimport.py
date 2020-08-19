@@ -14,7 +14,7 @@ from smr.xmindimport import XmindImporter
 
 def test_xmind_importer(xmind_importer):
     # given
-    expected_x_manager_files = [cts.ORIGINAL_EXAMPLE_MAP_PATH, cts.ORIGINAL_GENERAL_PSYCHOLOGY_MAP_PATH]
+    expected_x_manager_files = [cts.TEMPORARY_EXAMPLE_MAP_PATH, cts.TEMPORARY_GENERAL_PSYCHOLOGY_MAP_PATH]
     # when
     cut = xmind_importer
     # then
@@ -66,7 +66,7 @@ def test_import_file(xmind_importer, mocker, x_manager):
     cut.import_file(x_manager)
     # then
     assert cut.import_sheet.call_count == 2
-    assert cut.files_2_import[0].directory == cts.RESOURCES_PATH
+    assert cut.files_2_import[0].directory == cts.TEMPORARY_MAPS_DIRECTORY
     assert cut.files_2_import[0].deck_id == cts.TEST_DECK_ID
     assert cut.files_2_import[0].file_name == cts.EXAMPLE_MAP_NAME
 
@@ -88,7 +88,7 @@ def test_import_sheet(xmind_importer, mocker, x_manager):
     assert cut.current_sheet_import == sheet_2_import
     assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.sheets_2_import[0].sheet_id == '2485j5qgetfevlt00vhrn53961'
-    assert cut.sheets_2_import[0].file_directory == cts.RESOURCES_PATH
+    assert cut.sheets_2_import[0].file_directory == cts.TEMPORARY_MAPS_DIRECTORY
     assert cut.sheets_2_import[0].file_name == cts.EXAMPLE_MAP_NAME
 
 
@@ -306,7 +306,7 @@ def test_initialize_import_import_import_notes_to_correct_deck(
     # given
     collection = empty_anki_collection_function
     add_x_model(collection)
-    cut = XmindImporter(col=collection, file=cts.ORIGINAL_EXAMPLE_MAP_PATH)
+    cut = XmindImporter(col=collection, file=cts.DEFAULT_EXAMPLE_MAP_PATH)
     test_deck_id = cut.col.decks.id(name="test_deck")
     mocker.spy(cut, "import_edge")
     mocker.spy(cut, "import_node_if_concept")

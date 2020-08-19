@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import aqt
 import tests.constants as cts
 from anki import Collection
-from conftest import generate_new_file
+from conftest import generate_new_file, generate_new_tree
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.template import add_x_model
 from smr.xmindimport import XmindImporter
@@ -105,11 +105,7 @@ def main():
 def save_collection(collection, media_dir, collection_path):
     collection.close()
     generate_new_file(src=collection.path, dst=collection_path)
-    try:
-        shutil.rmtree(media_dir)
-    except FileNotFoundError:
-        pass
-    shutil.copytree(src=collection.media._dir, dst=media_dir)
+    generate_new_tree(src=collection.media._dir, dst=media_dir)
 
 
 # Call the main function
