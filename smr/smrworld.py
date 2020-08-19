@@ -1,6 +1,6 @@
 import os
 from collections import namedtuple
-from typing import List, TextIO, Tuple, Dict, Any, Union, Optional
+from typing import List, TextIO, Tuple, Dict, Any, Union, Optional, Set
 
 from anki import Collection
 from owlready2.namespace import World
@@ -181,7 +181,7 @@ class SmrWorld(World):
         return files_in_decks
 
     def get_changed_smr_notes(self, collection: Collection) -> Dict[str, Dict[str, Dict[str, Dict[str, Union[
-        SmrNoteDto, XmindNodeDto, str, Dict[int, Union[NodeContentDto, Any]]]]]]]:
+        SmrNoteDto, Dict[str, Union[XmindNodeDto, Set[int]]], str, Dict[int, Union[NodeContentDto, Any]]]]]]]:
         """
         Gets all notes belonging to xmind files that were changed since the last smr synchronization
         :return: A hierarchical structure of dictionaries
@@ -210,42 +210,59 @@ select xs.file_directory,
        xcn.link                 node_link,
        xcn.node_id,
        xcn.order_number,
-       xcn.ontology_storid      child_node_storid,
+       xcn.ontology_storid      node_storid,
        xpn.ontology_storid      parent_node_storid,
+       xce.edge_id              child_edge_id,
+       xce.ontology_storid      child_edge_storid,
+       xcn2.ontology_storid     child_node_storid,
        cn.flds                  note_fields
 from smr_notes sn
-         left join anki_collection.notes cn on sn.note_id = cn.id
+         join anki_collection.notes cn on sn.note_id = cn.id
          join xmind_edges xe on sn.edge_id = xe.edge_id
          join xmind_sheets xs on xe.sheet_id = xs.sheet_id
          join smr_triples st on xe.edge_id = st.edge_id
          join xmind_nodes xcn on st.child_node_id = xcn.node_id
          join xmind_nodes xpn on st.parent_node_id = xpn.node_id
+         left join smr_triples st2 on st2.parent_node_id = xcn.node_id
+         left join xmind_edges xce on st2.edge_id = xce.edge_id
+         left join xmind_nodes xcn2 on st2.child_node_id = xcn2.node_id
 where sn.last_modified < cn.mod""")
         smr_notes_in_files = {}
         for record in data:
             file_path = os.path.join(record.file_directory, record.file_name)
-            node = XmindNodeDto(image=record.node_image, link=record.node_link, title=record.node_title,
-                                node_id=record.node_id, ontology_storid=record.child_node_storid)
             try:
                 smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
-                    record.order_number] = node
+                    record.order_number]['children'][record.child_edge_id]['child_storids'].append(
+                    record.child_node_storid)
             except KeyError:
-                edge = XmindNodeDto(image=record.edge_image, link=record.edge_link, title=record.edge_title,
-                                    node_id=record.edge_id, ontology_storid=record.edge_storid)
-                smr_note = SmrNoteDto(*record[3:6])
-                edge_dict = {'note': smr_note, 'edge': edge, 'note_fields': record.note_fields,
-                             'answers': {record.order_number: node}, 'parents': set()}
+                child_storids = {'storid': record.child_edge_storid, 'child_storids': [record.child_node_storid]}
                 try:
-                    smr_notes_in_files[file_path][record.sheet_name][record.note_id] = edge_dict
+                    smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
+                        record.order_number]['children'][record.child_edge_id] = child_storids
                 except KeyError:
-                    sheet_dict = {record.note_id: edge_dict}
+                    node = {'node': XmindNodeDto(image=record.node_image, link=record.node_link, title=record.node_title,
+                                                 node_id=record.node_id, ontology_storid=record.node_storid),
+                            'children': {record.child_edge_id: child_storids}}
                     try:
-                        smr_notes_in_files[file_path][record.sheet_name] = sheet_dict
+                        smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
+                            record.order_number] = node
                     except KeyError:
-                        smr_notes_in_files[file_path] = {record.sheet_name: sheet_dict}
-            finally:
-                smr_notes_in_files[file_path][record.sheet_name][record.note_id]['parents'].add(
-                    record.parent_node_storid)
+                        edge = XmindNodeDto(image=record.edge_image, link=record.edge_link, title=record.edge_title,
+                                            node_id=record.edge_id, ontology_storid=record.edge_storid)
+                        smr_note = SmrNoteDto(*record[3:6])
+                        edge_dict = {'note': smr_note, 'edge': edge, 'note_fields': record.note_fields,
+                                     'answers': {record.order_number: node}, 'parents': set()}
+                        try:
+                            smr_notes_in_files[file_path][record.sheet_name][record.note_id] = edge_dict
+                        except KeyError:
+                            sheet_dict = {record.note_id: edge_dict}
+                            try:
+                                smr_notes_in_files[file_path][record.sheet_name] = sheet_dict
+                            except KeyError:
+                                smr_notes_in_files[file_path] = {record.sheet_name: sheet_dict}
+                finally:
+                    smr_notes_in_files[file_path][record.sheet_name][record.note_id]['parents'].add(
+                        record.parent_node_storid)
         return smr_notes_in_files
 
     def _get_records(self, sql: str) -> List['Record']:

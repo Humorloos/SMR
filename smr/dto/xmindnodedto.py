@@ -20,5 +20,11 @@ class XmindNodeDto(EntityDto):
     order_number: Optional[int] = None
 
     @property
-    def content(self):
+    def content(self) -> NodeContentDto:
         return NodeContentDto(image=self.image, media=self.link, title=self.title)
+
+    @content.setter
+    def content(self, value: NodeContentDto):
+        self.image = value.image
+        self.title = value.title
+        self.link = value.media

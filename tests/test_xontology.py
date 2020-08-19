@@ -131,7 +131,7 @@ def test_remove_node(ontology_with_example_map):
     storid = cut.one_or_more_amine_groups.storid
     # when
     cut.remove_node(xmind_node=XmindNodeDto(ontology_storid=storid, node_id='0s0is5027b7r6akh3he0nbu478'),
-                    xmind_edge=XmindNodeDto(), parent_concept_storids=[])
+                    xmind_edge=XmindNodeDto(), parent_concept_storids=[], child_triples={})
     # then
     assert not cut.one_or_more_amine_groups
     assert not cut.biogenic_amines.consist_of_xrelation
@@ -140,13 +140,46 @@ def test_remove_node(ontology_with_example_map):
 def test_remove_node_does_not_remove_concept_if_nodes_left(ontology_with_example_map):
     # given
     cut = ontology_with_example_map
-    storid = cut.Serotonin.storid
+    cut.nociceptors.XmindId.append('new_id')
+    storid = cut.nociceptors.storid
     # when
-    cut.remove_node(xmind_node=XmindNodeDto(ontology_storid=storid, node_id='3732cbg8qsmr8u4hn0bvljso06'),
-                    xmind_edge=XmindNodeDto(title="can be inhibited by", node_id="1scualcvt0scjd9iaoblg568ld"),
-                    parent_concept_storids=[cut.Pain.storid])
+    cut.remove_node(
+        xmind_node=XmindNodeDto(ontology_storid=storid, node_id='2mbb2crv3tdgr131i9j538n0ga'),
+        xmind_edge=XmindNodeDto(title="triggered by", node_id="4rdraflh6n2hl4a459g2urdkr6"),
+        parent_concept_storids=[cut.Pain.storid], child_triples={
+            '4q3e21ritrvitgmjialvadn2m6': {'storid': cut.can_be_xrelation.storid,
+                                           'child_storids': [cut.chemical.storid]}})
     # then
-    assert type(cut.Serotonin) == cut.Concept
-    assert not cut.Pain.can_be_inhibited_by_xrelation
+    assert type(cut.nociceptors) == cut.Concept
+    assert not cut.nociceptors.can_be_xrelation
+    assert not cut.chemical.Parent
 
 
+def test_add_node(ontology_with_example_map):
+    # given
+    cut = ontology_with_example_map
+    # when
+    cut.add_node(parent_edge=XmindNodeDto(
+        ontology_storid=cut.can_be_inhibited_by_xrelation.storid, node_id="1scualcvt0scjd9iaoblg568ld"),
+        node_2_add=XmindNodeDto(node_id='some id', title='some title', image='abcde.png', link='fghij.mp3'),
+        parent_node_storids=[cut.Pain.storid])
+    # then
+    assert [c.name for c in cut.Pain.can_be_inhibited_by_xrelation] == [
+        'Serotonin', 'some_titleximage_abcde_extension_pngxmedia_fghij_extension_mp3']
+
+
+def test_rename_node(ontology_with_example_map):
+    # given
+    cut = ontology_with_example_map
+    # when
+    new_concept = cut.rename_node(xmind_edge=XmindNodeDto(
+        title='are', ontology_storid=cut.are_xrelation.storid,
+        node_id="6iivm8tpoqj2c0euaabtput14l"), xmind_node=XmindNodeDto(
+        node_id='3oqcv5qlqhn28u1opce5i27709', title='nothing', image='abcde.png', link='fghij.mp3',
+        ontology_storid=cut.biogenic_amines.storid),
+        parent_node_storids=[getattr(cut, n).storid for n in cts.MULTIPLE_PARENTS_CLASS_NAMES],
+        child_triples={'0eaob1gla0j1qriki94n2os9oe': {'storid': cut.consist_of_xrelation.storid,
+                                                      'child_storids': [cut.one_or_more_amine_groups.storid]}})
+    assert new_concept.Parent == [getattr(cut, n) for n in cts.MULTIPLE_PARENTS_CLASS_NAMES]
+    assert len(new_concept.consist_of_xrelation)
+    assert new_concept in cut.one_or_more_amine_groups.Parent

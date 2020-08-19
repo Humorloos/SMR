@@ -40,7 +40,7 @@ def test_synchronize_no_changes(smr_synchronizer_no_changes, mocker):
     assert cut.process_local_and_remote_changes.call_count == 0
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker):
     # given
     cut = smr_synchronizer_local_changes

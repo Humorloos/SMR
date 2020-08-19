@@ -1,7 +1,7 @@
 import json
 import os
 import types
-from typing import List, Union, Set
+from typing import List, Union, Set, Dict
 
 import owlready2
 from smr.consts import X_MAX_ANSWERS, USER_PATH
@@ -111,26 +111,23 @@ class XOntology(Ontology):
         # noinspection PyProtectedMember
         return self.world._get_by_storid(storid)
 
-    def add_answer(self, a_id, answer_field, rel_dict, question_class, parents=None):
+    def add_node(self, parent_edge: XmindNodeDto, node_2_add: XmindNodeDto, parent_node_storids: List[int]):
         """
-        Adds an answer to a given question to the ontology
-        :param parents: Set of parent concepts of the question for the answer
-        :param a_id: Xmind id of the answer topic
-        :param answer_field: Anki note field of the answer
-        :param rel_dict: Relationship dictionary, as created by get_rel_dict()
-        :param question_class: Class name of the question
-        :return: The answer concept
+        - If the concept for the node already exists, adds the node id to the concept's node ids, else creates the
+        concept
+        - Connects the concept to its parents with the specified edge's information
+        :param parent_edge: xmind node dto of the edge preceding the node to add
+        :param node_2_add: xmind node dto of the node to add with already updated content
+        :param parent_node_storids: ontology storids of the parent concepts of the node to add
+        :return: the node's concept
         """
-        answer_content = content_from_field(answer_field)
-        answer_concept = self.concept_from_node_content(node_content=answer_content,
-                                                        question_xmind_id=rel_dict['x_id'],
-                                                        answer_xmind_id=a_id, file=rel_dict['doc'])
-        if not parents:
-            parents = set(q['s'] for q in self.get_question(rel_dict['x_id']))
-        for parent in parents:
-            self.add_relation(child_thing=answer_concept, relationship_class_name=question_class,
-                              parent_thing=parent, rel_dict=rel_dict)
-        return answer_concept
+        parent_concepts = [self.get(i) for i in parent_node_storids]
+        new_concept = self.concept_from_node_content(node_content=node_2_add.content, node_id=node_2_add.node_id)
+        for parent_concept in parent_concepts:
+            self.connect_concepts(child_thing=new_concept, parent_thing=parent_concept,
+                                  relationship_class_name=self.get(parent_edge.ontology_storid).name,
+                                  edge_id=parent_edge.node_id)
+        return new_concept
 
     def connect_concepts(self, child_thing: ThingClass, parent_thing: ThingClass, relationship_class_name: str,
                          edge_id: str) -> None:
@@ -187,15 +184,18 @@ class XOntology(Ontology):
                 relationship_property.range = [self.Concept]
         return relationship_property
 
-    def remove_node(self, xmind_node: XmindNodeDto, xmind_edge: XmindNodeDto, parent_concept_storids: List[int]):
+    def remove_node(self, xmind_node: XmindNodeDto, xmind_edge: XmindNodeDto, parent_concept_storids: List[int],
+                    child_triples: Dict[str, Dict[str, Union[int, List[int]]]]):
         """
         Removes the node's xmind id from the respective concept
-         - if there are more nodes left belonging to the concept, removes the relations between parent nodes and
-         specified node
+         - if there are more nodes left belonging to the concept, removes the relations between parent and child
+         nodes and specified node
          - if there are no more nodes left belonging to the concept, destroys the concept
         :param xmind_node: xmind node dto belonging to the node to be deleted
         :param xmind_edge: xmind node dto belonging to the parent edge of the node to be deleted
         :param parent_concept_storids: list of storids belonging to the concepts belonging to the
+        :param child_triples: dictionary where keys are edge_ids of edges following the node to remove and values are
+        dictionaries containing the edge's storid and a list of storids belonging to the edge's child nodes
         parent nodes of the node to be deleted
         """
         concept = self.get(xmind_node.ontology_storid)
@@ -204,34 +204,37 @@ class XOntology(Ontology):
         if not currently_associated_ids:
             destroy_entity(concept)
         else:
-            # remove the relations between the node and it's parents in case the concept itself is not removed
+            # remove the relations between the node and its parents and its children in case the concept itself is not
+            # removed
             self.remove_relations(parents=[self.get(i) for i in parent_concept_storids],
                                   relation_name=self.field_translator.relation_class_from_content(xmind_edge.content),
                                   children=[concept], edge_id=xmind_edge.node_id)
+            for edge_id, edge_data in child_triples.items():
+                self.remove_relations(parents=[concept], relation_name=self.get(edge_data['storid']).name,
+                                      children=[self.get(i) for i in edge_data['child_storids']], edge_id=edge_id)
 
-    def change_answer(self, q_id, a_id, a_field):
-        answer = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
-        answer_triples = [t for t in self.get_question(q_id) if t['o'] ==
-                          answer]
-        q_id = next(self.get_trpl_x_id(t) for t in answer_triples)
-        q_ref = next(self.get_trpl_ref(t) for t in answer_triples)
-        questions_2_answer = [t for t in self.get_child_elements(
-            answer.storid) if q_ref in self.get_trpl_ref(t)]
-        objects_2_answer = [{
-            'child': t['o'], 'rel_dict': self.rel_dict_from_triple(t),
-            'class_text': t['p'].name} for t in questions_2_answer]
-        question_class = answer_triples[0]['p'].name
-        parents = set(t['s'] for t in answer_triples)
-        rel_dict = self.rel_dict_from_triple(answer_triples[0])
-        self.remove_node(q_id=q_id, a_id=a_id)
-
-        new_answer = self.add_answer(
-            parents=parents, a_id=a_id, answer_field=a_field,
-            rel_dict=rel_dict, question_class=question_class)
-
-        for o in objects_2_answer:
-            self.add_relation(child_thing=o['child'], relationship_class_name=o['class_text'],
-                              parent_thing=new_answer, rel_dict=o['rel_dict'])
+    def rename_node(self, xmind_node: XmindNodeDto, xmind_edge: XmindNodeDto, parent_node_storids: List[int],
+                    child_triples: Dict[str, Dict[str, Union[int, List[int]]]]) -> ThingClass:
+        """
+        changes the name of a node while retaining the relations to related concepts (children and parents)
+        :param xmind_node: the xmind node to rename, with already updated node content
+        :param xmind_edge: the xmind edge preceding the node to rename
+        :param parent_node_storids: storids of all nodes preceding the node to change
+        :param child_triples: dictionary where keys are edge_ids of edges following the node to change and values are
+        dictionaries containing the edge's storid and a list of storids belonging to the edge's child nodes
+        :return:
+        """
+        self.remove_node(xmind_node=xmind_node, xmind_edge=xmind_edge, parent_concept_storids=parent_node_storids,
+                         child_triples=child_triples)
+        new_answer = self.add_node(parent_edge=xmind_edge, node_2_add=xmind_node,
+                                   parent_node_storids=parent_node_storids)
+        # connect concept to former children of removed node
+        for edge_id, edge_data in child_triples.items():
+            relation_class_name = self.get(edge_data['storid']).name
+            for node_storid in edge_data['child_storids']:
+                self.connect_concepts(child_thing=self.get(node_storid), parent_thing=new_answer,
+                                      relationship_class_name=relation_class_name, edge_id=edge_id)
+        return new_answer
 
     def change_relationship_class_name(self, parent_storids: List[int], relation_storid: int,
                                        child_storids: List[int], new_question_content: NodeContentDto,
