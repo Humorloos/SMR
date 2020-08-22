@@ -1,5 +1,5 @@
 import pickle
-
+import aqt
 import pytest
 from assertpy import assert_that
 from bs4 import Tag
@@ -21,14 +21,15 @@ def test_xmind_importer(xmind_importer):
     assert [x.file for x in cut.x_managers] == expected_x_manager_files
 
 
-def test_open_aborts_if_file_already_exists(xmind_importer, smr_world_4_tests):
+def test_open_aborts_if_file_already_exists(empty_anki_collection_session, mocker, smr_world_4_tests):
     """
     Test whether the import stops when the file to be imported is already in the world
     """
     # given
-    cut = xmind_importer
-    cut.smr_world = smr_world_4_tests
-    cut.file = cts.TEST_FILE_PATH
+    mocker.patch('aqt.mw')
+    aqt.mw.smr_world = smr_world_4_tests
+    aqt.mw.return_value = aqt.mw
+    cut = XmindImporter(col=empty_anki_collection_session, file=cts.TEST_FILE_PATH)
     # when
     cut.open()
     # then

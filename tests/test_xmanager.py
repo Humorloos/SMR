@@ -4,6 +4,7 @@ import bs4
 import pytest
 
 import tests.constants as cts
+from smr.dto.nodecontentdto import NodeContentDto
 from smr.xmanager import is_empty_node, get_node_title, get_child_nodes, get_non_empty_sibling_nodes, get_parent_node, \
     get_node_image, get_node_hyperlink, XManager, NodeNotFoundError
 
@@ -271,3 +272,26 @@ def test_get_hyperlink_uri_embedded_file(x_manager):
     uri = cut.get_hyperlink_uri(tag)
     # then
     assert uri == 'attachments/395ke7i9a6nkutu85fcpa66as2.mp4'
+
+
+def test_save_changes(x_manager, smr_world_with_example_map):
+    # given
+    new_node_content = NodeContentDto(image=cts.NEW_IMAGE_NAME, title='new node title')
+    x_manager.set_node_content(node_id=cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID, content=new_node_content,
+                               media_directory=cts.TEST_COLLECTIONS_PATH, smr_world=smr_world_with_example_map)
+    # when
+    x_manager.save_changes()
+    # then
+    assert XManager(cts.TEMPORARY_EXAMPLE_MAP_PATH).get_node_content_by_id(
+        cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID) == new_node_content
+
+
+def test_set_node_content(x_manager, smr_world_with_example_map):
+    # given
+    new_node_content = NodeContentDto(image=cts.NEW_IMAGE_NAME, title='new node title')
+    # when
+    x_manager.set_node_content(node_id=cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID, content=new_node_content,
+                               media_directory=cts.TEST_COLLECTIONS_PATH, smr_world=smr_world_with_example_map)
+    # then
+    assert smr_world_with_example_map.get_xmind_uri_from_anki_file_name(cts.NEW_IMAGE_NAME) == cts.NEW_IMAGE_NAME
+    assert x_manager.get_node_content_by_id(cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID) == new_node_content

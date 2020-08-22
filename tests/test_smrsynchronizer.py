@@ -1,5 +1,6 @@
 import pytest
 
+import tests.constants as cts
 from anki import Collection
 from conftest import generate_new_file
 from smr.smrsynchronizer import SmrSynchronizer
@@ -14,6 +15,8 @@ def smr_synchronizer_no_changes(patch_aqt_mw_smr_world_and_col_with_example_map)
 
 @pytest.fixture
 def smr_synchronizer_local_changes(patch_aqt_mw_smr_world_and_changed_col_with_example_map):
+    generate_new_file(src=cts.DEFAULT_EXAMPLE_MAP_PATH, dst=cts.TEMPORARY_EXAMPLE_MAP_PATH)
+    generate_new_file(src=cts.DEFAULT_GENERAL_PSYCHOLOGY_MAP_PATH, dst=cts.TEMPORARY_GENERAL_PSYCHOLOGY_MAP_PATH)
     yield SmrSynchronizer()
 
 
@@ -26,7 +29,6 @@ def test_smr_synchronizer(smr_synchronizer_no_changes):
     assert type(cut.col) == Collection
 
 
-@pytest.mark.skip
 def test_synchronize_no_changes(smr_synchronizer_no_changes, mocker):
     # given
     cut = smr_synchronizer_no_changes
@@ -39,7 +41,6 @@ def test_synchronize_no_changes(smr_synchronizer_no_changes, mocker):
     assert cut._process_local_changes.call_count == 0
     assert cut.process_remote_changes.call_count == 0
     assert cut.process_local_and_remote_changes.call_count == 0
-
 
 @pytest.mark.skip
 def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker):

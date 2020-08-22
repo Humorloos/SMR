@@ -23,7 +23,7 @@ ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_NAME = 'collection'
 ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
                                                          ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.anki2')
 ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
-                                                         ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.media')
+                                                          ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.media')
 ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(
     TEST_COLLECTIONS_PATH, 'collection_with_example_map_changes')
 ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME = 'collection'
@@ -61,6 +61,9 @@ ORIGINAL_HYPERLINK_MEDIA_PATH = os.path.join(RESOURCES_PATH, HYPERLINK_MEDIA_NAM
 DEFAULT_HYPERLINK_MEDIA_PATH = os.path.join(DEFAULT_MAPS_DIRECTORY, HYPERLINK_MEDIA_NAME)
 TEMPORARY_HYPERLINK_MEDIA_PATH = os.path.join(TEMPORARY_MAPS_DIRECTORY, HYPERLINK_MEDIA_NAME)
 
+CONTENT_NAME = 'content.xml'
+CONTENT_PATH = os.path.join(MAPS_DIRECTORY, CONTENT_NAME)
+
 ABSENT_XMIND_FILE_PATH = os.path.join(SUPPORT_PATH, 'absent_file.xmind')
 EXAMPLE_MAP_N_EDGES = 34
 TEST_DECK_ID = 1579442668731
@@ -89,6 +92,7 @@ TYPES_EDGE_XMIND_ID = '485fcs7jl72gtqesace4v8igf0'
 # nodes
 NEUROTRANSMITTERS_XMIND_ID = "4r6avbt0pbuam4fg07jod0ubec"
 MEDIA_HYPERLINK_XMIND_ID = '1s7h0rvsclrnvs8qq9u71acml5'
+ONE_OR_MORE_AMINE_GROUPS_NODE_ID = '0s0is5027b7r6akh3he0nbu478'
 NEUROTRANSMITTERS_NODE_CONTENT = NodeContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
                                                 title='neurotransmitters')
 # Media hyperlink path as saved in content.xml, replace backslash with slash, since xmind saves paths with slashes
@@ -114,8 +118,10 @@ EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE = \
 EDGE_FOLLOWING_MULTIPLE_NODES_NOTE_ID = 12345
 MULTIPLE_PARENTS_CONTENTS = [NodeContentDto(title=i) for i in ["Serotonin", "dopamine", "adrenaline", "noradrenaline"]]
 MULTIPLE_PARENTS_CLASS_NAMES = [FieldTranslator().class_from_content(i) for i in MULTIPLE_PARENTS_CONTENTS]
+MULTIPLE_PARENTS_NODE_IDS = ["56ru8hj8k8361ppfrftrbahgvv", "03eokjlomuockpeaqn2923nvvp", "3f5lmmd8mjhe3gkbnaih1m9q8j",
+                             "73mo29opsuegqobtttlt2vbaqj"]
 MULTIPLE_PARENTS_CHILD_CONTENT = NodeContentDto(title="biogenic amines")
 MULTIPLE_PARENTS_CHILD_CLASS_NAME = FieldTranslator().class_from_content(MULTIPLE_PARENTS_CHILD_CONTENT)
+MULTIPLE_PARENTS_CHILD_NODE_ID = "3oqcv5qlqhn28u1opce5i27709"
 MULTIPLE_PARENTS_RELATION_CONTENT = NodeContentDto(title="are")
 MULTIPLE_PARENTS_RELATION_CLASS_NAME = FieldTranslator().relation_class_from_content(MULTIPLE_PARENTS_RELATION_CONTENT)
-

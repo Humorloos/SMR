@@ -138,12 +138,15 @@ def smr_world_4_tests(_smr_world_for_tests_session):
 
 @pytest.fixture(scope="function")
 def x_manager() -> xmanager.XManager:
-    yield xmanager.XManager(cts.TEMPORARY_EXAMPLE_MAP_PATH)
+    generate_new_file(src=cts.ORIGINAL_EXAMPLE_MAP_PATH, dst=cts.TEMPORARY_EXAMPLE_MAP_PATH)
+    x_manager = xmanager.XManager(cts.TEMPORARY_EXAMPLE_MAP_PATH)
+    yield x_manager
+    x_manager.zip_file.close()
 
 
 @pytest.fixture
 def tag_for_tests():
-    with open(os.path.join(cts.SUPPORT_PATH, 'xmindImporter', 'content.xml'), 'r') as file:
+    with open(cts.CONTENT_PATH, 'r') as file:
         tag = bs4.BeautifulSoup(file.read(), features='html.parser').topic
         file.close()
     yield tag
@@ -159,13 +162,21 @@ def x_ontology(mocker, patch_empty_smr_world) -> xontology.XOntology:
 
 
 @pytest.fixture
+def ontology_with_example_map(smr_world_with_example_map, collection_with_example_map) -> xontology.XOntology:
+    yield xontology.XOntology(
+        deck_id=collection_with_example_map.decks.id('testdeck', create=False), smr_world=smr_world_with_example_map)
+
+
+@pytest.fixture
 def xmind_importer(mocker, empty_anki_collection_session) -> xmindimport.XmindImporter:
     """
     XmindImporter instance for file example map.xmind
     """
     mocker.patch("aqt.mw")
-    yield xmindimport.XmindImporter(col=empty_anki_collection_session,
-                                    file=cts.TEMPORARY_EXAMPLE_MAP_PATH)
+    importer = xmindimport.XmindImporter(col=empty_anki_collection_session, file=cts.TEMPORARY_EXAMPLE_MAP_PATH)
+    yield importer
+    for manager in importer.x_managers:
+        manager.zip_file.close()
 
 
 @pytest.fixture

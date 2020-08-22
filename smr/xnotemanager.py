@@ -122,23 +122,22 @@ def field_content_by_identifier(fields: List[str], identifier: str, smr_world: S
     return content_from_field(field=field_by_identifier(fields=fields, identifier=identifier), smr_world=smr_world)
 
 
-def field_from_content(content):
-    field = ''
-    if content['content']:
-        field += content['content']
-
-    if content['media']['image']:
+def field_from_content(content: NodeContentDto, smr_world: SmrWorld) -> str:
+    """
+    Gets an anki field content representing the specified node content
+    :param content: the node content to get the anki field for
+    :param smr_world: the smr world to get the anki file names from for the files in the content dto
+    :return: the anki field
+    """
+    field = content.title
+    if content.image:
         if field != '':
             field += '<br>'
-        field += '<img src="%s">' % re.sub('attachments/', '', content['media'][
-            'image'])
-
+        field += f'<img src="{smr_world.get_anki_file_name_from_xmind_uri(content.image)}">'
     if content.media:
         if field != '':
             field += '<br>'
-        field += '[sound:%s]' % re.sub('attachments/', '', content['media'][
-            'media'])
-
+        field += f'[sound:{smr_world.get_anki_file_name_from_xmind_uri(content.media)}]'
     return field
 
 

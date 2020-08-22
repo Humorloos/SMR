@@ -3,7 +3,8 @@ import pytest
 import tests.constants as cts
 from smr.dto.nodecontentdto import NodeContentDto
 from smr.xnotemanager import FieldTranslator, get_smr_note_reference_fields, get_smr_note_sort_fields, \
-    sort_id_from_order_number, XNoteManager, image_from_field, media_from_field, title_from_field, content_from_field
+    sort_id_from_order_number, XNoteManager, image_from_field, media_from_field, title_from_field, content_from_field, \
+    field_from_content
 
 
 @pytest.fixture
@@ -60,11 +61,11 @@ def test_get_smr_note_reference_fields(smr_world_with_example_map):
     assert reference_fields == {
         '1soij3rlgbkct9eq3uo7117sa9': 'biological psychology<li>investigates: information transfer and '
                                       'processing</li><li>modulated by: enzymes</li><li>completely unrelated '
-                                      'animation:  (media)</li>',
+                                      'animation: (media)</li>',
         '4s27e1mvsb5jqoiuaqmnlo8m71': 'biological psychology<li>investigates: information transfer and '
-                                      'processing</li><li>requires: neurotransmitters <img '
+                                      'processing</li><li>requires: neurotransmitters<br><img '
                                       'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic '
-                                      'amines</li><li> <img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
+                                      'amines</li><li><img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
                                       'Serotonin</li>',
         '6iivm8tpoqj2c0euaabtput14l': 'biological psychology<li>investigates: information transfer and '
                                       'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits '
@@ -153,3 +154,10 @@ def test_content_from_field(smr_world_with_example_map):
     assert content == NodeContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
                                      media=cts.TEMPORARY_HYPERLINK_MEDIA_PATH,
                                      title='MAO is not a neurotransmitter')
+
+
+def test_field_from_content(smr_world_with_example_map):
+    # when
+    field = field_from_content(content=cts.NEUROTRANSMITTERS_NODE_CONTENT, smr_world=smr_world_with_example_map)
+    # then
+    assert field == 'neurotransmitters<br><img src="attachments629d18n2i73im903jkrjmr98fg.png">'

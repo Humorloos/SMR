@@ -119,4 +119,6 @@ CREATE INDEX xmind_edges_sheet_id
     ON xmind_edges (sheet_id);
 CREATE INDEX xmind_media_to_anki_files_anki_file_name
     ON xmind_media_to_anki_files (anki_file_name);
+CREATE INDEX datas_o
+    ON datas(o);
 COMMIT;

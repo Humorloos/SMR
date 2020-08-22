@@ -169,11 +169,11 @@ def test_get_smr_note_references(smr_world_with_example_map):
                                       'amines</li>',
         '1soij3rlgbkct9eq3uo7117sa9': 'biological psychology<li>investigates: information transfer and '
                                       'processing</li><li>modulated by: enzymes</li><li>completely unrelated '
-                                      'animation:  [sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]</li>',
+                                      'animation: [sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]</li>',
         '4s27e1mvsb5jqoiuaqmnlo8m71': 'biological psychology<li>investigates: information transfer and '
-                                      'processing</li><li>requires: neurotransmitters <img '
+                                      'processing</li><li>requires: neurotransmitters<br><img '
                                       'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic '
-                                      'amines</li><li> <img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
+                                      'amines</li><li><img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
                                       'Serotonin</li>',
         '6iivm8tpoqj2c0euaabtput14l': 'biological psychology<li>investigates: information transfer and '
                                       'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits '
@@ -187,7 +187,7 @@ def test_get_smr_note_question_fields(smr_world_4_tests):
     # then
     assert question_fields == {
         '08eq1rdricsp1nt1b7aa181sq4': '<img src="attachments09r2e442o8lppjfeblf7il2rmd.png">',
-        '7ite3obkfmbcasdf12asd123ga': 'some media edge title [sound:somemedia.mp3]'}
+        '7ite3obkfmbcasdf12asd123ga': 'some media edge title<br>[sound:somemedia.mp3]'}
 
 
 def test_get_smr_note_answer_fields(smr_world_4_tests):
@@ -198,7 +198,7 @@ def test_get_smr_note_answer_fields(smr_world_4_tests):
     assert_that(answers).is_equal_to({
         '4vfsmbd1fmn6s0tqmlj4cei7pe': ['[sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]'],
         '61irckf1nloq42brfmbu0ke92v': ['Serotonin', 'dopamine', 'adrenaline', 'noradrenaline'],
-        '730ahk5oc4himfrdvkqc5ci1o2': ['neurotransmitters <img src="attachments629d18n2i73im903jkrjmr98fg.png">']})
+        '730ahk5oc4himfrdvkqc5ci1o2': ['neurotransmitters<br><img src="attachments629d18n2i73im903jkrjmr98fg.png">']})
 
 
 def test_get_smr_notes_sort_data(smr_world_4_tests):
@@ -275,3 +275,17 @@ def test_get_changed_smr_notes(smr_world_with_example_map, changed_collection_wi
     assert len(example_map_sheets['biological psychology']) == 5
     assert len(example_map_sheets['clinical psychology']) == 4
     assert len(list(values[1].values())[0]) == 1
+
+
+def test_storid_from_node_id(ontology_with_example_map):
+    # when
+    storid = ontology_with_example_map.smr_world.storid_from_node_id('78k8nsh3vfibpmq73kangacbll')
+    # then
+    assert ontology_with_example_map.get(storid) == ontology_with_example_map.biogenic_amines
+
+
+def test_storid_from_edge_id(ontology_with_example_map):
+    # when
+    storid = ontology_with_example_map.smr_world.storid_from_edge_id(cts.TYPES_EDGE_XMIND_ID)
+    # then
+    assert ontology_with_example_map.get(storid) == ontology_with_example_map.types_xrelation

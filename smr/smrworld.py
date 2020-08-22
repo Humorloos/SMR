@@ -13,12 +13,12 @@ from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from smr.dto.xmindnodedto import XmindNodeDto
 from smr.dto.xmindsheetdto import XmindSheetDto
-from smr.utils import get_smr_model_id
 
 FILE_NAME = 'smrworld.sqlite3'
 SQL_FILE_NAME = 'smrworld.sql'
 ANKI_COLLECTION_DB_NAME = "anki_collection"
 SMR_WORLD_PATH = os.path.join(USER_PATH, FILE_NAME)
+ANNOTATED_PROPERTY_STORID = 85
 
 
 def get_xmind_content_selection_clause(relation_name: str) -> str:
@@ -33,8 +33,8 @@ def get_xmind_content_selection_clause(relation_name: str) -> str:
             case
                 when {relation_name}.image is null then ''
                 else case
-                         when {relation_name}.title is null then ''
-                         else ' ' end ||
+                         when {relation_name}.title = '' or {relation_name}.title is null then ''
+                         else '<br>' end ||
                      '<img src="' ||
                      (SELECT anki_file_name FROM xmind_media_to_anki_files WHERE xmind_uri = {relation_name}.image) ||
                      '">'
@@ -42,8 +42,9 @@ def get_xmind_content_selection_clause(relation_name: str) -> str:
             case
                 when {relation_name}.link is null then ''
                 else case
-                         when {relation_name}.title is null and {relation_name}.image is null then ''
-                         else ' ' end ||
+                         when ({relation_name}.title = '' or {relation_name}.title is null) 
+                         and {relation_name}.image is null then ''
+                         else '<br>' end ||
                      '[sound:' ||
                      (SELECT anki_file_name FROM xmind_media_to_anki_files WHERE xmind_uri = {relation_name}.link) ||
                      ']'
@@ -84,10 +85,24 @@ class SmrWorld(World):
     """
 
     def __init__(self):
+        self.parent_storid = None
         super().__init__()
         self.set_backend(filename=SMR_WORLD_PATH)
         self.graph.execute('PRAGMA foreign_keys = ON')
         self.save()
+
+    @property
+    def parent_storid(self) -> int:
+        if not self._parent_storid:
+            self.parent_storid = self.graph.execute("""
+SELECT storid
+FROM resources
+WHERE iri LIKE '%Parent'""").fetchone()[0]
+        return self._parent_storid
+
+    @parent_storid.setter
+    def parent_storid(self, value: int):
+        self._parent_storid = value
 
     def set_up(self) -> None:
         """
@@ -200,21 +215,18 @@ select xs.file_directory,
        xs.name                  sheet_name,
        sn.note_id,
        sn.edge_id,
-       mod                      last_modified,
+       cn.mod                   last_modified,
        xe.title                 edge_title,
        xe.image                 edge_image,
        xe.link                  edge_link,
-       xe.ontology_storid       edge_storid,
        xcn.title                node_title,
        xcn.image                node_image,
        xcn.link                 node_link,
        xcn.node_id,
        xcn.order_number,
-       xcn.ontology_storid      node_storid,
-       xpn.ontology_storid      parent_node_storid,
-       xce.edge_id              child_edge_id,
-       xce.ontology_storid      child_edge_storid,
-       xcn2.ontology_storid     child_node_storid,
+       st.parent_node_id,
+       st2.edge_id              child_edge_id,
+       st2.child_node_id,
        cn.flds                  note_fields
 from smr_notes sn
          join anki_collection.notes cn on sn.note_id = cn.id
@@ -222,33 +234,35 @@ from smr_notes sn
          join xmind_sheets xs on xe.sheet_id = xs.sheet_id
          join smr_triples st on xe.edge_id = st.edge_id
          join xmind_nodes xcn on st.child_node_id = xcn.node_id
-         join xmind_nodes xpn on st.parent_node_id = xpn.node_id
          left join smr_triples st2 on st2.parent_node_id = xcn.node_id
-         left join xmind_edges xce on st2.edge_id = xce.edge_id
-         left join xmind_nodes xcn2 on st2.child_node_id = xcn2.node_id
 where sn.last_modified < cn.mod""")
         smr_notes_in_files = {}
         for record in data:
             file_path = os.path.join(record.file_directory, record.file_name)
             try:
                 smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
-                    record.order_number]['children'][record.child_edge_id]['child_storids'].append(
-                    record.child_node_storid)
+                    record.order_number]['children'][record.child_edge_id].append(record.child_node_id)
             except KeyError:
-                child_storids = {'storid': record.child_edge_storid, 'child_storids': [record.child_node_storid]}
+                child_node_ids = [record.child_node_id]
+                children = {record.child_edge_id: child_node_ids} if record.child_edge_id else {}
                 try:
-                    smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
-                        record.order_number]['children'][record.child_edge_id] = child_storids
+                    if record.child_edge_id:
+                        smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
+                            record.order_number]['children'][record.child_edge_id] = child_node_ids
+                    else:
+                        smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
+                            record.order_number]['children'] = children
                 except KeyError:
-                    node = {'node': XmindNodeDto(image=record.node_image, link=record.node_link, title=record.node_title,
-                                                 node_id=record.node_id, ontology_storid=record.node_storid),
-                            'children': {record.child_edge_id: child_storids}}
+                    node = {
+                        'node': XmindNodeDto(image=record.node_image, link=record.node_link, title=record.node_title,
+                                             node_id=record.node_id),
+                        'children': children}
                     try:
                         smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
                             record.order_number] = node
                     except KeyError:
                         edge = XmindNodeDto(image=record.edge_image, link=record.edge_link, title=record.edge_title,
-                                            node_id=record.edge_id, ontology_storid=record.edge_storid)
+                                            node_id=record.edge_id)
                         smr_note = SmrNoteDto(*record[3:6])
                         edge_dict = {'note': smr_note, 'edge': edge, 'note_fields': record.note_fields,
                                      'answers': {record.order_number: node}, 'parents': set()}
@@ -262,7 +276,7 @@ where sn.last_modified < cn.mod""")
                                 smr_notes_in_files[file_path] = {record.sheet_name: sheet_dict}
                 finally:
                     smr_notes_in_files[file_path][record.sheet_name][record.note_id]['parents'].add(
-                        record.parent_node_storid)
+                        record.parent_node_id)
         return smr_notes_in_files
 
     def _get_records(self, sql: str) -> List['Record']:
@@ -494,6 +508,29 @@ group by root_id""").fetchall()
         :param xmind_uri: the uri that identifies the entry to delete
         """
         self.graph.execute("DELETE FROM main.xmind_media_to_anki_files WHERE xmind_uri = ?", (xmind_uri,))
+
+    def storid_from_node_id(self, node_id: str) -> int:
+        """
+        gets the storid of the concept associated with the provided xmind id
+        :param node_id: the xmind id to get the storid for
+        :return: the storid
+        """
+        return self.graph.execute("SELECT s FROM datas WHERE o = ?", (node_id,)).fetchone()[0]
+
+    def storid_from_edge_id(self, edge_id: str) -> int:
+        """
+        gets the storid of the relation associated with the provided xmind edge id
+        :param edge_id: the xmind id to get the storid for
+        :return: the storid
+        """
+        return self.graph.execute(f"""
+SELECT oj.o
+from datas dt
+         join objs oj on dt.s = oj.s
+where dt.o = '{edge_id}'
+  and oj.p = {ANNOTATED_PROPERTY_STORID}
+  and not oj.o = {self.parent_storid}
+limit 1""").fetchone()[0]
 
 
 class AnkiCollectionAttachement:

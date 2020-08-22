@@ -197,7 +197,7 @@ class XManager:
         self.content_sheets = None
         self.referenced_files = None
         self.referenced_x_managers = []
-        self.files_2_add = []
+        self.files_2_add = {}
         self.file_bin = []
         self.did_introduce_changes = False
         self.node_dict = None
@@ -217,7 +217,7 @@ class XManager:
     def zip_file(self) -> ZipFile:
         if not self._zip_file:
             try:
-                self.zip_file: ZipFile = ZipFile(self.file, 'r')
+                self.zip_file = ZipFile(self.file, 'r')
             except FileNotFoundError:
                 raise FileNotFoundError(self.FILE_NOT_FOUND_MESSAGE.format(self.file))
         return self._zip_file
@@ -342,11 +342,11 @@ class XManager:
         self._map_last_modified = value
 
     @property
-    def files_2_add(self) -> List[bytes]:
+    def files_2_add(self) -> Dict[str, bytes]:
         return self._files_2_add
 
     @files_2_add.setter
-    def files_2_add(self, value: List[bytes]):
+    def files_2_add(self, value: Dict[str, bytes]):
         self._files_2_add = value
 
     @property
@@ -398,6 +398,15 @@ class XManager:
             node_content.media = hyperlink_uri
         return node_content
 
+    def get_node_content_by_id(self, node_id: str) -> NodeContentDto:
+        """
+        gets a node's content from its node id
+        :param node_id: xmind node id of the node to get the content from
+        :return: the node content in a node content dto
+        """
+        node = self.get_tag_by_id(node_id)
+        return self.get_node_content(node)
+
     def get_sheet_id(self, sheet: str):
         """
         Gets the xmind sheet id for the specified sheet
@@ -444,10 +453,6 @@ class XManager:
 
         remote = self.remote_file(remote_sheets)
         return remote
-
-    def content_by_id(self, x_id):
-        topic = self.get_tag_by_id(x_id)
-        return get_node_content(topic)
 
     # def get_remote_questions(self, sheet_id):
     #     remote_questions = dict()
@@ -510,6 +515,7 @@ class XManager:
         """
         Closes the map and saves changes if they were made
         """
+        assert self.manifest and self.soup
         self.zip_file.close()
         if self.did_introduce_changes:
             self._update_zip()
@@ -549,7 +555,7 @@ class XManager:
         :param node_image: the current image of the node that is to be removed, with 'xap:' prefix, None if you only
         want to add an image
         :param media_directory: anki's collection.media directory where all media files are saved
-        :param smr_world: the smr world to get the anki file name from and in which to save a new entry for new files
+        :param smr_world: the in which to save a new entry for new files or from which to delete removed images
         :return:
         """
         self.did_introduce_changes = True
@@ -563,7 +569,7 @@ class XManager:
             return
         # Add image to list of images to add
         with open(os.path.join(media_directory, note_image), "rb") as image:
-            self.files_2_add.append(image.read())
+            self.files_2_add[note_image] = image.read()
         new_media_type = "image/" + os.path.splitext(note_image)[1][1:]
         # Only create a new image tag and add it to the node Tag if the node does not have an image yet
         if not node_image:
@@ -600,12 +606,12 @@ class XManager:
             tag.append(title_tag)
         self.did_introduce_changes = True
 
-    def _update_zip(self):
+    def _update_zip(self) -> None:
         """
         - replaces the content.xml file in the xmind file with the manager's content soup
         - replaces the manifest.xml with the manager's manifest soup
         - removes all files in the file_bin from the xmind file
-        - adds all files in files_to_add to the xmind file
+        - adds all files in files_2_add to the xmind file
         code was adopted from
         https://stackoverflow.com/questions/25738523/how-to-update-one-file-inside-zip-file-using-python,
         """
@@ -626,6 +632,6 @@ class XManager:
         # now add filename with its new data
         with ZipFile(self.file, mode='a', compression=ZIP_DEFLATED) as zip_file:
             zip_file.writestr('content.xml', str(self.soup))
-            for file in os.listdir(self.files_to_add):
-                zip_file.write(filename=os.path.join(self.srcDir, file), arcname=os.path.join('attachments', file))
+            for file_uri, file in self.files_2_add.items():
+                zip_file.writestr(zinfo_or_arcname=file_uri, data=file)
             zip_file.writestr(zinfo_or_arcname='META-INF/manifest.xml', data=str(self.manifest))

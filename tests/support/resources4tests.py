@@ -2,6 +2,7 @@
 import os
 import shutil
 from unittest.mock import MagicMock
+from zipfile import ZipFile
 
 import aqt
 import tests.constants as cts
@@ -19,9 +20,18 @@ def main():
     generate_new_file(src=cts.ORIGINAL_EXAMPLE_MAP_PATH, dst=cts.DEFAULT_EXAMPLE_MAP_PATH)
     generate_new_file(src=cts.ORIGINAL_GENERAL_PSYCHOLOGY_MAP_PATH, dst=cts.DEFAULT_GENERAL_PSYCHOLOGY_MAP_PATH)
     generate_new_file(src=cts.ORIGINAL_HYPERLINK_MEDIA_PATH, dst=cts.DEFAULT_HYPERLINK_MEDIA_PATH)
+    # Get a copy of the default map files for temporary maps
     generate_new_file(src=cts.DEFAULT_EXAMPLE_MAP_PATH, dst=cts.TEMPORARY_EXAMPLE_MAP_PATH)
     generate_new_file(src=cts.DEFAULT_GENERAL_PSYCHOLOGY_MAP_PATH, dst=cts.TEMPORARY_GENERAL_PSYCHOLOGY_MAP_PATH)
     generate_new_file(src=cts.DEFAULT_HYPERLINK_MEDIA_PATH, dst=cts.TEMPORARY_HYPERLINK_MEDIA_PATH)
+    # Extract to maps directory
+    try:
+        os.unlink(cts.CONTENT_PATH)
+    except FileNotFoundError:
+        pass
+    open(cts.CONTENT_PATH, 'x')
+    with open(cts.CONTENT_PATH, 'wb') as content_file:
+        content_file.write(ZipFile(cts.DEFAULT_EXAMPLE_MAP_PATH, 'r').read(cts.CONTENT_NAME))
     # Get an empty anki collection
     try:
         os.unlink(os.path.join(cts.EMPTY_COLLECTION_FUNCTION_PATH))
