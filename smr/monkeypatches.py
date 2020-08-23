@@ -16,8 +16,8 @@ from smr.xmindimport import XmindImporter
 IMPORT_CANCELED_MESSAGE = 'Import canceled'
 
 
-def patch_import_diaglog(self: ImportDialog, mw: AnkiQt, importer: Union[NoteImporter, XmindImporter],
-                         _old: Callable) -> None:
+def patch_import_dialog(self: ImportDialog, mw: AnkiQt, importer: Union[NoteImporter, XmindImporter],
+                        _old: Callable) -> None:
     """
     Wraps around ImportDialog constructor to show the SMR deck selection dialog instead when importing an xmind file
     :param self: the ImportDialog around which this function wraps
@@ -27,8 +27,7 @@ def patch_import_diaglog(self: ImportDialog, mw: AnkiQt, importer: Union[NoteImp
     """
     if type(importer) == XmindImporter:
         # noinspection PyUnresolvedReferences
-        deck_selection_dialog = DeckSelectionDialog(mw=mw, filename=os.path.basename(
-            importer.x_managers[0].file))
+        deck_selection_dialog = DeckSelectionDialog(mw=mw, filename=os.path.basename(importer.x_manager.file))
         user_inputs = deck_selection_dialog.get_inputs()
         if user_inputs.running:
             # noinspection PyUnresolvedReferences
@@ -45,7 +44,7 @@ def patch_import_diaglog(self: ImportDialog, mw: AnkiQt, importer: Union[NoteImp
     _old(self, mw, importer)
 
 
-importing.ImportDialog.__init__ = wrap(importing.ImportDialog.__init__, patch_import_diaglog, pos="around")
+importing.ImportDialog.__init__ = wrap(importing.ImportDialog.__init__, patch_import_dialog, pos="around")
 
 
 # noinspection PyPep8Naming

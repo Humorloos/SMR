@@ -14,12 +14,10 @@ from smr.xmindimport import XmindImporter
 
 
 def test_xmind_importer(xmind_importer):
-    # given
-    expected_x_manager_files = [cts.PATH_EXAMPLE_MAP_TEMPORARY, cts.PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY]
     # when
     cut = xmind_importer
     # then
-    assert [x.file for x in cut.x_managers] == expected_x_manager_files
+    assert cut.x_manager.file == cts.PATH_EXAMPLE_MAP_TEMPORARY
 
 
 def test_open_aborts_if_file_already_exists(empty_anki_collection_session, mocker, smr_world_4_tests):
@@ -55,7 +53,7 @@ def test_initialize_import(mocker, xmind_importer):
     xmind_importer.initialize_import(DeckSelectionDialogUserInputsDTO())
     # then
     cut.mw.progress.start.assert_called_once()
-    assert cut.import_file.call_count == 2
+    assert cut.import_file.call_count == 1
 
 
 def test_import_file(xmind_importer, mocker, x_manager):
@@ -65,7 +63,7 @@ def test_import_file(xmind_importer, mocker, x_manager):
     mocker.patch.object(cut, "_mw")
     cut.deck_id = cts.TEST_DECK_ID
     # when
-    cut.import_file(x_manager)
+    cut.import_file()
     # then
     assert cut.import_sheet.call_count == 2
     assert cut.files_2_import[0].directory == cts.DIRECTORY_MAPS_TEMPORARY
@@ -98,7 +96,6 @@ def test_import_sheet(xmind_importer, mocker, x_manager):
 def active_xmind_importer(xmind_importer):
     importer = xmind_importer
     importer._current_sheet_import = "biological psychology"
-    importer._active_manager = importer.x_managers[0]
     return importer
 
 
@@ -116,7 +113,7 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, tag_
     cut = xmind_importer_import_node_if_concept
     # when
     cut.import_node_if_concept(node=tag_for_tests, concepts=[x_ontology.Root(
-        x_ontology.field_translator.class_from_content(cut.active_manager.get_node_content(tag_for_tests)))])
+        x_ontology.field_translator.class_from_content(cut.x_manager.get_node_content(tag_for_tests)))])
     # then
     assert cut.import_triple.call_count == 0
     assert cut.import_edge.call_count == 2
@@ -127,19 +124,19 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, tag_
 def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept, x_ontology):
     # given
     cut = xmind_importer_import_node_if_concept
-    node = cut._x_managers[0].get_tag_by_id(cts.EMPTY_NODE_TAG_ID)
-    concepts = [x_ontology.concept_from_node_content(cut.active_manager.get_node_content(t), node_id='some_id') for t in
+    node = cut.x_manager.get_tag_by_id(cts.EMPTY_NODE_TAG_ID)
+    concepts = [x_ontology.concept_from_node_content(cut.x_manager.get_node_content(t), node_id='some_id') for t in
                 get_non_empty_sibling_nodes(node)]
     parent_edge = get_parent_node(node)
     parent_node = get_parent_node(parent_edge)
     # when
     cut.import_node_if_concept(
         node=node, concepts=concepts, parent_node_ids=[parent_node['id']],
-        parent_concepts=[x_ontology.concept_from_node_content(cut.active_manager.get_node_content(parent_node),
+        parent_concepts=[x_ontology.concept_from_node_content(cut.x_manager.get_node_content(parent_node),
                                                               node_id='some_id')],
         parent_edge_id=parent_edge['id'],
         parent_relationship_class_name=x_ontology.field_translator.class_from_content(
-            cut.active_manager.get_node_content(parent_edge)), order_number=5)
+            cut.x_manager.get_node_content(parent_edge)), order_number=5)
     # then
     assert cut.import_triple.call_count == 0
     assert cut._smr_world.add_or_replace_xmind_nodes.call_count == 0
@@ -150,20 +147,17 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
 def test_import_node_if_concept_following_multiple_concepts(xmind_importer_import_node_if_concept, x_ontology):
     # given
     cut = xmind_importer_import_node_if_concept
-    node = cut._x_managers[0].get_tag_by_id("3oqcv5qlqhn28u1opce5i27709")
-    concepts = [x_ontology.concept_from_node_content(cut.active_manager.get_node_content(node), node_id='some_id')]
+    node = cut.x_manager.get_tag_by_id("3oqcv5qlqhn28u1opce5i27709")
+    concepts = [x_ontology.concept_from_node_content(cut.x_manager.get_node_content(node), node_id='some_id')]
     parent_edge = get_parent_node(node)
     parent_nodes = get_non_empty_sibling_nodes(get_parent_node(parent_edge))
     # when
     cut.import_node_if_concept(
-        node=node, concepts=concepts, parent_node_ids=[n['id'] for n in parent_nodes],
-        parent_concepts=[x_ontology.concept_from_node_content(cut.active_manager.get_node_content(n),
-                                                              node_id='some_id') for n in
-                         parent_nodes],
-        parent_edge_id=parent_edge['id'],
+        node=node, concepts=concepts, parent_node_ids=[n['id'] for n in parent_nodes], parent_concepts=[
+            x_ontology.concept_from_node_content(cut.x_manager.get_node_content(n), node_id='some_id') for
+            n in parent_nodes], parent_edge_id=parent_edge['id'],
         parent_relationship_class_name=x_ontology.field_translator.class_from_content(
-            cut.active_manager.get_node_content(parent_edge)),
-        order_number=1)
+            cut.x_manager.get_node_content(parent_edge)), order_number=1)
     # then
     assert cut.import_triple.call_count == 4
     assert cut.import_edge.call_count == 1
@@ -186,7 +180,7 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     # given
     cut = xmind_importer_import_edge
     # when
-    cut.import_edge(order_number=1, edge=cut._active_manager.get_tag_by_id(cts.TYPES_EDGE_ID), parent_node_ids=[
+    cut.import_edge(order_number=1, edge=cut.x_manager.get_tag_by_id(cts.TYPES_EDGE_ID), parent_node_ids=[
         cts.NEUROTRANSMITTERS_NODE_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
     # then
     assert cut.onto.concept_from_node_content.call_count == 1
@@ -209,7 +203,7 @@ def test_import_edge_no_child_nodes(xmind_importer_import_edge, x_ontology, mock
     mocker.patch("smr.xmindimport.get_child_nodes", return_value=[])
     mocker.patch("smr.xmindimport.get_edge_coordinates_from_parent_node", return_value='coordinates')
     # when
-    cut.import_edge(order_number=1, edge=cut._active_manager.get_tag_by_id(cts.TYPES_EDGE_ID), parent_node_ids=[
+    cut.import_edge(order_number=1, edge=cut.x_manager.get_tag_by_id(cts.TYPES_EDGE_ID), parent_node_ids=[
         cts.NEUROTRANSMITTERS_NODE_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
     # then
     assert_import_edge_not_executed(cut)
@@ -224,7 +218,7 @@ def test_import_edge_too_many_child_nodes(xmind_importer_import_edge, x_ontology
     mocker.patch("smr.xmindimport.get_child_nodes", return_value=[Tag(name='tag')] * (X_MAX_ANSWERS + 1))
     mocker.patch("smr.xmindimport.is_empty_node", return_value=False)
     # when
-    cut.import_edge(order_number=1, edge=cut._active_manager.get_tag_by_id(cts.TYPES_EDGE_ID), parent_node_ids=[
+    cut.import_edge(order_number=1, edge=cut.x_manager.get_tag_by_id(cts.TYPES_EDGE_ID), parent_node_ids=[
         cts.NEUROTRANSMITTERS_NODE_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
     # then
     assert_import_edge_not_executed(cut)
@@ -236,12 +230,12 @@ def test_import_edge_too_many_child_nodes(xmind_importer_import_edge, x_ontology
 def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge, x_ontology):
     # given
     cut = xmind_importer_import_edge
-    edge = cut._active_manager.get_tag_by_id(cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID)
+    edge = cut.x_manager.get_tag_by_id(cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID)
     parent_node = get_parent_node(edge)
     # when
     cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node['id']],
                     parent_concepts=[
-                        x_ontology.concept_from_node_content(cut.active_manager.get_node_content(parent_node),
+                        x_ontology.concept_from_node_content(cut.x_manager.get_node_content(parent_node),
                                                              node_id='some_id')])
     # then
     assert cut.onto.concept_from_node_content.call_count == 4
@@ -253,12 +247,12 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge, x_o
 def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     # given
     cut = xmind_importer_import_edge
-    edge = cut._active_manager.get_tag_by_id("668iln3nrlmk5ibhnf4lvbbnmo")
+    edge = cut.x_manager.get_tag_by_id("668iln3nrlmk5ibhnf4lvbbnmo")
     parent_node = get_parent_node(edge)
     # when
     cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node['id']],
                     parent_concepts=[
-                        x_ontology.concept_from_node_content(cut.active_manager.get_node_content(parent_node),
+                        x_ontology.concept_from_node_content(cut.x_manager.get_node_content(parent_node),
                                                              node_id='some_id')])
     # then
     assert cut.onto.concept_from_node_content.call_count == 1
@@ -297,20 +291,20 @@ def test_initialize_import_import_import_notes_to_correct_deck(
     mocker.spy(cut, "import_sheet")
     mocker.spy(cut, "import_triple")
     mocker.spy(cut, "import_file")
-    n_cards_example_map = 39
+    n_cards_example_map = 35
     # when
     cut.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=test_deck_id))
     cut.finish_import()
     # then
-    assert cut.import_file.call_count == 2
-    assert cut.import_sheet.call_count == 3
-    assert cut.import_edge.call_count == 34
-    assert cut.import_node_if_concept.call_count == 47
-    assert cut.import_triple.call_count == 46
+    assert cut.import_file.call_count == 1
+    assert cut.import_sheet.call_count == 2
+    assert cut.import_edge.call_count == 31
+    assert cut.import_node_if_concept.call_count == 42
+    assert cut.import_triple.call_count == 42
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == n_cards_example_map
     assert cut.col.db.execute('select type from cards') == n_cards_example_map * [[0]]
-    assert len(cut.smr_world.graph.execute('select distinct card_id from main.smr_triples').fetchall()) == 40
+    assert len(cut.smr_world.graph.execute('select distinct card_id from main.smr_triples').fetchall()) == 36
 
 
 # noinspection PyPep8Naming

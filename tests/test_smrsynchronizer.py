@@ -16,14 +16,19 @@ from smr.xnotemanager import XNoteManager
 
 @pytest.fixture
 def smr_synchronizer_no_changes(patch_aqt_mw_smr_world_and_col_with_example_map):
+    generate_default_example_map()
     return SmrSynchronizer()
 
 
 @pytest.fixture
 def smr_synchronizer_local_changes(patch_aqt_mw_smr_world_and_changed_col_with_example_map):
+    generate_default_example_map()
+    yield SmrSynchronizer()
+
+
+def generate_default_example_map():
     generate_new_file(src=cts.PATH_EXAMPLE_MAP_DEFAULT, dst=cts.PATH_EXAMPLE_MAP_TEMPORARY)
     generate_new_file(src=cts.PATH_MAP_GENERAL_PSYCHOLOGY_DEFAULT, dst=cts.PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY)
-    yield SmrSynchronizer()
 
 
 def test_smr_synchronizer(smr_synchronizer_no_changes):

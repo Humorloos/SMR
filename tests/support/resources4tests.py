@@ -4,6 +4,8 @@ import shutil
 from unittest.mock import MagicMock
 from zipfile import ZipFile
 
+from bs4 import BeautifulSoup
+
 import aqt
 import tests.constants as cts
 from anki import Collection
@@ -30,8 +32,9 @@ def main():
     except FileNotFoundError:
         pass
     open(cts.PATH_CONTENT, 'x')
-    with open(cts.PATH_CONTENT, 'wb') as content_file:
-        content_file.write(ZipFile(cts.PATH_EXAMPLE_MAP_DEFAULT, 'r').read(cts.NAME_CONTENT))
+    with open(cts.PATH_CONTENT, 'w') as content_file:
+        content_file.write(BeautifulSoup(ZipFile(cts.PATH_EXAMPLE_MAP_DEFAULT, 'r').read(
+            cts.NAME_CONTENT), features="html.parser").prettify())
     # Get an empty anki collection
     try:
         os.unlink(os.path.join(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH))
@@ -58,6 +61,10 @@ def main():
     aqt.mw.smr_world = smr_world
     aqt.mw.return_value = aqt.mw
     importer = XmindImporter(col=collection, file=cts.PATH_EXAMPLE_MAP_TEMPORARY)
+    importer.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=deck_id))
+    importer.finish_import()
+    # Import the map general psychology to the same deck
+    importer = XmindImporter(col=collection, file=cts.PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY)
     importer.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=deck_id))
     importer.finish_import()
     # Save smr world to smr world with example map

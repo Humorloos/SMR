@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+from zipfile import ZipFile
 
 import bs4
 import pandas as pd
@@ -141,14 +142,11 @@ def x_manager() -> xmanager.XManager:
     generate_new_file(src=cts.PATH_EXAMPLE_MAP_ORIGINAL, dst=cts.PATH_EXAMPLE_MAP_TEMPORARY)
     x_manager = xmanager.XManager(cts.PATH_EXAMPLE_MAP_TEMPORARY)
     yield x_manager
-    x_manager.zip_file.close()
 
 
 @pytest.fixture
 def tag_for_tests():
-    with open(cts.PATH_CONTENT, 'r') as file:
-        tag = bs4.BeautifulSoup(file.read(), features='html.parser').topic
-        file.close()
+    tag = bs4.BeautifulSoup(ZipFile(cts.PATH_EXAMPLE_MAP_DEFAULT, 'r').read(cts.NAME_CONTENT)).topic
     yield tag
 
 
@@ -175,8 +173,6 @@ def xmind_importer(mocker, empty_anki_collection_session) -> xmindimport.XmindIm
     mocker.patch("aqt.mw")
     importer = xmindimport.XmindImporter(col=empty_anki_collection_session, file=cts.PATH_EXAMPLE_MAP_TEMPORARY)
     yield importer
-    for manager in importer.x_managers:
-        manager.zip_file.close()
 
 
 @pytest.fixture

@@ -11,13 +11,11 @@ from smr.xmanager import is_empty_node, get_node_title, get_child_nodes, get_non
 
 def test_x_manager(x_manager):
     # given
-    expected_sheets = ['biological psychology', 'clinical psychology', 'ref']
-    expected_referenced_file = [cts.PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY]
+    expected_sheets = ['biological psychology', 'clinical psychology']
     # when
     cut = x_manager
     # then
     assert list(cut.sheets.keys()) == expected_sheets
-    assert cut.referenced_files == expected_referenced_file
 
 
 def test_x_manager_wrong_file_path():
@@ -25,9 +23,9 @@ def test_x_manager_wrong_file_path():
     cut = XManager(file=cts.ABSENT_XMIND_FILE_PATH)
     # when
     with pytest.raises(FileNotFoundError) as exception_info:
-        _ = cut.zip_file
+        assert cut.soup
     # then
-    assert exception_info.value.args[0] == XManager.FILE_NOT_FOUND_MESSAGE.format(cts.ABSENT_XMIND_FILE_PATH)
+    assert exception_info.value.args[1] == 'No such file or directory'
 
 
 def test_get_root_node(x_manager):
@@ -53,13 +51,11 @@ def test_get_node_title(tag_for_tests):
     assert title == 'biological psychology'
 
 
-def test_get_tag_by_id(tag_for_tests, x_manager):
-    # given
-    expexted_tag = tag_for_tests
+def test_get_tag_by_id(x_manager):
     # when
-    tag = x_manager.get_tag_by_id(expexted_tag['id'])
+    tag = x_manager.get_tag_by_id(cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID)
     # then
-    assert tag.contents[0].text == expexted_tag.contents[1].text
+    assert tag.text == 'one or more amine groups'
 
 
 def test_get_tag_by_id_tag_not_found(x_manager):
@@ -115,13 +111,11 @@ def test_get_sheet_id(x_manager):
     assert sheet_id == '2485j5qgetfevlt00vhrn53961'
 
 
-def test_get_child_nodes(tag_for_tests):
-    # given
-    expected_child_node_titles = ['', 'investigates']
+def test_get_child_nodes(x_manager):
     # when
-    child_nodes = get_child_nodes(tag_for_tests)
+    child_nodes = get_child_nodes(x_manager.get_tag_by_id(cts.CONSIST_OF_EDGE_ID))
     # then
-    assert [c.contents[1].text for c in child_nodes] == expected_child_node_titles
+    assert child_nodes[0]['id'] == cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID
 
 
 def test_get_parent_node(x_manager):

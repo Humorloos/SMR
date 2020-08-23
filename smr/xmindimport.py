@@ -32,15 +32,13 @@ class XmindImporter(NoteImporter):
     log: List[str]
     needMapper = False
 
-    def __init__(self, col: Collection, file: str, include_referenced_files=True):
+    def __init__(self, col: Collection, file: str):
         NoteImporter.__init__(self, col, file)
-        self.includes_referenced_files = include_referenced_files
         self.mw: AnkiQt = aqt.mw
-        self.x_managers: List[XManager] = []
+        self.x_manager: List[XManager] = []
         self.smr_world: SmrWorld = self.mw.smr_world
         self._translator: FieldTranslator = FieldTranslator()
         self.is_running: bool = True
-        self.active_manager: Optional[XManager] = None
         self.current_sheet_import: str = ''
         self.edge_ids_2_make_notes_of: List[str] = []
         self.notes_2_import: Dict[str, ForeignNote] = {}
@@ -138,22 +136,14 @@ class XmindImporter(NoteImporter):
         self._notes_2_import = value
 
     @property
-    def x_managers(self) -> List[XManager]:
-        if not self._x_managers:
-            manager = XManager(os.path.normpath(self.file))
-            self.x_managers = [manager]
-            # add referenced managers to the list if necessary
-            if self.includes_referenced_files:
-                self._x_managers.extend(manager.referenced_x_managers)
-        return self._x_managers
+    def x_manager(self) -> XManager:
+        if not self._x_manager:
+            self.x_manager = XManager(os.path.normpath(self.file))
+        return self._x_manager
 
-    @x_managers.setter
-    def x_managers(self, value):
-        self._x_managers = value
-
-    @property
-    def includes_referenced_files(self) -> bool:
-        return self.__includes_referenced_files
+    @x_manager.setter
+    def x_manager(self, value: XManager):
+        self._x_manager = value
 
     @property
     def repair(self):
@@ -162,10 +152,6 @@ class XmindImporter(NoteImporter):
     @repair.setter
     def repair(self, value):
         self._repair = value
-
-    @property
-    def active_manager(self) -> Optional[XManager]:
-        return self._active_manager
 
     @property
     def is_running(self) -> bool:
@@ -199,10 +185,6 @@ class XmindImporter(NoteImporter):
     def smr_notes_2_add(self) -> List[SmrNoteDto]:
         return self._smr_notes_2_add
 
-    @includes_referenced_files.setter
-    def includes_referenced_files(self, value):
-        self.__includes_referenced_files = value
-
     @media_2_anki_files_2_import.setter
     def media_2_anki_files_2_import(self, value):
         self._media_2_anki_files_2_import = value
@@ -218,10 +200,6 @@ class XmindImporter(NoteImporter):
     @nodes_2_import.setter
     def nodes_2_import(self, value):
         self._nodes_2_import = value
-
-    @active_manager.setter
-    def active_manager(self, value):
-        self._active_manager = value
 
     @edges_2_import.setter
     def edges_2_import(self, value):
@@ -277,25 +255,22 @@ class XmindImporter(NoteImporter):
         self.mw.progress.start(immediate=True, label='importing...')
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
-        for manager in self.x_managers:
-            self.import_file(manager)
+        self.import_file()
         self._add_entities_2_smr_world()
         # Create Notes from all edges
         self.notes_2_import = self.smr_world.generate_notes(self.col, edge_ids=self.edge_ids_2_make_notes_of)
 
-    def import_file(self, x_manager: XManager):
+    def import_file(self):
         """
         Imports a file managed by the provided XManager and starts imports for all sheets in that file that contain
         concept maps
-        :param x_manager: the x_manager that manages the file
         """
-        self.active_manager = x_manager
-        directory, file_name = x_manager.get_directory_and_file_name()
+        directory, file_name = self.x_manager.get_directory_and_file_name()
         self.files_2_import.append(XmindFileDto(
             directory=directory, file_name=file_name,
-            map_last_modified=x_manager.map_last_modified, file_last_modified=x_manager.file_last_modified,
+            map_last_modified=self.x_manager.map_last_modified, file_last_modified=self.x_manager.file_last_modified,
             deck_id=self.deck_id))
-        for sheet in x_manager.content_sheets:
+        for sheet in self.x_manager.sheets:
             self.import_sheet(sheet)
 
     def import_sheet(self, sheet: str) -> None:
@@ -306,13 +281,13 @@ class XmindImporter(NoteImporter):
         self.current_sheet_import = sheet
         self.mw.progress.update(label='importing %s' % sheet, maybeShow=False)
         self.mw.app.processEvents()
-        directory, file_name = self.active_manager.get_directory_and_file_name()
+        directory, file_name = self.x_manager.get_directory_and_file_name()
         self.sheets_2_import.append(XmindSheetDto(
-            sheet_id=self.active_manager.get_sheet_id(sheet), name=sheet, file_directory=directory, file_name=file_name,
-            last_modified=self.active_manager.get_sheet_last_modified(sheet)))
-        root_node = self.active_manager.get_root_node(sheet=sheet)
+            sheet_id=self.x_manager.get_sheet_id(sheet), name=sheet, file_directory=directory, file_name=file_name,
+            last_modified=self.x_manager.get_sheet_last_modified(sheet)))
+        root_node = self.x_manager.get_root_node(sheet=sheet)
         root_concept = self.onto.concept_from_node_content(
-            self.active_manager.get_node_content(root_node), node_id=root_node['id'], node_is_root=True)
+            self.x_manager.get_node_content(root_node), node_id=root_node['id'], node_is_root=True)
         self.import_node_if_concept(node=root_node, concepts=[root_concept])
 
     def import_node_if_concept(
@@ -342,12 +317,12 @@ class XmindImporter(NoteImporter):
         if parent_concepts is None:
             parent_concepts = []
         if not is_empty_node(node):
-            node_content = self.active_manager.get_node_content(node)
+            node_content = self.x_manager.get_node_content(node)
             # add image and media to the anki collection
             self.add_image_and_media_to_collection(node_content)
             # add the node to the smr world
             self.nodes_2_import.append(XmindNodeDto(
-                node_id=node['id'], sheet_id=self.active_manager.get_sheet_id(self.current_sheet_import),
+                node_id=node['id'], sheet_id=self.x_manager.get_sheet_id(self.current_sheet_import),
                 title=node_content.title, image=node_content.image, link=node_content.media,
                 ontology_storid=concepts[0].storid, last_modified=node['timestamp'], order_number=order_number))
             # import a triple for each parent concept
@@ -376,7 +351,7 @@ class XmindImporter(NoteImporter):
             # xmind 8 adds prefix attachments, xmind zen adds prefix resources
             if content.media.startswith(('attachments', 'resources')):
                 new_media_name = self.col.media.write_data(desired_fname=content.media,
-                                                           data=self.active_manager.read_attachment(content.media))
+                                                           data=self.x_manager.read_attachment(content.media))
             # if media file was not attached but only referenced via hyperlink
             else:
                 new_media_name = self.col.media.add_file(content.media)
@@ -384,7 +359,7 @@ class XmindImporter(NoteImporter):
                 xmind_uri=content.media, anki_file_name=new_media_name))
         if content.image:
             new_image_name = self.col.media.write_data(desired_fname=content.image,
-                                                       data=self.active_manager.read_attachment(content.image))
+                                                       data=self.x_manager.read_attachment(content.image))
             self.media_2_anki_files_2_import.append(XmindMediaToAnkiFilesDto(
                 xmind_uri=content.image, anki_file_name=new_image_name))
 
@@ -418,7 +393,7 @@ class XmindImporter(NoteImporter):
         :param parent_node_ids: list of xmind ids of parent nodes
         :param parent_concepts: list of concepts of parent nodes
         """
-        edge_content: NodeContentDto = self.active_manager.get_node_content(edge)
+        edge_content: NodeContentDto = self.x_manager.get_node_content(edge)
         child_nodes: List[bs4.Tag] = get_child_nodes(edge)
         # stop execution and warn if an edge is not followed by any nodes
         if len(child_nodes) == 0:
@@ -448,7 +423,7 @@ class XmindImporter(NoteImporter):
             return
         # create the concepts for the next iteration beforehand to be able to assign a list of all sibling concepts
         # to empty nodes for creating relationships following multiple concepts
-        all_child_concepts = [self.onto.concept_from_node_content(node_content=self.active_manager.get_node_content(
+        all_child_concepts = [self.onto.concept_from_node_content(node_content=self.x_manager.get_node_content(
             n), node_id=n['id'], node_is_root=False) for n in non_empty_child_nodes]
         single_child_concepts = [[concept] for concept in all_child_concepts]
         # add the relation to the ontology
@@ -460,7 +435,7 @@ class XmindImporter(NoteImporter):
             self.add_image_and_media_to_collection(edge_content)
         # add the edge to the smr world
         self.edges_2_import.append(XmindNodeDto(
-            node_id=edge['id'], sheet_id=self.active_manager.get_sheet_id(self.current_sheet_import),
+            node_id=edge['id'], sheet_id=self.x_manager.get_sheet_id(self.current_sheet_import),
             title=edge_content.title, image=edge_content.image, link=edge_content.media,
             ontology_storid=relationship_property.storid, last_modified=edge['timestamp'], order_number=order_number))
         # if the edge is not empty, add it to the list of edges to make notes from
@@ -574,10 +549,10 @@ class XmindImporter(NoteImporter):
 #
 # def set_up_import(self, deck_id, sheet, onto=None):
 #     self.current_sheet_import = next(
-#         s for m in self.x_managers for
+#         s for m in self.x_manager for
 #         s in m._sheets if m._sheets[s]['tag']['id'] == sheet)
 #     self.active_manager = next(
-#         m for m in self.x_managers for
+#         m for m in self.x_manager for
 #         s in m._sheets if s == self.current_sheet_import)
 #     self.deck_id = deck_id
 #     if onto:

@@ -177,7 +177,7 @@ class SmrSynchronizer:
         self.smr_world.add_or_replace_smr_notes(list(smr_notes_2_update.values()))
         # update smr notes affected by changes
         changed_notes = self.smr_world.generate_notes(self.col, list(smr_notes_2_update))
-        importer = XmindImporter(col=self.col, file='', include_referenced_files=False)
+        importer = XmindImporter(col=self.col, file='')
         importer.tagModified = 'yes'
         importer.addUpdates(rows=[
             [smr_notes_2_update[edge_id].last_modified, self.col.usn(), foreign_note.fieldsStr,

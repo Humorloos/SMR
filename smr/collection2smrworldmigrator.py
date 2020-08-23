@@ -115,7 +115,7 @@ WHERE did = ? and mid = ?""", smr_deck_id, self.note_manager.col.models.id_for_n
         for file_path, notes in files.items():
             aqt.mw.progress.update(label="Registering file " + os.path.basename(file_path), maybeShow=False)
             aqt.mw.app.processEvents()
-            importer = XmindImporter(col=self.collection, file=file_path, include_referenced_files=False)
+            importer = XmindImporter(col=self.collection, file=file_path)
             importer.initialize_import(user_inputs=DeckSelectionDialogUserInputsDTO(deck_id=smr_deck_id))
             notes_2_update = {n: importer.notes_2_import.pop(n) for n in list(importer.notes_2_import) if
                               n in notes}

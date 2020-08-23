@@ -35,7 +35,7 @@ def test_migrate_deck_2_smr_world_file_not_found(collection_2_smr_world_migrator
         # when
         cut._migrate_deck_2_smr_world(smr_deck_id=1579442668731)
     # then
-    assert exception_info.value.args[0] == XManager.FILE_NOT_FOUND_MESSAGE.format(cts.ABSENT_XMIND_FILE_PATH)
+    assert exception_info.value.args[1] == 'No such file or directory'
 
 
 @pytest.mark.skip(reason="This test takes far too for running it each time")

@@ -183,20 +183,16 @@ class NodeNotFoundError(Exception):
 
 
 class XManager:
-    FILE_NOT_FOUND_MESSAGE = 'Xmind file "{}" not found.'
     MANAGED_FILES_NAMES = ['content.xml', 'META-INF/manifest.xml']
 
     def __init__(self, file: Union[str, XmindFileDto]):
         self.file = file
         self.file_last_modified = None
         self.map_last_modified = None
-        self.zip_file = None
         self.soup = None
         self.manifest = None
         self.sheets = None
         self.content_sheets = None
-        self.referenced_files = None
-        self.referenced_x_managers = []
         self.files_2_add = {}
         self.file_bin = []
         self.did_introduce_changes = False
@@ -214,22 +210,10 @@ class XManager:
             self._file = value
 
     @property
-    def zip_file(self) -> ZipFile:
-        if not self._zip_file:
-            try:
-                self.zip_file = ZipFile(self.file, 'r')
-            except FileNotFoundError:
-                raise FileNotFoundError(self.FILE_NOT_FOUND_MESSAGE.format(self.file))
-        return self._zip_file
-
-    @zip_file.setter
-    def zip_file(self, value: ZipFile):
-        self._zip_file = value
-
-    @property
     def soup(self) -> BeautifulSoup:
         if not self._soup:
-            self.soup = BeautifulSoup(self.zip_file.read('content.xml'), features='html.parser')
+            with ZipFile(self.file, 'r') as zip_file:
+                self.soup = BeautifulSoup(zip_file.read('content.xml'), features='html.parser')
         return self._soup
 
     @soup.setter
@@ -239,7 +223,8 @@ class XManager:
     @property
     def manifest(self) -> BeautifulSoup:
         if not self._manifest:
-            self.manifest = BeautifulSoup(self.zip_file.read("META-INF/manifest.xml"), features='html.parser')
+            with ZipFile(self.file, 'r') as zip_file:
+                self.manifest = BeautifulSoup(zip_file.read("META-INF/manifest.xml"), features='html.parser')
         return self._manifest
 
     @manifest.setter
@@ -260,38 +245,6 @@ class XManager:
         self._sheets = value
 
     @property
-    def referenced_x_managers(self) -> List['XManager']:
-        if not self._referenced_x_managers:
-            self.referenced_x_managers = self._get_referenced_x_managers()
-        return self._referenced_x_managers
-
-    @referenced_x_managers.setter
-    def referenced_x_managers(self, value: List['XManager']):
-        self._referenced_x_managers = value
-
-    def _get_referenced_x_managers(self) -> List['XManager']:
-        ref_managers = [XManager(f) for f in self.referenced_files]
-        for manager in ref_managers:
-            ref_managers.extend(XManager._get_referenced_x_managers(manager))
-        return ref_managers
-
-    @property
-    def referenced_files(self) -> List[str]:
-        if not self._referenced_files:
-            referenced_files = []
-            for sheet in self.sheets.values():
-                # Get reference sheets
-                if sheet['tag']('title', recursive=False)[0].text == 'ref':
-                    ref_tags = get_child_nodes(sheet['tag'].topic)
-                    referenced_files.extend(self.get_hyperlink_uri(t) for t in ref_tags)
-            self.referenced_files = referenced_files
-        return self._referenced_files
-
-    @referenced_files.setter
-    def referenced_files(self, value: List[str]):
-        self._referenced_files = value
-
-    @property
     def file_bin(self) -> List[str]:
         return self._file_bin
 
@@ -310,16 +263,6 @@ class XManager:
     @node_dict.setter
     def node_dict(self, value: Dict[str, Tag]):
         self._node_dict = value
-
-    @property
-    def content_sheets(self) -> List[str]:
-        if not self._content_sheets:
-            self.content_sheets = [sheet_name for sheet_name in self.sheets.keys() if sheet_name != 'ref']
-        return self._content_sheets
-
-    @content_sheets.setter
-    def content_sheets(self, value: List[str]):
-        self._content_sheets = value
 
     @property
     def file_last_modified(self) -> float:
@@ -421,8 +364,9 @@ class XManager:
         :param attachment_uri: uri of the attachment (of the form attachment/filename)
         :return: the attachment as binary data
         """
-        with self.zip_file.open(attachment_uri) as attachment:
-            return attachment.read()
+        with ZipFile(self.file, 'r') as zip_file:
+            with zip_file.open(attachment_uri) as attachment:
+                return attachment.read()
 
     def get_tag_by_id(self, tag_id: str):
         """
@@ -515,9 +459,8 @@ class XManager:
         """
         Closes the map and saves changes if they were made
         """
-        assert self.manifest and self.soup
-        self.zip_file.close()
         if self.did_introduce_changes:
+            assert self.manifest and self.soup
             self._update_zip()
 
     def set_node_content(self, node_id: str, content: NodeContentDto, media_directory: str,
