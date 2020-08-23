@@ -17,21 +17,21 @@ import smr.config as config
 
 def main():
     # Get a copy of the original map files
-    generate_new_file(src=cts.ORIGINAL_EXAMPLE_MAP_PATH, dst=cts.DEFAULT_EXAMPLE_MAP_PATH)
-    generate_new_file(src=cts.ORIGINAL_GENERAL_PSYCHOLOGY_MAP_PATH, dst=cts.DEFAULT_GENERAL_PSYCHOLOGY_MAP_PATH)
-    generate_new_file(src=cts.ORIGINAL_HYPERLINK_MEDIA_PATH, dst=cts.DEFAULT_HYPERLINK_MEDIA_PATH)
+    generate_new_file(src=cts.PATH_EXAMPLE_MAP_ORIGINAL, dst=cts.PATH_EXAMPLE_MAP_DEFAULT)
+    generate_new_file(src=cts.PATH_MAP_GENERAL_PSYCHOLOGY_ORIGINAL, dst=cts.PATH_MAP_GENERAL_PSYCHOLOGY_DEFAULT)
+    generate_new_file(src=cts.PATH_HYPERLINK_MEDIA_ORIGINAL, dst=cts.PATH_HYPERLINK_MEDIA_DEFAULT)
     # Get a copy of the default map files for temporary maps
-    generate_new_file(src=cts.DEFAULT_EXAMPLE_MAP_PATH, dst=cts.TEMPORARY_EXAMPLE_MAP_PATH)
-    generate_new_file(src=cts.DEFAULT_GENERAL_PSYCHOLOGY_MAP_PATH, dst=cts.TEMPORARY_GENERAL_PSYCHOLOGY_MAP_PATH)
-    generate_new_file(src=cts.DEFAULT_HYPERLINK_MEDIA_PATH, dst=cts.TEMPORARY_HYPERLINK_MEDIA_PATH)
+    generate_new_file(src=cts.PATH_EXAMPLE_MAP_DEFAULT, dst=cts.PATH_EXAMPLE_MAP_TEMPORARY)
+    generate_new_file(src=cts.PATH_MAP_GENERAL_PSYCHOLOGY_DEFAULT, dst=cts.PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY)
+    generate_new_file(src=cts.PATH_HYPERLINK_MEDIA_DEFAULT, dst=cts.PATH_HYPERLINK_MEDIA_TEMPORARY)
     # Extract to maps directory
     try:
-        os.unlink(cts.CONTENT_PATH)
+        os.unlink(cts.PATH_CONTENT)
     except FileNotFoundError:
         pass
-    open(cts.CONTENT_PATH, 'x')
-    with open(cts.CONTENT_PATH, 'wb') as content_file:
-        content_file.write(ZipFile(cts.DEFAULT_EXAMPLE_MAP_PATH, 'r').read(cts.CONTENT_NAME))
+    open(cts.PATH_CONTENT, 'x')
+    with open(cts.PATH_CONTENT, 'wb') as content_file:
+        content_file.write(ZipFile(cts.PATH_EXAMPLE_MAP_DEFAULT, 'r').read(cts.NAME_CONTENT))
     # Get an empty anki collection
     try:
         os.unlink(os.path.join(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH))
@@ -57,7 +57,7 @@ def main():
     smr_world.set_up()
     aqt.mw.smr_world = smr_world
     aqt.mw.return_value = aqt.mw
-    importer = XmindImporter(col=collection, file=cts.TEMPORARY_EXAMPLE_MAP_PATH)
+    importer = XmindImporter(col=collection, file=cts.PATH_EXAMPLE_MAP_TEMPORARY)
     importer.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=deck_id))
     importer.finish_import()
     # Save smr world to smr world with example map
@@ -108,7 +108,7 @@ def main():
     # save collection to collection with example map changes
     save_collection(collection, media_dir=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
                     collection_path=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
-    # get another copy of collection with example map
+    # generate collection with new answer
     generate_new_file(
         cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_PATH, cts.DEFAULT_NEW_ANSWER_COLLECTION_WITH_EXAMPLE_MAP_PATH)
     generate_new_tree(
@@ -120,6 +120,21 @@ def main():
                          'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up: Serotonin, '
                          'dopamine, adrenaline, noradrenaline</li>arebiogenic '
                          'aminesadded answer|{|{{{|{'
+        }
+    }
+    change_collection(collection=col, collection_changes=change)
+    col.close()
+    # generate collection with removed center node
+    generate_new_file(
+        cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_PATH, cts.DEFAULT_REMOVED_CENTER_NODE_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    generate_new_tree(
+        cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+        cts.DEFAULT_REMOVED_CENTER_NODE_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
+    col = Collection(cts.DEFAULT_REMOVED_CENTER_NODE_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    change = {
+        " testdeck::example_map::biological_psychology ": {
+            '|': 'biological psychologyinvestigatesinformation transfer and processing'
+                 '|'
         }
     }
     change_collection(collection=col, collection_changes=change)

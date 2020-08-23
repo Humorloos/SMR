@@ -12,7 +12,7 @@ from smr.xmanager import is_empty_node, get_node_title, get_child_nodes, get_non
 def test_x_manager(x_manager):
     # given
     expected_sheets = ['biological psychology', 'clinical psychology', 'ref']
-    expected_referenced_file = [cts.TEMPORARY_GENERAL_PSYCHOLOGY_MAP_PATH]
+    expected_referenced_file = [cts.PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY]
     # when
     cut = x_manager
     # then
@@ -83,7 +83,7 @@ def test_get_node_content(x_manager, tag_for_tests):
 
 def test_get_node_content_with_image(x_manager):
     # given
-    tag = x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID)
+    tag = x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_NODE_ID)
     # when
     node_content = x_manager.get_node_content(tag=tag)
     # then
@@ -101,7 +101,7 @@ def test_get_node_content_with_media(x_manager):
 
 def test_get_node_content_with_media_via_hyperlink(x_manager):
     # given
-    tag = x_manager.get_tag_by_id(cts.MEDIA_HYPERLINK_XMIND_ID)
+    tag = x_manager.get_tag_by_id(cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID)
     # when
     node_content = x_manager.get_node_content(tag=tag)
     # then
@@ -144,7 +144,7 @@ def test_get_non_empty_sibling_nodes(x_manager):
 
 def test_get_node_image(x_manager):
     # given
-    tag = x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID)
+    tag = x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_NODE_ID)
     # when
     node_image = get_node_image(tag)
     # then
@@ -157,7 +157,7 @@ def test_get_node_hyperlink(x_manager):
     # when
     node_media = get_node_hyperlink(tag)
     # then
-    assert urllib.parse.unquote(node_media[5:]) == cts.HYPERLINK_MEDIA_NAME
+    assert urllib.parse.unquote(node_media[5:]) == cts.NAME_HYPERLINK_MEDIA
 
 
 def test_extract_attachment(x_manager):
@@ -191,7 +191,7 @@ def test_set_node_title(x_manager, tag_for_tests):
 
 
 def test_set_node_image_remove(x_manager, changed_collection_with_example_map, smr_world_with_example_map):
-    tag = x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID)
+    tag = x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_NODE_ID)
     node_image = get_node_image(tag)
     # when
     x_manager.set_node_image(tag=tag, note_image=None, node_image=node_image,
@@ -222,7 +222,7 @@ def test_set_node_image_add(x_manager, changed_collection_with_example_map, smr_
 
 def test_set_node_image_change(x_manager, changed_collection_with_example_map, smr_world_with_example_map,
                                tag_for_tests):
-    tag = x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_XMIND_ID)
+    tag = x_manager.get_tag_by_id(cts.NEUROTRANSMITTERS_NODE_ID)
     expected_image = 'xap:paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg'
     old_image = get_node_image(tag)
     # when
@@ -249,7 +249,7 @@ def test_remove_node(x_manager):
 def test_remove_node_invalid_removal(x_manager):
     # when
     with pytest.raises(AttributeError) as error_info:
-        x_manager.remove_node(cts.NEUROTRANSMITTERS_XMIND_ID)
+        x_manager.remove_node(cts.NEUROTRANSMITTERS_NODE_ID)
     # then
     assert error_info.value.args[0] == 'Topic has subtopics, can not remove.'
 
@@ -261,7 +261,7 @@ def test_get_hyperlink_uri(x_manager):
     # when
     uri = cut.get_hyperlink_uri(tag)
     # then
-    assert uri == cts.TEMPORARY_HYPERLINK_MEDIA_PATH
+    assert uri == cts.PATH_HYPERLINK_MEDIA_TEMPORARY
 
 
 def test_get_hyperlink_uri_embedded_file(x_manager):
@@ -282,7 +282,7 @@ def test_save_changes(x_manager, smr_world_with_example_map):
     # when
     x_manager.save_changes()
     # then
-    assert XManager(cts.TEMPORARY_EXAMPLE_MAP_PATH).get_node_content_by_id(
+    assert XManager(cts.PATH_EXAMPLE_MAP_TEMPORARY).get_node_content_by_id(
         cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID) == new_node_content
 
 

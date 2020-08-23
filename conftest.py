@@ -138,15 +138,15 @@ def smr_world_4_tests(_smr_world_for_tests_session):
 
 @pytest.fixture(scope="function")
 def x_manager() -> xmanager.XManager:
-    generate_new_file(src=cts.ORIGINAL_EXAMPLE_MAP_PATH, dst=cts.TEMPORARY_EXAMPLE_MAP_PATH)
-    x_manager = xmanager.XManager(cts.TEMPORARY_EXAMPLE_MAP_PATH)
+    generate_new_file(src=cts.PATH_EXAMPLE_MAP_ORIGINAL, dst=cts.PATH_EXAMPLE_MAP_TEMPORARY)
+    x_manager = xmanager.XManager(cts.PATH_EXAMPLE_MAP_TEMPORARY)
     yield x_manager
     x_manager.zip_file.close()
 
 
 @pytest.fixture
 def tag_for_tests():
-    with open(cts.CONTENT_PATH, 'r') as file:
+    with open(cts.PATH_CONTENT, 'r') as file:
         tag = bs4.BeautifulSoup(file.read(), features='html.parser').topic
         file.close()
     yield tag
@@ -173,7 +173,7 @@ def xmind_importer(mocker, empty_anki_collection_session) -> xmindimport.XmindIm
     XmindImporter instance for file example map.xmind
     """
     mocker.patch("aqt.mw")
-    importer = xmindimport.XmindImporter(col=empty_anki_collection_session, file=cts.TEMPORARY_EXAMPLE_MAP_PATH)
+    importer = xmindimport.XmindImporter(col=empty_anki_collection_session, file=cts.PATH_EXAMPLE_MAP_TEMPORARY)
     yield importer
     for manager in importer.x_managers:
         manager.zip_file.close()

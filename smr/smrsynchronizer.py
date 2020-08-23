@@ -164,7 +164,7 @@ class SmrSynchronizer:
                 elif local_change and not remote_change:
                     self._process_local_changes(xmind_file)
                 elif not local_change and remote_change:
-                    self.process_remote_changes(xmind_file)
+                    self._process_remote_changes(xmind_file)
                 else:
                     self.process_local_and_remote_changes()
                 self.x_manager.save_changes()
@@ -450,15 +450,16 @@ note.""")
         try:
             self.x_manager.remove_node(node_id=xmind_node.node_id)
         except AttributeError:
-            self.log.append(
-                f"Invalid answer removal: Cannot remove answer {field_from_content(xmind_node.content)} to question "
-                f"{field_from_content(xmind_edge.content)} (reference "
-                f"{get_smr_note_reference_fields(self.smr_world, [xmind_edge.node_id])[xmind_edge.node_id]}), "
-                f"answer was restored.")
+            self.log.append(f"""\
+Invalid answer removal: Cannot remove answer "{field_from_content(xmind_node.content, self.smr_world)}" to question \
+"{field_from_content(xmind_edge.content, self.smr_world)}" (reference: \
+{self.smr_world.get_smr_note_reference_fields([xmind_edge.node_id])[xmind_edge.node_id]}), because more questions \
+follow this answer in the xmind map. I restored the answer. If you want to remove the answer, do it in the concept \
+map and then synchronize.""")
         # Remove node from ontology
         self.onto.remove_node(xmind_node=xmind_node, xmind_edge=xmind_edge,
                               parent_node_ids=parent_node_ids, children={})
-        # Add node to answers to remove
+        # Add node to nodes to remove
         self.xmind_nodes_2_remove.append(xmind_node.node_id)
 
     def process_change_list(self):
@@ -525,7 +526,7 @@ note.""")
                 if anki_note_was_changed:
                     self.edge_ids_of_notes_2_update.append(note_data['note'].edge_id)
 
-    def process_remote_changes(self, file):
+    def _process_remote_changes(self, file):
         pass
         # for sheet in {**remote, **status}:
         #     if sheet not in status:

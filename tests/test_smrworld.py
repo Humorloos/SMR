@@ -29,12 +29,12 @@ def test_set_up(empty_smr_world, empty_anki_collection_session):
 
 
 def test_add_or_replace_xmind_files(smr_world_4_tests, x_manager):
-    expected_entry = (cts.RESOURCES_PATH, cts.EXAMPLE_MAP_NAME, 1595671089759, 1595687290.0, cts.TEST_DECK_ID)
+    expected_entry = (cts.RESOURCES_PATH, cts.NAME_EXAMPLE_MAP, 1595671089759, 1595687290.0, cts.TEST_DECK_ID)
     # given
     cut = smr_world_4_tests
     # when
     cut.add_or_replace_xmind_files([XmindFileDto(
-        directory=cts.RESOURCES_PATH, file_name=cts.EXAMPLE_MAP_NAME, map_last_modified=1595671089759,
+        directory=cts.RESOURCES_PATH, file_name=cts.NAME_EXAMPLE_MAP, map_last_modified=1595671089759,
         file_last_modified=1595687290.0, deck_id=cts.TEST_DECK_ID)])
     # then
     assert list(cut.graph.execute("SELECT * FROM main.xmind_files").fetchall())[1] == expected_entry
@@ -102,20 +102,20 @@ def test_add_xmind_sheet_wrong_path(smr_world_4_tests, x_manager_absent_file):
 def test_add_or_replace_xmind_nodes(smr_world_4_tests, x_manager):
     # given
     # noinspection PyTypeChecker
-    expected_entry = XmindNodeDto(node_id=cts.NEUROTRANSMITTERS_XMIND_ID, title='neurotransmitters',
+    expected_entry = XmindNodeDto(node_id=cts.NEUROTRANSMITTERS_NODE_ID, title='neurotransmitters',
                                   image='attachments/629d18n2i73im903jkrjmr98fg.png', link=None)
     # then
-    verify_add_xmind_node(expected_entry, smr_world_4_tests, x_manager, cts.NEUROTRANSMITTERS_XMIND_ID,
+    verify_add_xmind_node(expected_entry, smr_world_4_tests, x_manager, cts.NEUROTRANSMITTERS_NODE_ID,
                           cts.NEUROTRANSMITTERS_NODE_CONTENT)
 
 
 def test_add_or_replace_xmind_nodes_with_media_hyperlink(smr_world_4_tests, x_manager):
     # given
     # noinspection PyTypeChecker
-    expected_entry = XmindNodeDto(node_id=cts.MEDIA_HYPERLINK_XMIND_ID, title='',
-                                  link=cts.TEMPORARY_HYPERLINK_MEDIA_PATH, image=None)
+    expected_entry = XmindNodeDto(node_id=cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID, title='',
+                                  link=cts.PATH_HYPERLINK_MEDIA_TEMPORARY, image=None)
     # then
-    verify_add_xmind_node(expected_entry, smr_world_4_tests, x_manager, cts.MEDIA_HYPERLINK_XMIND_ID,
+    verify_add_xmind_node(expected_entry, smr_world_4_tests, x_manager, cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID,
                           cts.MEDIA_HYPERLINK_NODE_CONTENT)
 
 
@@ -271,20 +271,20 @@ def test_get_xmind_files_in_decks(smr_world_with_example_map):
     xmind_files_in_decks = smr_world_with_example_map.get_xmind_files_in_decks()
     # then
     files = list(xmind_files_in_decks.values())[0]
-    assert files[0].directory == cts.TEMPORARY_MAPS_DIRECTORY
-    assert files[0].file_name == cts.EXAMPLE_MAP_NAME
-    assert files[1].file_name == cts.GENERAL_PSYCHOLOGY_MAP_NAME
+    assert files[0].directory == cts.DIRECTORY_MAPS_TEMPORARY
+    assert files[0].file_name == cts.NAME_EXAMPLE_MAP
+    assert files[1].file_name == cts.NAME_MAP_GENERAL_PSYCHOLOGY
 
 
 def test_get_changed_smr_notes(smr_world_with_example_map, changed_collection_with_example_map):
     # when
     changed_smr_notes = smr_world_with_example_map.get_changed_smr_notes(changed_collection_with_example_map)
     # then
-    assert list(changed_smr_notes.keys()) == [cts.TEMPORARY_EXAMPLE_MAP_PATH, cts.TEMPORARY_GENERAL_PSYCHOLOGY_MAP_PATH]
+    assert list(changed_smr_notes.keys()) == [cts.PATH_EXAMPLE_MAP_TEMPORARY, cts.PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY]
     values = list(changed_smr_notes.values())
     assert list(values[0].keys()) == ['biological psychology', 'clinical psychology']
     assert list(values[1].keys()) == ['general psychology']
-    example_map_sheets = changed_smr_notes[cts.TEMPORARY_EXAMPLE_MAP_PATH]
+    example_map_sheets = changed_smr_notes[cts.PATH_EXAMPLE_MAP_TEMPORARY]
     assert len(example_map_sheets['biological psychology']) == 5
     assert len(example_map_sheets['clinical psychology']) == 4
     assert len(list(values[1].values())[0]) == 1

@@ -91,7 +91,7 @@ def test_media_from_field(smr_world_with_example_map):
     media = media_from_field('MAO is not a neurotransmitter[sound:serotonin.mp3]<br><img '
                              'src="attachments629d18n2i73im903jkrjmr98fg.png">', smr_world_with_example_map)
     # then
-    assert media == cts.TEMPORARY_HYPERLINK_MEDIA_PATH
+    assert media == cts.PATH_HYPERLINK_MEDIA_TEMPORARY
 
 
 def test_media_from_field_no_media(smr_world_with_example_map):
@@ -129,7 +129,7 @@ def test_content_from_field(smr_world_with_example_map):
                                  'src="attachments629d18n2i73im903jkrjmr98fg.png">', smr_world_with_example_map)
     # then
     assert content == NodeContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
-                                     media=cts.TEMPORARY_HYPERLINK_MEDIA_PATH,
+                                     media=cts.PATH_HYPERLINK_MEDIA_TEMPORARY,
                                      title='MAO is not a neurotransmitter')
 
 
