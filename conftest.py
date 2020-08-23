@@ -42,13 +42,13 @@ def empty_anki_collection_function() -> Collection:
 @pytest.fixture(scope="function")
 def patch_empty_smr_world() -> None:
     try:
-        os.unlink(os.path.join(cts.SMR_WORLD_PATH, cts.EMPTY_SMR_WORLD_NAME))
+        os.unlink(os.path.join(cts.SMR_WORLD_DIRECTORY, cts.EMPTY_SMR_WORLD_NAME))
     except FileNotFoundError:
         pass
     standard_world_path = smrworld.SMR_WORLD_PATH
     standard_user_path_config = config.USER_PATH
-    smrworld.SMR_WORLD_PATH = os.path.join(cts.SMR_WORLD_PATH, cts.EMPTY_SMR_WORLD_NAME)
-    config.USER_PATH = cts.SMR_WORLD_PATH
+    smrworld.SMR_WORLD_PATH = os.path.join(cts.SMR_WORLD_DIRECTORY, cts.EMPTY_SMR_WORLD_NAME)
+    config.USER_PATH = cts.SMR_WORLD_DIRECTORY
     yield
     smrworld.SMR_WORLD_PATH = standard_world_path
     config.USER_PATH = standard_user_path_config
@@ -72,7 +72,7 @@ def set_up_empty_smr_world(empty_smr_world):
 
 @pytest.fixture(scope="session")
 def _smr_world_for_tests_session(empty_anki_collection_session):
-    smr_world_path = os.path.join(cts.SMR_WORLD_PATH, "smr_world_4_tests.sqlite3")
+    smr_world_path = os.path.join(cts.SMR_WORLD_DIRECTORY, "smr_world_4_tests.sqlite3")
     smrworld.SMR_WORLD_PATH = smr_world_path
     try:
         os.unlink(smr_world_path)
@@ -87,7 +87,7 @@ def _smr_world_for_tests_session(empty_anki_collection_session):
                           'main_xmind_edges.csv', 'main_smr_triples.csv', 'main_smr_notes.csv']
     for csv_filename in relevant_csv_files:
         table: str = re.sub("main_|.csv", '', csv_filename)
-        csv_file_path = os.path.join(cts.SMR_WORLD_CSV_PATH, csv_filename)
+        csv_file_path = os.path.join(cts.SMR_WORLD_CSV_DIRECTORY, csv_filename)
         # noinspection SqlWithoutWhere
         smr_world.graph.execute("DELETE FROM {}".format(table))
         df = pd.read_csv(csv_file_path)
@@ -98,12 +98,12 @@ def _smr_world_for_tests_session(empty_anki_collection_session):
 
 @pytest.fixture(scope="function")
 def smr_world_with_example_map():
-    test_world_path = os.path.join(cts.SMR_WORLD_PATH, "smr_world_with_example_map.sqlite3")
+    test_world_path = os.path.join(cts.SMR_WORLD_DIRECTORY, "smr_world_with_example_map.sqlite3")
     generate_new_file(src=cts.ORIGINAL_SMR_WORLD_WITH_EXAMPLE_MAP_PATH, dst=test_world_path)
     standard_world_path = smrworld.SMR_WORLD_PATH
     standard_user_path_config = config.USER_PATH
     smrworld.SMR_WORLD_PATH = test_world_path
-    config.USER_PATH = cts.SMR_WORLD_PATH
+    config.USER_PATH = cts.SMR_WORLD_DIRECTORY
     smr_world = smrworld.SmrWorld()
     yield smr_world
     smr_world.close()

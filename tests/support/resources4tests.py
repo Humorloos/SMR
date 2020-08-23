@@ -46,13 +46,13 @@ def main():
     deck_id = collection.decks.id('testdeck')
     # Import the example map to the deck 'testdeck'
     aqt.mw = MagicMock()
-    smr_world_path = os.path.join(cts.SMR_WORLD_PATH, cts.EMPTY_SMR_WORLD_NAME)
+    smr_world_path = os.path.join(cts.SMR_WORLD_DIRECTORY, cts.EMPTY_SMR_WORLD_NAME)
     try:
         os.unlink(smr_world_path)
     except FileNotFoundError:
         pass
     smrworld.SMR_WORLD_PATH = smr_world_path
-    config.USER_PATH = cts.SMR_WORLD_PATH
+    config.USER_PATH = cts.SMR_WORLD_DIRECTORY
     smr_world = smrworld.SmrWorld()
     smr_world.set_up()
     aqt.mw.smr_world = smr_world
@@ -109,7 +109,11 @@ def main():
     save_collection(collection, media_dir=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
                     collection_path=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
     # get another copy of collection with example map
-    col = Collection(cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    generate_new_file(
+        cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_PATH, cts.DEFAULT_NEW_ANSWER_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    generate_new_tree(
+        cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_MEDIA, cts.DEFAULT_NEW_ANSWER_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
+    col = Collection(cts.DEFAULT_NEW_ANSWER_COLLECTION_WITH_EXAMPLE_MAP_PATH)
     change = {
         " testdeck::example_map::biological_psychology ": {
             '|{|{{{|{': 'biological psychology<li>investigates: information transfer and '
@@ -119,8 +123,7 @@ def main():
         }
     }
     change_collection(collection=col, collection_changes=change)
-    save_collection(col, collection_path=cts.DEFAULT_NEW_ANSWER_COLLECTION_WITH_EXAMPLE_MAP_PATH,
-                    media_dir=cts.DEFAULT_NEW_ANSWER_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
+    col.close()
 
 
 def change_collection(collection, collection_changes):
