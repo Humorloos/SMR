@@ -1,5 +1,6 @@
 import pytest
 
+import aqt
 import tests.constants as cts
 from anki import Collection
 from conftest import generate_new_file
@@ -71,3 +72,22 @@ def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker, chang
                'MAO</li><li>splits up: Serotonin, dopamine, adrenaline</li><li>are changed question: biogenic '
                'amines</li>\x1fconsist of\x1fone or more amine '
                'groups\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f|{|{{{|~{{{']
+
+
+def test_synchronize_answer_added_error(mocker, smr_world_with_example_map):
+    # given
+    generate_new_file(src=cts.DEFAULT_NEW_ANSWER_COLLECTION_WITH_EXAMPLE_MAP_PATH,
+                      dst=cts.TEMPORARY_NEW_ANSWER_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    mocker.patch('aqt.mw')
+    aqt.mw.smr_world = smr_world_with_example_map
+    aqt.mw.col = Collection(cts.TEMPORARY_NEW_ANSWER_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    aqt.mw.return_value = aqt.mw
+    cut = SmrSynchronizer()
+    # when
+    cut.synchronize()
+    # then
+    assert cut.log == ['Invalid added answer: Cannot add answer "added answer" to question "are" (reference: '
+                       'biological psychology<li>investigates: information transfer and processing</li><li>modulated '
+                       'by: enzymes</li><li>example: MAO</li><li>splits up: Serotonin, dopamine, adrenaline, '
+                       'noradrenaline</li>). Adding answers via anki is not yet supported, instead, add the answer in '
+                       'your xmind map and synchronize. I removed the answer from the note.']

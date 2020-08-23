@@ -103,13 +103,30 @@ def main():
                      'schizophrenia</li>possible causes answer 2biochemical factors{{{|{'
         }
     }
-    data = [(fields, tag, sort_id) for tag, changes in collection_changes.items()
-            for sort_id, fields in changes.items()]
-    collection.db.executemany("UPDATE NOTES SET flds = ?, mod = mod + 1 WHERE tags = ? and sfld = ?", data)
+    change_collection(collection, collection_changes)
     collection.media.add_file(os.path.join(cts.TEST_COLLECTIONS_DIRECTORY, cts.NEW_IMAGE_NAME))
     # save collection to collection with example map changes
     save_collection(collection, media_dir=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
                     collection_path=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    # get another copy of collection with example map
+    col = Collection(cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    change = {
+        " testdeck::example_map::biological_psychology ": {
+            '|{|{{{|{': 'biological psychology<li>investigates: information transfer and '
+                         'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up: Serotonin, '
+                         'dopamine, adrenaline, noradrenaline</li>arebiogenic '
+                         'aminesadded answer|{|{{{|{'
+        }
+    }
+    change_collection(collection=col, collection_changes=change)
+    save_collection(col, collection_path=cts.DEFAULT_NEW_ANSWER_COLLECTION_WITH_EXAMPLE_MAP_PATH,
+                    media_dir=cts.DEFAULT_NEW_ANSWER_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
+
+
+def change_collection(collection, collection_changes):
+    data = [(fields, tag, sort_id) for tag, changes in collection_changes.items()
+            for sort_id, fields in changes.items()]
+    collection.db.executemany("UPDATE NOTES SET flds = ?, mod = mod + 1 WHERE tags = ? and sfld = ?", data)
 
 
 def save_collection(collection, media_dir, collection_path):

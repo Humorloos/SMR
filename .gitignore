@@ -7,6 +7,8 @@
 /tests/support/collections/temporary_empty_smr_col_function/
 /tests/support/collections/temporary_empty_smr_col_session/
 /tests/support/collections/temporary_changed_collection_with_example_map/
+/tests/support/collections/default_new_answer_collection_with_example_map/
+/tests/support/collections/temporary_new_answer_collection_with_example_map/
 /tests/support/smr_world/smr_world_for_tests.sqlite3
 /tests/support/smr_world/empty_smr_world.sqlite3
 /tests/support/smr_world/smr_world_with_example_map.sqlite3

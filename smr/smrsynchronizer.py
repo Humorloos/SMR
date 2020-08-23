@@ -192,13 +192,12 @@ class SmrSynchronizer:
     def add_answer(self, answer_content: NodeContentDto, xmind_edge: XmindNodeDto):
         print('add answer to map')
         print('add answer to ontology')
-        self.log.append(
-            f"Invalid added answer: Cannot add answer "
-            f"{field_from_content(content=answer_content, smr_world=self.smr_world)} to question "
-            f"{field_from_content(content=xmind_edge.content, smr_world=self.smr_world)} (reference "
-            f"{self.smr_world.get_smr_note_reference_fields([xmind_edge.node_id])[xmind_edge.node_id]}), "
-            f"adding answers through anki is not yet supported. I removed the answer from the note again. Instead, "
-            f"add the answer in your xmind map.")
+        self.log.append(f"""\
+Invalid added answer: Cannot add answer "{field_from_content(content=answer_content, smr_world=self.smr_world)}" to \
+question "{field_from_content(content=xmind_edge.content, smr_world=self.smr_world)}" (reference: \
+{self.smr_world.get_smr_note_reference_fields([xmind_edge.node_id])[xmind_edge.node_id]}). Adding answers via \
+anki is not yet supported, instead, add the answer in your xmind map and synchronize. I removed the answer from the \
+note.""")
 
     # def add_remote_a(self, q_content, q_id, remote, status, a_tag, import_dict):
     #     a_content = self.map_manager.get_node_content(a_tag)
