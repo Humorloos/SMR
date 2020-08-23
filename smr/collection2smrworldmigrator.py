@@ -121,9 +121,9 @@ WHERE did = ? and mid = ?""", smr_deck_id, self.note_manager.col.models.id_for_n
                               n in notes}
             if notes_2_update:
                 importer.tagModified = 'yes'
-                importer.addUpdates(
-                    rows=[[intTime(), self._collection.usn(), n.fieldsStr, n.tags[0], notes[k]['note_id'], n.fieldsStr]
-                          for k, n in notes_2_update.items()])
+                rows = [[intTime(), self.collection.usn(), n.fieldsStr, n.tags[0], notes[k]['note_id'], n.fieldsStr]
+                        for k, n in notes_2_update.items()]
+                importer.addUpdates(rows=rows)
                 smr_notes_2_add = []
                 smr_cards_2_update = []
                 for edge_id in notes_2_update:
@@ -133,7 +133,7 @@ WHERE did = ? and mid = ?""", smr_deck_id, self.note_manager.col.models.id_for_n
                         note_id=note_dict['note_id'], edge_id=edge_id, last_modified=note_dict['last_modified']))
                     for card in note_dict['cards']:
                         smr_cards_2_update.append((note_id, card['card_order_number']))
-                self.smr_world.add_smr_notes(smr_notes_2_add)
+                self.smr_world.add_or_replace_smr_notes(smr_notes_2_add)
                 self.smr_world.update_smr_triples_card_ids(data=smr_cards_2_update, collection=self.collection)
             importer.import_notes_and_cards()
             importer.mw.progress.finish()

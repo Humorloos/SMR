@@ -166,7 +166,7 @@ def test_rename_node(ontology_with_example_map):
         title='are', node_id="6iivm8tpoqj2c0euaabtput14l"), xmind_node=XmindNodeDto(
         node_id='3oqcv5qlqhn28u1opce5i27709', title='nothing', image='abcde.png', link='fghij.mp3'),
         parent_node_ids=cts.MULTIPLE_PARENTS_NODE_IDS,
-        children={'0eaob1gla0j1qriki94n2os9oe': [cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID]})
+        children={cts.CONSIST_OF_EDGE_ID: [cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID]})
     assert new_concept.Parent == [getattr(cut, n) for n in cts.MULTIPLE_PARENTS_CLASS_NAMES]
     assert len(new_concept.consist_of_xrelation)
     assert new_concept in cut.one_or_more_amine_groups.Parent
@@ -180,5 +180,5 @@ def test_get_concept_from_node_id(ontology_with_example_map):
 
 
 def test_get_relation_from_edge_id(ontology_with_example_map):
-    assert ontology_with_example_map.get_relation_from_edge_id(cts.TYPES_EDGE_XMIND_ID) == \
+    assert ontology_with_example_map.get_relation_from_edge_id(cts.TYPES_EDGE_ID) == \
            ontology_with_example_map.types_xrelation

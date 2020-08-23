@@ -1,6 +1,8 @@
 import json
 import re
-from typing import List, Optional, Dict, Sequence
+from typing import List, Optional, Sequence
+
+from bs4 import BeautifulSoup
 
 from anki import Collection
 from anki.backend_pb2 import NoteTypeNameID
@@ -8,46 +10,11 @@ from anki.models import ModelManager
 from anki.utils import splitFields, joinFields
 import smr.consts as cts
 from smr.dto.nodecontentdto import NodeContentDto
-from smr.smrworld import SmrWorld
+from smr.smrworld import SmrWorld, sort_id_from_order_number
 from smr.utils import replace_embedded_media, get_smr_model_id
 
 IMAGE_REGEX = r'<img src=\"(.*\.(' + '|'.join(cts.X_IMAGE_EXTENSIONS) + '))\">'
 MEDIA_REGEX = r'\[sound:(.*\.(' + '|'.join(cts.X_MEDIA_EXTENSIONS) + r'))]'
-
-
-def get_smr_note_reference_fields(smr_world: SmrWorld, edge_ids: List[str]) -> Dict[str, str]:
-    """
-    gets the data for the reference fields from smr_world and replaces embedded media with the string (media)
-    :param smr_world: the smr world containing the data for the fields
-    :param edge_ids: the xmind ids of the edges to to get the reference fields for
-    :return: the reference fields' contents in a dictionary where the keys contain the edge_ids for which the
-    reference field was retrieved and values contain the cleaned up reference fields
-    """
-    reference_data = smr_world.get_smr_note_references(edge_ids)
-    return {key: replace_embedded_media(value) for key, value in reference_data.items()}
-
-
-def sort_id_from_order_number(order_number: int) -> chr:
-    """
-    converts the specified order number into a character used for sorting the notes generated from an xmind map. The
-    returned characters are handled by anki so that a character belonging to a larger order number is sorted after
-    one belonging to a smaller order number.
-    :param order_number: the number to convert into a character
-    :return: the character for the sort field
-    """
-    return chr(order_number + 122)
-
-
-def get_smr_note_sort_fields(smr_world: SmrWorld, edge_ids: List[str]) -> Dict[str, str]:
-    """
-    gets the data for the sort field of the smr note belonging to the specified edge from the specified smr world and
-    converts it into the string that is used to sort the smr notes belonging to a certain map
-    :param smr_world: the smr world to get the data from
-    :param edge_ids: xmind id of the edge representing the note to get the sort field for
-    :return: the sort field's content
-    """
-    sort_field_data = smr_world.get_smr_notes_sort_data(edge_ids)
-    return {key: ''.join(sort_id_from_order_number(int(c)) for c in value) for key, value in sort_field_data.items()}
 
 
 def order_number_from_sort_id_character(sort_id_character: str) -> int:
@@ -174,7 +141,7 @@ def title_from_field(field: str) -> str:
     :param field: the anki note field to extract the title from
     :return: the title of the field
     """
-    return re.sub(IMAGE_REGEX + "|" + MEDIA_REGEX, "", field)
+    return BeautifulSoup(re.sub(IMAGE_REGEX + "|" + MEDIA_REGEX, "", field), "html.parser").text
 
 
 def image_from_field(field: str, smr_world: SmrWorld) -> Optional[str]:

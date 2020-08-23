@@ -3,8 +3,10 @@ from collections import namedtuple
 from typing import List, TextIO, Tuple, Dict, Any, Union, Optional, Set
 
 from anki import Collection
+from anki.importing.noteimp import ForeignNote, ForeignCard
+from anki.utils import joinFields, intTime
 from owlready2.namespace import World
-from smr.consts import ADDON_PATH, USER_PATH
+from smr.consts import ADDON_PATH, USER_PATH, X_MAX_ANSWERS
 from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.ontologylivesindeckdto import OntologyLivesInDeckDto
 from smr.dto.smrnotedto import SmrNoteDto
@@ -13,6 +15,7 @@ from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from smr.dto.xmindnodedto import XmindNodeDto
 from smr.dto.xmindsheetdto import XmindSheetDto
+from smr.utils import replace_embedded_media
 
 FILE_NAME = 'smrworld.sqlite3'
 SQL_FILE_NAME = 'smrworld.sql'
@@ -124,12 +127,13 @@ WHERE iri LIKE '%Parent'""").fetchone()[0]
         c = self.graph.execute("SELECT c FROM ontologies WHERE iri = '{}'".format(ontology_base_iri)).fetchone()[0]
         self.graph.execute("INSERT INTO ontology_lives_in_deck VALUES (?, ?)", (deck_id, c))
 
-    def add_xmind_files(self, entities: List[XmindFileDto]) -> None:
+    def add_or_replace_xmind_files(self, entities: List[XmindFileDto]) -> None:
         """
-        Adds an entry for an xmind file to the relation xmind_files
+        Adds an entry for an xmind file to the relation xmind_files, replaces it if an entry with the same path
+        already exists
         :param entities: List of entries to be inserted into the xmind_files relation
         """
-        self.graph.db.executemany("INSERT INTO main.xmind_files VALUES (?, ?, ?, ?, ?)",
+        self.graph.db.executemany("REPLACE INTO main.xmind_files VALUES (?, ?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
     def add_xmind_sheets(self, entities: List[XmindSheetDto]) -> None:
@@ -140,20 +144,22 @@ WHERE iri LIKE '%Parent'""").fetchone()[0]
         self.graph.db.executemany("INSERT INTO main.xmind_sheets VALUES (?, ?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
-    def add_xmind_nodes(self, entities: List[XmindNodeDto]) -> None:
+    def add_or_replace_xmind_nodes(self, entities: List[XmindNodeDto]) -> None:
         """
-        Adds entries for xmind nodes to the relation xmind_nodes
+        Adds entries for xmind nodes to the relation xmind_nodes, replaces them if entries with the same node ids
+        already exist
         :param entities: List of entries for the xmind nodes relation
         """
-        self.graph.db.executemany("INSERT INTO main.xmind_nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        self.graph.db.executemany("REPLACE INTO main.xmind_nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
-    def add_xmind_edges(self, entities: List[XmindNodeDto]) -> None:
+    def add_or_replace_xmind_edges(self, entities: List[XmindNodeDto]) -> None:
         """
-        Adds entries for xmind edges to the relation xmind_edges
+        Adds entries for xmind edges to the relation xmind_edges, replaces them if entries with the same edge ids
+        already exist
         :param entities: List of entries for the xmind edges relation
         """
-        self.graph.db.executemany("INSERT INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        self.graph.db.executemany("REPLACE INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
     def add_smr_triples(self, entities: List[SmrTripleDto]) -> None:
@@ -216,12 +222,19 @@ select xs.file_directory,
        sn.note_id,
        sn.edge_id,
        cn.mod                   last_modified,
+xe.sheet_id,
        xe.title                 edge_title,
        xe.image                 edge_image,
        xe.link                  edge_link,
+xe.ontology_storid edge_storid,
+xe.last_modified edge_last_modified,
+xe.order_number edge_order_number,
        xcn.title                node_title,
        xcn.image                node_image,
        xcn.link                 node_link,
+xcn.ontology_storid node_storid,
+xcn.last_modified node_last_modified,
+xcn.order_number node_order_number,
        xcn.node_id,
        xcn.order_number,
        st.parent_node_id,
@@ -253,16 +266,19 @@ where sn.last_modified < cn.mod""")
                         smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
                             record.order_number]['children'] = children
                 except KeyError:
-                    node = {
-                        'node': XmindNodeDto(image=record.node_image, link=record.node_link, title=record.node_title,
-                                             node_id=record.node_id),
+                    node = {'node': XmindNodeDto(
+                        node_id=record.node_id, sheet_id=record.sheet_id, title=record.node_title,
+                        image=record.node_image, link=record.node_link, ontology_storid=record.node_storid,
+                        last_modified=record.node_last_modified, order_number=record.node_order_number),
                         'children': children}
                     try:
                         smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
                             record.order_number] = node
                     except KeyError:
-                        edge = XmindNodeDto(image=record.edge_image, link=record.edge_link, title=record.edge_title,
-                                            node_id=record.edge_id)
+                        edge = XmindNodeDto(
+                            node_id=record.edge_id, sheet_id=record.sheet_id, title=record.edge_title,
+                            image=record.edge_image, link=record.edge_link, ontology_storid=record.edge_storid,
+                            last_modified=record.edge_last_modified, order_number=record.edge_order_number)
                         smr_note = SmrNoteDto(*record[3:6])
                         edge_dict = {'note': smr_note, 'edge': edge, 'note_fields': record.note_fields,
                                      'answers': {record.order_number: node}, 'parents': set()}
@@ -319,19 +335,19 @@ set card_id = (select card_id from card_triples)
 where edge_id = (select edge_id from card_triples)
   and child_node_id = (select child_node_id from card_triples)""", data)
 
-    def add_smr_notes(self, entities: List[SmrNoteDto]):
+    def add_or_replace_smr_notes(self, entities: List[SmrNoteDto]):
         """
         adds entries linking xmind edges to anki notes and saving the creation time in last_modified
         :param entities: smr note entries to add to the relation
         """
-        self.graph.db.executemany("INSERT INTO main.smr_notes VALUES (?, ?, ?)", (tuple(e) for e in entities))
+        self.graph.db.executemany("REPLACE INTO main.smr_notes VALUES (?, ?, ?)", (tuple(e) for e in entities))
 
-    def get_smr_note_references(self, edge_ids: List[str]) -> Dict[str, str]:
+    def get_smr_note_reference_fields(self, edge_ids: List[str]) -> Dict[str, str]:
         """
-        gets a dictionary of reference fields for the notes belonging to the specified xmind edge ids. the keys in
-        the dictionary are the respective edge ids to which each reference field belongs
-        :param edge_ids: ids of the edges up to which to get the reference
-        :return: a dictionary in which keys are the provided edge ids and values are the respective reference fields
+        gets the data for the reference fields from smr_world and replaces embedded media with the string (media)
+        :param edge_ids: the xmind ids of the edges to to get the reference fields for
+        :return: the reference fields' contents in a dictionary where the keys contain the edge_ids for which the
+        reference field was retrieved and values contain the cleaned up reference fields
         """
         reference_data = self.graph.execute("""-- noinspection SqlResolveForFile
 WITH ancestor AS (
@@ -374,7 +390,7 @@ select root_id, group_concat(row, '') from rows group by root_id""".format(
             edge_ids="'" + "', '".join(edge_ids) + "'",
             node_selection_clause=get_xmind_content_selection_clause('n'),
             edge_selection_clause=get_xmind_content_selection_clause('e'))).fetchall()
-        return {row[0]: row[1] for row in reference_data}
+        return {row[0]: replace_embedded_media(row[1]) for row in reference_data}
 
     def get_smr_note_question_fields(self, edge_ids: List[str]) -> Dict[str, str]:
         """
@@ -430,11 +446,13 @@ ORDER BY t.edge_id, n.order_number""").fetchall()
                 grouped_answer_fields[row[0]] = [row[1]]
         return grouped_answer_fields
 
-    def get_smr_notes_sort_data(self, edge_ids: List[str]) -> Dict[str, str]:
+    def get_smr_note_sort_fields(self, edge_ids: List[str]) -> Dict[str, str]:
         """
-        gets the data for generating the sort field for the notds belonging to the specified edge ids
-        :param edge_ids: list of xmind ids of the edges that belong to the notes to get the sort fields for
-        :return: a dictionary where keys are the edge ids and values are the sort ids for the respective notes
+        gets the data for the sort fields of the smr notes belonging to the specified edges and
+        converts it into the fields that are used to sort the smr notes belonging to a certain map
+        :param edge_ids: xmind ids of the edges representing the notes to get the sort fields for
+        :return: Dictionary where keys are the edge ids of the notes and values are the sort fields for each
+        respective note
         """
         sort_data = self.graph.execute(f"""-- noinspection SqlResolveForFile
 WITH ancestor AS (
@@ -462,7 +480,7 @@ WITH ancestor AS (
 select root_id, group_concat(row, '')
 from rows
 group by root_id""").fetchall()
-        return {row[0]: row[1] for row in sort_data}
+        return {row[0]: ''.join(sort_id_from_order_number(int(c)) for c in row[1]) for row in sort_data}
 
     def get_xmind_uri_from_anki_file_name(self, anki_file_name: str) -> Optional[str]:
         """
@@ -532,6 +550,64 @@ where dt.o = '{edge_id}'
   and not oj.o = {self.parent_storid}
 limit 1""").fetchone()[0]
 
+    def remove_xmind_nodes(self, xmind_nodes_2_remove: List[str]):
+        """
+        Removes all entries with the specified node ids from the relation xmind nodes
+        :param xmind_nodes_2_remove: List of node ids of the nodes to remove
+        """
+        self.graph.execute(f"""DELETE FROM xmind_nodes WHERE node_id IN ('{"', '".join(xmind_nodes_2_remove)}')""")
+
+    def generate_notes(self, col, edge_ids) -> Dict[str, ForeignNote]:
+        """
+        Creates Notes for the specified edge_ids from the data saved in the smr world and returns them in a
+        dictionary where keys are edge ids
+        :param col: the anki collection to get the deck names for the note tags from
+        :param edge_ids: List of xmind edge ids to create the notes from
+        :return A dictionary where keys are the edge_ids belonging to the notes and values are the foreign notes
+        created from the edge ids
+        """
+        reference_fields = self.get_smr_note_reference_fields(edge_ids=edge_ids)
+        question_fields = self.get_smr_note_question_fields(edge_ids)
+        answer_fields_of_all_edges = self.get_smr_note_answer_fields(edge_ids)
+        sort_fields = self.get_smr_note_sort_fields(edge_ids=edge_ids)
+        tags = self.get_smr_note_tags(anki_collection=col, edge_ids=edge_ids)
+        notes = {}
+        for edge_id in edge_ids:
+            note = ForeignNote()
+            note_answer_fields = answer_fields_of_all_edges[edge_id]
+            note.fields = [reference_fields[edge_id]] + [question_fields[edge_id]] + note_answer_fields + \
+                          (X_MAX_ANSWERS - len(note_answer_fields)) * [''] + [sort_fields[edge_id]]
+            note.tags.append(tags[edge_id])
+            # add the edge id to the tags list to be able to assign the note to the right edge during import
+            note.tags.append(edge_id)
+            # note.deck = self.deck_id
+            note.cards = {i: ForeignCard() for i, _ in enumerate(note_answer_fields, start=1)}
+            note.fieldsStr = joinFields(note.fields)
+            notes[edge_id] = note
+        return notes
+
+    def get_updated_child_smr_notes(self, edge_ids: List[str]) -> Dict[str, SmrNoteDto]:
+        """
+        For all edges following the specified edges, returns smr note dtos with last_modified set to the time at
+        which the method is called
+        :param edge_ids: the xmind edge ids to get the child notes for
+        :return: a dictionary in which keys are edge ids of the retrieved notes and values are smr note dtos with
+        updated last modified values
+        """
+        child_records = self._get_records(f"""
+WITH successor AS (
+    SELECT st.edge_id, st.child_node_id
+    FROM smr_triples st
+    WHERE st.edge_id in ('{"', '".join(edge_ids)}')
+    UNION ALL
+    SELECT st2.edge_id, st2.child_node_id
+    FROM smr_triples st2
+             JOIN successor sc ON sc.child_node_id = st2.parent_node_id)
+select distinct sc.edge_id, sn.note_id from successor sc
+natural join smr_notes sn""")
+        return {record.edge_id: SmrNoteDto(note_id=record.note_id, edge_id=record.edge_id,
+                                           last_modified=intTime()) for record in child_records}
+
 
 class AnkiCollectionAttachement:
     """
@@ -547,3 +623,14 @@ class AnkiCollectionAttachement:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.world.detach_anki_collection(self.collection)
+
+
+def sort_id_from_order_number(order_number: int) -> chr:
+    """
+    converts the specified order number into a character used for sorting the notes generated from an xmind map. The
+    returned characters are handled by anki so that a character belonging to a larger order number is sorted after
+    one belonging to a smaller order number.
+    :param order_number: the number to convert into a character
+    :return: the character for the sort field
+    """
+    return chr(order_number + 122)

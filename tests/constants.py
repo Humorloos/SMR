@@ -2,6 +2,8 @@ import os
 
 from smr.consts import ADDON_PATH
 from smr.dto.nodecontentdto import NodeContentDto
+from smr.dto.xmindfiledto import XmindFileDto
+from smr.dto.xmindnodedto import XmindNodeDto
 from smr.xnotemanager import FieldTranslator
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
@@ -10,35 +12,53 @@ SMR_WORLD_CSV_PATH = os.path.join(SMR_WORLD_PATH, "csv")
 ORIGINAL_SMR_WORLD_WITH_EXAMPLE_MAP_PATH = os.path.join(SMR_WORLD_PATH, "smr_world_with_example_map",
                                                         "smr_world.sqlite3")
 EMPTY_SMR_WORLD_NAME = "empty_smr_world.sqlite3"
-TEST_COLLECTIONS_PATH = os.path.join(SUPPORT_PATH, 'collections')
-EMPTY_COLLECTION_PATH_SESSION = os.path.join(TEST_COLLECTIONS_PATH, 'empty_smr_col_session/empty_smr_col_session.anki2')
-EMPTY_COLLECTION_FUNCTION_NAME = 'empty_smr_col_function'
-EMPTY_COLLECTION_FUNCTION_DIRECTORY = os.path.join(TEST_COLLECTIONS_PATH, EMPTY_COLLECTION_FUNCTION_NAME)
-EMPTY_COLLECTION_FUNCTION_PATH = os.path.join(EMPTY_COLLECTION_FUNCTION_DIRECTORY, EMPTY_COLLECTION_FUNCTION_NAME +
-                                              '.anki2')
-EMPTY_COLLECTION_FUNCTION_MEDIA = os.path.join(EMPTY_COLLECTION_FUNCTION_DIRECTORY, EMPTY_COLLECTION_FUNCTION_NAME +
-                                               '.media')
-ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(TEST_COLLECTIONS_PATH, 'collection_with_example_map')
-ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_NAME = 'collection'
-ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
-                                                         ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.anki2')
-ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
-                                                          ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.media')
-ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(
-    TEST_COLLECTIONS_PATH, 'collection_with_example_map_changes')
-ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME = 'collection'
-ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(
-    ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
-    ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.anki2')
-ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(
-    ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
-    ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.media')
-COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(TEST_COLLECTIONS_PATH, "changed_col_with_example_map")
-COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME = "changed_col_with_example_map"
-COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(
-    COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY, COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + ".anki2")
-COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(
-    COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY, COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + ".media")
+
+# collections
+TEST_COLLECTIONS_DIRECTORY = os.path.join(SUPPORT_PATH, 'collections')
+# empty collections
+# session
+TEMPORARY_EMPTY_COLLECTION_SESSION_PATH = os.path.join(TEST_COLLECTIONS_DIRECTORY, 'temporary_empty_smr_col_session',
+                                                       'empty_smr_col_session.anki2')
+# function
+TEMPORARY_EMPTY_COLLECTION_FUNCTION_NAME = 'empty_smr_col_function'
+TEMPORARY_EMPTY_COLLECTION_FUNCTION_DIRECTORY = os.path.join(TEST_COLLECTIONS_DIRECTORY,
+                                                             'temporary_empty_smr_col_function')
+TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH = os.path.join(TEMPORARY_EMPTY_COLLECTION_FUNCTION_DIRECTORY,
+                                                        TEMPORARY_EMPTY_COLLECTION_FUNCTION_NAME + '.anki2')
+TEMPORARY_EMPTY_COLLECTION_FUNCTION_MEDIA = os.path.join(TEMPORARY_EMPTY_COLLECTION_FUNCTION_DIRECTORY,
+                                                         TEMPORARY_EMPTY_COLLECTION_FUNCTION_NAME + '.media')
+# collections with example map
+# no changes
+DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(TEST_COLLECTIONS_DIRECTORY,
+                                                             'default_collection_with_example_map')
+DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_NAME = 'collection'
+DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
+                                                        DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.anki2')
+DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
+                                                         DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.media')
+# with changes
+# default
+DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(TEST_COLLECTIONS_DIRECTORY,
+                                                                     'default_changed_collection_with_example_map')
+DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME = 'collection'
+DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(
+    DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY, DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.anki2')
+DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(
+    DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY, DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.media')
+# temporary
+TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(TEST_COLLECTIONS_DIRECTORY,
+                                                                       "temporary_changed_collection_with_example_map")
+TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME = "changed_col_with_example_map"
+TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(
+    TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
+    TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + ".anki2")
+TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(
+    TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
+    TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + ".media")
+# Collection version 0.0.1 for migration
+ORIGINAL_COLLECTION_VERSION_001_PATH = os.path.join(TEST_COLLECTIONS_DIRECTORY, 'original_collection_version_0.0.1',
+                                                    'collection.anki2')
+
 NEW_IMAGE_NAME = "paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg"
 NEUROTRANSMITTERS_IMAGE_XMIND_URI = "attachments/09r2e442o8lppjfeblf7il2rmd.png"
 NEUROTRANSMITTERS_IMAGE_ANKI_FILE_NAME = "attachments09r2e442o8lppjfeblf7il2rmd.png"
@@ -66,33 +86,63 @@ CONTENT_PATH = os.path.join(MAPS_DIRECTORY, CONTENT_NAME)
 
 ABSENT_XMIND_FILE_PATH = os.path.join(SUPPORT_PATH, 'absent_file.xmind')
 EXAMPLE_MAP_N_EDGES = 34
-TEST_DECK_ID = 1579442668731
+
+# values from smr world for tests
+# xmind files
 TEST_FILE_DIRECTORY = "mypath"
 TEST_FILE_NAME = "test_file"
-TEST_FILE_PATH = os.path.join(TEST_FILE_DIRECTORY, TEST_FILE_NAME + '.xmind')
-TEST_CONCEPT_STORID = 153
-TEST_CONCEPT_CLASS_NAME = "test_concept"
+TEST_FILE_MAP_LAST_MODIFIED = 1594823958217
+TEST_FILE_FILE_LAST_MODIFIED = 1594823958.8585837
+TEST_DECK_ID = 1579442668731
+TEST_XMIND_FILE = XmindFileDto(directory=TEST_FILE_DIRECTORY, file_name=TEST_FILE_NAME,
+                               map_last_modified=TEST_FILE_MAP_LAST_MODIFIED,
+                               file_last_modified=TEST_FILE_FILE_LAST_MODIFIED, deck_id=TEST_DECK_ID)
+# xmind sheets
+TEST_SHEET_ID = "sheet id"
+# xmind edges
+TEST_RELATION_EDGE_ID = "edge id"
+TEST_EDGE_TITLE = 'edge title'
+TEST_EDGE_IMAGE = 'edge image'
+TEST_EDGE_MEDIA = 'edge media'
+TEST_RELATION_STORID = 154
+TEST_EDGE_LAST_MODIFIED = 1578313461243
+TEST_EDGE_ORDER_NUMBER = 1
+TEST_XMIND_EDGE = XmindNodeDto(node_id=TEST_RELATION_EDGE_ID, sheet_id=TEST_SHEET_ID, title=TEST_EDGE_TITLE,
+                               image=TEST_EDGE_IMAGE, link=TEST_EDGE_MEDIA, ontology_storid=TEST_RELATION_STORID,
+                               last_modified=TEST_EDGE_LAST_MODIFIED, order_number=TEST_EDGE_ORDER_NUMBER)
+# xmind nodes
 TEST_CONCEPT_NODE_ID = "node id"
+TEST_NODE_TITLE = 'node title'
+TEST_NODE_IMAGE = 'node image'
+TEST_NODE_MEDIA = 'node media'
+TEST_CONCEPT_STORID = 153
+TEST_NODE_LAST_MODIFIED = 1578314907411
+TEST_NODE_ORDER_NUMBER = 1
+TEST_XMIND_NODE = XmindNodeDto(node_id=TEST_CONCEPT_NODE_ID, sheet_id=TEST_SHEET_ID, title=TEST_NODE_TITLE,
+                               image=TEST_NODE_IMAGE, link=TEST_NODE_MEDIA, ontology_storid=TEST_CONCEPT_STORID,
+                               last_modified=TEST_NODE_LAST_MODIFIED, order_number=TEST_NODE_ORDER_NUMBER)
+TEST_FILE_PATH = os.path.join(TEST_FILE_DIRECTORY, TEST_FILE_NAME + '.xmind')
+TEST_CONCEPT_CLASS_NAME = "test_concept"
 TEST_CONCEPT_2_NODE_ID = "node id2"
 TEST_CONCEPT_2_STORID = 155
 TEST_CONCEPT_2_CLASS_NAME = "test_concept2"
-TEST_RELATION_STORID = 154
 TEST_RELATION_CLASS_NAME = "test_relation"
-TEST_RELATION_EDGE_ID = "edge id"
-TEST_SHEET_ID = "sheet id"
 
 # edges from smr_world
-PRONOUNCIATION_EDGE_XMIND_ID = "4s27e1mvsb5jqoiuaqmnlo8m71"
 EDGE_WITH_MEDIA_XMIND_ID = "7ite3obkfmbcasdf12asd123ga"
 EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID = "61irckf1nloq42brfmbu0ke92v"
 EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID = "6iivm8tpoqj2c0euaabtput14l"
 # edge from xmind test file
-TYPES_EDGE_XMIND_ID = '485fcs7jl72gtqesace4v8igf0'
+TYPES_EDGE_ID = '485fcs7jl72gtqesace4v8igf0'
+EXAMPLE_IMAGE_EDGE_ID = '08eq1rdricsp1nt1b7aa181sq4'
+PRONOUNCIATION_EDGE_ID = "4s27e1mvsb5jqoiuaqmnlo8m71"
+CONSIST_OF_EDGE_ID = '0eaob1gla0j1qriki94n2os9oe'
 
 # nodes
 NEUROTRANSMITTERS_XMIND_ID = "4r6avbt0pbuam4fg07jod0ubec"
 MEDIA_HYPERLINK_XMIND_ID = '1s7h0rvsclrnvs8qq9u71acml5'
 ONE_OR_MORE_AMINE_GROUPS_NODE_ID = '0s0is5027b7r6akh3he0nbu478'
+ENZYMES_NODE_ID = '5e2cicue01ikp5vnq5pp46np83'
 NEUROTRANSMITTERS_NODE_CONTENT = NodeContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
                                                 title='neurotransmitters')
 # Media hyperlink path as saved in content.xml, replace backslash with slash, since xmind saves paths with slashes

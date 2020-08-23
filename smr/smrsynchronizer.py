@@ -1,22 +1,20 @@
 from itertools import zip_longest
-from typing import List, Dict, Union, Any, Set
+from typing import List, Dict
 
 import aqt as aqt
+import smr.consts as cts
 from anki import Collection
-from anki.utils import splitFields
+from anki.utils import splitFields, intTime
 from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindnodedto import XmindNodeDto
 from smr.smrworld import SmrWorld
-from smr.utils import deep_merge
-from smr.xmanager import get_topic_index, XManager, get_parent_question_topic, get_parent_a_topics
+from smr.xmanager import XManager
 from smr.xmindimport import XmindImporter
 from smr.xnotemanager import field_by_identifier, XNoteManager, FieldTranslator, field_from_content, meta_from_fields, \
-    content_from_field, title_from_field, image_from_field, change_dict, sort_id_from_order_number, \
-    field_content_by_identifier, get_smr_note_reference_fields
+    content_from_field, field_content_by_identifier
 from smr.xontology import XOntology
-import smr.consts as cts
 
 
 # Algorithm for synchronization was adopted from
@@ -36,7 +34,7 @@ class SmrSynchronizer:
         self.translator = FieldTranslator()
         self.xmind_files_2_update = []
         self.xmind_edges_2_update = []
-        self.anki_notes_2_update = []
+        self.edge_ids_of_notes_2_update = []
         self.xmind_nodes_2_update = []
         self.xmind_nodes_2_remove = []
         self.changed_smr_notes = {}
@@ -84,12 +82,12 @@ class SmrSynchronizer:
         self._xmind_edges_2_update = value
 
     @property
-    def anki_notes_2_update(self) -> List[SmrNoteDto]:
-        return self._anki_notes_2_update
+    def edge_ids_of_notes_2_update(self) -> List[str]:
+        return self._edge_ids_of_notes_2_update
 
-    @anki_notes_2_update.setter
-    def anki_notes_2_update(self, value: List[SmrNoteDto]):
-        self._anki_notes_2_update = value
+    @edge_ids_of_notes_2_update.setter
+    def edge_ids_of_notes_2_update(self, value: List[str]):
+        self._edge_ids_of_notes_2_update = value
 
     @property
     def changed_smr_notes(self) -> Dict[str, SmrNoteDto]:
@@ -124,11 +122,11 @@ class SmrSynchronizer:
         self._log = value
 
     @property
-    def xmind_nodes_2_remove(self) -> List[XmindNodeDto]:
+    def xmind_nodes_2_remove(self) -> List[str]:
         return self._xmind_nodes_2_remove
 
     @xmind_nodes_2_remove.setter
-    def xmind_nodes_2_remove(self, value: List[XmindNodeDto]):
+    def xmind_nodes_2_remove(self, value: List[str]):
         self._xmind_nodes_2_remove = value
 
     @property
@@ -171,17 +169,34 @@ class SmrSynchronizer:
                     self.process_local_and_remote_changes()
                 self.x_manager.save_changes()
         # process changes in smr world
-        # self.note_manager.save_col()
+        self.smr_world.add_or_replace_xmind_files(self.xmind_files_2_update)
+        self.smr_world.add_or_replace_xmind_edges(self.xmind_edges_2_update)
+        self.smr_world.add_or_replace_xmind_nodes(self.xmind_nodes_2_update)
+        self.smr_world.remove_xmind_nodes(self.xmind_nodes_2_remove)
+        smr_notes_2_update = self.smr_world.get_updated_child_smr_notes(list(self.edge_ids_of_notes_2_update))
+        self.smr_world.add_or_replace_smr_notes(list(smr_notes_2_update.values()))
+        # update smr notes affected by changes
+        changed_notes = self.smr_world.generate_notes(self.col, list(smr_notes_2_update))
+        importer = XmindImporter(col=self.col, file='', include_referenced_files=False)
+        importer.tagModified = 'yes'
+        importer.addUpdates(rows=[
+            [smr_notes_2_update[edge_id].last_modified, self.col.usn(), foreign_note.fieldsStr,
+             foreign_note.tags[0], smr_notes_2_update[edge_id].note_id, foreign_note.fieldsStr] for
+            edge_id, foreign_note in changed_notes.items()])
+        # generate cards + update field cache
+        self.col.after_note_updates(nids=[n.note_id for n in smr_notes_2_update.values()], mark_modified=False)
+        self.note_manager.save_col()
         aqt.mw.progress.finish()
 
-    # TODO: Implement this
+    # TODO: Implement this, do not forget here that we need to add smr triples in this case
     def add_answer(self, answer_content: NodeContentDto, xmind_edge: XmindNodeDto):
         print('add answer to map')
         print('add answer to ontology')
         self.log.append(
-            f"Invalid added answer: Cannot add answer {field_from_content(answer_content)} to question "
-            f"{field_from_content(xmind_edge.content)} (reference "
-            f"{get_smr_note_reference_fields(self.smr_world, [xmind_edge.node_id])[xmind_edge.node_id]}), "
+            f"Invalid added answer: Cannot add answer "
+            f"{field_from_content(content=answer_content, smr_world=self.smr_world)} to question "
+            f"{field_from_content(content=xmind_edge.content, smr_world=self.smr_world)} (reference "
+            f"{self.smr_world.get_smr_note_reference_fields([xmind_edge.node_id])[xmind_edge.node_id]}), "
             f"adding answers through anki is not yet supported. I removed the answer from the note again. Instead, "
             f"add the answer in your xmind map.")
 
@@ -237,12 +252,12 @@ class SmrSynchronizer:
                 q_id=q_id, remote=remote, status=status, a_tag=a_tag)
         return import_dict
 
-    def change_answer(self, xmind_edge: XmindNodeDto, parent_node_storids: List[int], xmind_node: XmindNodeDto,
-                      children: Dict[str, List[str]]) -> None:
+    def _change_remote_node(self, xmind_edge: XmindNodeDto, parent_node_ids: List[str], xmind_node: XmindNodeDto,
+                            children: Dict[str, List[str]]) -> None:
         """
         Changes a node's content in the xmind map and in the ontology
         :param xmind_edge: the xmind edge preceding the node to change
-        :param parent_node_storids: list of storids of parent nodes of the preceding edge
+        :param parent_node_ids: list of node ids of parent nodes of the preceding edge
         :param xmind_node: xmind node dto of the node to change
         :param children: dictionary where keys are edge_ids of edges following the node to change and values are
         lists of xmind node ids belonging to the edge's child nodes
@@ -251,8 +266,8 @@ class SmrSynchronizer:
         self.x_manager.set_node_content(node_id=xmind_node.node_id, content=xmind_node.content,
                                         media_directory=self.note_manager.media_directory, smr_world=self.smr_world)
         # Change answer in Ontology
-        self.onto.rename_node(xmind_node=xmind_node, xmind_edge=xmind_edge, parent_node_ids=parent_node_storids,
-                              children=children)
+        xmind_node.ontology_storid = self.onto.rename_node(
+            xmind_node=xmind_node, xmind_edge=xmind_edge, parent_node_ids=parent_node_ids, children=children).storid
 
     # def change_remote_as(self, status, remote, q_id, level, import_dict):
     #     for a_id in {**status, **remote}:
@@ -445,7 +460,7 @@ class SmrSynchronizer:
         self.onto.remove_node(xmind_node=xmind_node, xmind_edge=xmind_edge,
                               parent_node_ids=parent_node_ids, children={})
         # Add node to answers to remove
-        self.xmind_nodes_2_remove.append(xmind_node)
+        self.xmind_nodes_2_remove.append(xmind_node.node_id)
 
     def process_change_list(self):
         for sheet in self.change_list:
@@ -500,15 +515,16 @@ class SmrSynchronizer:
                         # change answer if content was changed
                         elif local_answer_content != answer_data['node'].content:
                             answer_data['node'].content = local_answer_content
-                            self.change_answer(xmind_edge=note_data['edge'], parent_node_storids=note_data['parents'],
-                                               xmind_node=answer_data['node'], children=answer_data['children'])
+                            self._change_remote_node(xmind_edge=note_data['edge'],
+                                                     parent_node_ids=note_data['parents'],
+                                                     xmind_node=answer_data['node'], children=answer_data['children'])
                             self.xmind_nodes_2_update.append(answer_data['node'])
                             anki_note_was_changed = True
                         # do nothing if answer has not changed
                         else:
                             continue
                 if anki_note_was_changed:
-                    self.anki_notes_2_update.append(note_data['note'])
+                    self.edge_ids_of_notes_2_update.append(note_data['note'].edge_id)
 
     def process_remote_changes(self, file):
         pass

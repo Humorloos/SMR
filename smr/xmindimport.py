@@ -5,9 +5,8 @@ import bs4
 
 import aqt as aqt
 from owlready2 import ThingClass, ObjectPropertyClass
-from anki.importing.noteimp import NoteImporter, ForeignNote, ForeignCard, ADD_MODE
+from anki.importing.noteimp import NoteImporter, ForeignNote, ADD_MODE
 from anki.models import NoteType
-from anki.utils import joinFields
 from aqt.main import AnkiQt
 from smr.consts import X_MODEL_NAME, X_MAX_ANSWERS, SMR_NOTE_FIELD_NAMES
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
@@ -22,7 +21,7 @@ from smr.smrworld import SmrWorld
 from smr.utils import get_edge_coordinates_from_parent_node
 from smr.xmanager import get_child_nodes, is_empty_node, XManager, get_non_empty_sibling_nodes, \
     get_node_title
-from smr.xnotemanager import FieldTranslator, get_smr_note_reference_fields, get_smr_note_sort_fields
+from smr.xnotemanager import FieldTranslator
 from smr.xontology import XOntology
 
 
@@ -238,7 +237,7 @@ class XmindImporter(NoteImporter):
 
     def newData(self, n: ForeignNote) -> List:
         """
-        overrides NoteImporter's method newData() to additionally call smr_world.add_smr_notes()
+        overrides NoteImporter's method newData() to additionally call smr_world.add_or_replace_smr_notes()
         :param n: the note whose data is to be processed and which is to be added to the smr world
         :return: the data needed to create a new anki note in a list
         """
@@ -282,7 +281,7 @@ class XmindImporter(NoteImporter):
             self.import_file(manager)
         self._add_entities_2_smr_world()
         # Create Notes from all edges
-        self.notes_2_import = self.generate_notes(edge_ids=self.edge_ids_2_make_notes_of)
+        self.notes_2_import = self.smr_world.generate_notes(self.col, edge_ids=self.edge_ids_2_make_notes_of)
 
     def import_file(self, x_manager: XManager):
         """
@@ -476,33 +475,6 @@ class XmindImporter(NoteImporter):
                 parent_concepts=parent_concepts, parent_edge_id=edge['id'],
                 parent_relationship_class_name=relationship_class_name, order_number=order_number)
 
-    def generate_notes(self, edge_ids) -> Dict[str, ForeignNote]:
-        """
-        Creates the Notes to add to the collection and adds them to the list of notes to be imported
-        :param edge_ids: List of xmind edge ids to create the notes from
-        :return A dictionary where keys are the edge_ids belonging to the notes and values are the foreign notes
-        created from the edge ids
-        """
-        reference_fields = get_smr_note_reference_fields(smr_world=self.smr_world, edge_ids=edge_ids)
-        question_fields = self.smr_world.get_smr_note_question_fields(edge_ids)
-        answer_fields_of_all_edges = self.smr_world.get_smr_note_answer_fields(edge_ids)
-        sort_fields = get_smr_note_sort_fields(smr_world=self.smr_world, edge_ids=edge_ids)
-        tags = self.smr_world.get_smr_note_tags(anki_collection=self.col, edge_ids=edge_ids)
-        notes = {}
-        for edge_id in edge_ids:
-            note = ForeignNote()
-            note_answer_fields = answer_fields_of_all_edges[edge_id]
-            note.fields = [reference_fields[edge_id]] + [question_fields[edge_id]] + note_answer_fields + \
-                          (X_MAX_ANSWERS - len(note_answer_fields)) * [''] + [sort_fields[edge_id]]
-            note.tags.append(tags[edge_id])
-            # add the edge id to the tags list to be able to assign the note to the right edge during import
-            note.tags.append(edge_id)
-            # note.deck = self.deck_id
-            note.cards = {i: ForeignCard() for i, _ in enumerate(note_answer_fields, start=1)}
-            note.fieldsStr = joinFields(note.fields)
-            notes[edge_id] = note
-        return notes
-
     def finish_import(self) -> None:
         """
         - Cancels the import if something went wrong
@@ -531,7 +503,7 @@ class XmindImporter(NoteImporter):
         self.col.models.save(self.model)
         self.importNotes(list(self.notes_2_import.values()))
         # Link imported notes to edges
-        self.smr_world.add_smr_notes(self.smr_notes_2_add)
+        self.smr_world.add_or_replace_smr_notes(self.smr_notes_2_add)
         # remove log entries informing about duplicate fields
         self.log = [self.log[-1]]
         # Add card ids to smr triples relation in smr world
@@ -544,15 +516,15 @@ class XmindImporter(NoteImporter):
         need to be imported to the anki collection first)
         """
         # Add all files to the smr world
-        self.smr_world.add_xmind_files(self.files_2_import)
+        self.smr_world.add_or_replace_xmind_files(self.files_2_import)
         # Add all sheets to the smr world
         self.smr_world.add_xmind_sheets(self.sheets_2_import)
         # Add all media and images to the smr world
         self.smr_world.add_xmind_media_to_anki_files(self._media_2_anki_files_2_import)
         # Add all nodes to the smr world
-        self.smr_world.add_xmind_nodes(self.nodes_2_import)
+        self.smr_world.add_or_replace_xmind_nodes(self.nodes_2_import)
         # Add all edges to the smr world
-        self.smr_world.add_xmind_edges(self.edges_2_import)
+        self.smr_world.add_or_replace_xmind_edges(self.edges_2_import)
         # Add all triples to the smr world
         self.smr_world.add_smr_triples(self.triples_2_import)
 

@@ -20,10 +20,10 @@ from smr.config import get_or_create_smr_world
 @pytest.fixture(scope="session")
 def empty_anki_collection_session() -> Collection:
     try:
-        os.unlink(os.path.join(cts.EMPTY_COLLECTION_PATH_SESSION))
+        os.unlink(os.path.join(cts.TEMPORARY_EMPTY_COLLECTION_SESSION_PATH))
     except FileNotFoundError:
         pass
-    collection = Collection(cts.EMPTY_COLLECTION_PATH_SESSION)
+    collection = Collection(cts.TEMPORARY_EMPTY_COLLECTION_SESSION_PATH)
     yield collection
     collection.close()
 
@@ -31,10 +31,10 @@ def empty_anki_collection_session() -> Collection:
 @pytest.fixture(scope="function")
 def empty_anki_collection_function() -> Collection:
     try:
-        os.unlink(os.path.join(cts.EMPTY_COLLECTION_FUNCTION_PATH))
+        os.unlink(os.path.join(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH))
     except FileNotFoundError:
         pass
-    collection = Collection(cts.EMPTY_COLLECTION_FUNCTION_PATH)
+    collection = Collection(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
     yield collection
     collection.close()
 
@@ -113,18 +113,18 @@ def smr_world_with_example_map():
 
 @pytest.fixture(scope="function")
 def collection_4_migration():
-    generate_new_file(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_version_0.0.1', 'collection.anki2'),
-                      dst=cts.EMPTY_COLLECTION_FUNCTION_PATH)
-    col = Collection(cts.EMPTY_COLLECTION_FUNCTION_PATH)
+    generate_new_file(src=cts.ORIGINAL_COLLECTION_VERSION_001_PATH,
+                      dst=cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
+    col = Collection(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
     yield col
     col.close()
 
 
 @pytest.fixture(scope="function")
 def real_collection_4_migration():
-    generate_new_file(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'real_collection_version_0.0.1', 'collection.anki2'),
-                      dst=cts.EMPTY_COLLECTION_FUNCTION_PATH)
-    col = Collection(cts.EMPTY_COLLECTION_FUNCTION_PATH)
+    generate_new_file(src=os.path.join(cts.TEST_COLLECTIONS_DIRECTORY, 'real_collection_version_0.0.1', 'collection.anki2'),
+                      dst=cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
+    col = Collection(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
     yield col
     col.close()
 
@@ -189,19 +189,19 @@ def patch_aqt_mw_empty_smr_world(mocker, set_up_empty_smr_world):
 
 @pytest.fixture
 def collection_with_example_map():
-    generate_new_file(src=cts.ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_PATH, dst=cts.EMPTY_COLLECTION_FUNCTION_PATH)
-    col = Collection(cts.EMPTY_COLLECTION_FUNCTION_PATH)
+    generate_new_file(src=cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_PATH, dst=cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
+    col = Collection(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
     yield col
     col.close()
 
 
 @pytest.fixture
 def changed_collection_with_example_map():
-    generate_new_file(src=cts.ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH,
-                      dst=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
-    generate_new_tree(src=os.path.join(cts.TEST_COLLECTIONS_PATH, 'collection_with_example_map_changes',
-                                       'collection.media'), dst=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
-    col = Collection(cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    generate_new_file(src=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH,
+                      dst=cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    generate_new_tree(src=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+                      dst=cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
+    col = Collection(cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
     yield col
     col.close()
 

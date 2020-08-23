@@ -195,7 +195,7 @@ def test_set_node_image_remove(x_manager, changed_collection_with_example_map, s
     node_image = get_node_image(tag)
     # when
     x_manager.set_node_image(tag=tag, note_image=None, node_image=node_image,
-                             media_directory=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+                             media_directory=cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
                              smr_world=smr_world_with_example_map)
     # then
     assert get_node_image(tag) is None
@@ -211,7 +211,7 @@ def test_set_node_image_add(x_manager, changed_collection_with_example_map, smr_
     expected_image = 'xap:paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg'
     # when
     x_manager.set_node_image(tag=tag, note_image=cts.NEW_IMAGE_NAME, node_image=None,
-                             media_directory=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+                             media_directory=cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
                              smr_world=smr_world_with_example_map)
     # then
     assert get_node_image(tag) == expected_image
@@ -227,7 +227,7 @@ def test_set_node_image_change(x_manager, changed_collection_with_example_map, s
     old_image = get_node_image(tag)
     # when
     x_manager.set_node_image(tag=tag, note_image=cts.NEW_IMAGE_NAME, node_image=old_image,
-                             media_directory=cts.COPY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+                             media_directory=cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
                              smr_world=smr_world_with_example_map)
     # then
     assert get_node_image(tag) == expected_image
@@ -278,7 +278,7 @@ def test_save_changes(x_manager, smr_world_with_example_map):
     # given
     new_node_content = NodeContentDto(image=cts.NEW_IMAGE_NAME, title='new node title')
     x_manager.set_node_content(node_id=cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID, content=new_node_content,
-                               media_directory=cts.TEST_COLLECTIONS_PATH, smr_world=smr_world_with_example_map)
+                               media_directory=cts.TEST_COLLECTIONS_DIRECTORY, smr_world=smr_world_with_example_map)
     # when
     x_manager.save_changes()
     # then
@@ -291,7 +291,7 @@ def test_set_node_content(x_manager, smr_world_with_example_map):
     new_node_content = NodeContentDto(image=cts.NEW_IMAGE_NAME, title='new node title')
     # when
     x_manager.set_node_content(node_id=cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID, content=new_node_content,
-                               media_directory=cts.TEST_COLLECTIONS_PATH, smr_world=smr_world_with_example_map)
+                               media_directory=cts.TEST_COLLECTIONS_DIRECTORY, smr_world=smr_world_with_example_map)
     # then
     assert smr_world_with_example_map.get_xmind_uri_from_anki_file_name(cts.NEW_IMAGE_NAME) == cts.NEW_IMAGE_NAME
     assert x_manager.get_node_content_by_id(cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID) == new_node_content

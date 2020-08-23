@@ -34,14 +34,14 @@ def main():
         content_file.write(ZipFile(cts.DEFAULT_EXAMPLE_MAP_PATH, 'r').read(cts.CONTENT_NAME))
     # Get an empty anki collection
     try:
-        os.unlink(os.path.join(cts.EMPTY_COLLECTION_FUNCTION_PATH))
+        os.unlink(os.path.join(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH))
     except FileNotFoundError:
         pass
     try:
-        shutil.rmtree(cts.EMPTY_COLLECTION_FUNCTION_MEDIA)
+        shutil.rmtree(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_MEDIA)
     except FileNotFoundError:
         pass
-    collection = Collection(cts.EMPTY_COLLECTION_FUNCTION_PATH)
+    collection = Collection(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
     add_x_model(collection)
     deck_id = collection.decks.id('testdeck')
     # Import the example map to the deck 'testdeck'
@@ -64,8 +64,8 @@ def main():
     importer.smr_world.close()
     shutil.copy(src=smr_world_path, dst=cts.ORIGINAL_SMR_WORLD_WITH_EXAMPLE_MAP_PATH)
     # save collection to collection with example map
-    save_collection(collection, collection_path=cts.ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_PATH,
-                    media_dir=cts.ORIGINAL_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
+    save_collection(collection, collection_path=cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_PATH,
+                    media_dir=cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
     # make changes to the collection
     # change fields
     collection.reopen()
@@ -83,8 +83,8 @@ def main():
                          '<img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
                          'Serotonin</li>affectsSleepformerly pain|{{{{{{{{',
             '|{|': 'biological psychology<li>investigates: information transfer and processing</li>modulated '
-                   'byenzymes&nbsp;<img src="paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg'
-                   '">|{|',
+                   'byenzymes<div><img src="paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg"><br></div>'
+                   '|{|',
             '|{|{{{|': 'biological psychology<li>investigates: information transfer and processing</li><li>modulated '
                        'by: enzymes</li><li>example: MAO</li>splits '
                        'upSerotonindopamineadrenaline|{|{{{|',
@@ -106,10 +106,10 @@ def main():
     data = [(fields, tag, sort_id) for tag, changes in collection_changes.items()
             for sort_id, fields in changes.items()]
     collection.db.executemany("UPDATE NOTES SET flds = ?, mod = mod + 1 WHERE tags = ? and sfld = ?", data)
-    collection.media.add_file(os.path.join(cts.TEST_COLLECTIONS_PATH, cts.NEW_IMAGE_NAME))
+    collection.media.add_file(os.path.join(cts.TEST_COLLECTIONS_DIRECTORY, cts.NEW_IMAGE_NAME))
     # save collection to collection with example map changes
-    save_collection(collection, media_dir=cts.ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
-                    collection_path=cts.ORIGINAL_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
+    save_collection(collection, media_dir=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
+                    collection_path=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
 
 
 def save_collection(collection, media_dir, collection_path):

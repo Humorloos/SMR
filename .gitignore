@@ -1,15 +1,18 @@
 
 /desktop.ini
 /.idea/
-/tests/support/collections/empty_smr_col_function/
-/tests/support/collections/empty_smr_col_session/
-/tests/support/collections/changed_col_with_example_map/
+/tests/support/collections/default_collection_with_example_map/
+/tests/support/collections/default_changed_collection_with_example_map/collection.media/
+/tests/support/collections/default_changed_collection_with_example_map/collection.anki2
+/tests/support/collections/temporary_empty_smr_col_function/
+/tests/support/collections/temporary_empty_smr_col_session/
+/tests/support/collections/temporary_changed_collection_with_example_map/
 /tests/support/smr_world/smr_world_for_tests.sqlite3
 /tests/support/smr_world/empty_smr_world.sqlite3
 /tests/support/smr_world/smr_world_with_example_map.sqlite3
 /tests/support/smr_world/smr_world_with_example_map.sqlite3-journal
 /tests/support/smr_world/smr_world_4_tests.sqlite3
-/tests/support/maps/temporary/
+/tests/support/maps/
 /tests/.pytest_cache/
 /tests/UI tests/.pytest_cache/
 /user_files/smrworld.sqlite3

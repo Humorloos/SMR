@@ -2,9 +2,9 @@ import pytest
 
 import tests.constants as cts
 from smr.dto.nodecontentdto import NodeContentDto
-from smr.xnotemanager import FieldTranslator, get_smr_note_reference_fields, get_smr_note_sort_fields, \
-    sort_id_from_order_number, XNoteManager, image_from_field, media_from_field, title_from_field, content_from_field, \
+from smr.xnotemanager import FieldTranslator, XNoteManager, image_from_field, media_from_field, title_from_field, content_from_field, \
     field_from_content
+from smr.smrworld import sort_id_from_order_number
 
 
 @pytest.fixture
@@ -50,35 +50,6 @@ def test_class_from_content_parentheses(field_translator):
     ontology_class = field_translator.class_from_content(content)
     # then
     assert ontology_class == expected_class
-
-
-def test_get_smr_note_reference_fields(smr_world_with_example_map):
-    # when
-    reference_fields = get_smr_note_reference_fields(
-        smr_world=smr_world_with_example_map, edge_ids=[
-            cts.PRONOUNCIATION_EDGE_XMIND_ID, '1soij3rlgbkct9eq3uo7117sa9', cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
-    # then
-    assert reference_fields == {
-        '1soij3rlgbkct9eq3uo7117sa9': 'biological psychology<li>investigates: information transfer and '
-                                      'processing</li><li>modulated by: enzymes</li><li>completely unrelated '
-                                      'animation: (media)</li>',
-        '4s27e1mvsb5jqoiuaqmnlo8m71': 'biological psychology<li>investigates: information transfer and '
-                                      'processing</li><li>requires: neurotransmitters<br><img '
-                                      'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic '
-                                      'amines</li><li><img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
-                                      'Serotonin</li>',
-        '6iivm8tpoqj2c0euaabtput14l': 'biological psychology<li>investigates: information transfer and '
-                                      'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits '
-                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>'}
-
-
-def test_get_smr_note_sort_fields(smr_world_4_tests):
-    # when
-    sort_fields = get_smr_note_sort_fields(
-        smr_world=smr_world_4_tests,
-        edge_ids=[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID])
-    # then
-    assert sort_fields == {'6iivm8tpoqj2c0euaabtput14l': '|{|{{{|\x7f{', '7ite3obkfmbcasdf12asd123ga': '||{{{'}
 
 
 def test_sort_id_from_order_number():
@@ -144,6 +115,12 @@ def test_title_from_field():
                              'src="attachments629d18n2i73im903jkrjmr98fg.png">')
     # then
     assert title == 'MAO is not a neurotransmitter'
+
+
+def test_title_from_field_with_html_tags():
+    title = title_from_field('enzymes<div><img src="paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg"><br></div>')
+    # then
+    assert title == "enzymes"
 
 
 def test_content_from_field(smr_world_with_example_map):

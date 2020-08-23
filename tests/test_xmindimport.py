@@ -1,9 +1,10 @@
 import pickle
-import aqt
+
 import pytest
 from assertpy import assert_that
 from bs4 import Tag
 
+import aqt
 import tests.constants as cts
 from smr.consts import X_MAX_ANSWERS, X_MODEL_NAME
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
@@ -141,7 +142,7 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
             cut.active_manager.get_node_content(parent_edge)), order_number=5)
     # then
     assert cut.import_triple.call_count == 0
-    assert cut._smr_world.add_xmind_nodes.call_count == 0
+    assert cut._smr_world.add_or_replace_xmind_nodes.call_count == 0
     assert cut.import_edge.call_count == 1
     assert cut._smr_world.add_images_and_media_to_collection_and_self.call_count == 0
 
@@ -178,7 +179,6 @@ def xmind_importer_import_edge(active_xmind_importer, mocker):
     mocker.patch.object(importer, "_mw")
     mocker.patch.object(importer, "import_node_if_concept")
     mocker.patch.object(importer, "add_image_and_media_to_collection")
-    mocker.patch.object(importer, "generate_notes")
     return importer
 
 
@@ -186,7 +186,7 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     # given
     cut = xmind_importer_import_edge
     # when
-    cut.import_edge(order_number=1, edge=cut._active_manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID), parent_node_ids=[
+    cut.import_edge(order_number=1, edge=cut._active_manager.get_tag_by_id(cts.TYPES_EDGE_ID), parent_node_ids=[
         cts.NEUROTRANSMITTERS_XMIND_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
     # then
     assert cut.onto.concept_from_node_content.call_count == 1
@@ -200,7 +200,6 @@ def assert_import_edge_not_executed(cut):
     assert cut.smr_world.add_xmind_edge.call_count == 0
     assert cut.import_node_if_concept.call_count == 0
     assert cut.is_running is False
-    assert cut.generate_notes.call_count == 0
     assert cut.add_image_and_media_to_collection.call_count == 0
 
 
@@ -210,7 +209,7 @@ def test_import_edge_no_child_nodes(xmind_importer_import_edge, x_ontology, mock
     mocker.patch("smr.xmindimport.get_child_nodes", return_value=[])
     mocker.patch("smr.xmindimport.get_edge_coordinates_from_parent_node", return_value='coordinates')
     # when
-    cut.import_edge(order_number=1, edge=cut._active_manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID), parent_node_ids=[
+    cut.import_edge(order_number=1, edge=cut._active_manager.get_tag_by_id(cts.TYPES_EDGE_ID), parent_node_ids=[
         cts.NEUROTRANSMITTERS_XMIND_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
     # then
     assert_import_edge_not_executed(cut)
@@ -225,7 +224,7 @@ def test_import_edge_too_many_child_nodes(xmind_importer_import_edge, x_ontology
     mocker.patch("smr.xmindimport.get_child_nodes", return_value=[Tag(name='tag')] * (X_MAX_ANSWERS + 1))
     mocker.patch("smr.xmindimport.is_empty_node", return_value=False)
     # when
-    cut.import_edge(order_number=1, edge=cut._active_manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID), parent_node_ids=[
+    cut.import_edge(order_number=1, edge=cut._active_manager.get_tag_by_id(cts.TYPES_EDGE_ID), parent_node_ids=[
         cts.NEUROTRANSMITTERS_XMIND_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
     # then
     assert_import_edge_not_executed(cut)
@@ -268,22 +267,6 @@ def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     assert len(cut.edges_2_import) == 1
 
 
-def test_generate_notes(active_xmind_importer, smr_world_4_tests, collection_4_migration):
-    # given
-    cut = active_xmind_importer
-    cut.col = collection_4_migration
-    cut._smr_world = smr_world_4_tests
-    # when
-    notes = cut.generate_notes([cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
-    # then
-    imported_note = notes[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
-    assert imported_note.fieldsStr == 'biological psychology<li>investigates: information transfer and ' \
-                                      'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits ' \
-                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>arebiogenic ' \
-                                      'amines|{|{{{|{'
-    assert imported_note.tags == [' Example::test_file::test_sheet ', cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
-
-
 def test_finish_import(active_xmind_importer, smr_world_4_tests, mocker, collection_4_migration):
     # given
     cut = active_xmind_importer
@@ -293,9 +276,9 @@ def test_finish_import(active_xmind_importer, smr_world_4_tests, mocker, collect
     cut.deck_id = 1
     mocker.patch.object(cut, "import_notes_and_cards")
     cut.col = collection_4_migration
-    cut.notes_2_import = cut.generate_notes(
-        [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_XMIND_ID,
-         cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID])
+    cut.notes_2_import = smr_world_4_tests.generate_notes(
+        cut.col, [cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.PRONOUNCIATION_EDGE_ID,
+                  cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID])
     # when
     cut.finish_import()
     # then

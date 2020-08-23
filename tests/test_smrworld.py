@@ -3,11 +3,12 @@ from sqlite3 import IntegrityError, OperationalError
 import pytest
 from assertpy import assert_that
 
-import tests.constants as cts
+from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.smrtripledto import SmrTripleDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindnodedto import XmindNodeDto
 from smr.dto.xmindsheetdto import XmindSheetDto
+from tests import constants as cts
 
 
 def test_set_up(empty_smr_world, empty_anki_collection_session):
@@ -27,16 +28,28 @@ def test_set_up(empty_smr_world, empty_anki_collection_session):
     assert smrworld_databases == expected_databases
 
 
-def test_add_xmind_files(smr_world_4_tests, x_manager):
+def test_add_or_replace_xmind_files(smr_world_4_tests, x_manager):
     expected_entry = (cts.RESOURCES_PATH, cts.EXAMPLE_MAP_NAME, 1595671089759, 1595687290.0, cts.TEST_DECK_ID)
     # given
     cut = smr_world_4_tests
     # when
-    cut.add_xmind_files([XmindFileDto(
+    cut.add_or_replace_xmind_files([XmindFileDto(
         directory=cts.RESOURCES_PATH, file_name=cts.EXAMPLE_MAP_NAME, map_last_modified=1595671089759,
         file_last_modified=1595687290.0, deck_id=cts.TEST_DECK_ID)])
     # then
     assert list(cut.graph.execute("SELECT * FROM main.xmind_files").fetchall())[1] == expected_entry
+
+
+def test_add_or_replace_xmind_files_replace(smr_world_4_tests, x_manager):
+    # given
+    cut = smr_world_4_tests
+    xmind_file = cts.TEST_XMIND_FILE
+    mod = 50.0
+    xmind_file.file_last_modified = mod
+    # when
+    cut.add_or_replace_xmind_files([xmind_file])
+    # then
+    assert cut.get_xmind_files_in_decks()[cts.TEST_DECK_ID][0].file_last_modified == mod
 
 
 @pytest.fixture
@@ -86,7 +99,7 @@ def test_add_xmind_sheet_wrong_path(smr_world_4_tests, x_manager_absent_file):
             sheet_id=cts.TEST_SHEET_ID, file_directory=directory, file_name=file_name, last_modified=12345)])
 
 
-def test_add_xmind_nodes(smr_world_4_tests, x_manager):
+def test_add_or_replace_xmind_nodes(smr_world_4_tests, x_manager):
     # given
     # noinspection PyTypeChecker
     expected_entry = XmindNodeDto(node_id=cts.NEUROTRANSMITTERS_XMIND_ID, title='neurotransmitters',
@@ -96,7 +109,7 @@ def test_add_xmind_nodes(smr_world_4_tests, x_manager):
                           cts.NEUROTRANSMITTERS_NODE_CONTENT)
 
 
-def test_add_xmind_nodes_with_media_hyperlink(smr_world_4_tests, x_manager):
+def test_add_or_replace_xmind_nodes_with_media_hyperlink(smr_world_4_tests, x_manager):
     # given
     # noinspection PyTypeChecker
     expected_entry = XmindNodeDto(node_id=cts.MEDIA_HYPERLINK_XMIND_ID, title='',
@@ -106,11 +119,27 @@ def test_add_xmind_nodes_with_media_hyperlink(smr_world_4_tests, x_manager):
                           cts.MEDIA_HYPERLINK_NODE_CONTENT)
 
 
+def test_add_or_replace_xmind_nodes_replace(smr_world_4_tests, x_manager):
+    # given
+    node = cts.TEST_XMIND_NODE
+    new_title = 'different title'
+    node.content = NodeContentDto(image=cts.TEST_EDGE_IMAGE, media=cts.TEST_EDGE_MEDIA, title=new_title)
+    cut = smr_world_4_tests
+    # when
+    cut.add_or_replace_xmind_nodes([node])
+    # then
+    new_entry = XmindNodeDto(*cut.graph.execute(
+        f"select * from xmind_nodes where node_id = '{node.node_id}'").fetchone())
+    assert new_entry.image == cts.TEST_EDGE_IMAGE
+    assert new_entry.link == cts.TEST_EDGE_MEDIA
+    assert new_entry.title == new_title
+
+
 def verify_add_xmind_node(expected_entry, cut, x_manager, tag_id, node_content):
     # given
     node = x_manager.get_tag_by_id(tag_id)
     # when
-    cut.add_xmind_nodes([XmindNodeDto(
+    cut.add_or_replace_xmind_nodes([XmindNodeDto(
         node_id=node['id'], sheet_id=cts.TEST_SHEET_ID, title=node_content.title, image=node_content.image,
         link=node_content.media, ontology_storid=cts.TEST_CONCEPT_STORID, last_modified=node['timestamp'],
         order_number=1)])
@@ -123,23 +152,39 @@ def verify_add_xmind_node(expected_entry, cut, x_manager, tag_id, node_content):
     assert xmind_node.link == expected_entry.link
 
 
-def test_add_xmind_edges(smr_world_4_tests, x_manager):
+def test_add_or_replace_xmind_edges(smr_world_4_tests, x_manager):
     # given
-    expected_entry = (cts.TYPES_EDGE_XMIND_ID, cts.TEST_SHEET_ID, 'types', None, None, cts.TEST_RELATION_STORID,
+    expected_entry = (cts.TYPES_EDGE_ID, cts.TEST_SHEET_ID, 'types', None, None, cts.TEST_RELATION_STORID,
                       1573032291149, 1)
     manager = x_manager
-    edge = manager.get_tag_by_id(cts.TYPES_EDGE_XMIND_ID)
+    edge = manager.get_tag_by_id(cts.TYPES_EDGE_ID)
     edge_content = manager.get_node_content(edge)
     cut = smr_world_4_tests
     # when
-    cut.add_xmind_edges([XmindNodeDto(
+    cut.add_or_replace_xmind_edges([XmindNodeDto(
         node_id=edge['id'], sheet_id=cts.TEST_SHEET_ID,
         title=edge_content.title, image=edge_content.image, link=edge_content.media,
         ontology_storid=cts.TEST_RELATION_STORID, last_modified=edge['timestamp'], order_number=1)])
     # then
     assert list(cut.graph.execute(
-        "SELECT * FROM main.xmind_edges WHERE edge_id = '{}'".format(cts.TYPES_EDGE_XMIND_ID)).fetchall())[
+        "SELECT * FROM main.xmind_edges WHERE edge_id = '{}'".format(cts.TYPES_EDGE_ID)).fetchall())[
                0] == expected_entry
+
+
+def test_add_or_replace_xmind_edges_replace(smr_world_4_tests, x_manager):
+    # given
+    xmind_edge = cts.TEST_XMIND_EDGE
+    new_title = 'different title'
+    xmind_edge.content = NodeContentDto(image=cts.TEST_NODE_IMAGE, media=cts.TEST_NODE_MEDIA, title=new_title)
+    cut = smr_world_4_tests
+    # when
+    cut.add_or_replace_xmind_edges([xmind_edge])
+    # then
+    new_entry = XmindNodeDto(*cut.graph.execute(
+        f"select * from xmind_edges where edge_id = '{xmind_edge.node_id}'").fetchone())
+    assert new_entry.image == cts.TEST_NODE_IMAGE
+    assert new_entry.link == cts.TEST_NODE_MEDIA
+    assert new_entry.title == new_title
 
 
 def test_add_smr_triples(smr_world_4_tests):
@@ -156,37 +201,13 @@ def test_add_smr_triples(smr_world_4_tests):
         test_edge_id)).fetchall())[0] == expected_entry
 
 
-def test_get_smr_note_references(smr_world_with_example_map):
-    # when
-    reference = smr_world_with_example_map.get_smr_note_references([
-        cts.PRONOUNCIATION_EDGE_XMIND_ID, cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID,
-        '0eaob1gla0j1qriki94n2os9oe', '1soij3rlgbkct9eq3uo7117sa9'])
-    # then
-    assert reference == {
-        '0eaob1gla0j1qriki94n2os9oe': 'biological psychology<li>investigates: information transfer and '
-                                      'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits '
-                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li><li>are: biogenic '
-                                      'amines</li>',
-        '1soij3rlgbkct9eq3uo7117sa9': 'biological psychology<li>investigates: information transfer and '
-                                      'processing</li><li>modulated by: enzymes</li><li>completely unrelated '
-                                      'animation: [sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]</li>',
-        '4s27e1mvsb5jqoiuaqmnlo8m71': 'biological psychology<li>investigates: information transfer and '
-                                      'processing</li><li>requires: neurotransmitters<br><img '
-                                      'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic '
-                                      'amines</li><li><img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
-                                      'Serotonin</li>',
-        '6iivm8tpoqj2c0euaabtput14l': 'biological psychology<li>investigates: information transfer and '
-                                      'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits '
-                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>'}
-
-
 def test_get_smr_note_question_fields(smr_world_4_tests):
     # when
     question_fields = smr_world_4_tests.get_smr_note_question_fields(
-        [cts.EDGE_WITH_MEDIA_XMIND_ID, "08eq1rdricsp1nt1b7aa181sq4"])
+        [cts.EDGE_WITH_MEDIA_XMIND_ID, cts.EXAMPLE_IMAGE_EDGE_ID])
     # then
     assert question_fields == {
-        '08eq1rdricsp1nt1b7aa181sq4': '<img src="attachments09r2e442o8lppjfeblf7il2rmd.png">',
+        cts.EXAMPLE_IMAGE_EDGE_ID: '<img src="attachments09r2e442o8lppjfeblf7il2rmd.png">',
         '7ite3obkfmbcasdf12asd123ga': 'some media edge title<br>[sound:somemedia.mp3]'}
 
 
@@ -199,14 +220,6 @@ def test_get_smr_note_answer_fields(smr_world_4_tests):
         '4vfsmbd1fmn6s0tqmlj4cei7pe': ['[sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]'],
         '61irckf1nloq42brfmbu0ke92v': ['Serotonin', 'dopamine', 'adrenaline', 'noradrenaline'],
         '730ahk5oc4himfrdvkqc5ci1o2': ['neurotransmitters<br><img src="attachments629d18n2i73im903jkrjmr98fg.png">']})
-
-
-def test_get_smr_notes_sort_data(smr_world_4_tests):
-    # when
-    sort_field_data = smr_world_4_tests.get_smr_notes_sort_data([
-        cts.PRONOUNCIATION_EDGE_XMIND_ID, cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
-    # then
-    assert sort_field_data == {'4s27e1mvsb5jqoiuaqmnlo8m71': '211111112', '6iivm8tpoqj2c0euaabtput14l': '212111251'}
 
 
 def test_update_smr_triples_card_ids(smr_world_4_tests, collection_4_migration):
@@ -286,6 +299,68 @@ def test_storid_from_node_id(ontology_with_example_map):
 
 def test_storid_from_edge_id(ontology_with_example_map):
     # when
-    storid = ontology_with_example_map.smr_world.storid_from_edge_id(cts.TYPES_EDGE_XMIND_ID)
+    storid = ontology_with_example_map.smr_world.storid_from_edge_id(cts.TYPES_EDGE_ID)
     # then
     assert ontology_with_example_map.get(storid) == ontology_with_example_map.types_xrelation
+
+
+def test_remove_xmind_nodes(smr_world_4_tests):
+    # given
+    cut = smr_world_4_tests
+    # when
+    cut.remove_xmind_nodes([cts.TEST_CONCEPT_NODE_ID, cts.TEST_CONCEPT_2_NODE_ID])
+    # then
+    remaining_node_ids = [e[0] for e in cut.graph.execute("select node_id from xmind_nodes").fetchall()]
+    assert cts.TEST_CONCEPT_NODE_ID not in remaining_node_ids
+    assert cts.TEST_CONCEPT_2_NODE_ID not in remaining_node_ids
+
+
+def test_get_smr_note_reference_fields(smr_world_with_example_map):
+    # given
+    cut = smr_world_with_example_map
+    # when
+    reference_fields = cut.get_smr_note_reference_fields(edge_ids=[
+        cts.PRONOUNCIATION_EDGE_ID, '1soij3rlgbkct9eq3uo7117sa9', cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
+    # then
+    assert reference_fields == {
+        '1soij3rlgbkct9eq3uo7117sa9': 'biological psychology<li>investigates: information transfer and '
+                                      'processing</li><li>modulated by: enzymes</li><li>completely unrelated '
+                                      'animation: (media)</li>',
+        '4s27e1mvsb5jqoiuaqmnlo8m71': 'biological psychology<li>investigates: information transfer and '
+                                      'processing</li><li>requires: neurotransmitters<br><img '
+                                      'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic '
+                                      'amines</li><li><img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
+                                      'Serotonin</li>',
+        '6iivm8tpoqj2c0euaabtput14l': 'biological psychology<li>investigates: information transfer and '
+                                      'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits '
+                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>'}
+
+
+def test_get_smr_note_sort_fields(smr_world_4_tests):
+    # when
+    sort_fields = smr_world_4_tests.get_smr_note_sort_fields(
+        edge_ids=[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID])
+    # then
+    assert sort_fields == {'6iivm8tpoqj2c0euaabtput14l': '|{|{{{|\x7f{', '7ite3obkfmbcasdf12asd123ga': '||{{{'}
+
+
+def test_get_updated_child_smr_notes(smr_world_with_example_map):
+    # when
+    child_notes = smr_world_with_example_map.get_updated_child_smr_notes([cts.EXAMPLE_IMAGE_EDGE_ID])
+    # then
+    assert list(child_notes) == [cts.EXAMPLE_IMAGE_EDGE_ID, '4lrqok8ac9hec8u2c2ul4mpo4k', cts.PRONOUNCIATION_EDGE_ID,
+                                 '077tf3ovn4gc1j1dqte7or33fl']
+
+
+def test_generate_notes(smr_world_4_tests, collection_4_migration):
+    # given
+    cut = smr_world_4_tests
+    # when
+    notes = cut.generate_notes(col=collection_4_migration, edge_ids=[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
+    # then
+    imported_note = notes[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
+    assert imported_note.fieldsStr == 'biological psychology<li>investigates: information transfer and ' \
+                                      'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits ' \
+                                      'up: Serotonin, dopamine, adrenaline, noradrenaline</li>arebiogenic ' \
+                                      'amines|{|{{{|{'
+    assert imported_note.tags == [' Example::test_file::test_sheet ', cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
