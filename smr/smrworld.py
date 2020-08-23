@@ -201,6 +201,17 @@ WHERE iri LIKE '%Parent'""").fetchone()[0]
                 files_in_decks[xmind_file.deck_id] = [xmind_file]
         return files_in_decks
 
+    def get_xmind_sheets_in_file(self, file_directory: str, file_name: str) -> List[XmindSheetDto]:
+        """
+        Gets a list of all xmind sheets in the specified file
+        :param file_directory: directory of the file to get the sheets of
+        :param file_name: name of the file to get the sheets of
+        :return: the sheets as a list of xmind sheet dtos
+        """
+        return [XmindSheetDto(*row) for row in self.graph.execute(
+            "SELECT * FROM xmind_sheets where file_directory = ? and file_name = ?", (
+                file_directory, file_name)).fetchall()]
+
     def get_changed_smr_notes(self, collection: Collection) -> Dict[str, Dict[str, Dict[str, Dict[str, Union[
         SmrNoteDto, Dict[str, Union[XmindNodeDto, Set[int]]], str, Dict[int, Union[NodeContentDto, Any]]]]]]]:
         """

@@ -364,3 +364,11 @@ def test_generate_notes(smr_world_4_tests, collection_4_migration):
                                       'up: Serotonin, dopamine, adrenaline, noradrenaline</li>arebiogenic ' \
                                       'amines|{|{{{|{'
     assert imported_note.tags == [' Example::test_file::test_sheet ', cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
+
+
+def test_get_xmind_sheets_in_file(smr_world_with_example_map):
+    # when
+    sheets = smr_world_with_example_map.get_xmind_sheets_in_file(file_directory=cts.DIRECTORY_MAPS_TEMPORARY,
+                                                                 file_name=cts.NAME_EXAMPLE_MAP)
+    # then
+    assert [s.name for s in sheets] == ['biological psychology', 'clinical psychology']

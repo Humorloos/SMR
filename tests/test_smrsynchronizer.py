@@ -1,9 +1,12 @@
+import os
+
 import pytest
 
 import aqt
 import tests.constants as cts
 from anki import Collection
 from conftest import generate_new_file
+import smr.smrsynchronizer
 from smr.dto.nodecontentdto import NodeContentDto
 from smr.smrsynchronizer import SmrSynchronizer
 from smr.smrworld import SmrWorld
@@ -122,3 +125,21 @@ def test_synchronize_center_node_removed_error(mocker, smr_world_with_example_ma
         "and sfld = '|'") == [
                'biological psychology\x1finvestigates\x1finformation transfer and '
                'processing\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f|']
+
+
+def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collection_with_example_map):
+    # given
+    generate_new_file(cts.PATH_EXAMPLE_MAP_CHANGED, cts.PATH_EXAMPLE_MAP_TEMPORARY)
+    generate_new_file(cts.PATH_MAP_GENERAL_PSYCHOLOGY_CHANGED, cts.PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY)
+    generate_new_file(cts.PATH_HYPERLINK_MEDIA_CHANGED, cts.PATH_HYPERLINK_MEDIA_TEMPORARY)
+    generate_new_file(cts.PATH_MAP_NEW_PSYCHOLOGY, os.path.join(cts.DIRECTORY_MAPS_TEMPORARY,
+                                                                cts.NAME_NEW_PSYCHOLOGY + '.xmind'))
+    mocker.patch('aqt.mw')
+    aqt.mw.smr_world = smr_world_with_example_map
+    aqt.mw.col = collection_with_example_map
+    aqt.mw.return_value = aqt.mw
+    cut = smr.smrsynchronizer.SmrSynchronizer()
+    # when
+    cut.synchronize()
+    # then
+    assert False

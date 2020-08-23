@@ -153,11 +153,11 @@ class SmrSynchronizer:
                 self.x_manager = XManager(xmind_file)
                 remote_change = False
                 if xmind_file.file_last_modified != self.x_manager.file_last_modified:
+                    xmind_file.file_last_modified = self.x_manager.file_last_modified
                     if xmind_file.map_last_modified != self.x_manager.map_last_modified:
                         remote_change = True
-                    else:
-                        xmind_file.file_last_modified = self.x_manager.file_last_modified
-                        self.xmind_files_2_update.append(xmind_file)
+                        xmind_file.map_last_modified = self.x_manager.map_last_modified
+                    self.xmind_files_2_update.append(xmind_file)
                 local_change = xmind_file.file_path in self.changed_smr_notes
                 if not local_change and not remote_change:
                     continue
@@ -527,8 +527,12 @@ map and then synchronize.""")
                     self.edge_ids_of_notes_2_update.append(note_data['note'].edge_id)
 
     def _process_remote_changes(self, file):
-        pass
-        # for sheet in {**remote, **status}:
+        # sheets_status = self.smr_world.get_xmind_sheets_in_file(file_directory=file.directory, file_name=file.file_name)
+        # sheet_ids_status = [sheet.sheet_id for sheet in sheets_status]
+        # sheet_ids_remote = [
+        #     self.x_manager.sheets[sheet_name]['tag']['id'] for sheet_name in self.x_manager.content_sheets]
+        # for sheet_id in set(sheet_ids_status + sheet_ids_remote):
+        assert False
         #     if sheet not in status:
         #         importer = XmindImporter(self.note_manager.col,
         #                                  self.map_manager.file)
