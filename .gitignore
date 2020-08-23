@@ -16,6 +16,9 @@
 /tests/support/smr_world/smr_world_with_example_map.sqlite3
 /tests/support/smr_world/smr_world_with_example_map.sqlite3-journal
 /tests/support/smr_world/smr_world_4_tests.sqlite3
+/tests/support/maps/no_changes/
+/tests/support/maps/temporary/
+/tests/support/maps/content.xml
 /tests/.pytest_cache/
 /tests/UI tests/.pytest_cache/
 /user_files/smrworld.sqlite3
