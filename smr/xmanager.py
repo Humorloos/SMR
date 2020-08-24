@@ -236,7 +236,7 @@ class XManager:
         if not self._sheets:
             sheets = {}
             for sheet in self.soup('sheet'):
-                sheets[sheet('title', recursive=False)[0].text] = {'tag': sheet, 'nodes': sheet('topic')}
+                sheets[sheet['id']] = {'tag': sheet, 'nodes': sheet('topic')}
             self.sheets = sheets
         return self._sheets
 
@@ -350,13 +350,21 @@ class XManager:
         node = self.get_tag_by_id(node_id)
         return self.get_node_content(node)
 
-    def get_sheet_id(self, sheet: str):
+    def get_sheet_name(self, sheet_id: str) -> str:
         """
-        Gets the xmind sheet id for the specified sheet
-        :param sheet: the name of the sheet to get the id for
-        :return: the sheet's id
+        Gets the title of the sheet with the specified xmind sheet id
+        :param sheet_id: xmind id of the sheet to get the name of
+        :return: the name of the sheet
         """
-        return self.sheets[sheet]['tag']['id']
+        return self.sheets[sheet_id]['tag']('title', recursive=False)[0].text
+
+    def get_sheet_last_modified(self, sheet_id: str) -> int:
+        """
+        Gets the internally saved timestamp of the last time the sheet with the provided name was modified
+        :param sheet_id: xmind sheet id of the sheet to get the timestamp for
+        :return: the timestamp (integer)
+        """
+        return int(self.sheets[sheet_id]['tag']['timestamp'])
 
     def read_attachment(self, attachment_uri: str) -> bytes:
         """
@@ -418,29 +426,21 @@ class XManager:
     #                         'x_id': a['crosslink']['id']}
     #     return remote_questions
 
-    def get_remote_sheets(self):
-        content_keys = self.get_content_sheets()
-        content_sheets = [self.sheets[s] for s in content_keys]
-        sheets = dict()
-        for s in content_sheets:
-            sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
-        return sheets
+    # def get_remote_sheets(self):
+    #     content_keys = self.get_content_sheets()
+    #     content_sheets = [self.sheets[s] for s in content_keys]
+    #     sheets = dict()
+    #     for s in content_sheets:
+    #         sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
+    #     return sheets
 
-    def get_sheet_last_modified(self, sheet: str) -> int:
-        """
-        Gets the internally saved timestamp of the last time the sheet with the provided name was modified
-        :param sheet: name of the sheet to get the timestamp for
-        :return: the timestamp (integer)
-        """
-        return int(self.sheets[sheet]['tag']['timestamp'])
-
-    def get_root_node(self, sheet: str):
+    def get_root_node(self, sheet_id: str) -> Tag:
         """
         Returns the root topic of the specified sheet
-        :param sheet: the sheet to get the root topic for
+        :param sheet_id: the sheet id of the sheet to get the root topic for
         :return: the tag representing the root node
         """
-        return self.sheets[sheet]['tag'].topic
+        return self.sheets[sheet_id]['tag'].topic
 
     def remove_node(self, node_id: str):
         """

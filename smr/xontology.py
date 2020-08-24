@@ -12,7 +12,7 @@ from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.xmindnodedto import XmindNodeDto
 from smr.smrworld import SmrWorld
 from smr.utils import file_dict
-from smr.xnotemanager import FieldTranslator
+from smr.fieldtranslator import FieldTranslator
 
 
 def get_question_sets(q_id_elements):
@@ -41,25 +41,22 @@ def get_question_sets(q_id_elements):
     return questionList
 
 
-def remove_question(question_elements, q_id):
-    answers = set(t['o'] for t in question_elements)
-    parents = set(t['s'] for t in question_elements)
-    remove_relations(answers=answers, parents=parents,
-                     question_triples=question_elements)
-    for answer in answers:
-        remove_concept(concept_storid=answer, q_id=q_id)
+# def remove_question(question_elements, q_id):
+#     answers = set(t['o'] for t in question_elements)
+#     parents = set(t['s'] for t in question_elements)
+#     remove_relations(answers=answers, parents=parents,
+#                      question_triples=question_elements)
+#     for answer in answers:
+#         remove_concept(concept_storid=answer, q_id=q_id)
 
 
 class XOntology(Ontology):
-    CHILD_CLASS_NAME = 'Child'
 
     def __init__(self, deck_id: int, smr_world: SmrWorld):
         self.smr_world = smr_world
         self.deck_id = deck_id
         self.field_translator = None
-        # set base_iri eagerly because checking whether base iri is initiated via if not self._base_iri is not
-        # possible for an ontology because _base_iri would be considered an Ontology object
-        self.base_iri = os.path.join(USER_PATH, str(self.deck_id) + '#')
+        self.base_iri = None
         Ontology.__init__(self, world=self.smr_world, base_iri=self.base_iri)
         # set up classes and register ontology only if the ontology has not been set up before
         try:
@@ -85,14 +82,6 @@ class XOntology(Ontology):
         self._deck_id = value
 
     @property
-    def base_iri(self) -> str:
-        return self._base_iri
-
-    @base_iri.setter
-    def base_iri(self, value: str):
-        self._base_iri = value
-
-    @property
     def field_translator(self) -> FieldTranslator:
         if not self._field_translator:
             self.field_translator = FieldTranslator()
@@ -101,6 +90,16 @@ class XOntology(Ontology):
     @field_translator.setter
     def field_translator(self, value: FieldTranslator):
         self._field_translator = value
+
+    @property
+    def base_iri(self) -> str:
+        if self._base_iri is None:
+            self.base_iri = os.path.join(USER_PATH, str(self.deck_id) + '#')
+        return self._base_iri
+
+    @base_iri.setter
+    def base_iri(self, value: str):
+        self._base_iri = value
 
     def get(self, storid: int) -> Union[ObjectPropertyClass, ThingClass]:
         """
@@ -160,10 +159,10 @@ class XOntology(Ontology):
         new_children = current_children + [child_thing]
         setattr(parent_thing, relationship_class_name, new_children)
         self.XmindId[parent_thing, getattr(self, relationship_class_name), child_thing].append(edge_id)
-        current_parents = getattr(child_thing, 'Parent')
+        current_parents = getattr(child_thing, self.smr_world.parent_relation_name)
         new_parents = current_parents + [parent_thing]
-        setattr(child_thing, 'Parent', new_parents)
-        self.XmindId[child_thing, self.Parent, parent_thing].append(edge_id)
+        setattr(child_thing, self.smr_world.parent_relation_name, new_parents)
+        self.XmindId[child_thing, getattr(self, self.smr_world.parent_relation_name), parent_thing].append(edge_id)
 
     def concept_from_node_content(self, node_content: NodeContentDto, node_id: str,
                                   node_is_root: bool = False) -> ThingClass:
@@ -208,9 +207,9 @@ class XOntology(Ontology):
          - if there are more nodes left belonging to the concept, removes the relations between parent and child
          nodes and specified node
          - if there are no more nodes left belonging to the concept, destroys the concept
+        :param parent_node_ids: list of node ids belonging to the parent nodes of the edge preceding the node to remove
         :param xmind_node: xmind node dto belonging to the node to be deleted
         :param xmind_edge: xmind node dto belonging to the parent edge of the node to be deleted
-        :param parent_node_ids: list of node ids belonging to the parent nodes of the edge preceding the node to remove
         :param children: dictionary where keys are edge_ids of edges following the node to remove and values are
         dictionaries containing the edge's storid and a list of storids belonging to the edge's child nodes
         parent nodes of the node to be deleted
@@ -303,282 +302,30 @@ class XOntology(Ontology):
                 if not relation_triples:
                     getattr(parent, relation_name).remove(child)
                 # Remove edge from edge list for parent relation
-                parent_triples = self.XmindId[child, self.Parent, parent]
+                parent_triples = self.XmindId[child, self.smrparent_xrelation, parent]
                 parent_triples.remove(edge_id)
                 # If edge list has become empty remove parent relation
                 if not parent_triples:
-                    child.Parent.remove(parent)
+                    child.smrparent_xrelation.remove(parent)
 
-    def relation_from_triple(self, parent: ThingClass, relation_name: str, child: ThingClass):
+    def remove_sheet(self, sheet_id: str, root_node_id: str) -> None:
         """
-        Creates a new relation between the child and the parent with the
-        given name and the attributes of the relation described in
-        question_triple
-        :param child: Object concept (answer)
-        :param relation_name: Name of the relation to add (question name)
-        :param parent: Subject concept (parent to question)
+        Removes all nodes and the relations associated to the nodes belonging to the specified sheet from the ontology
+        :param sheet_id: the xmind id of the sheet to remove the nodes for
+        :param root_node_id: the xmind node id of the root node of the sheet
         """
-        self.add_relation(
-            child_thing=child, relationship_class_name=relation_name, parent_thing=parent,
-            rel_dict=self.rel_dict_from_triple(question_triple=question_triple))
-
-    def get_answer_by_a_id(self, a_id, q_id):
-        return self.search(Xid='*"' + q_id + '": {"src": "' + a_id + '*')[0]
-
-    def get_all_parent_triples(self):
-        return [t for t in self.get_triples() if t[1] == self.Parent.storid]
-
-    def getChildQuestionIds(self, childElements):
-        children = {'childQuestions': set(), 'bridges': list()}
-        for elements in childElements:
-            if elements['p'].name != 'Child':
-                children['childQuestions'].add(self.get_trpl_x_id(elements))
-            else:
-                nextChildElements = self.get_child_elements(
-                    elements['o'].storid)
-                bridge = {'objectTitle': elements['s'].name}
-                bridge.update(self.getChildQuestionIds(nextChildElements))
-                children['bridges'].append(bridge)
-        children['childQuestions'] = list(children['childQuestions'])
-        return children
-
-    def get_child_elements(self, s_storid):
-        nextChildTriples = self.getChildTriples(s=s_storid)
-        nextChildElements = [
-            self.getElements(t) for t in nextChildTriples]
-        return nextChildElements
-
-    def getChildTriples(self, s):
-        questionStorids = [p.storid for p in self.object_properties() if
-                           p.name != 'Parent']
-        return [t for t in self.get_triples(s=s) if t[1] in questionStorids]
-
-    def getElements(self, triple):
-        elements = [self.world._get_by_storid(s) for s in triple]
-        return {'s': elements[0], 'p': elements[1], 'o': elements[2]}
-
-    def getFiles(self, elements):
-        files = [self.get_trpl_image(elements), self.get_trpl_media(elements)]
-        return [None if not f else file_dict(
-            identifier=f, doc=self.get_trpl_doc(elements)) for f in files]
-
-    def get_inverse(self, x_id):
-        triples = self.get_all_parent_triples()
-        elements = [self.getElements(t) for t in triples]
-        inverse_elements = [e for e in elements if
-                            self.get_trpl_x_id(e) == x_id]
-        return inverse_elements
-
-    def getNoteTag(self, elements):
-        return self.NoteTag[elements['s'], elements['p'], elements['o']][0]
-
-    def getParentQuestionIds(self, parentElements):
-        parents = {'parentQuestions': set(), 'bridges': list()}
-        for elements in parentElements:
-            # Add id of question to set if parent is a normal question
-            if elements['p'].name != 'Child':
-                parents['parentQuestions'].add(self.get_trpl_x_id(elements))
-            # If parent is a bridge, add a dictionary titled by the answer
-            # containing parents of the bridge
-            else:
-                nextParentTriples = self.getParentTriples(o=elements[
-                    's'].storid)
-                nextParentElements = [
-                    self.getElements(t) for t in nextParentTriples]
-                # Named dictionary is necessary to understand map structure
-                # in case of bridges following bridges
-                bridge = {'subjectTitle': elements['o'].name}
-                bridge.update(self.getChildQuestionIds(nextParentElements))
-                parents['bridges'].append(bridge)
-        parents['parentQuestions'] = list(parents['parentQuestions'])
-        return parents
-
-    def get_question(self, x_id):
-        # much faster:
-        # with rels as (select s, objs.o as o, objs.p as p
-        #               from datas
-        #                        join objs using (s)
-        #               where datas.o = '4lrqok8ac9hec8u2c2ul4mpo4k')
-        # select source, property, target
-        # from (select s, o as source
-        #       from rels
-        #       where p = (select storid
-        #                  from resources
-        #                  where iri like '%annotatedSource'))
-        #          join (select s, o as property
-        #                from rels
-        #                         join resources on o = storid
-        #                where p = (select storid
-        #                           from resources
-        #                           where iri like '%annotatedProperty')
-        #                  /*Do not include parent relationships*/
-        #                  and iri not like '%Parent') using (s)
-        #          join (select s, o as target
-        #                from rels
-        #                where p = (select storid
-        #                           from resources
-        #                           where iri like '%annotatedTarget'
-        #                )) using (s);
-        triples = self.getNoteTriples()
-        elements = [self.getElements(t) for t in triples]
-        question_elements = [e for e in elements if
-                             self.get_trpl_x_id(e) == x_id]
-        return question_elements
-
-    def getNoteData(self, questionList):
-        question_elements = next(l['triple'] for l in questionList)
-        q_id = self.get_trpl_x_id(question_elements)
-        answers = set(l['triple']['o'] for l in questionList)
-
-        # Sort answers by answer index to get the answers' order right
-        answers = sorted(answers, key=lambda d: self.get_trpl_a_index(
-            next(t['triple'] for t in questionList if t['triple']['o'] == d)))
-        answerDicts = [dict() for _ in range(X_MAX_ANSWERS)]
-        images = []
-        media = []
-        for i, answerDict in enumerate(answerDicts[0:len(answers)]):
-            answerDict['text'] = self.field_translator.field_from_class(
-                answers[i].name)
-            id_dict = json.loads(answers[i].Xid[0])
-            answerDict['src'] = id_dict[q_id]['src']
-            answerDict['crosslink'] = id_dict[q_id]['crosslink']
-            if answers[i].Image:
-                images.append(file_dict(identifier=answers[i].Image[0],
-                                        doc=answers[i].Doc[0]))
-            if answers[i].Media:
-                media.append(file_dict(identifier=answers[i].Media[0],
-                                       doc=answers[i].Doc[0]))
-            childElements = self.get_child_elements(answers[i].storid)
-            answerDict['children'] = self.getChildQuestionIds(childElements)
-
-        parents = list(set(t['triple']['s'] for t in questionList))
-        parentDicts = []
-        for parent in parents:
-            parentDict = dict()
-            parentDict['text'] = parent.name
-            parentDict['id'] = parent.Xid[0]
-            parentTriples = self.getParentTriples(o=parent.storid)
-            parentElements = [self.getElements(t) for t in parentTriples]
-            parentDict['parents'] = self.getParentQuestionIds(parentElements)
-            parentDicts.append(parentDict)
-
-        files = self.getFiles(question_elements)
-        if files[0]:
-            images.append(files[0])
-        if files[1]:
-            media.append(files[1])
-        return {
-            'reference': self.get_trpl_ref(question_elements),
-            'question': self.field_translator.field_from_class(
-                question_elements['p'].name),
-            'answers': answerDicts,
-            'sortId': self.get_trpl_sort_id(question_elements),
-            'document': self.get_trpl_doc(question_elements),
-            'sheetId': self.get_trpl_sheet(question_elements),
-            'questionId': q_id,
-            'subjects': parentDicts,
-            'images': images,
-            'media': media,
-            'tag': self.getNoteTag(question_elements)
-        }
-
-    def get_note_elements(self):
-        return [self.getElements(t) for t in self.getNoteTriples()]
-
-    def getNoteTriples(self):
-        noNoteRels = ['Parent', 'Child']
-        questionsStorids = [p.storid for p in self.object_properties() if
-                            p.name not in noNoteRels]
-        return [t for t in self.get_triples() if t[1] in questionsStorids]
-
-    def getParentTriples(self, o):
-        questionsStorids = [p.storid for p in self.object_properties() if
-                            p.name != 'Parent']
-        return [t for t in self.get_triples(o=o) if t[1] in questionsStorids]
-
-    def get_sheet_elements(self, sheet_id):
-        note_elements = self.get_note_elements()
-        return [e for e in note_elements if self.get_trpl_sheet(e) == sheet_id]
-
-    def get_trpl_a_index(self, elements):
-        return self.AIndex[elements['s'], elements['p'], elements['o']][0]
-
-    def get_trpl_doc(self, elements):
-        return self.Doc[elements['s'], elements['p'], elements['o']][0]
-
-    def get_trpl_image(self, elements):
-        try:
-            return self.Image[elements['s'], elements['p'], elements['o']][0]
-        except IndexError:
-            return ''
-
-    def get_trpl_media(self, elements):
-        try:
-            return self.Media[elements['s'], elements['p'], elements['o']][0]
-        except IndexError:
-            return ''
-
-    def get_trpl_ref(self, elements):
-        return self.Reference[elements['s'], elements['p'], elements['o']][
-            0]
-
-    def get_trpl_sheet(self, elements):
-        return self.Sheet[elements['s'], elements['p'], elements['o']][0]
-
-    def get_trpl_sort_id(self, elements):
-        return self.SortId[elements['s'], elements['p'], elements['o']][0]
-
-    def get_trpl_x_id(self, elements):
-        return self.Xid[elements['s'], elements['p'], elements['o']][0]
-
-    def q_id_elements(self, elements):
-        return {'triple': elements, 'q_id': self.get_trpl_x_id(elements)}
-
-    def remove_answer(self, concept_storid: int, node_id: str):
-        question_triples = self.get_question(q_id)
-        parents = set(t['s'] for t in question_triples)
-        answer = next(t['o'] for t in question_triples if
-                      a_id == json.loads(t['o'].Xid[0])[q_id]['src'])
-
-        # Remove answer from question
-        remove_relations(answers=[answer], parents=parents,
-                         question_triples=question_triples)
-
-        remove_concept(concept_storid=answer, q_id=q_id)
-
-    def remove_questions(self, q_ids):
-        question_elements = {q: self.get_question(q) for q in q_ids}
-        for q_id in question_elements:
-            remove_question(question_elements=question_elements[q_id],
-                            q_id=q_id)
-        print()
-
-    def remove_sheet(self, sheet_id):
-        sheet_elements = self.get_sheet_elements(sheet_id)
-        q_id_elements = [self.q_id_elements(e) for e in sheet_elements]
-
-        # Sort questions in descending order by sort_id to first remove
-        # questions whose answers are leaves and continue removing in
-        # hierarchical order
-        question_sets = sorted(
-            get_question_sets(q_id_elements),
-            key=lambda s: self.get_trpl_sort_id(s[0]['triple']),
-            reverse=True)
-        for question_set in question_sets:
-            remove_question(
-                question_elements=[s['triple'] for s in question_set],
-                q_id=next(s['q_id'] for s in question_set))
-        else:
-            # Remove root
-            remove_concept(
-                concept_storid=question_sets[-1][0]['triple']['s'], q_id='root')
-
-    def set_trpl_a_index(self, a_id, q_id, a_index):
-        q_trpls = self.get_question(q_id)
-        a_concept = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
-        a_trpls = [t for t in q_trpls if t['o'] == a_concept]
-        for trpl in a_trpls:
-            self.AIndex[trpl['s'], trpl['p'], trpl['o']] = a_index
+        # get all ids of nodes belonging to a sheet ordered by sort id so that leaves are positioned first,
+        # together with parent edges (only ids and content) and parent node ids
+        nodes_2_remove = self.smr_world.get_nodes_2_remove_by_sheet(sheet_id)
+        # remove all nodes starting from leave nodes continuing towards the root
+        for node in nodes_2_remove:
+            if node['xmind_edge'].content.is_empty():
+                node['xmind_edge'].title = self.smr_world.CHILD_NAME
+            self.remove_node(parent_node_ids=node['parent_node_ids'],
+                             xmind_edge=node['xmind_edge'], xmind_node=node['xmind_node'], children={})
+        # finally, remove the root node which is not included in the output of nodes_2_remove and has no parent_node_ids
+        self.remove_node(parent_node_ids=[], xmind_edge=XmindNodeDto(), xmind_node=XmindNodeDto(node_id=root_node_id),
+                         children={})
 
     def _set_up_classes(self):
         """
@@ -593,11 +340,256 @@ class XOntology(Ontology):
                 pass
 
             # standard object properties
-            class Parent(Concept >> Concept):
-                pass
+            types.new_class(self.smr_world.parent_relation_name, (owlready2.ObjectProperty,))
 
-            class Child(Concept >> Concept):
-                pass
+            types.new_class(self.smr_world.child_relation_name, (owlready2.ObjectProperty,))
 
             class XmindId(owlready2.AnnotationProperty):
                 pass
+
+    # def relation_from_triple(self, parent: ThingClass, relation_name: str, child: ThingClass):
+    #     """
+    #     Creates a new relation between the child and the parent with the
+    #     given name and the attributes of the relation described in
+    #     question_triple
+    #     :param child: Object concept (answer)
+    #     :param relation_name: Name of the relation to add (question name)
+    #     :param parent: Subject concept (parent to question)
+    #     """
+    #     self.add_relation(
+    #         child_thing=child, relationship_class_name=relation_name, parent_thing=parent,
+    #         rel_dict=self.rel_dict_from_triple(question_triple=question_triple))
+
+    # def get_answer_by_a_id(self, a_id, q_id):
+    #     return self.search(Xid='*"' + q_id + '": {"src": "' + a_id + '*')[0]
+    #
+    # def get_all_parent_triples(self):
+    #     return [t for t in self.get_triples() if t[1] == self.Parent.storid]
+    #
+    # def getChildQuestionIds(self, childElements):
+    #     children = {'childQuestions': set(), 'bridges': list()}
+    #     for elements in childElements:
+    #         if elements['p'].name != 'Child':
+    #             children['childQuestions'].add(self.get_trpl_x_id(elements))
+    #         else:
+    #             nextChildElements = self.get_child_elements(
+    #                 elements['o'].storid)
+    #             bridge = {'objectTitle': elements['s'].name}
+    #             bridge.update(self.getChildQuestionIds(nextChildElements))
+    #             children['bridges'].append(bridge)
+    #     children['childQuestions'] = list(children['childQuestions'])
+    #     return children
+    #
+    # def get_child_elements(self, s_storid):
+    #     nextChildTriples = self.getChildTriples(s=s_storid)
+    #     nextChildElements = [
+    #         self.getElements(t) for t in nextChildTriples]
+    #     return nextChildElements
+    #
+    # def getChildTriples(self, s):
+    #     questionStorids = [p.storid for p in self.object_properties() if
+    #                        p.name != 'Parent']
+    #     return [t for t in self.get_triples(s=s) if t[1] in questionStorids]
+    #
+    # def getElements(self, triple):
+    #     elements = [self.world._get_by_storid(s) for s in triple]
+    #     return {'s': elements[0], 'p': elements[1], 'o': elements[2]}
+    #
+    # def getFiles(self, elements):
+    #     files = [self.get_trpl_image(elements), self.get_trpl_media(elements)]
+    #     return [None if not f else file_dict(
+    #         identifier=f, doc=self.get_trpl_doc(elements)) for f in files]
+    #
+    # def get_inverse(self, x_id):
+    #     triples = self.get_all_parent_triples()
+    #     elements = [self.getElements(t) for t in triples]
+    #     inverse_elements = [e for e in elements if
+    #                         self.get_trpl_x_id(e) == x_id]
+    #     return inverse_elements
+    #
+    # def getNoteTag(self, elements):
+    #     return self.NoteTag[elements['s'], elements['p'], elements['o']][0]
+    #
+    # def getParentQuestionIds(self, parentElements):
+    #     parents = {'parentQuestions': set(), 'bridges': list()}
+    #     for elements in parentElements:
+    #         # Add id of question to set if parent is a normal question
+    #         if elements['p'].name != 'Child':
+    #             parents['parentQuestions'].add(self.get_trpl_x_id(elements))
+    #         # If parent is a bridge, add a dictionary titled by the answer
+    #         # containing parents of the bridge
+    #         else:
+    #             nextParentTriples = self.getParentTriples(o=elements[
+    #                 's'].storid)
+    #             nextParentElements = [
+    #                 self.getElements(t) for t in nextParentTriples]
+    #             # Named dictionary is necessary to understand map structure
+    #             # in case of bridges following bridges
+    #             bridge = {'subjectTitle': elements['o'].name}
+    #             bridge.update(self.getChildQuestionIds(nextParentElements))
+    #             parents['bridges'].append(bridge)
+    #     parents['parentQuestions'] = list(parents['parentQuestions'])
+    #     return parents
+    #
+    # def get_question(self, x_id):
+    #     # much faster:
+    #     # with rels as (select s, objs.o as o, objs.p as p
+    #     #               from datas
+    #     #                        join objs using (s)
+    #     #               where datas.o = '4lrqok8ac9hec8u2c2ul4mpo4k')
+    #     # select source, property, target
+    #     # from (select s, o as source
+    #     #       from rels
+    #     #       where p = (select storid
+    #     #                  from resources
+    #     #                  where iri like '%annotatedSource'))
+    #     #          join (select s, o as property
+    #     #                from rels
+    #     #                         join resources on o = storid
+    #     #                where p = (select storid
+    #     #                           from resources
+    #     #                           where iri like '%annotatedProperty')
+    #     #                  /*Do not include parent relationships*/
+    #     #                  and iri not like '%Parent') using (s)
+    #     #          join (select s, o as target
+    #     #                from rels
+    #     #                where p = (select storid
+    #     #                           from resources
+    #     #                           where iri like '%annotatedTarget'
+    #     #                )) using (s);
+    #     triples = self.getNoteTriples()
+    #     elements = [self.getElements(t) for t in triples]
+    #     question_elements = [e for e in elements if
+    #                          self.get_trpl_x_id(e) == x_id]
+    #     return question_elements
+    #
+    # def getNoteData(self, questionList):
+    #     question_elements = next(l['triple'] for l in questionList)
+    #     q_id = self.get_trpl_x_id(question_elements)
+    #     answers = set(l['triple']['o'] for l in questionList)
+    #
+    #     # Sort answers by answer index to get the answers' order right
+    #     answers = sorted(answers, key=lambda d: self.get_trpl_a_index(
+    #         next(t['triple'] for t in questionList if t['triple']['o'] == d)))
+    #     answerDicts = [dict() for _ in range(X_MAX_ANSWERS)]
+    #     images = []
+    #     media = []
+    #     for i, answerDict in enumerate(answerDicts[0:len(answers)]):
+    #         answerDict['text'] = self.field_translator.field_from_class(
+    #             answers[i].name)
+    #         id_dict = json.loads(answers[i].Xid[0])
+    #         answerDict['src'] = id_dict[q_id]['src']
+    #         answerDict['crosslink'] = id_dict[q_id]['crosslink']
+    #         if answers[i].Image:
+    #             images.append(file_dict(identifier=answers[i].Image[0],
+    #                                     doc=answers[i].Doc[0]))
+    #         if answers[i].Media:
+    #             media.append(file_dict(identifier=answers[i].Media[0],
+    #                                    doc=answers[i].Doc[0]))
+    #         childElements = self.get_child_elements(answers[i].storid)
+    #         answerDict['children'] = self.getChildQuestionIds(childElements)
+    #
+    #     parents = list(set(t['triple']['s'] for t in questionList))
+    #     parentDicts = []
+    #     for parent in parents:
+    #         parentDict = dict()
+    #         parentDict['text'] = parent.name
+    #         parentDict['id'] = parent.Xid[0]
+    #         parentTriples = self.getParentTriples(o=parent.storid)
+    #         parentElements = [self.getElements(t) for t in parentTriples]
+    #         parentDict['parents'] = self.getParentQuestionIds(parentElements)
+    #         parentDicts.append(parentDict)
+    #
+    #     files = self.getFiles(question_elements)
+    #     if files[0]:
+    #         images.append(files[0])
+    #     if files[1]:
+    #         media.append(files[1])
+    #     return {
+    #         'reference': self.get_trpl_ref(question_elements),
+    #         'question': self.field_translator.field_from_class(
+    #             question_elements['p'].name),
+    #         'answers': answerDicts,
+    #         'sortId': self.get_trpl_sort_id(question_elements),
+    #         'document': self.get_trpl_doc(question_elements),
+    #         'sheetId': self.get_trpl_sheet(question_elements),
+    #         'questionId': q_id,
+    #         'subjects': parentDicts,
+    #         'images': images,
+    #         'media': media,
+    #         'tag': self.getNoteTag(question_elements)
+    #     }
+    #
+    # def get_note_elements(self):
+    #     return [self.getElements(t) for t in self.getNoteTriples()]
+    #
+    # def getNoteTriples(self):
+    #     noNoteRels = ['Parent', 'Child']
+    #     questionsStorids = [p.storid for p in self.object_properties() if
+    #                         p.name not in noNoteRels]
+    #     return [t for t in self.get_triples() if t[1] in questionsStorids]
+    #
+    # def getParentTriples(self, o):
+    #     questionsStorids = [p.storid for p in self.object_properties() if
+    #                         p.name != 'Parent']
+    #     return [t for t in self.get_triples(o=o) if t[1] in questionsStorids]
+    #
+    # def get_trpl_a_index(self, elements):
+    #     return self.AIndex[elements['s'], elements['p'], elements['o']][0]
+    #
+    # def get_trpl_doc(self, elements):
+    #     return self.Doc[elements['s'], elements['p'], elements['o']][0]
+    #
+    # def get_trpl_image(self, elements):
+    #     try:
+    #         return self.Image[elements['s'], elements['p'], elements['o']][0]
+    #     except IndexError:
+    #         return ''
+    #
+    # def get_trpl_media(self, elements):
+    #     try:
+    #         return self.Media[elements['s'], elements['p'], elements['o']][0]
+    #     except IndexError:
+    #         return ''
+    #
+    # def get_trpl_ref(self, elements):
+    #     return self.Reference[elements['s'], elements['p'], elements['o']][
+    #         0]
+    #
+    # def get_trpl_sheet(self, elements):
+    #     return self.Sheet[elements['s'], elements['p'], elements['o']][0]
+    #
+    # def get_trpl_sort_id(self, elements):
+    #     return self.SortId[elements['s'], elements['p'], elements['o']][0]
+    #
+    # def get_trpl_x_id(self, elements):
+    #     return self.Xid[elements['s'], elements['p'], elements['o']][0]
+    #
+    # def q_id_elements(self, elements):
+    #     return {'triple': elements, 'q_id': self.get_trpl_x_id(elements)}
+    #
+    # def remove_answer(self, concept_storid: int, node_id: str):
+    #     question_triples = self.get_question(q_id)
+    #     parents = set(t['s'] for t in question_triples)
+    #     answer = next(t['o'] for t in question_triples if
+    #                   a_id == json.loads(t['o'].Xid[0])[q_id]['src'])
+    #
+    #     # Remove answer from question
+    #     remove_relations(answers=[answer], parents=parents,
+    #                      question_triples=question_triples)
+    #
+    #     remove_concept(concept_storid=answer, q_id=q_id)
+    #
+    # def remove_questions(self, q_ids):
+    #     question_elements = {q: self.get_question(q) for q in q_ids}
+    #     for q_id in question_elements:
+    #         remove_question(question_elements=question_elements[q_id],
+    #                         q_id=q_id)
+    #     print()
+
+    def set_trpl_a_index(self, a_id, q_id, a_index):
+        q_trpls = self.get_question(q_id)
+        a_concept = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
+        a_trpls = [t for t in q_trpls if t['o'] == a_concept]
+        for trpl in a_trpls:
+            self.AIndex[trpl['s'], trpl['p'], trpl['o']] = a_index

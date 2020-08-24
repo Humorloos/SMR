@@ -96,7 +96,7 @@
 #             sheetImport = dict(sheet=sheet, tag=tag4Sheet, deckId=did4Sheet,
 #                                repair=False)
 #             sheetImports.append(sheetImport)
-#         importer.import_sheet(sheetImports)
+#         importer._import_sheet(sheetImports)
 #
 #     def syncNote(self, note):
 #         print('synchronizing note')

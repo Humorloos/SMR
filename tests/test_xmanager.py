@@ -11,7 +11,7 @@ from smr.xmanager import is_empty_node, get_node_title, get_child_nodes, get_non
 
 def test_x_manager(x_manager):
     # given
-    expected_sheets = ['biological psychology', 'clinical psychology']
+    expected_sheets = [cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID, '1bt0u8ahp0p8d41j6pto2d9q8t']
     # when
     cut = x_manager
     # then
@@ -32,9 +32,9 @@ def test_get_root_node(x_manager):
     # given
     cut = x_manager
     # when
-    root_node = cut.get_root_node(sheet="biological psychology")
+    root_node = cut.get_root_node(sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
-    assert isinstance(root_node, bs4.element.Tag)
+    assert get_node_title(root_node) == 'biological psychology'
 
 
 def test_is_empty_node(tag_for_tests):
@@ -104,11 +104,11 @@ def test_get_node_content_with_media_via_hyperlink(x_manager):
     assert node_content == cts.MEDIA_HYPERLINK_NODE_CONTENT
 
 
-def test_get_sheet_id(x_manager):
+def test_get_sheet_name(x_manager):
     # when
-    sheet_id = x_manager.get_sheet_id('biological psychology')
+    sheet_id = x_manager.get_sheet_name(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
-    assert sheet_id == '2485j5qgetfevlt00vhrn53961'
+    assert sheet_id == 'biological psychology'
 
 
 def test_get_child_nodes(x_manager):
@@ -170,7 +170,7 @@ def test_map_last_modified(x_manager):
 
 def test_get_sheet_last_modified(x_manager):
     # when
-    sheet_last_modified = x_manager.get_sheet_last_modified('biological psychology')
+    sheet_last_modified = x_manager.get_sheet_last_modified(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
     assert sheet_last_modified > 15956710897
 

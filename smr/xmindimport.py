@@ -21,7 +21,7 @@ from smr.smrworld import SmrWorld
 from smr.utils import get_edge_coordinates_from_parent_node
 from smr.xmanager import get_child_nodes, is_empty_node, XManager, get_non_empty_sibling_nodes, \
     get_node_title
-from smr.xnotemanager import FieldTranslator
+from smr.fieldtranslator import FieldTranslator
 from smr.xontology import XOntology
 
 
@@ -255,12 +255,22 @@ class XmindImporter(NoteImporter):
         self.mw.progress.start(immediate=True, label='importing...')
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
-        self.import_file()
+        self._import_file()
         self._add_entities_2_smr_world()
         # Create Notes from all edges
         self.notes_2_import = self.smr_world.generate_notes(self.col, edge_ids=self.edge_ids_2_make_notes_of)
 
-    def import_file(self):
+    def import_sheet(self, sheet_id: str):
+        """
+        Imports only the sheet with the specified id and adds its contents to the smr world
+        :param sheet_id:
+        :return:
+        """
+        self._import_sheet(sheet_id)
+        self._add_entities_2_smr_world()
+        self.notes_2_import = self.smr_world.generate_notes(self.col, edge_ids=self.edge_ids_2_make_notes_of)
+
+    def _import_file(self):
         """
         Imports a file managed by the provided XManager and starts imports for all sheets in that file that contain
         concept maps
@@ -271,21 +281,22 @@ class XmindImporter(NoteImporter):
             map_last_modified=self.x_manager.map_last_modified, file_last_modified=self.x_manager.file_last_modified,
             deck_id=self.deck_id))
         for sheet in self.x_manager.sheets:
-            self.import_sheet(sheet)
+            self._import_sheet(sheet)
 
-    def import_sheet(self, sheet: str) -> None:
+    def _import_sheet(self, sheet_id: str) -> None:
         """
         Imports the specified sheet and starts importing the map contained in that sheet starting from the root concept
-        :param sheet: name of the sheet to be imported
+        :param sheet_id: name of the sheet to be imported
         """
-        self.current_sheet_import = sheet
-        self.mw.progress.update(label='importing %s' % sheet, maybeShow=False)
+        self.current_sheet_import = sheet_id
+        sheet_name = self.x_manager.get_sheet_name(sheet_id)
+        self.mw.progress.update(label='importing %s' % sheet_name, maybeShow=False)
         self.mw.app.processEvents()
         directory, file_name = self.x_manager.get_directory_and_file_name()
         self.sheets_2_import.append(XmindSheetDto(
-            sheet_id=self.x_manager.get_sheet_id(sheet), name=sheet, file_directory=directory, file_name=file_name,
-            last_modified=self.x_manager.get_sheet_last_modified(sheet)))
-        root_node = self.x_manager.get_root_node(sheet=sheet)
+            sheet_id=sheet_id, name=sheet_name, file_directory=directory, file_name=file_name,
+            last_modified=self.x_manager.get_sheet_last_modified(sheet_id)))
+        root_node = self.x_manager.get_root_node(sheet_id=sheet_id)
         root_concept = self.onto.concept_from_node_content(
             self.x_manager.get_node_content(root_node), node_id=root_node['id'], node_is_root=True)
         self.import_node_if_concept(node=root_node, concepts=[root_concept])
@@ -322,7 +333,7 @@ class XmindImporter(NoteImporter):
             self.add_image_and_media_to_collection(node_content)
             # add the node to the smr world
             self.nodes_2_import.append(XmindNodeDto(
-                node_id=node['id'], sheet_id=self.x_manager.get_sheet_id(self.current_sheet_import),
+                node_id=node['id'], sheet_id=self.current_sheet_import,
                 title=node_content.title, image=node_content.image, link=node_content.media,
                 ontology_storid=concepts[0].storid, last_modified=node['timestamp'], order_number=order_number))
             # import a triple for each parent concept
@@ -427,17 +438,17 @@ class XmindImporter(NoteImporter):
             n), node_id=n['id'], node_is_root=False) for n in non_empty_child_nodes]
         single_child_concepts = [[concept] for concept in all_child_concepts]
         # add the relation to the ontology
-        relationship_class_name = self.onto.CHILD_CLASS_NAME if edge_content.is_empty() else self._translator \
-            .relation_class_from_content(edge_content)
+        relationship_class_name = self.smr_world.child_relation_name if edge_content.is_empty() \
+            else self._translator.relation_class_from_content(edge_content)
         relationship_property: ObjectPropertyClass = self.onto.add_relation(relationship_class_name)
         # add node image and media to anki if edge is not empty
-        if relationship_class_name != self.onto.CHILD_CLASS_NAME:
+        if relationship_class_name != self.smr_world.child_relation_name:
             self.add_image_and_media_to_collection(edge_content)
         # add the edge to the smr world
         self.edges_2_import.append(XmindNodeDto(
-            node_id=edge['id'], sheet_id=self.x_manager.get_sheet_id(self.current_sheet_import),
-            title=edge_content.title, image=edge_content.image, link=edge_content.media,
-            ontology_storid=relationship_property.storid, last_modified=edge['timestamp'], order_number=order_number))
+            node_id=edge['id'], sheet_id=self.current_sheet_import, title=edge_content.title, image=edge_content.image,
+            link=edge_content.media, ontology_storid=relationship_property.storid, last_modified=edge['timestamp'],
+            order_number=order_number))
         # if the edge is not empty, add it to the list of edges to make notes from
         if not edge_content.is_empty():
             self.edge_ids_2_make_notes_of.append(edge['id'])

@@ -2,61 +2,9 @@ import pytest
 
 import tests.constants as cts
 from smr.dto.nodecontentdto import NodeContentDto
-from smr.xnotemanager import FieldTranslator, XNoteManager, image_from_field, media_from_field, title_from_field, content_from_field, \
+from smr.xnotemanager import XNoteManager, image_from_field, media_from_field, title_from_field, \
+    content_from_field, \
     field_from_content
-from smr.smrworld import sort_id_from_order_number
-
-
-@pytest.fixture
-def field_translator():
-    yield FieldTranslator()
-
-
-def test_class_from_content(field_translator):
-    # given
-    expected_class = 'biological_psychology'
-    content = NodeContentDto(title="biological psychology")
-    # when
-    ontology_class = field_translator.class_from_content(content)
-    # then
-    assert ontology_class == expected_class
-
-
-def test_class_from_content_only_image(field_translator):
-    # given
-    expected_class = 'ximage_09r2e442o8lppjfeblf7il2rmd_extension_png'
-    content = NodeContentDto(image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI)
-    # when
-    ontology_class = field_translator.class_from_content(content)
-    # then
-    assert ontology_class == expected_class
-
-
-def test_class_from_content_only_media(field_translator):
-    # given
-    expected_class = 'xmedia_3lv2k1fhghfb9ghfb8depnqvdt_extension_mp3'
-    content = NodeContentDto(media="attachments/3lv2k1fhghfb9ghfb8depnqvdt.mp3")
-    # when
-    ontology_class = field_translator.class_from_content(content)
-    # then
-    assert ontology_class == expected_class
-
-
-def test_class_from_content_parentheses(field_translator):
-    # given
-    expected_class = 'biological_psychology_xlparenthesis_text_in_parenthses_xrparenthesis'
-    content = NodeContentDto(title="biological psychology (text in parenthses)")
-    # when
-    ontology_class = field_translator.class_from_content(content)
-    # then
-    assert ontology_class == expected_class
-
-
-def test_sort_id_from_order_number():
-    # when
-    sort_ids = [sort_id_from_order_number(i) for i in range(1, 21)]
-    # then
-    assert sort_ids == sorted(sort_ids)
 
 
 @pytest.fixture
@@ -138,3 +86,9 @@ def test_field_from_content(smr_world_with_example_map):
     field = field_from_content(content=cts.NEUROTRANSMITTERS_NODE_CONTENT, smr_world=smr_world_with_example_map)
     # then
     assert field == 'neurotransmitters<br><img src="attachments629d18n2i73im903jkrjmr98fg.png">'
+
+
+def test_remove_notes_by_sheet_id(note_manager, smr_world_with_example_map):
+    cut = note_manager
+    cut.remove_notes_by_sheet_id(sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID, smr_world=smr_world_with_example_map)
+    assert len(cut.col.find_notes('')) == 11

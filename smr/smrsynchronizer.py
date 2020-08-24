@@ -12,8 +12,9 @@ from smr.dto.xmindnodedto import XmindNodeDto
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
 from smr.xmindimport import XmindImporter
-from smr.xnotemanager import field_by_identifier, XNoteManager, FieldTranslator, field_from_content, meta_from_fields, \
+from smr.xnotemanager import field_by_identifier, XNoteManager, field_from_content, meta_from_fields, \
     content_from_field, field_content_by_identifier
+from smr.fieldtranslator import FieldTranslator
 from smr.xontology import XOntology
 
 
@@ -189,7 +190,7 @@ class SmrSynchronizer:
         aqt.mw.progress.finish()
 
     # TODO: Implement this, do not forget here that we need to add smr triples in this case
-    def add_answer(self, answer_content: NodeContentDto, xmind_edge: XmindNodeDto):
+    def _add_answer(self, answer_content: NodeContentDto, xmind_edge: XmindNodeDto):
         print('add answer to map')
         print('add answer to ontology')
         self.log.append(f"""\
@@ -510,7 +511,7 @@ map and then synchronize.""")
                         local_answer_content = content_from_field(field=local_answer_field, smr_world=self.smr_world)
                         # TODO: add answer to remote if added in anki (not implemented yet)
                         if not answer_id:
-                            self.add_answer(answer_content=local_answer_content, xmind_edge=note_data['edge'])
+                            self._add_answer(answer_content=local_answer_content, xmind_edge=note_data['edge'])
                             anki_note_was_changed = True
                         # change answer if content was changed
                         elif local_answer_content != answer_data['node'].content:
@@ -526,22 +527,18 @@ map and then synchronize.""")
                 if anki_note_was_changed:
                     self.edge_ids_of_notes_2_update.append(note_data['note'].edge_id)
 
-    def _process_remote_changes(self, file):
-        # sheets_status = self.smr_world.get_xmind_sheets_in_file(file_directory=file.directory, file_name=file.file_name)
-        # sheet_ids_status = [sheet.sheet_id for sheet in sheets_status]
-        # sheet_ids_remote = [
-        #     self.x_manager.sheets[sheet_name]['tag']['id'] for sheet_name in self.x_manager.content_sheets]
-        # for sheet_id in set(sheet_ids_status + sheet_ids_remote):
-        assert False
-        #     if sheet not in status:
-        #         importer = XmindImporter(self.note_manager.col,
-        #                                  self.map_manager.file)
-        #         # importer.import_map(sheet=sheet, deck_id=deck_id)
-        #         importer.finish_import()
-        #     elif sheet not in remote:
-        #         if not self.onto:
-        #             self.onto = XOntology(deck_id)
-        #         self.remove_sheet(sheet, status)
+    def _process_remote_changes(self, file: XmindFileDto):
+        sheets_status = self.smr_world.get_xmind_sheets_in_file(file_directory=file.directory, file_name=file.file_name)
+        sheet_ids_status = [sheet.sheet_id for sheet in sheets_status]
+        sheet_ids_remote = list(self.x_manager.sheets)
+        for sheet_id in set(sheet_ids_status + sheet_ids_remote):
+            if sheet_id not in sheet_ids_status:
+                importer = XmindImporter(col=self.col, file=file.file_path)
+                importer.import_sheet(sheet_id)
+                importer.finish_import()
+            elif sheet_id not in sheet_ids_remote:
+                self._remove_sheet(sheet, status)
+            assert False
         #     elif remote[sheet]['xMod'] != status[sheet]['xMod']:
         #         if not self.onto:
         #             self.onto = XOntology(deck_id)
@@ -658,10 +655,15 @@ map and then synchronize.""")
     #         del status[a_id]
     #     return import_dict
 
-    def remove_sheet(self, sheet, status):
-        self.note_manager.remove_sheet(sheet)
-        del status[sheet]
-        self.onto.remove_sheet(sheet)
+    def _remove_sheet(self, sheet_id: str) -> None:
+        """
+        Removes all notes belonging to a sheet from the collection and the ontology and adds the sheet to the list of
+        sheets to remove.
+        :param sheet_id: xmind sheet id of the sheet to remove
+        """
+        self.note_manager.remove_notes_by_sheet_id(sheet_id, self.smr_world)
+        self.onto.remove_sheet(sheet_id, self.x_manager.get_root_node(sheet_id)['id'])
+        self.xmind_sheets_2_remove.append(sheet_id)
 
     def process_local_and_remote_changes(self):
         pass

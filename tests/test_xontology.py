@@ -57,7 +57,7 @@ def test_connect_concepts(x_ontology):
                          child_thing=child_1_concept, edge_id=edge_id)
     # then
     assert cut.parent.relationship == [child_1_concept]
-    assert cut.child.Parent == [parent_concept]
+    assert getattr(cut.child, cut.smr_world.parent_relation_name) == [parent_concept]
     # when
     cut.connect_concepts(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
                          child_thing=child_2_concept, edge_id=edge_id)
@@ -68,7 +68,7 @@ def test_connect_concepts(x_ontology):
                          child_thing=child_1_concept, edge_id=edge_id)
     # then
     assert cut.parent.relationship == [child_1_concept, child_2_concept]
-    assert cut.child.Parent == [parent_concept, parent_2_concept]
+    assert getattr(cut.child, cut.smr_world.parent_relation_name) == [parent_concept, parent_2_concept]
     assert cut.XmindId[parent_concept, getattr(cut, relationship_class_name), child_1_concept][0] == edge_id
     assert cut.XmindId[parent_concept, getattr(cut, relationship_class_name), child_2_concept][0] == edge_id
     assert cut.XmindId[parent_2_concept, getattr(cut, relationship_class_name), child_1_concept][0] == edge_id
@@ -101,7 +101,7 @@ def test_remove_relations(ontology_with_example_map):
                           edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
     # then
     assert [getattr(p, relation_name) for p in parents] == 4 * [[]]
-    assert len(child.Parent) == 1
+    assert len(getattr(child, onto.smr_world.parent_relation_name)) == 1
 
 
 def test_change_relationship_class_name(ontology_with_example_map):
@@ -142,7 +142,7 @@ def test_remove_node_does_not_remove_concept_if_nodes_left(ontology_with_example
     # then
     assert type(cut.nociceptors) == cut.Concept
     assert not cut.nociceptors.can_be_xrelation
-    assert not cut.chemical.Parent
+    assert not getattr(cut.chemical, cut.smr_world.parent_relation_name)
 
 
 def test_add_node(ontology_with_example_map):
@@ -167,9 +167,10 @@ def test_rename_node(ontology_with_example_map):
         node_id='3oqcv5qlqhn28u1opce5i27709', title='nothing', image='abcde.png', link='fghij.mp3'),
         parent_node_ids=cts.MULTIPLE_PARENTS_NODE_IDS,
         children={cts.CONSIST_OF_EDGE_ID: [cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID]})
-    assert new_concept.Parent == [getattr(cut, n) for n in cts.MULTIPLE_PARENTS_CLASS_NAMES]
+    assert getattr(new_concept, cut.smr_world.parent_relation_name) == [getattr(cut, n) for n in
+                                                                        cts.MULTIPLE_PARENTS_CLASS_NAMES]
     assert len(new_concept.consist_of_xrelation)
-    assert new_concept in cut.one_or_more_amine_groups.Parent
+    assert new_concept in getattr(cut.one_or_more_amine_groups, cut.smr_world.parent_relation_name)
 
 
 def test_get_concept_from_node_id(ontology_with_example_map):
@@ -182,3 +183,15 @@ def test_get_concept_from_node_id(ontology_with_example_map):
 def test_get_relation_from_edge_id(ontology_with_example_map):
     assert ontology_with_example_map.get_relation_from_edge_id(cts.TYPES_EDGE_ID) == \
            ontology_with_example_map.types_xrelation
+
+
+def test_remove_sheet(ontology_with_example_map):
+    # given
+    cut = ontology_with_example_map
+    # when
+    cut.remove_sheet(sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID, root_node_id=cts.BIOLOGICAL_PSYCHOLOGY_NODE_ID)
+    # then
+    assert not cut.Pain
+    assert not cut.information_transfer_and_processing
+    assert not cut.chemical
+    assert not cut.Serotonin.pronounciation_xrelation

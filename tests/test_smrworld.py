@@ -8,6 +8,7 @@ from smr.dto.smrtripledto import SmrTripleDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindnodedto import XmindNodeDto
 from smr.dto.xmindsheetdto import XmindSheetDto
+from smr.smrworld import sort_id_from_order_number
 from tests import constants as cts
 
 
@@ -372,3 +373,25 @@ def test_get_xmind_sheets_in_file(smr_world_with_example_map):
                                                                  file_name=cts.NAME_EXAMPLE_MAP)
     # then
     assert [s.name for s in sheets] == ['biological psychology', 'clinical psychology']
+
+
+def test_get_note_ids_from_sheet_id(smr_world_with_example_map):
+    # when
+    notes_in_sheet = smr_world_with_example_map.get_note_ids_from_sheet_id(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
+    # then
+    assert len(notes_in_sheet) == 19
+
+
+def test_get_nodes_2_remove_by_sheet(smr_world_with_example_map):
+    # when
+    nodes_2_remove = smr_world_with_example_map.get_nodes_2_remove_by_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
+    # then
+    assert nodes_2_remove[-1]['xmind_node'].node_id == cts.CLINICAL_PSYCHOLOGY_1_NODE_ID
+    assert nodes_2_remove[0]['xmind_edge'].node_id == cts.CAN_BE_TRIGGERED_BY_NODE_ID
+
+
+def test_sort_id_from_order_number():
+    # when
+    sort_ids = [sort_id_from_order_number(i) for i in range(1, 21)]
+    # then
+    assert sort_ids == sorted(sort_ids)

@@ -4,7 +4,7 @@ from smr.consts import ADDON_PATH
 from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindnodedto import XmindNodeDto
-from smr.xnotemanager import FieldTranslator
+from smr.fieldtranslator import FieldTranslator
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 RESOURCES_PATH = os.path.join(ADDON_PATH, 'resources')
@@ -157,9 +157,10 @@ ORIGINAL_COLLECTION_VERSION_001_PATH = os.path.join(
 # maps
 MAPS_DIRECTORY = os.path.join(SUPPORT_PATH, 'maps')
 NAME_EXAMPLE_MAP = "example map"
+EXAMPLE_MAP_N_EDGES = 34
 NAME_MAP_GENERAL_PSYCHOLOGY = 'example_general_psychology'
-NEUROTRANSMITTERS_IMAGE_XMIND_URI = "attachments/09r2e442o8lppjfeblf7il2rmd.png"
 NAME_HYPERLINK_MEDIA = "serotonin.mp3"
+NEUROTRANSMITTERS_IMAGE_XMIND_URI = "attachments/09r2e442o8lppjfeblf7il2rmd.png"
 # original
 PATH_EXAMPLE_MAP_ORIGINAL = os.path.join(RESOURCES_PATH, NAME_EXAMPLE_MAP + '.xmind')
 PATH_MAP_GENERAL_PSYCHOLOGY_ORIGINAL = os.path.join(RESOURCES_PATH, NAME_MAP_GENERAL_PSYCHOLOGY + '.xmind')
@@ -184,9 +185,15 @@ PATH_HYPERLINK_MEDIA_TEMPORARY = os.path.join(DIRECTORY_MAPS_TEMPORARY, NAME_HYP
 # content xml
 NAME_CONTENT = 'content.xml'
 PATH_CONTENT = os.path.join(MAPS_DIRECTORY, NAME_CONTENT)
-
+# absent file
 ABSENT_XMIND_FILE_PATH = os.path.join(SUPPORT_PATH, 'absent_file.xmind')
-EXAMPLE_MAP_N_EDGES = 34
+# IDs
+# sheets
+BIOLOGICAL_PSYCHOLOGY_SHEET_ID = '2485j5qgetfevlt00vhrn53961'
+# nodes
+BIOLOGICAL_PSYCHOLOGY_NODE_ID = '0pbme7b9sg9en8qqmmn9jj06od'
+CLINICAL_PSYCHOLOGY_1_NODE_ID = '29qkib9g6gqsfqqmcqk2495kgc'
+CAN_BE_TRIGGERED_BY_NODE_ID = '7ite3obkfmbchr1pc6ib0o7rga'
 
 # edges from smr_world
 EDGE_WITH_MEDIA_XMIND_ID = "7ite3obkfmbcasdf12asd123ga"

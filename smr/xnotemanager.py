@@ -17,16 +17,6 @@ IMAGE_REGEX = r'<img src=\"(.*\.(' + '|'.join(cts.X_IMAGE_EXTENSIONS) + '))\">'
 MEDIA_REGEX = r'\[sound:(.*\.(' + '|'.join(cts.X_MEDIA_EXTENSIONS) + r'))]'
 
 
-def order_number_from_sort_id_character(sort_id_character: str) -> int:
-    """
-    converts the specified letter into the order_number that would normally be converted into this character by the
-    function sort_id_from_order_number()
-    :param sort_id_character: the character to convert into an order number
-    :return: the order number
-    """
-    return ord(sort_id_character) - 122
-
-
 def ref_minus_last(ref):
     return re.sub(r'<li>(?!.*<li>).*', '', ref)
 
@@ -347,14 +337,14 @@ class XNoteManager:
         nids_2_remove = [self.get_nid_from_q_id(q) for q in q_ids]
         self.col.remNotes(nids_2_remove)
 
-    def remove_sheet(self, sheet):
-        # Remove notes from this sheet from collection
-        sheet_nids = self.get_sheet_nids(sheet)
-        tag = self.col.getNote(sheet_nids[0]).tags[0]
-        self.col.remNotes(sheet_nids)
-
-        # Remove tag
-        del self.col.tags.tags[tag]
+    def remove_notes_by_sheet_id(self, sheet_id: str, smr_world: SmrWorld) -> None:
+        """
+        Removes all notes belonging to the specified sheet from the collection
+        :param sheet_id: id of the sheet to remove the notes for
+        :param smr_world: the smr world to get the note ids from
+        """
+        note_ids_in_sheet = smr_world.get_note_ids_from_sheet_id(sheet_id)
+        self.col.remNotes(note_ids_in_sheet)
 
     def save_col(self):
         self.col.save()
@@ -426,41 +416,3 @@ class XNoteManager:
             print()
         print()
 
-
-class FieldTranslator:
-    def __init__(self):
-        self.field_re_dict = {
-            'ximage_': '<img src="',
-            'xmedia_': '[sound:',
-            'xlparenthesis_': '(',
-            '_xrparenthesis': ')',
-        }
-        self.field_regex = re.compile("(%s)" % "|".join(self.field_re_dict.keys()))
-        self.inverse_dict = {re.escape(self.field_re_dict[k]): k for k in self.field_re_dict}
-        self.inverse_regex = re.compile("(%s)" % "|".join(self.inverse_dict.keys()))
-
-    def class_from_content(self, content: NodeContentDto) -> str:
-        """
-        converts a node content dictionary into a string that can be used as an ontology class name
-        :param content: xmind node content DTO
-        :return: a class name generated from the node's content
-        """
-        classified: str = content.title.replace(" ", "_")
-        if content.image:
-            classified += "ximage_" + re.sub('attachments/', '', content.image)
-            classified = re.sub('(\\.)(' + '|'.join(cts.X_IMAGE_EXTENSIONS) + ')', '_extension_\\2', classified)
-        if content.media:
-            classified += "xmedia_" + re.sub('attachments/', '', content.media)
-            classified = re.sub('(\\.)(' + '|'.join(cts.X_MEDIA_EXTENSIONS) + ')', '_extension_\\2', classified)
-        classified = self.inverse_regex.sub(lambda mo: self.inverse_dict[re.escape(mo.string[mo.start():mo.end()])],
-                                            classified)
-        return classified
-
-    def relation_class_from_content(self, content: NodeContentDto) -> str:
-        """
-        converts a node content dictionary into a string that can be used as an ontology class name for a
-        relationship property (only difference to concepts is postfix "_xrelation"
-        :param content: xmind node content DTO
-        :return: a class name generated from the node's content
-        """
-        return self.class_from_content(content) + "_xrelation"

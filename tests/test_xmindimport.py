@@ -46,26 +46,26 @@ def test_initialize_import(mocker, xmind_importer):
     mocker.patch.object(cut, '_mw')
     mocker.patch.object(cut, "finish_import")
     mocker.patch('smr.xmindimport.XOntology')
-    mocker.patch.object(cut, 'import_file')
+    mocker.patch.object(cut, '_import_file')
     mocker.patch.object(cut, 'col')
     cut.model = {'id': 'my mid'}
     # when
     xmind_importer.initialize_import(DeckSelectionDialogUserInputsDTO())
     # then
     cut.mw.progress.start.assert_called_once()
-    assert cut.import_file.call_count == 1
+    assert cut._import_file.call_count == 1
 
 
 def test_import_file(xmind_importer, mocker, x_manager):
     # given
     cut = xmind_importer
-    mocker.patch.object(cut, "import_sheet")
+    mocker.patch.object(cut, "_import_sheet")
     mocker.patch.object(cut, "_mw")
     cut.deck_id = cts.TEST_DECK_ID
     # when
-    cut.import_file()
+    cut._import_file()
     # then
-    assert cut.import_sheet.call_count == 2
+    assert cut._import_sheet.call_count == 2
     assert cut.files_2_import[0].directory == cts.DIRECTORY_MAPS_TEMPORARY
     assert cut.files_2_import[0].deck_id == cts.TEST_DECK_ID
     assert cut.files_2_import[0].file_name == cts.NAME_EXAMPLE_MAP
@@ -73,21 +73,21 @@ def test_import_file(xmind_importer, mocker, x_manager):
 
 def test_import_sheet(xmind_importer, mocker, x_manager):
     # given
-    sheet_2_import = 'biological psychology'
+    sheet_2_import = cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID
     cut = xmind_importer
     mocker.patch.object(cut, "_mw")
     mocker.patch.object(cut, "import_node_if_concept")
     mocker.patch.object(cut, "_onto")
     cut._active_manager = x_manager
     # when
-    cut.import_sheet(sheet_2_import)
+    cut._import_sheet(sheet_2_import)
     # then
     assert cut.mw.progress.update.call_count == 1
     assert cut.mw.app.processEvents.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
     assert cut.current_sheet_import == sheet_2_import
     assert cut.onto.concept_from_node_content.call_count == 1
-    assert cut.sheets_2_import[0].sheet_id == '2485j5qgetfevlt00vhrn53961'
+    assert cut.sheets_2_import[0].sheet_id == cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID
     assert cut.sheets_2_import[0].file_directory == cts.DIRECTORY_MAPS_TEMPORARY
     assert cut.sheets_2_import[0].file_name == cts.NAME_EXAMPLE_MAP
 
@@ -288,16 +288,16 @@ def test_initialize_import_import_import_notes_to_correct_deck(
     test_deck_id = cut.col.decks.id(name="test_deck")
     mocker.spy(cut, "import_edge")
     mocker.spy(cut, "import_node_if_concept")
-    mocker.spy(cut, "import_sheet")
+    mocker.spy(cut, "_import_sheet")
     mocker.spy(cut, "import_triple")
-    mocker.spy(cut, "import_file")
+    mocker.spy(cut, "_import_file")
     n_cards_example_map = 35
     # when
     cut.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=test_deck_id))
     cut.finish_import()
     # then
-    assert cut.import_file.call_count == 1
-    assert cut.import_sheet.call_count == 2
+    assert cut._import_file.call_count == 1
+    assert cut._import_sheet.call_count == 2
     assert cut.import_edge.call_count == 31
     assert cut.import_node_if_concept.call_count == 42
     assert cut.import_triple.call_count == 42
