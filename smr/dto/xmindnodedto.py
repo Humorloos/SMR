@@ -2,7 +2,7 @@ import dataclasses as dc
 from typing import Optional
 
 from smr.dto.entitydto import EntityDto
-from smr.dto.nodecontentdto import NodeContentDto
+from smr.dto.topiccontentdto import TopicContentDto
 
 
 @dc.dataclass
@@ -20,11 +20,11 @@ class XmindNodeDto(EntityDto):
     order_number: Optional[int] = None
 
     @property
-    def content(self) -> NodeContentDto:
-        return NodeContentDto(image=self.image, media=self.link, title=self.title)
+    def content(self) -> TopicContentDto:
+        return TopicContentDto(image=self.image, media=self.link, title=self.title)
 
     @content.setter
-    def content(self, value: NodeContentDto):
+    def content(self, value: TopicContentDto):
         self.image = value.image
         self.title = value.title
         self.link = value.media

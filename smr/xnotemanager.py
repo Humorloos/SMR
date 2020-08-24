@@ -9,7 +9,7 @@ from anki.backend_pb2 import NoteTypeNameID
 from anki.models import ModelManager
 from anki.utils import splitFields, joinFields
 import smr.consts as cts
-from smr.dto.nodecontentdto import NodeContentDto
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.smrworld import SmrWorld, sort_id_from_order_number
 from smr.utils import replace_embedded_media, get_smr_model_id
 
@@ -67,7 +67,7 @@ def field_by_identifier(fields: List[str], identifier: str) -> str:
     return fields[cts.SMR_FIELD_IDENTIFIERS.index(identifier)]
 
 
-def field_content_by_identifier(fields: List[str], identifier: str, smr_world: SmrWorld) -> NodeContentDto:
+def field_content_by_identifier(fields: List[str], identifier: str, smr_world: SmrWorld) -> TopicContentDto:
     """
     Given an anki fields list an an index identifier from the smr constants, gets the content of the field that
     belongs to the identifier from the fields list
@@ -79,7 +79,7 @@ def field_content_by_identifier(fields: List[str], identifier: str, smr_world: S
     return content_from_field(field=field_by_identifier(fields=fields, identifier=identifier), smr_world=smr_world)
 
 
-def field_from_content(content: NodeContentDto, smr_world: SmrWorld) -> str:
+def field_from_content(content: TopicContentDto, smr_world: SmrWorld) -> str:
     """
     Gets an anki field content representing the specified node content
     :param content: the node content to get the anki field for
@@ -98,16 +98,16 @@ def field_from_content(content: NodeContentDto, smr_world: SmrWorld) -> str:
     return field
 
 
-def content_from_field(field: str, smr_world: SmrWorld) -> NodeContentDto:
+def content_from_field(field: str, smr_world: SmrWorld) -> TopicContentDto:
     """
     Converts the string from an anki question or answer field to a node content dto
     :param field: an anki question or answer field
     :param smr_world: the smr world to get the xmind file uris from for images and media
     :return: a node content dto that represents the field's content
     """
-    return NodeContentDto(image=image_from_field(field=field, smr_world=smr_world),
-                          media=media_from_field(field=field, smr_world=smr_world),
-                          title=title_from_field(field))
+    return TopicContentDto(image=image_from_field(field=field, smr_world=smr_world),
+                           media=media_from_field(field=field, smr_world=smr_world),
+                           title=title_from_field(field))
 
 
 #

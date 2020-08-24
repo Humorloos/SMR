@@ -4,11 +4,16 @@ from bs4 import Tag
 
 
 class XmindSheet:
+    """
+    Represents a sheet in an xmind file
+    """
     def __init__(self, tag: Tag):
         self.tag = tag
         self.root_node = None
         self.nodes = None
         self.edges = None
+        self.name = None
+        self.last_modified = None
 
     @property
     def tag(self) -> Tag:
@@ -48,10 +53,30 @@ class XmindSheet:
     def root_node(self, value: Tag):
         self._root_node = value
 
+    @property
+    def name(self) -> str:
+        if not self._name:
+            self.name = self.tag('title', recursive=False)[0].text
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        self._name = value
+
+    @property
+    def last_modified(self) -> int:
+        if not self._last_modified:
+            self.last_modified = int(self.tag['timestamp'])
+        return self._last_modified
+
+    @last_modified.setter
+    def last_modified(self, value: int):
+        self._last_modified = value
+
     def _set_nodes_and_edges(self):
         """
-        Recursively walks through the whole map and
-        :return:
+        Recursively walks through the whole map collects all nodes and edges and indexes them in the respective
+        dictionaries
         """
         def _append_node(sheet, node: Tag):
             sheet.nodes[node['id']] = node

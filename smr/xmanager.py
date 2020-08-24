@@ -9,7 +9,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from bs4 import BeautifulSoup, Tag
 
 from smr.consts import X_MEDIA_EXTENSIONS
-from smr.dto.nodecontentdto import NodeContentDto
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from smr.smrworld import SmrWorld
@@ -38,7 +38,7 @@ def get_node_hyperlink(node: Tag) -> str:
         return ''
 
 
-def get_node_image(node: Tag) -> Optional[str]:
+def get_topic_image(node: Tag) -> Optional[str]:
     """
     Gets the image uri of an xmind node
     :param node: the tag representing the node to get the image from
@@ -51,7 +51,7 @@ def get_node_image(node: Tag) -> Optional[str]:
         return None
 
 
-def get_node_title(node: Tag) -> str:
+def get_topic_content(node: Tag) -> str:
     """
     Gets the title of an xmind node
     :param node: Tag representing the node to get the title from
@@ -138,7 +138,7 @@ def is_crosslink(href):
 
 def is_crosslink_node(tag):
     href = get_node_hyperlink(tag)
-    if not href or get_node_title(tag) or get_node_image(tag) or not is_crosslink(
+    if not href or get_topic_content(tag) or get_topic_image(tag) or not is_crosslink(
             href):
         return False
     return True
@@ -150,9 +150,9 @@ def is_empty_node(tag: Tag):
     :param tag: tag to check for
     :return: True if node does not contain any title, image or hyperlink
     """
-    if get_node_title(tag):
+    if get_topic_content(tag):
         return False
-    if get_node_image(tag):
+    if get_topic_image(tag):
         return False
     if get_node_hyperlink(tag):
         return False
@@ -185,6 +185,7 @@ class XManager:
         self.file_bin = []
         self.did_introduce_changes = False
         self.node_dict = None
+        self.edge_dict = None
 
     @property
     def file(self) -> str:
@@ -243,14 +244,28 @@ class XManager:
     @property
     def node_dict(self) -> Dict[str, Tag]:
         if not self._node_dict:
-            # Nested list comprehension explained:
-            # https://stackoverflow.com/questions/20639180/explanation-of-how-nested-list-comprehension-works
-            self.node_dict = {t['id']: t for s in self.sheets.values() for t in s['nodes']}
+            node_dict = {}
+            for sheet in self.sheets.values():
+                node_dict.update(sheet.nodes)
+            self.node_dict = node_dict
         return self._node_dict
 
     @node_dict.setter
     def node_dict(self, value: Dict[str, Tag]):
         self._node_dict = value
+
+    @property
+    def edge_dict(self) -> Dict[str, Tag]:
+        if not self._edge_dict:
+            edge_dict = {}
+            for sheet in self.sheets.values():
+                edge_dict.update(sheet.edges)
+            self.edge_dict = edge_dict
+        return self._edge_dict
+
+    @edge_dict.setter
+    def edge_dict(self, value: Dict[str, Tag]):
+        self._edge_dict = value
 
     @property
     def file_last_modified(self) -> float:
@@ -309,50 +324,34 @@ class XManager:
             uri = href[4:]
         return uri
 
-    def get_node_content(self, tag: Tag) -> NodeContentDto:
+    def get_topic_content(self, tag: Tag) -> TopicContentDto:
         """
-        Gets the content of the node represented by the specified Tag in a dictionary
-        :param tag: the tag representing the node to get the content of
-        :return: a NodeContentDTO containing the contents of the node
+        Gets the content of the topic represented by the specified Tag in a dictionary
+        :param tag: the tag representing the topic to get the content of
+        :return: a TopicContentDto containing the contents of the topic
         """
-        node_content = NodeContentDto()
-        node_content.title = get_node_title(tag)
+        topic_content = TopicContentDto()
+        topic_content.title = get_topic_content(tag)
 
         # if necessary add image
-        node_image = get_node_image(node=tag)
-        if node_image:
-            node_content.image = node_image[4:]
+        topic_image = get_topic_image(node=tag)
+        if topic_image:
+            topic_content.image = topic_image[4:]
 
         # if necessary add sound
         hyperlink_uri = self.get_hyperlink_uri(tag)
         if hyperlink_uri and hyperlink_uri.endswith(X_MEDIA_EXTENSIONS):
-            node_content.media = hyperlink_uri
-        return node_content
+            topic_content.media = hyperlink_uri
+        return topic_content
 
-    def get_node_content_by_id(self, node_id: str) -> NodeContentDto:
+    def get_node_content_by_id(self, node_id: str) -> TopicContentDto:
         """
         gets a node's content from its node id
         :param node_id: xmind node id of the node to get the content from
         :return: the node content in a node content dto
         """
-        node = self.get_tag_by_id(node_id)
-        return self.get_node_content(node)
-
-    def get_sheet_name(self, sheet_id: str) -> str:
-        """
-        Gets the title of the sheet with the specified xmind sheet id
-        :param sheet_id: xmind id of the sheet to get the name of
-        :return: the name of the sheet
-        """
-        return self.sheets[sheet_id]['tag']('title', recursive=False)[0].text
-
-    def get_sheet_last_modified(self, sheet_id: str) -> int:
-        """
-        Gets the internally saved timestamp of the last time the sheet with the provided name was modified
-        :param sheet_id: xmind sheet id of the sheet to get the timestamp for
-        :return: the timestamp (integer)
-        """
-        return int(self.sheets[sheet_id]['tag']['timestamp'])
+        node = self.get_node_by_id(node_id)
+        return self.get_topic_content(node)
 
     def read_attachment(self, attachment_uri: str) -> bytes:
         """
@@ -364,14 +363,25 @@ class XManager:
             with zip_file.open(attachment_uri) as attachment:
                 return attachment.read()
 
-    def get_tag_by_id(self, tag_id: str):
+    def get_node_by_id(self, node_id: str) -> Tag:
         """
-        Gets the tag that
-        :param tag_id: the id property of the tag
+        Gets the node with the specified xmind id
+        :param node_id: the node's xmind id
         :return: the tag containing the Id
         """
         try:
-            return self.node_dict[tag_id]
+            return self.node_dict[node_id]
+        except KeyError as exception_info:
+            raise NodeNotFoundError(exception_info.args[0])
+
+    def get_edge_by_id(self, edge_id: str) -> Tag:
+        """
+        Gets the edge with the specified xmind id
+        :param edge_id: the edge's xmind id
+        :return: the tag representing the edge with the specified id
+        """
+        try:
+            return self.edge_dict[edge_id]
         except KeyError as exception_info:
             raise NodeNotFoundError(exception_info.args[0])
 
@@ -403,7 +413,7 @@ class XManager:
     #             remote_questions[t['id']] = {'xMod': t['timestamp'],
     #                                          'index': get_topic_index(t),
     #                                          'answers': answers}
-    #             for a in self.get_answer_nodes(self.get_tag_by_id(t['id'])):
+    #             for a in self.get_answer_nodes(self.get_node_by_id(t['id'])):
     #                 answers[a['src']['id']] = {
     #                     'xMod': a['src']['timestamp'],
     #                     'index': get_topic_index(a['src']),
@@ -427,7 +437,7 @@ class XManager:
         Removes the node with the specified xmind id from the map
         :param node_id: the xmind node id of the node to remove
         """
-        tag = self.get_tag_by_id(node_id)
+        tag = self.get_node_by_id(node_id)
         if not get_child_nodes(tag):
             tag.decompose()
             del self.node_dict[node_id]
@@ -443,7 +453,7 @@ class XManager:
             assert self.manifest and self.soup
             self._update_zip()
 
-    def set_node_content(self, node_id: str, content: NodeContentDto, media_directory: str,
+    def set_node_content(self, node_id: str, content: TopicContentDto, media_directory: str,
                          smr_world: SmrWorld) -> None:
         """
         Sets an xmind node's title and image to the ones specified in the content dto
@@ -452,17 +462,40 @@ class XManager:
         :param media_directory: the anki's collection.media directory to get images from
         :param smr_world: the smr world to register newly added and removed images
         """
-        tag = self.get_tag_by_id(node_id)
-        if content.title != get_node_title(tag):
-            self.set_node_title(tag=tag, title=content.title)
+        node = self.get_node_by_id(node_id)
+        self._set_topic_content(topic=node, content=content, media_directory=media_directory, smr_world=smr_world)
+
+    def set_edge_content(self, edge_id: str, content: TopicContentDto, media_directory: str,
+                         smr_world: SmrWorld) -> None:
+        """
+        Sets an xmind edge's title and image to the ones specified in the content dto
+        :param edge_id: the node's xmind_id
+        :param content: the node's content
+        :param media_directory: the anki's collection.media directory to get images from
+        :param smr_world: the smr world to register newly added and removed images
+        """
+        node = self.get_edge_by_id(edge_id)
+        self._set_topic_content(topic=node, content=content, media_directory=media_directory, smr_world=smr_world)
+
+    def _set_topic_content(self, topic: Tag, content: TopicContentDto, media_directory: str,
+                           smr_world: SmrWorld) -> None:
+        """
+        Sets an xmind node's title and image to the ones specified in the content dto
+        :param topic: the topic to set the content for
+        :param content: the topic's content
+        :param media_directory: anki's collection.media directory to get images from
+        :param smr_world: the smr world to register newly added and removed images
+        """
+        if content.title != get_topic_content(topic):
+            self.set_node_title(tag=topic, title=content.title)
         # change the image if
         # - the note has an image and the node not
         # - the images of note and tag are different or
         # - the image was removed
-        node_image = get_node_image(tag)
+        node_image = get_topic_image(topic)
         if (content.image and not node_image or content.image and content.image != node_image) or \
                 node_image and not content.image:
-            self.set_node_image(tag=tag, note_image=content.image, node_image=node_image,
+            self.set_node_image(tag=topic, note_image=content.image, node_image=node_image,
                                 media_directory=media_directory, smr_world=smr_world)
 
     def set_node_image(self, tag: Tag, note_image: Optional[str], node_image: Optional[str], media_directory: str,

@@ -4,17 +4,17 @@ from typing import List, Dict
 import aqt as aqt
 import smr.consts as cts
 from anki import Collection
-from anki.utils import splitFields, intTime
-from smr.dto.nodecontentdto import NodeContentDto
+from anki.utils import splitFields
 from smr.dto.smrnotedto import SmrNoteDto
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindnodedto import XmindNodeDto
+from smr.fieldtranslator import FieldTranslator
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
 from smr.xmindimport import XmindImporter
 from smr.xnotemanager import field_by_identifier, XNoteManager, field_from_content, meta_from_fields, \
     content_from_field, field_content_by_identifier
-from smr.fieldtranslator import FieldTranslator
 from smr.xontology import XOntology
 
 
@@ -190,7 +190,7 @@ class SmrSynchronizer:
         aqt.mw.progress.finish()
 
     # TODO: Implement this, do not forget here that we need to add smr triples in this case
-    def _add_answer(self, answer_content: NodeContentDto, xmind_edge: XmindNodeDto):
+    def _add_answer(self, answer_content: TopicContentDto, xmind_edge: XmindNodeDto):
         print('add answer to map')
         print('add answer to ontology')
         self.log.append(f"""\
@@ -201,7 +201,7 @@ anki is not yet supported, instead, add the answer in your xmind map and synchro
 note.""")
 
     # def add_remote_a(self, q_content, q_id, remote, status, a_tag, import_dict):
-    #     a_content = self.map_manager.get_node_content(a_tag)
+    #     a_content = self.map_manager.get_topic_content(a_tag)
     #     a_field = field_from_content(a_content)
     #
     #     # Add answer to note fields
@@ -245,7 +245,7 @@ note.""")
         not_in_status = [a for a in remote['answers'] if a not in status[
             'answers']]
         for a_id in not_in_status:
-            a_tag = self.map_manager.get_tag_by_id(a_id)
+            a_tag = self.map_manager.get_node_by_id(a_id)
             import_dict = self.add_remote_a(
                 import_dict=import_dict,
                 q_content=q_content,
@@ -324,7 +324,7 @@ note.""")
     #             # Add change to sort_id_changes
     #             new_sort_id = sort_id_from_order_number(remote[a_id]['index'])
     #             if not level:
-    #                 q_topic = self.map_manager.get_tag_by_id(q_id)
+    #                 q_topic = self.map_manager.get_node_by_id(q_id)
     #                 level = len(self.map_manager.ref_and_sort_id(q_topic)[1])
     #             import_dict['sort_id_changes'][a_id] = change_dict(
     #                 old=level, new=new_sort_id)
@@ -360,7 +360,7 @@ note.""")
     #
     #     # Adjust index if it has changed
     #     if not status['index'] == remote['index']:
-    #         q_topic = self.map_manager.get_tag_by_id(q_id)
+    #         q_topic = self.map_manager.get_node_by_id(q_id)
     #         level = len(self.map_manager.ref_and_sort_id(q_topic)[1])
     #         new_sort_id = sort_id_from_order_number(remote['index'])
     #
@@ -416,7 +416,7 @@ note.""")
         :param child_node_ids: list of xmind node ids of the child nodes of the edge to change
         """
         # Change edge in map
-        self.x_manager.set_node_content(node_id=xmind_edge.node_id, content=xmind_edge.content,
+        self.x_manager.set_edge_content(edge_id=xmind_edge.node_id, content=xmind_edge.content,
                                         media_directory=self.note_manager.media_directory, smr_world=self.smr_world)
         # Change question in ontology
         xmind_edge.ontology_storid = self.onto.change_relationship_class_name(
@@ -537,7 +537,7 @@ map and then synchronize.""")
                 importer.finish_import()
             elif sheet_id not in sheet_ids_remote:
                 self._remove_sheet(sheet_id)
-            elif sheets_status[sheet_id].last_modified != self.x_manager.get_sheet_last_modified(sheet_id):
+            elif sheets_status[sheet_id].last_modified != get_sheet_last_modified(self.x_manager.sheets, sheet_id):
                 self._process_remote_questions(sheet_id)
             assert False
 
@@ -552,7 +552,7 @@ map and then synchronize.""")
         #
         # # Add questions that were added in map
         # not_in_status = [q for q in remote if q not in status]
-        # tags_to_add = [self.map_manager.get_tag_by_id(q) for q in not_in_status]
+        # tags_to_add = [self.map_manager.get_node_by_id(q) for q in not_in_status]
         # if tags_to_add:
         #     tags_and_parent_qs = [{'tag': t,
         #                            'parent_q': get_parent_question_topic(t)} for
@@ -577,7 +577,7 @@ map and then synchronize.""")
         #                 if not note:
         #                     note = self.note_manager.get_note_from_q_id(
         #                         seed_dict['parent_q']['id'])
-        #                 q_content = self.map_manager.get_node_content(
+        #                 q_content = self.map_manager.get_topic_content(
         #                     seed_dict['parent_q'])
         #                 import_dict = {
         #                     'meta': meta_from_fields(note.fields),

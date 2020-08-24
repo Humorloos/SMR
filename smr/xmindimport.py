@@ -4,25 +4,25 @@ from typing import List, Optional, Dict, Collection
 import bs4
 
 import aqt as aqt
-from owlready2 import ThingClass, ObjectPropertyClass
 from anki.importing.noteimp import NoteImporter, ForeignNote, ADD_MODE
 from anki.models import NoteType
 from aqt.main import AnkiQt
+from owlready2 import ThingClass, ObjectPropertyClass
 from smr.consts import X_MODEL_NAME, X_MAX_ANSWERS, SMR_NOTE_FIELD_NAMES
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
-from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.dto.smrtripledto import SmrTripleDto
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from smr.dto.xmindnodedto import XmindNodeDto
 from smr.dto.xmindsheetdto import XmindSheetDto
+from smr.fieldtranslator import FieldTranslator
 from smr.smrworld import SmrWorld
 from smr.utils import get_edge_coordinates_from_parent_node
 from smr.xmanager import is_empty_node, XManager, get_non_empty_sibling_nodes, \
-    get_node_title
+    get_topic_content
 from smr.xmindsheet import get_child_nodes
-from smr.fieldtranslator import FieldTranslator
 from smr.xontology import XOntology
 
 
@@ -290,16 +290,16 @@ class XmindImporter(NoteImporter):
         :param sheet_id: name of the sheet to be imported
         """
         self.current_sheet_import = sheet_id
-        sheet_name = self.x_manager.get_sheet_name(sheet_id)
+        sheet_name = self.x_manager.sheets[sheet_id].name
         self.mw.progress.update(label='importing %s' % sheet_name, maybeShow=False)
         self.mw.app.processEvents()
         directory, file_name = self.x_manager.get_directory_and_file_name()
         self.sheets_2_import.append(XmindSheetDto(
             sheet_id=sheet_id, name=sheet_name, file_directory=directory, file_name=file_name,
-            last_modified=self.x_manager.get_sheet_last_modified(sheet_id)))
+            last_modified=self.x_manager.sheets[sheet_id].last_modified))
         root_node = self.x_manager.sheets[sheet_id].root_node
         root_concept = self.onto.concept_from_node_content(
-            self.x_manager.get_node_content(root_node), node_id=root_node['id'], node_is_root=True)
+            self.x_manager.get_topic_content(root_node), node_id=root_node['id'], node_is_root=True)
         self.import_node_if_concept(node=root_node, concepts=[root_concept])
 
     def import_node_if_concept(
@@ -329,7 +329,7 @@ class XmindImporter(NoteImporter):
         if parent_concepts is None:
             parent_concepts = []
         if not is_empty_node(node):
-            node_content = self.x_manager.get_node_content(node)
+            node_content = self.x_manager.get_topic_content(node)
             # add image and media to the anki collection
             self.add_image_and_media_to_collection(node_content)
             # add the node to the smr world
@@ -352,7 +352,7 @@ class XmindImporter(NoteImporter):
             self.import_edge(order_number=order_number, edge=following_relationship,
                              parent_node_ids=node_ids_preceding_next_edge, parent_concepts=concepts)
 
-    def add_image_and_media_to_collection(self, content: NodeContentDto) -> None:
+    def add_image_and_media_to_collection(self, content: TopicContentDto) -> None:
         """
         - If present, adds media and image specified in the content DTO to the anki collection and media folder
         - Records an entry linking the potentially new file name to the media attachment / hyperlink from the xmind map
@@ -405,7 +405,7 @@ class XmindImporter(NoteImporter):
         :param parent_node_ids: list of xmind ids of parent nodes
         :param parent_concepts: list of concepts of parent nodes
         """
-        edge_content: NodeContentDto = self.x_manager.get_node_content(edge)
+        edge_content: TopicContentDto = self.x_manager.get_topic_content(edge)
         child_nodes: List[bs4.Tag] = get_child_nodes(edge)
         # stop execution and warn if an edge is not followed by any nodes
         if len(child_nodes) == 0:
@@ -431,11 +431,11 @@ class XmindImporter(NoteImporter):
             self.log = [
                 "Warning:\nA Question titled \"{title}\" has more than {n_answers} answers. Make sure every Question "
                 "in your Map is followed by no more than {n_answers} Answers and try again.".format(
-                    title=get_node_title(edge), n_answers=X_MAX_ANSWERS)]
+                    title=get_topic_content(edge), n_answers=X_MAX_ANSWERS)]
             return
         # create the concepts for the next iteration beforehand to be able to assign a list of all sibling concepts
         # to empty nodes for creating relationships following multiple concepts
-        all_child_concepts = [self.onto.concept_from_node_content(node_content=self.x_manager.get_node_content(
+        all_child_concepts = [self.onto.concept_from_node_content(node_content=self.x_manager.get_topic_content(
             n), node_id=n['id'], node_is_root=False) for n in non_empty_child_nodes]
         single_child_concepts = [[concept] for concept in all_child_concepts]
         # add the relation to the ontology

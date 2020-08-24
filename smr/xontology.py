@@ -1,4 +1,3 @@
-import json
 import os
 import types
 from typing import List, Union, Dict
@@ -7,12 +6,11 @@ import owlready2
 from owlready2 import ThingClass
 from owlready2.namespace import Ontology
 from owlready2.prop import destroy_entity, ObjectPropertyClass
-from smr.consts import X_MAX_ANSWERS, USER_PATH
-from smr.dto.nodecontentdto import NodeContentDto
+from smr.consts import USER_PATH
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindnodedto import XmindNodeDto
-from smr.smrworld import SmrWorld
-from smr.utils import file_dict
 from smr.fieldtranslator import FieldTranslator
+from smr.smrworld import SmrWorld
 
 
 def get_question_sets(q_id_elements):
@@ -164,7 +162,7 @@ class XOntology(Ontology):
         setattr(child_thing, self.smr_world.parent_relation_name, new_parents)
         self.XmindId[child_thing, getattr(self, self.smr_world.parent_relation_name), parent_thing].append(edge_id)
 
-    def concept_from_node_content(self, node_content: NodeContentDto, node_id: str,
+    def concept_from_node_content(self, node_content: TopicContentDto, node_id: str,
                                   node_is_root: bool = False) -> ThingClass:
         """
         Adds a new concept to the ontology and returns it
@@ -257,7 +255,7 @@ class XOntology(Ontology):
         return new_concept
 
     def change_relationship_class_name(self, parent_node_ids: List[str], child_node_ids: List[str],
-                                       new_question_content: NodeContentDto, edge_id: str) -> ObjectPropertyClass:
+                                       new_question_content: TopicContentDto, edge_id: str) -> ObjectPropertyClass:
         """
         - Changes a relation in the ontology by removing the old relation from parents and children and adding the new
         relation specified by new_question_field to them

@@ -7,7 +7,7 @@ import tests.constants as cts
 from anki import Collection
 from conftest import generate_new_file
 import smr.smrsynchronizer
-from smr.dto.nodecontentdto import NodeContentDto
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.smrsynchronizer import SmrSynchronizer
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
@@ -63,7 +63,7 @@ def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker, chang
     # when
     cut.synchronize()
     # then
-    assert XManager(cts.PATH_EXAMPLE_MAP_TEMPORARY).get_node_content_by_id(cts.ENZYMES_NODE_ID) == NodeContentDto(
+    assert XManager(cts.PATH_EXAMPLE_MAP_TEMPORARY).get_node_content_by_id(cts.ENZYMES_NODE_ID) == TopicContentDto(
         image='paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg', title='enzymes')
     assert changed_collection_with_example_map.db.first(
         "select flds from notes where tags = ' testdeck::example_map::biological_psychology ' "
@@ -132,6 +132,7 @@ def test_synchronize_center_node_removed_error(mocker, smr_world_with_example_ma
                'processing\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f|']
 
 
+@pytest.mark.skip
 def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collection_with_example_map):
     # given
     generate_new_file(cts.PATH_EXAMPLE_MAP_CHANGED, cts.PATH_EXAMPLE_MAP_TEMPORARY)

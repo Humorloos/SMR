@@ -1,7 +1,7 @@
 import os
 
 from smr.consts import ADDON_PATH
-from smr.dto.nodecontentdto import NodeContentDto
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindnodedto import XmindNodeDto
 from smr.fieldtranslator import FieldTranslator
@@ -193,11 +193,14 @@ BIOLOGICAL_PSYCHOLOGY_SHEET_ID = '2485j5qgetfevlt00vhrn53961'
 # nodes
 BIOLOGICAL_PSYCHOLOGY_NODE_ID = '0pbme7b9sg9en8qqmmn9jj06od'
 CLINICAL_PSYCHOLOGY_1_NODE_ID = '29qkib9g6gqsfqqmcqk2495kgc'
+PAIN_1_NODE_ID = '3nb97928e68dcu5512pft7gkcg'
 CAN_BE_TRIGGERED_BY_NODE_ID = '7ite3obkfmbchr1pc6ib0o7rga'
+# edges
+EMPTY_EDGE_ID = '668iln3nrlmk5ibhnf4lvbbnmo'
+SPLITS_UP_EDGE_ID = '61irckf1nloq42brfmbu0ke92v'
 
 # edges from smr_world
 EDGE_WITH_MEDIA_XMIND_ID = "7ite3obkfmbcasdf12asd123ga"
-EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID = "61irckf1nloq42brfmbu0ke92v"
 EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID = "6iivm8tpoqj2c0euaabtput14l"
 # edge from xmind test file
 TYPES_EDGE_ID = '485fcs7jl72gtqesace4v8igf0'
@@ -212,12 +215,12 @@ NEUROTRANSMITTERS_NODE_ID = "4r6avbt0pbuam4fg07jod0ubec"
 SEROTONIN_MEDIA_HYPERLINK_NODE_ID = '1s7h0rvsclrnvs8qq9u71acml5'
 ONE_OR_MORE_AMINE_GROUPS_NODE_ID = '0s0is5027b7r6akh3he0nbu478'
 ENZYMES_NODE_ID = '5e2cicue01ikp5vnq5pp46np83'
-NEUROTRANSMITTERS_NODE_CONTENT = NodeContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
-                                                title='neurotransmitters')
+NEUROTRANSMITTERS_NODE_CONTENT = TopicContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
+                                                 title='neurotransmitters')
 # Media hyperlink path as saved in content.xml, replace backslash with slash, since xmind saves paths with slashes
 UNIX_HYPERLINK_MEDIA_PATH = PATH_HYPERLINK_MEDIA_TEMPORARY.replace("\\", "/")
-MEDIA_HYPERLINK_NODE_CONTENT = NodeContentDto(media=PATH_HYPERLINK_MEDIA_TEMPORARY)
-MEDIA_ATTACHMENT_NODE_CONTENT: NodeContentDto = NodeContentDto(media='attachments/395ke7i9a6nkutu85fcpa66as2.mp4')
+MEDIA_HYPERLINK_NODE_CONTENT = TopicContentDto(media=PATH_HYPERLINK_MEDIA_TEMPORARY)
+MEDIA_ATTACHMENT_NODE_CONTENT: TopicContentDto = TopicContentDto(media='attachments/395ke7i9a6nkutu85fcpa66as2.mp4')
 NEUROTRANSMITTERS_CLASS_NAME = 'neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png'
 EMPTY_NODE_TAG_ID = "6b0ho6vvcs4pcacchhsgju7513"
 
@@ -235,12 +238,12 @@ EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE = \
     b'dopamine, adrenaline, noradrenaline</li>\x1fare\x1fbiogenic ' \
     b'amines\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f|{|{{{|\x7f{\x94ub.'
 EDGE_FOLLOWING_MULTIPLE_NODES_NOTE_ID = 12345
-MULTIPLE_PARENTS_CONTENTS = [NodeContentDto(title=i) for i in ["Serotonin", "dopamine", "adrenaline", "noradrenaline"]]
+MULTIPLE_PARENTS_CONTENTS = [TopicContentDto(title=i) for i in ["Serotonin", "dopamine", "adrenaline", "noradrenaline"]]
 MULTIPLE_PARENTS_CLASS_NAMES = [FieldTranslator().class_from_content(i) for i in MULTIPLE_PARENTS_CONTENTS]
 MULTIPLE_PARENTS_NODE_IDS = ["56ru8hj8k8361ppfrftrbahgvv", "03eokjlomuockpeaqn2923nvvp", "3f5lmmd8mjhe3gkbnaih1m9q8j",
                              "73mo29opsuegqobtttlt2vbaqj"]
-MULTIPLE_PARENTS_CHILD_CONTENT = NodeContentDto(title="biogenic amines")
+MULTIPLE_PARENTS_CHILD_CONTENT = TopicContentDto(title="biogenic amines")
 MULTIPLE_PARENTS_CHILD_CLASS_NAME = FieldTranslator().class_from_content(MULTIPLE_PARENTS_CHILD_CONTENT)
 MULTIPLE_PARENTS_CHILD_NODE_ID = "3oqcv5qlqhn28u1opce5i27709"
-MULTIPLE_PARENTS_RELATION_CONTENT = NodeContentDto(title="are")
+MULTIPLE_PARENTS_RELATION_CONTENT = TopicContentDto(title="are")
 MULTIPLE_PARENTS_RELATION_CLASS_NAME = FieldTranslator().relation_class_from_content(MULTIPLE_PARENTS_RELATION_CONTENT)

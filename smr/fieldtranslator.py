@@ -1,7 +1,7 @@
 import re
 
 from smr import consts as cts
-from smr.dto.nodecontentdto import NodeContentDto
+from smr.dto.topiccontentdto import TopicContentDto
 
 
 class FieldTranslator:
@@ -16,7 +16,7 @@ class FieldTranslator:
         self.inverse_dict = {re.escape(self.field_re_dict[k]): k for k in self.field_re_dict}
         self.inverse_regex = re.compile("(%s)" % "|".join(self.inverse_dict.keys()))
 
-    def class_from_content(self, content: NodeContentDto) -> str:
+    def class_from_content(self, content: TopicContentDto) -> str:
         """
         converts a node content dictionary into a string that can be used as an ontology class name
         :param content: xmind node content DTO
@@ -33,7 +33,7 @@ class FieldTranslator:
                                             classified)
         return classified
 
-    def relation_class_from_content(self, content: NodeContentDto) -> str:
+    def relation_class_from_content(self, content: TopicContentDto) -> str:
         """
         converts a node content dictionary into a string that can be used as an ontology class name for a
         relationship property (only difference to concepts is postfix "_xrelation"

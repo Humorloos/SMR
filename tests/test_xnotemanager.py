@@ -1,7 +1,7 @@
 import pytest
 
 import tests.constants as cts
-from smr.dto.nodecontentdto import NodeContentDto
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.xnotemanager import XNoteManager, image_from_field, media_from_field, title_from_field, \
     content_from_field, \
     field_from_content
@@ -76,9 +76,9 @@ def test_content_from_field(smr_world_with_example_map):
     content = content_from_field('MAO is not a neurotransmitter[sound:serotonin.mp3]<img '
                                  'src="attachments629d18n2i73im903jkrjmr98fg.png">', smr_world_with_example_map)
     # then
-    assert content == NodeContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
-                                     media=cts.PATH_HYPERLINK_MEDIA_TEMPORARY,
-                                     title='MAO is not a neurotransmitter')
+    assert content == TopicContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
+                                      media=cts.PATH_HYPERLINK_MEDIA_TEMPORARY,
+                                      title='MAO is not a neurotransmitter')
 
 
 def test_field_from_content(smr_world_with_example_map):

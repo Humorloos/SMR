@@ -7,16 +7,16 @@ from anki.importing.noteimp import ForeignNote, ForeignCard
 from anki.utils import joinFields, intTime
 from owlready2.namespace import World
 from smr.consts import ADDON_PATH, USER_PATH, X_MAX_ANSWERS
-from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.ontologylivesindeckdto import OntologyLivesInDeckDto
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.dto.smrtripledto import SmrTripleDto
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from smr.dto.xmindnodedto import XmindNodeDto
 from smr.dto.xmindsheetdto import XmindSheetDto
-from smr.utils import replace_embedded_media
 from smr.fieldtranslator import FieldTranslator
+from smr.utils import replace_embedded_media
 
 FILE_NAME = 'smrworld.sqlite3'
 SQL_FILE_NAME = 'smrworld.sql'
@@ -132,7 +132,7 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
     def parent_relation_name(self) -> str:
         if self._parent_relation_name is None:
             self.parent_relation_name = self.field_translator.relation_class_from_content(
-                NodeContentDto(title=self.PARENT_NAME))
+                TopicContentDto(title=self.PARENT_NAME))
         return self._parent_relation_name
 
     @parent_relation_name.setter
@@ -143,7 +143,7 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
     def child_relation_name(self) -> str:
         if self._child_relation_name is None:
             self.child_relation_name = self.field_translator.relation_class_from_content(
-                NodeContentDto(title=self.CHILD_NAME))
+                TopicContentDto(title=self.CHILD_NAME))
         return self._child_relation_name
 
     @child_relation_name.setter
@@ -265,7 +265,7 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
             f"SELECT * FROM xmind_sheets where file_directory = '{file_directory}' and file_name = '{file_name}'")}
 
     def get_changed_smr_notes(self, collection: Collection) -> Dict[str, Dict[str, Dict[str, Dict[str, Union[
-        SmrNoteDto, Dict[str, Union[XmindNodeDto, Set[int]]], str, Dict[int, Union[NodeContentDto, Any]]]]]]]:
+        SmrNoteDto, Dict[str, Union[XmindNodeDto, Set[int]]], str, Dict[int, Union[TopicContentDto, Any]]]]]]]:
         """
         Gets all notes belonging to xmind files that were changed since the last smr synchronization
         :return: A hierarchical structure of dictionaries

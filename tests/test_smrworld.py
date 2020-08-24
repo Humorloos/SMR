@@ -3,7 +3,7 @@ from sqlite3 import IntegrityError, OperationalError
 import pytest
 from assertpy import assert_that
 
-from smr.dto.nodecontentdto import NodeContentDto
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.smrtripledto import SmrTripleDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindnodedto import XmindNodeDto
@@ -124,7 +124,7 @@ def test_add_or_replace_xmind_nodes_replace(smr_world_4_tests, x_manager):
     # given
     node = cts.TEST_XMIND_NODE
     new_title = 'different title'
-    node.content = NodeContentDto(image=cts.TEST_EDGE_IMAGE, media=cts.TEST_EDGE_MEDIA, title=new_title)
+    node.content = TopicContentDto(image=cts.TEST_EDGE_IMAGE, media=cts.TEST_EDGE_MEDIA, title=new_title)
     cut = smr_world_4_tests
     # when
     cut.add_or_replace_xmind_nodes([node])
@@ -138,7 +138,7 @@ def test_add_or_replace_xmind_nodes_replace(smr_world_4_tests, x_manager):
 
 def verify_add_xmind_node(expected_entry, cut, x_manager, tag_id, node_content):
     # given
-    node = x_manager.get_tag_by_id(tag_id)
+    node = x_manager.get_node_by_id(tag_id)
     # when
     cut.add_or_replace_xmind_nodes([XmindNodeDto(
         node_id=node['id'], sheet_id=cts.TEST_SHEET_ID, title=node_content.title, image=node_content.image,
@@ -158,8 +158,8 @@ def test_add_or_replace_xmind_edges(smr_world_4_tests, x_manager):
     expected_entry = (cts.TYPES_EDGE_ID, cts.TEST_SHEET_ID, 'types', None, None, cts.TEST_RELATION_STORID,
                       1573032291149, 1)
     manager = x_manager
-    edge = manager.get_tag_by_id(cts.TYPES_EDGE_ID)
-    edge_content = manager.get_node_content(edge)
+    edge = manager.get_edge_by_id(cts.TYPES_EDGE_ID)
+    edge_content = manager.get_topic_content(edge)
     cut = smr_world_4_tests
     # when
     cut.add_or_replace_xmind_edges([XmindNodeDto(
@@ -176,7 +176,7 @@ def test_add_or_replace_xmind_edges_replace(smr_world_4_tests, x_manager):
     # given
     xmind_edge = cts.TEST_XMIND_EDGE
     new_title = 'different title'
-    xmind_edge.content = NodeContentDto(image=cts.TEST_NODE_IMAGE, media=cts.TEST_NODE_MEDIA, title=new_title)
+    xmind_edge.content = TopicContentDto(image=cts.TEST_NODE_IMAGE, media=cts.TEST_NODE_MEDIA, title=new_title)
     cut = smr_world_4_tests
     # when
     cut.add_or_replace_xmind_edges([xmind_edge])
@@ -214,7 +214,7 @@ def test_get_smr_note_question_fields(smr_world_4_tests):
 
 def test_get_smr_note_answer_fields(smr_world_4_tests):
     # when
-    edges = [cts.EDGE_PRECEDING_MULTIPLE_NODES_XMIND_ID, "730ahk5oc4himfrdvkqc5ci1o2", "4vfsmbd1fmn6s0tqmlj4cei7pe"]
+    edges = [cts.SPLITS_UP_EDGE_ID, "730ahk5oc4himfrdvkqc5ci1o2", "4vfsmbd1fmn6s0tqmlj4cei7pe"]
     answers = smr_world_4_tests.get_smr_note_answer_fields(edges)
     # then
     assert_that(answers).is_equal_to({

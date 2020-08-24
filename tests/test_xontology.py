@@ -1,9 +1,6 @@
-import pytest
-
-import smr.xontology as xontology
 import tests.constants as cts
-from owlready2 import ThingClass, ObjectPropertyClass
-from smr.dto.nodecontentdto import NodeContentDto
+from owlready2 import ObjectPropertyClass
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindnodedto import XmindNodeDto
 
 
@@ -112,7 +109,7 @@ def test_change_relationship_class_name(ontology_with_example_map):
     # when
     new_property = cut.change_relationship_class_name(
         parent_node_ids=parent_node_ids, child_node_ids=[child_node_id],
-        new_question_content=NodeContentDto(title='new question', image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI),
+        new_question_content=TopicContentDto(title='new question', image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI),
         edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
     # then
     assert new_property.name == 'new_questionximage_09r2e442o8lppjfeblf7il2rmd_extension_png_xrelation'

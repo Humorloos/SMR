@@ -11,7 +11,7 @@
 # from anki.utils import splitFields
 # from aqt.utils import tooltip
 # from smr.utils import get_smr_model_id
-# from smr.xmanager import get_node_title, get_node_image
+# from smr.xmanager import get_topic_content, get_topic_image
 # from smr.xmindimport import XmindImporter
 #
 #
@@ -120,10 +120,10 @@
 #
 #     def setNodeContent(self, tag, noteContent):
 #         noteTitle = titleFromContent(noteContent)
-#         if noteTitle != get_node_title(tag):
+#         if noteTitle != get_topic_content(tag):
 #             setNodeTitle(tag=tag, title=noteTitle)
 #         noteImg = imgFromContent(noteContent)
-#         nodeImg = get_node_image(tag)
+#         nodeImg = get_topic_image(tag)
 #         if (noteImg and not nodeImg or noteImg and noteImg not in nodeImg) or \
 #                 nodeImg and not noteImg:
 #             self.setNodeImg(tag=tag, noteImg=noteImg, nodeImg=nodeImg)
