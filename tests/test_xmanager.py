@@ -5,8 +5,9 @@ import pytest
 
 import tests.constants as cts
 from smr.dto.nodecontentdto import NodeContentDto
-from smr.xmanager import is_empty_node, get_node_title, get_child_nodes, get_non_empty_sibling_nodes, get_parent_node, \
+from smr.xmanager import is_empty_node, get_node_title, get_non_empty_sibling_nodes, get_parent_node, \
     get_node_image, get_node_hyperlink, XManager, NodeNotFoundError
+from smr.xmindsheet import get_root_node, get_child_nodes
 
 
 def test_x_manager(x_manager):
@@ -32,7 +33,7 @@ def test_get_root_node(x_manager):
     # given
     cut = x_manager
     # when
-    root_node = cut.get_root_node(sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
+    root_node = get_root_node(cut.sheets, sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
     assert get_node_title(root_node) == 'biological psychology'
 

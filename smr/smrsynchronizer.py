@@ -529,108 +529,100 @@ map and then synchronize.""")
 
     def _process_remote_changes(self, file: XmindFileDto):
         sheets_status = self.smr_world.get_xmind_sheets_in_file(file_directory=file.directory, file_name=file.file_name)
-        sheet_ids_status = [sheet.sheet_id for sheet in sheets_status]
         sheet_ids_remote = list(self.x_manager.sheets)
-        for sheet_id in set(sheet_ids_status + sheet_ids_remote):
-            if sheet_id not in sheet_ids_status:
+        for sheet_id in set(list(sheets_status) + sheet_ids_remote):
+            if sheet_id not in sheets_status:
                 importer = XmindImporter(col=self.col, file=file.file_path)
                 importer.import_sheet(sheet_id)
                 importer.finish_import()
             elif sheet_id not in sheet_ids_remote:
-                self._remove_sheet(sheet, status)
+                self._remove_sheet(sheet_id)
+            elif sheets_status[sheet_id].last_modified != self.x_manager.get_sheet_last_modified(sheet_id):
+                self._process_remote_questions(sheet_id)
             assert False
-        #     elif remote[sheet]['xMod'] != status[sheet]['xMod']:
-        #         if not self.onto:
-        #             self.onto = XOntology(deck_id)
-        #         print('process_remote_questions')
-        #         remote_questions = self.map_manager.get_remote_questions(sheet)
-        #         self.process_remote_questions(
-        #             status=status[sheet]['questions'], remote=remote_questions,
-        #             deck_id=deck_id, sheet_id=sheet)
 
-    # def process_remote_questions(self, status, remote, deck_id, sheet_id):
-    #     note = None
-    #     import_dicts = {}
-    #     importer = None
-    #     meta = None
-    #
-    #     # Remove questions that were removed in map
-    #     not_in_remote = [q for q in status if q not in remote]
-    #     self.remove_questions(q_ids=not_in_remote, status=status)
-    #
-    #     # Add questions that were added in map
-    #     not_in_status = [q for q in remote if q not in status]
-    #     tags_to_add = [self.map_manager.get_tag_by_id(q) for q in not_in_status]
-    #     if tags_to_add:
-    #         tags_and_parent_qs = [{'tag': t,
-    #                                'parent_q': get_parent_question_topic(t)} for
-    #                               t in tags_to_add]
-    #
-    #         # Get all questions whose parent question is already in status,
-    #         # since they are the starting points for the imports
-    #         seed_dicts = [d for d in tags_and_parent_qs if
-    #                       d['parent_q']['id'] in status]
-    #         importer = XmindImporter(col=self.note_manager.col,
-    #                                  file=self.map_manager.file,
-    #                                  status_manager=self.status_manager)
-    #         for seed_dict in seed_dicts:
-    #             parent_as = get_parent_a_topics(
-    #                 q_topic=seed_dict['tag'], parent_q=seed_dict['parent_q'])
-    #
-    #             # If the parent answer of this new question is not yet in
-    #             # status, add the answer before importing from the question
-    #             for a in parent_as:
-    #                 if a['id'] not in \
-    #                         status[seed_dict['parent_q']['id']]['answers']:
-    #                     if not note:
-    #                         note = self.note_manager.get_note_from_q_id(
-    #                             seed_dict['parent_q']['id'])
-    #                     q_content = self.map_manager.get_node_content(
-    #                         seed_dict['parent_q'])
-    #                     import_dict = {
-    #                         'meta': meta_from_fields(note.fields),
-    #                         'note': note,
-    #                         'importer': importer,
-    #                         'index_dict': {},
-    #                         'ref_changes': {},
-    #                         'sort_id_changes': {}}
-    #                     import_dicts[seed_dict['parent_q'][
-    #                         'id']] = self.add_remote_a(
-    #                         q_content=q_content,
-    #                         q_id=seed_dict['parent_q']['id'],
-    #                         remote=remote[seed_dict['parent_q']['id']],
-    #                         status=status[seed_dict['parent_q']['id']],
-    #                         a_tag=a, import_dict=import_dict)['index_dict']
-    #                     self.note_manager.save_note(note)
-    #             importer.partial_import(
-    #                 seed_topic=seed_dict['tag'], sheet_id=sheet_id,
-    #                 deck_id=deck_id, parent_q=seed_dict['parent_q'],
-    #                 parent_as=parent_as, onto=self.onto)
-    #         importer.finish_import()
-    #
-    #         # Add questions to status
-    #         importer_status = next(
-    #             f for f in importer.status_manager.status if
-    #             f['file'] == self.map_manager.file)['sheets'][sheet_id][
-    #             'questions']
-    #         for q_id in importer_status:
-    #             if q_id not in status:
-    #                 status[q_id] = importer_status[q_id]
-    #
-    #     for question in {**status, **remote}:
-    #         if question in import_dicts:
-    #             import_dict = import_dicts[question]
-    #         else:
-    #             import_dict = {'note': note,
-    #                            'meta': meta,
-    #                            'importer': importer,
-    #                            'index_dict': {},
-    #                            'ref_changes': {},
-    #                            'sort_id_changes': {}}
-    #         self.process_note(q_id=question, status=status[question],
-    #                           remote=remote[question],
-    #                           import_dict=import_dict)
-    #     print()
+    def _process_remote_questions(self, sheet_id):
+        nodes_status = self.smr_world.get_nodes_and_edges_
+        # for node in self.x_manager.sheets[sheet_id]:
+        #
+        #
+        # # Remove questions that were removed in map
+        # not_in_remote = [q for q in status if q not in remote]
+        # self.remove_questions(q_ids=not_in_remote, status=status)
+        #
+        # # Add questions that were added in map
+        # not_in_status = [q for q in remote if q not in status]
+        # tags_to_add = [self.map_manager.get_tag_by_id(q) for q in not_in_status]
+        # if tags_to_add:
+        #     tags_and_parent_qs = [{'tag': t,
+        #                            'parent_q': get_parent_question_topic(t)} for
+        #                           t in tags_to_add]
+        #
+        #     # Get all questions whose parent question is already in status,
+        #     # since they are the starting points for the imports
+        #     seed_dicts = [d for d in tags_and_parent_qs if
+        #                   d['parent_q']['id'] in status]
+        #     importer = XmindImporter(col=self.note_manager.col,
+        #                              file=self.map_manager.file,
+        #                              status_manager=self.status_manager)
+        #     for seed_dict in seed_dicts:
+        #         parent_as = get_parent_a_topics(
+        #             q_topic=seed_dict['tag'], parent_q=seed_dict['parent_q'])
+        #
+        #         # If the parent answer of this new question is not yet in
+        #         # status, add the answer before importing from the question
+        #         for a in parent_as:
+        #             if a['id'] not in \
+        #                     status[seed_dict['parent_q']['id']]['answers']:
+        #                 if not note:
+        #                     note = self.note_manager.get_note_from_q_id(
+        #                         seed_dict['parent_q']['id'])
+        #                 q_content = self.map_manager.get_node_content(
+        #                     seed_dict['parent_q'])
+        #                 import_dict = {
+        #                     'meta': meta_from_fields(note.fields),
+        #                     'note': note,
+        #                     'importer': importer,
+        #                     'index_dict': {},
+        #                     'ref_changes': {},
+        #                     'sort_id_changes': {}}
+        #                 import_dicts[seed_dict['parent_q'][
+        #                     'id']] = self.add_remote_a(
+        #                     q_content=q_content,
+        #                     q_id=seed_dict['parent_q']['id'],
+        #                     remote=remote[seed_dict['parent_q']['id']],
+        #                     status=status[seed_dict['parent_q']['id']],
+        #                     a_tag=a, import_dict=import_dict)['index_dict']
+        #                 self.note_manager.save_note(note)
+        #         importer.partial_import(
+        #             seed_topic=seed_dict['tag'], sheet_id=sheet_id,
+        #             deck_id=deck_id, parent_q=seed_dict['parent_q'],
+        #             parent_as=parent_as, onto=self.onto)
+        #     importer.finish_import()
+        #
+        #     # Add questions to status
+        #     importer_status = next(
+        #         f for f in importer.status_manager.status if
+        #         f['file'] == self.map_manager.file)['sheets'][sheet_id][
+        #         'questions']
+        #     for q_id in importer_status:
+        #         if q_id not in status:
+        #             status[q_id] = importer_status[q_id]
+        #
+        # for question in {**status, **remote}:
+        #     if question in import_dicts:
+        #         import_dict = import_dicts[question]
+        #     else:
+        #         import_dict = {'note': note,
+        #                        'meta': meta,
+        #                        'importer': importer,
+        #                        'index_dict': {},
+        #                        'ref_changes': {},
+        #                        'sort_id_changes': {}}
+        #     self.process_note(q_id=question, status=status[question],
+        #                       remote=remote[question],
+        #                       import_dict=import_dict)
+        # print()
 
     def remove_questions(self, q_ids, status):
         self.note_manager.remove_notes_by_q_ids(q_ids)
@@ -662,7 +654,7 @@ map and then synchronize.""")
         :param sheet_id: xmind sheet id of the sheet to remove
         """
         self.note_manager.remove_notes_by_sheet_id(sheet_id, self.smr_world)
-        self.onto.remove_sheet(sheet_id, self.x_manager.get_root_node(sheet_id)['id'])
+        self.onto.remove_sheet(sheet_id, self.x_manager.sheets[sheet_id].root_node['id'])
         self.xmind_sheets_2_remove.append(sheet_id)
 
     def process_local_and_remote_changes(self):

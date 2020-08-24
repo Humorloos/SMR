@@ -13,6 +13,7 @@ from smr.dto.nodecontentdto import NodeContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from smr.smrworld import SmrWorld
+from smr.xmindsheet import XmindSheet, get_child_nodes
 
 
 def get_ancestry(topic, descendants):
@@ -99,19 +100,6 @@ def isQuestionNode(tag, level=0):
         return level % 2 == 1
     # Else add one to the path length and test again
     return isQuestionNode(tag.parent.parent.parent, level + 1)
-
-
-def get_child_nodes(tag: Tag) -> List[Tag]:
-    """
-    Gets all nodes directly following the node represented by the specified tag
-    :param tag: the tag representing the node to get the child nodes for
-    :return: the child nodes as a list of tags, an empty list if it doesn't have any
-    """
-    try:
-        return tag.find('children', recursive=False).find(
-            'topics', recursive=False).find_all('topic', recursive=False)
-    except AttributeError:
-        return []
 
 
 def get_non_empty_sibling_nodes(tag: Tag) -> List[Tag]:
@@ -232,16 +220,16 @@ class XManager:
         self._manifest = value
 
     @property
-    def sheets(self) -> Dict[str, Dict[str, Union[Tag, List[Tag]]]]:
+    def sheets(self) -> Dict[str, XmindSheet]:
         if not self._sheets:
             sheets = {}
             for sheet in self.soup('sheet'):
-                sheets[sheet['id']] = {'tag': sheet, 'nodes': sheet('topic')}
+                sheets[sheet['id']] = XmindSheet(sheet)
             self.sheets = sheets
         return self._sheets
 
     @sheets.setter
-    def sheets(self, value: Dict[str, Dict[str, Union[Tag, List[Tag]]]]):
+    def sheets(self, value: Dict[str, XmindSheet]):
         self._sheets = value
 
     @property
@@ -433,14 +421,6 @@ class XManager:
     #     for s in content_sheets:
     #         sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
     #     return sheets
-
-    def get_root_node(self, sheet_id: str) -> Tag:
-        """
-        Returns the root topic of the specified sheet
-        :param sheet_id: the sheet id of the sheet to get the root topic for
-        :return: the tag representing the root node
-        """
-        return self.sheets[sheet_id]['tag'].topic
 
     def remove_node(self, node_id: str):
         """

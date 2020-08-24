@@ -372,7 +372,7 @@ def test_get_xmind_sheets_in_file(smr_world_with_example_map):
     sheets = smr_world_with_example_map.get_xmind_sheets_in_file(file_directory=cts.DIRECTORY_MAPS_TEMPORARY,
                                                                  file_name=cts.NAME_EXAMPLE_MAP)
     # then
-    assert [s.name for s in sheets] == ['biological psychology', 'clinical psychology']
+    assert [s.name for s in sheets.values()] == ['biological psychology', 'clinical psychology']
 
 
 def test_get_note_ids_from_sheet_id(smr_world_with_example_map):

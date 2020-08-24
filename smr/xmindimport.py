@@ -19,8 +19,9 @@ from smr.dto.xmindnodedto import XmindNodeDto
 from smr.dto.xmindsheetdto import XmindSheetDto
 from smr.smrworld import SmrWorld
 from smr.utils import get_edge_coordinates_from_parent_node
-from smr.xmanager import get_child_nodes, is_empty_node, XManager, get_non_empty_sibling_nodes, \
+from smr.xmanager import is_empty_node, XManager, get_non_empty_sibling_nodes, \
     get_node_title
+from smr.xmindsheet import get_child_nodes
 from smr.fieldtranslator import FieldTranslator
 from smr.xontology import XOntology
 
@@ -296,7 +297,7 @@ class XmindImporter(NoteImporter):
         self.sheets_2_import.append(XmindSheetDto(
             sheet_id=sheet_id, name=sheet_name, file_directory=directory, file_name=file_name,
             last_modified=self.x_manager.get_sheet_last_modified(sheet_id)))
-        root_node = self.x_manager.get_root_node(sheet_id=sheet_id)
+        root_node = self.x_manager.sheets[sheet_id].root_node
         root_concept = self.onto.concept_from_node_content(
             self.x_manager.get_node_content(root_node), node_id=root_node['id'], node_is_root=True)
         self.import_node_if_concept(node=root_node, concepts=[root_concept])
