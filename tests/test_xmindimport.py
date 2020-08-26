@@ -14,16 +14,6 @@ from smr.xmindimport import XmindImporter
 from smr.xmindtopic import XmindNode
 
 
-@pytest.fixture(scope='function')
-def xmind_importer_import_edge(active_xmind_importer, mocker):
-    # given
-    importer = active_xmind_importer
-    mocker.patch.object(importer, "_onto")
-    mocker.patch.object(importer, "_mw")
-    mocker.patch.object(importer, "import_node_if_concept")
-    return importer
-
-
 @pytest.fixture
 def active_xmind_importer(xmind_importer):
     importer = xmind_importer
@@ -49,8 +39,17 @@ def xmind_importer_4_integration(empty_anki_collection_function, mocker, patch_a
 def xmind_importer_import_node_if_concept(mocker, active_xmind_importer):
     importer = active_xmind_importer
     mocker.patch.object(importer, "import_edge")
-    mocker.patch.object(importer, "import_triple")
     yield importer
+
+
+@pytest.fixture(scope='function')
+def xmind_importer_import_edge(active_xmind_importer, mocker):
+    importer = active_xmind_importer
+    mocker.patch.object(importer, "_onto")
+    mocker.patch.object(importer, "_mw")
+    mocker.patch.object(importer, "import_node_if_concept")
+    mocker.patch.object(importer, "import_triple")
+    return importer
 
 
 @pytest.fixture
@@ -68,6 +67,7 @@ def assert_import_edge_not_executed(cut):
     assert cut.import_node_if_concept.call_count == 0
     assert cut.is_running is False
     assert len(cut.media_uris_2_add) == 0
+    assert cut.import_triple.call_count == 0
 
 
 def test_xmind_importer(xmind_importer):
@@ -156,7 +156,6 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, xmin
     cut.import_node_if_concept(node=xmind_node, concepts=[x_ontology.Root(
         x_ontology.field_translator.class_from_content(xmind_node.content))])
     # then
-    assert cut.import_triple.call_count == 0
     assert cut.import_edge.call_count == 2
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.nodes_2_import) == 1
@@ -168,16 +167,9 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
     node = cut.x_manager.get_node_by_id(cts.EMPTY_NODE_ID)
     concepts = [x_ontology.concept_from_node_content(t.content, node_id='some_id') for t in
                 node.non_empty_sibling_nodes]
-    parent_edge = node.parent_edge
-    parent_node = parent_edge.parent_nodes[0]
     # when
-    cut.import_node_if_concept(
-        node=node, concepts=concepts,
-        parent_concepts=[x_ontology.concept_from_node_content(parent_node.content, node_id='some_id')],
-        parent_relationship_class_name=x_ontology.field_translator.class_from_content(parent_edge.content),
-        order_number=5)
+    cut.import_node_if_concept(node=node, concepts=concepts, order_number=5)
     # then
-    assert cut.import_triple.call_count == 0
     assert cut._smr_world.add_or_replace_xmind_nodes.call_count == 0
     assert cut.import_edge.call_count == 1
     assert len(cut.media_uris_2_add) == 0
@@ -188,17 +180,9 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
     cut = xmind_importer_import_node_if_concept
     node = cut.x_manager.get_node_by_id(cts.BIOGENIC_AMINES_NODE_ID)
     concepts = [x_ontology.concept_from_node_content(node.content, node_id='some_id')]
-    parent_edge = node.parent_edge
-    parent_nodes = parent_edge.parent_nodes
     # when
-    cut.import_node_if_concept(
-        node=node, concepts=concepts,
-        parent_concepts=[x_ontology.concept_from_node_content(n.content, node_id='some_id') for
-                         n in parent_nodes],
-        parent_relationship_class_name=x_ontology.field_translator.class_from_content(parent_edge.content),
-        order_number=1)
+    cut.import_node_if_concept(node=node, concepts=concepts, order_number=1)
     # then
-    assert cut.import_triple.call_count == 4
     assert cut.import_edge.call_count == 1
     assert len(cut.nodes_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
@@ -208,22 +192,22 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     # given
     cut = xmind_importer_import_edge
     # when
-    cut.import_edge(order_number=1, edge=cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID),
-                    parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
+    cut.import_edge(order_number=1, edge=cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID))
     # then
     assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
+    assert cut.import_triple.call_count == 1
 
 
-def test_import_edge_no_child_nodes(xmind_importer_import_edge, x_ontology):
+def test_import_edge_no_child_nodes(xmind_importer_import_edge):
     # given
     cut = xmind_importer_import_edge
     edge = cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID)
     edge.child_nodes = []
     # when
-    cut.import_edge(order_number=1, edge=edge, parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
+    cut.import_edge(order_number=1, edge=edge)
     # then
     assert_import_edge_not_executed(cut)
     assert cut.log == ["""\
@@ -233,7 +217,7 @@ investigates: information transfer and processing
 requires: neurotransmitters (image)) is missing answers. Please adjust your Concept Map and try again."""]
 
 
-def test_import_edge_too_many_child_nodes(xmind_importer_import_edge, x_ontology):
+def test_import_edge_too_many_child_nodes(xmind_importer_import_edge):
     # given
     cut = xmind_importer_import_edge
     edge = cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID)
@@ -241,7 +225,7 @@ def test_import_edge_too_many_child_nodes(xmind_importer_import_edge, x_ontology
     for n in edge.child_nodes:
         n.is_empty = False
     # when
-    cut.import_edge(order_number=1, edge=edge, parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
+    cut.import_edge(order_number=1, edge=edge)
     # then
     assert_import_edge_not_executed(cut)
     assert cut.log == ["""\
@@ -252,34 +236,32 @@ requires: neurotransmitters (image)) has more than 20 answers. Make sure every Q
 more than 20 Answers and try again."""]
 
 
-def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge, x_ontology):
+def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge):
     # given
     cut = xmind_importer_import_edge
     edge = cut.x_manager.get_edge_by_id(cts.SPLITS_UP_EDGE_ID)
-    parent_node = edge.parent_nodes[0]
     # when
-    cut.import_edge(order_number=1, edge=edge,
-                    parent_concepts=[x_ontology.concept_from_node_content(parent_node.content, node_id='some_id')])
+    cut.import_edge(order_number=1, edge=edge)
     # then
     assert cut.onto.concept_from_node_content.call_count == 4
     assert cut.import_node_if_concept.call_count == 5
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
+    assert cut.import_triple.call_count == 4
 
 
 def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     # given
     cut = xmind_importer_import_edge
-    edge = cut.x_manager.get_edge_by_id(cts.EMPTY_EDGE_ID)
-    parent_node = edge.parent_nodes[0]
+    edge = cut.x_manager.get_edge_by_id(cts.EMPTY_EDGE_3_ID)
     # when
-    cut.import_edge(order_number=1, edge=edge,
-                    parent_concepts=[x_ontology.concept_from_node_content(parent_node.content, node_id='some_id')])
+    cut.import_edge(order_number=1, edge=edge)
     # then
     assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
+    assert cut.import_triple.call_count == 1
 
 
 def test_finish_import(patch_aqt_mw_smr_world_and_col_with_example_map, mocker):

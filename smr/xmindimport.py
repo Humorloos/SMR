@@ -333,8 +333,7 @@ class XmindImporter(NoteImporter):
         self.import_node_if_concept(node=root_node, concepts=[root_concept])
 
     def import_node_if_concept(
-            self, node: XmindNode, concepts: List[ThingClass], parent_relationship_class_name: Optional[str] = None,
-            order_number: int = 1) -> None:
+            self, node: XmindNode, concepts: List[ThingClass], order_number: int = 1) -> None:
         """
         If the node is not empty:
         - adds a node to the smr world
@@ -345,14 +344,8 @@ class XmindImporter(NoteImporter):
         :param concepts: A list of concepts that only contains one concept if the node that is imported is not
         empty. Multiple concepts if the node is empty to serve as a representation of multiple concepts preceding a
         relation. In this case the list serves
-        :param parent_relationship_class_name: class name for the relationship in the triple that we import into the
-        ontology
         :param order_number: order number of the node with respect to its siblings
         """
-        if node.parent_edge is None:
-            parent_node_ids = []
-        else:
-            parent_node_ids = [n.id for n in node.parent_edge.parent_nodes]
         if not node.is_empty:
             # If needed, add media and image to files to add to the anki collection after the import
             if node.image:
@@ -364,13 +357,9 @@ class XmindImporter(NoteImporter):
                 node_id=node.id, sheet_id=node.sheet_id,
                 title=node.title, image=node.image, link=node.media,
                 ontology_storid=concepts[0].storid, last_modified=node.last_modified, order_number=order_number))
-            # import a triple for each parent concept
-            for parent_node_id in parent_node_ids:
-                self.import_triple(parent_node_id=parent_node_id, edge_id=node.parent_edge.id,
-                                   child_node_id=node.id, relationship_class_name=parent_relationship_class_name)
         # import each child edge
         for order_number, following_relationship in enumerate(node.child_edges, start=1):
-            self.import_edge(order_number=order_number, edge=following_relationship, parent_concepts=concepts)
+            self.import_edge(order_number=order_number, edge=following_relationship)
 
     def import_triple(self, parent_node_id: str, edge_id: str, relationship_class_name: str,
                       child_node_id: str) -> None:
@@ -388,7 +377,7 @@ class XmindImporter(NoteImporter):
         self.triples_2_import.append(SmrTripleDto(
             parent_node_id=parent_node_id, edge_id=edge_id, child_node_id=child_node_id))
 
-    def import_edge(self, order_number: int, edge: XmindEdge, parent_concepts: List[ThingClass]) -> None:
+    def import_edge(self, order_number: int, edge: XmindEdge) -> None:
         """
         - creates concepts for all non-empty all the edge represented by the specified tag
         - adds the relationship property to the ontology
@@ -397,12 +386,9 @@ class XmindImporter(NoteImporter):
         - calls import_node_if_concept() for each child node following the edge.
         :param order_number: order number of the edge with respect to its siblings
         :param edge: tag that represents the edge to be imported
-        :param parent_node_ids: list of xmind ids of parent nodes
-        :param parent_concepts: list of concepts of parent nodes
         """
-        child_nodes = edge.child_nodes
         # stop execution and warn if an edge is not followed by any nodes
-        if len(child_nodes) == 0:
+        if len(edge.child_nodes) == 0:
             self.is_running = False
             self.log = [
                 'Warning:\nA Question titled "{title}" (reference: {reference}) is missing answers. Please adjust your '
@@ -413,7 +399,7 @@ class XmindImporter(NoteImporter):
         # when importing the triples
         non_empty_child_nodes = []
         empty_child_nodes = []
-        for n in child_nodes:
+        for n in edge.child_nodes:
             if n.is_empty:
                 empty_child_nodes.append(n)
             else:
@@ -435,6 +421,12 @@ class XmindImporter(NoteImporter):
         relationship_class_name = self.smr_world.child_relation_name if edge.is_empty \
             else self.translator.relation_class_from_content(edge.content)
         relationship_property: ObjectPropertyClass = self.onto.add_relation(relationship_class_name)
+        # import a triple for each parent and child node
+        for parent_node in edge.parent_nodes:
+            for child_node in edge.child_nodes:
+                if not child_node.is_empty:
+                    self.import_triple(parent_node_id=parent_node.id, edge_id=edge.id,
+                                       child_node_id=child_node.id, relationship_class_name=relationship_class_name)
         # if needed, add image and media to media files to add to collection after import
         if edge.image:
             self.media_uris_2_add.append(edge.image)
@@ -453,8 +445,7 @@ class XmindImporter(NoteImporter):
                 non_empty_child_nodes + empty_child_nodes,
                 single_child_concepts + len(empty_child_nodes) * [all_child_concepts]), start=1):
             self.import_node_if_concept(
-                node=child_node, concepts=child_concepts, parent_concepts=parent_concepts,
-                parent_relationship_class_name=relationship_class_name, order_number=order_number)
+                node=child_node, concepts=child_concepts, order_number=order_number)
 
     def finish_import(self) -> None:
         """

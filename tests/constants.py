@@ -199,9 +199,9 @@ DE_EMBEDDED_MEDIA_NODE_ID = '23nu73chqkkkem455dit5p8stu'
 PAIN_1_NODE_ID = '3nb97928e68dcu5512pft7gkcg'
 CAN_BE_TRIGGERED_BY_NODE_ID = '7ite3obkfmbchr1pc6ib0o7rga'
 # edges
-EMPTY_EDGE_ID = '668iln3nrlmk5ibhnf4lvbbnmo'
 SPLITS_UP_EDGE_ID = '61irckf1nloq42brfmbu0ke92v'
 ARE_EDGE_ID = "6iivm8tpoqj2c0euaabtput14l"
+EMPTY_EDGE_3_ID = '668iln3nrlmk5ibhnf4lvbbnmo'
 
 # edges from smr_world
 EDGE_WITH_MEDIA_XMIND_ID = "7ite3obkfmbcasdf12asd123ga"
