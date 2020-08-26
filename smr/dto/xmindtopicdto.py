@@ -6,9 +6,10 @@ from smr.dto.topiccontentdto import TopicContentDto
 
 
 @dc.dataclass
-class XmindNodeDto(EntityDto):
+class XmindTopicDto(EntityDto):
     """
-    Data transfer object representing a node (or edge) from the xmind_sheets relation in the smr world
+    Data transfer object representing a topic (node or edge) from the xmind_nodes or xmind_edges relation in the smr
+    world
     """
     node_id: str = ""
     sheet_id: str = ""

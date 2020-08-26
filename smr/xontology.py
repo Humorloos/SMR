@@ -8,7 +8,7 @@ from owlready2.namespace import Ontology
 from owlready2.prop import destroy_entity, ObjectPropertyClass
 from smr.consts import USER_PATH
 from smr.dto.topiccontentdto import TopicContentDto
-from smr.dto.xmindnodedto import XmindNodeDto
+from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.fieldtranslator import FieldTranslator
 from smr.smrworld import SmrWorld
 
@@ -124,8 +124,8 @@ class XOntology(Ontology):
         """
         return self.get(self.smr_world.storid_from_edge_id(edge_id))
 
-    def add_node(self, parent_node_ids: List[str], parent_edge: XmindNodeDto, relationship_class_name: str,
-                 node_2_add: XmindNodeDto):
+    def add_node(self, parent_node_ids: List[str], parent_edge: XmindTopicDto, relationship_class_name: str,
+                 node_2_add: XmindTopicDto):
         """
         - If the concept for the node already exists, adds the node id to the concept's node ids, else creates the
         concept
@@ -199,7 +199,7 @@ class XOntology(Ontology):
                 relationship_property.range = [self.Concept]
         return relationship_property
 
-    def remove_node(self, parent_node_ids: List[str], xmind_edge: XmindNodeDto, xmind_node: XmindNodeDto,
+    def remove_node(self, parent_node_ids: List[str], xmind_edge: XmindTopicDto, xmind_node: XmindTopicDto,
                     children: Dict[str, List[str]]):
         """
         Removes the node's xmind id from the respective concept
@@ -229,7 +229,7 @@ class XOntology(Ontology):
                 self.remove_relations(parents=[concept], relation_name=self.get_relation_from_edge_id(edge_id).name,
                                       children=child_concepts, edge_id=edge_id)
 
-    def rename_node(self, parent_node_ids: List[str], xmind_edge: XmindNodeDto, xmind_node: XmindNodeDto,
+    def rename_node(self, parent_node_ids: List[str], xmind_edge: XmindTopicDto, xmind_node: XmindTopicDto,
                     children: Dict[str, List[str]]) -> ThingClass:
         """
         changes the name of a node while retaining the relations to related concepts (children and parents)
@@ -324,7 +324,7 @@ class XOntology(Ontology):
             self.remove_node(parent_node_ids=node['parent_node_ids'],
                              xmind_edge=node['xmind_edge'], xmind_node=node['xmind_node'], children={})
         # finally, remove the root node which is not included in the output of nodes_2_remove and has no parent_node_ids
-        self.remove_node(parent_node_ids=[], xmind_edge=XmindNodeDto(), xmind_node=XmindNodeDto(node_id=root_node_id),
+        self.remove_node(parent_node_ids=[], xmind_edge=XmindTopicDto(), xmind_node=XmindTopicDto(node_id=root_node_id),
                          children={})
 
     def _set_up_classes(self):

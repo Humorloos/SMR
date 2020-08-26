@@ -1,7 +1,7 @@
 import tests.constants as cts
 from owlready2 import ObjectPropertyClass
 from smr.dto.topiccontentdto import TopicContentDto
-from smr.dto.xmindnodedto import XmindNodeDto
+from smr.dto.xmindtopicdto import XmindTopicDto
 
 
 def test_xontology(x_ontology):
@@ -121,8 +121,8 @@ def test_remove_node(ontology_with_example_map):
     # given
     cut = ontology_with_example_map
     # when
-    cut.remove_node(xmind_node=XmindNodeDto(node_id=cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID),
-                    xmind_edge=XmindNodeDto(), parent_node_ids=[], children={})
+    cut.remove_node(xmind_node=XmindTopicDto(node_id=cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID),
+                    xmind_edge=XmindTopicDto(), parent_node_ids=[], children={})
     # then
     assert not cut.one_or_more_amine_groups
     assert not cut.biogenic_amines.consist_of_xrelation
@@ -134,8 +134,8 @@ def test_remove_node_does_not_remove_concept_if_nodes_left(ontology_with_example
     cut.nociceptors.XmindId.append('new_id')
     # when
     cut.remove_node(
-        xmind_node=XmindNodeDto(node_id='2mbb2crv3tdgr131i9j538n0ga'),
-        xmind_edge=XmindNodeDto(title="triggered by", node_id="4rdraflh6n2hl4a459g2urdkr6"),
+        xmind_node=XmindTopicDto(node_id='2mbb2crv3tdgr131i9j538n0ga'),
+        xmind_edge=XmindTopicDto(title="triggered by", node_id="4rdraflh6n2hl4a459g2urdkr6"),
         parent_node_ids=["5asru7kdmre8059cemi8p5lm3v"],
         children={'4q3e21ritrvitgmjialvadn2m6': ['2jf5kkori2h7sdja7cgje5i71e']})
     # then
@@ -148,9 +148,9 @@ def test_add_node(ontology_with_example_map):
     # given
     cut = ontology_with_example_map
     # when
-    cut.add_node(parent_edge=XmindNodeDto(node_id="1scualcvt0scjd9iaoblg568ld"),
+    cut.add_node(parent_edge=XmindTopicDto(node_id="1scualcvt0scjd9iaoblg568ld"),
                  relationship_class_name='can_be_inhibited_by_xrelation',
-                 node_2_add=XmindNodeDto(node_id='some id', title='some title', image='abcde.png', link='fghij.mp3'),
+                 node_2_add=XmindTopicDto(node_id='some id', title='some title', image='abcde.png', link='fghij.mp3'),
                  parent_node_ids=['5asru7kdmre8059cemi8p5lm3v'])
     # then
     assert [c.name for c in cut.Pain.can_be_inhibited_by_xrelation] == [
@@ -161,8 +161,8 @@ def test_rename_node(ontology_with_example_map):
     # given
     cut = ontology_with_example_map
     # when
-    new_concept = cut.rename_node(xmind_edge=XmindNodeDto(
-        title='are', node_id="6iivm8tpoqj2c0euaabtput14l"), xmind_node=XmindNodeDto(
+    new_concept = cut.rename_node(xmind_edge=XmindTopicDto(
+        title='are', node_id="6iivm8tpoqj2c0euaabtput14l"), xmind_node=XmindTopicDto(
         node_id='3oqcv5qlqhn28u1opce5i27709', title='nothing', image='abcde.png', link='fghij.mp3'),
         parent_node_ids=cts.MULTIPLE_PARENTS_NODE_IDS,
         children={cts.CONSIST_OF_EDGE_ID: [cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID]})

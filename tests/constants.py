@@ -3,7 +3,7 @@ import os
 from smr.consts import ADDON_PATH
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
-from smr.dto.xmindnodedto import XmindNodeDto
+from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.fieldtranslator import FieldTranslator
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
@@ -31,9 +31,9 @@ TEST_EDGE_IMAGE = 'edge image'
 TEST_EDGE_MEDIA = 'edge media'
 TEST_EDGE_LAST_MODIFIED = 1578313461243
 TEST_EDGE_ORDER_NUMBER = 1
-TEST_XMIND_EDGE = XmindNodeDto(node_id=TEST_RELATION_EDGE_ID, sheet_id=TEST_SHEET_ID, title=TEST_EDGE_TITLE,
-                               image=TEST_EDGE_IMAGE, link=TEST_EDGE_MEDIA,
-                               last_modified=TEST_EDGE_LAST_MODIFIED, order_number=TEST_EDGE_ORDER_NUMBER)
+TEST_XMIND_EDGE = XmindTopicDto(node_id=TEST_RELATION_EDGE_ID, sheet_id=TEST_SHEET_ID, title=TEST_EDGE_TITLE,
+                                image=TEST_EDGE_IMAGE, link=TEST_EDGE_MEDIA,
+                                last_modified=TEST_EDGE_LAST_MODIFIED, order_number=TEST_EDGE_ORDER_NUMBER)
 # xmind nodes
 TEST_CONCEPT_NODE_ID = "node id"
 TEST_NODE_TITLE = 'node title'
@@ -41,9 +41,9 @@ TEST_NODE_IMAGE = 'node image'
 TEST_NODE_MEDIA = 'node media'
 TEST_NODE_LAST_MODIFIED = 1578314907411
 TEST_NODE_ORDER_NUMBER = 1
-TEST_XMIND_NODE = XmindNodeDto(node_id=TEST_CONCEPT_NODE_ID, sheet_id=TEST_SHEET_ID, title=TEST_NODE_TITLE,
-                               image=TEST_NODE_IMAGE, link=TEST_NODE_MEDIA,
-                               last_modified=TEST_NODE_LAST_MODIFIED, order_number=TEST_NODE_ORDER_NUMBER)
+TEST_XMIND_NODE = XmindTopicDto(node_id=TEST_CONCEPT_NODE_ID, sheet_id=TEST_SHEET_ID, title=TEST_NODE_TITLE,
+                                image=TEST_NODE_IMAGE, link=TEST_NODE_MEDIA,
+                                last_modified=TEST_NODE_LAST_MODIFIED, order_number=TEST_NODE_ORDER_NUMBER)
 TEST_FILE_PATH = os.path.join(TEST_FILE_DIRECTORY, TEST_FILE_NAME + '.xmind')
 TEST_CONCEPT_CLASS_NAME = "test_concept"
 TEST_CONCEPT_2_NODE_ID = "node id2"

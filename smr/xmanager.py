@@ -5,7 +5,7 @@ import tempfile
 from typing import Dict, List, Optional, Tuple, Union
 from zipfile import ZipFile, ZIP_DEFLATED
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto

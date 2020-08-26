@@ -8,7 +8,7 @@ from anki.utils import splitFields
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
-from smr.dto.xmindnodedto import XmindNodeDto
+from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.fieldtranslator import FieldTranslator
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
@@ -77,11 +77,11 @@ class SmrSynchronizer:
         self._xmind_files_2_update = value
 
     @property
-    def xmind_edges_2_update(self) -> List[XmindNodeDto]:
+    def xmind_edges_2_update(self) -> List[XmindTopicDto]:
         return self._xmind_edges_2_update
 
     @xmind_edges_2_update.setter
-    def xmind_edges_2_update(self, value: List[XmindNodeDto]):
+    def xmind_edges_2_update(self, value: List[XmindTopicDto]):
         self._xmind_edges_2_update = value
 
     @property
@@ -141,11 +141,11 @@ class SmrSynchronizer:
         self._xmind_sheets_2_remove = value
 
     @property
-    def xmind_nodes_2_update(self) -> List[XmindNodeDto]:
+    def xmind_nodes_2_update(self) -> List[XmindTopicDto]:
         return self._xmind_nodes_2_update
 
     @xmind_nodes_2_update.setter
-    def xmind_nodes_2_update(self, value: List[XmindNodeDto]):
+    def xmind_nodes_2_update(self, value: List[XmindTopicDto]):
         self._xmind_nodes_2_update = value
 
     @property
@@ -210,7 +210,7 @@ class SmrSynchronizer:
         aqt.mw.progress.finish()
 
     # TODO: Implement this, do not forget here that we need to add smr triples in this case
-    def _add_answer(self, answer_content: TopicContentDto, xmind_edge: XmindNodeDto):
+    def _add_answer(self, answer_content: TopicContentDto, xmind_edge: XmindTopicDto):
         print('add answer to map')
         print('add answer to ontology')
         self.log.append(f"""\
@@ -272,7 +272,7 @@ note.""")
                 q_id=q_id, remote=remote, status=status, a_tag=a_tag)
         return import_dict
 
-    def _change_remote_node(self, xmind_edge: XmindNodeDto, parent_node_ids: List[str], xmind_node: XmindNodeDto,
+    def _change_remote_node(self, xmind_edge: XmindTopicDto, parent_node_ids: List[str], xmind_node: XmindTopicDto,
                             children: Dict[str, List[str]]) -> None:
         """
         Changes a node's content in the xmind map and in the ontology
@@ -425,7 +425,7 @@ note.""")
     #     importer.finish_import()
     # print('change note in anki and status and put changes in change_list')
 
-    def _change_remote_question(self, xmind_edge: XmindNodeDto, parent_node_ids: List[str],
+    def _change_remote_question(self, xmind_edge: XmindTopicDto, parent_node_ids: List[str],
                                 child_node_ids: List[str]):
         """
         - Changes the content of the xmind edge that belongs to the specified note data to the local question content
@@ -459,7 +459,7 @@ note.""")
                 importer.media.append(a_media['media'])
         return importer
 
-    def _try_to_remove_answer(self, xmind_edge: XmindNodeDto, xmind_node: XmindNodeDto,
+    def _try_to_remove_answer(self, xmind_edge: XmindTopicDto, xmind_node: XmindTopicDto,
                               parent_node_ids: List[str]):
         """
         checks whether an answer is a leave node and if it is, removes it from the xmind map and the ontology

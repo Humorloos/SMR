@@ -1,22 +1,18 @@
 import os
-from typing import List, Optional, Dict, Collection
-
-import bs4
+from typing import List, Optional, Dict, Collection, Union
 
 import aqt as aqt
 from anki.importing.noteimp import NoteImporter, ForeignNote, ADD_MODE
 from anki.models import NoteType
 from aqt.main import AnkiQt
-from owlready2 import ThingClass, ObjectPropertyClass
 from smr.consts import X_MODEL_NAME, X_MAX_ANSWERS, SMR_NOTE_FIELD_NAMES
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.dto.smrtripledto import SmrTripleDto
-from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
-from smr.dto.xmindnodedto import XmindNodeDto
 from smr.dto.xmindsheetdto import XmindSheetDto
+from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.fieldtranslator import FieldTranslator
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
@@ -45,8 +41,8 @@ class XmindImporter(NoteImporter):
         self.files_2_import: List[XmindFileDto] = []
         self.sheets_2_import: List[XmindSheetDto] = []
         self.media_2_anki_files_2_import: List[XmindMediaToAnkiFilesDto] = []
-        self.nodes_2_import: List[XmindNodeDto] = []
-        self.edges_2_import: List[XmindNodeDto] = []
+        self.nodes_2_import: List[XmindTopicDto] = []
+        self.edges_2_import: List[XmindTopicDto] = []
         self.triples_2_import: List[SmrTripleDto] = []
         self.smr_notes_2_add: List[SmrNoteDto] = []
         # deck id, deck name, and repair are speciefied in deck selection dialog
@@ -99,11 +95,11 @@ class XmindImporter(NoteImporter):
         return self._media_2_anki_files_2_import
 
     @property
-    def nodes_2_import(self) -> List[XmindNodeDto]:
+    def nodes_2_import(self) -> List[XmindTopicDto]:
         return self._nodes_2_import
 
     @property
-    def edges_2_import(self) -> List[XmindNodeDto]:
+    def edges_2_import(self) -> List[XmindTopicDto]:
         return self._edges_2_import
 
     @property
@@ -337,25 +333,14 @@ class XmindImporter(NoteImporter):
     def import_node_if_concept(self, node: XmindNode) -> None:
         """
         If the node is not empty:
-        - adds a node to the smr world
-        - adds image and media files from the node to the anki collection
-        - calls import_triple() for each parent node preceding the parent edge
-        Finally calls import_edge() for each edge following the node.
+        - adds a concept for the node to the ontology
+        - adds the node's data to the respective lists for finishing the import
         :param node: the node to import
         """
         if not node.is_empty:
             # create the concept for this node in the ontology
             self.onto.concept_from_node_content(node_content=node.content, node_id=node.id, node_is_root=False)
-            # If needed, add media and image to files to add to the anki collection after the import
-            if node.image:
-                self.media_uris_2_add.append(node.image)
-            if node.media:
-                self.media_uris_2_add.append(node.media)
-            # remember to add the node to the smr world on finishing the import
-            self.nodes_2_import.append(XmindNodeDto(
-                node_id=node.id, sheet_id=node.sheet_id,
-                title=node.title, image=node.image, link=node.media, last_modified=node.last_modified,
-                order_number=node.order_number))
+            self._append_topic_data(topic=node, type_is_node=True)
 
     def import_triple(self, parent_node_id: str, edge_id: str, relationship_class_name: str,
                       child_node_id: str) -> None:
@@ -375,11 +360,12 @@ class XmindImporter(NoteImporter):
 
     def import_edge(self, edge: XmindEdge) -> None:
         """
-        - creates concepts for all non-empty all the edge represented by the specified tag
-        - adds the relationship property to the ontology
-        - adds the edge to the smr world
-        - adds image and media from the edge to the anki collection
-        - calls import_node_if_concept() for each child node following the edge.
+        - if the edge is not empty:
+            - adds the edge to the list of edges to make notes of
+            - adds the relationship property to the ontology
+        - connects all parent- and child nodes using the relationship property and adds the triples to the list for
+        the smr world
+        - adds the edge's data to the lists for finishing the import
         :param edge: tag that represents the edge to be imported
         """
         # stop execution and warn if an edge is not followed by any nodes
@@ -396,32 +382,43 @@ class XmindImporter(NoteImporter):
             if len(edge.non_empty_child_nodes) > X_MAX_ANSWERS:
                 self.is_running = False
                 self.log = [
-                    "Warning:\nA Question titled \"{title}\" (reference: {reference}) has more than {n_answers} answers. "
-                    "Make sure every Question in your Map is followed by no more than {n_answers} Answers and try "
-                    "again.".format(title=edge.title, reference=edge.get_reference(), n_answers=X_MAX_ANSWERS)]
+                    "Warning:\nA Question titled \"{title}\" (reference: {reference}) has more than {n_answers} "
+                    "answers. Make sure every Question in your Map is followed by no more than {n_answers} Answers "
+                    "and try again.".format(title=edge.title, reference=edge.get_reference(), n_answers=X_MAX_ANSWERS)]
                 return
             self.edge_ids_2_make_notes_of.append(edge.id)
             relationship_class_name = self.translator.relation_class_from_content(edge.content)
+            self.onto.add_relation(relationship_class_name)
         # else just add triples with child and parent relations
         else:
             relationship_class_name = self.smr_world.child_relation_name
         # add the relation to the ontology
-        self.onto.add_relation(relationship_class_name)
         # import a triple for each parent and child node
         for parent_node in edge.parent_nodes:
             for child_node in edge.child_nodes:
                 if not child_node.is_empty:
                     self.import_triple(parent_node_id=parent_node.id, edge_id=edge.id,
                                        child_node_id=child_node.id, relationship_class_name=relationship_class_name)
+        self._append_topic_data(topic=edge, type_is_node=False)
+
+    def _append_topic_data(self, topic: Union[XmindNode, XmindEdge], type_is_node: bool):
+        """
+        If needed, appends the topic's media uris to the respective list, gets the topic's TopicDto and adds it to
+        the list nodes_2_import or edges_2_import
+        :param topic: either an XmindNode or an XmindEdge for which to add the data to the respective lists
+        :param type_is_node: Whether the topic for which to record the data is an xmind node (False means it is an edge)
+        """
         # if needed, add image and media to media files to add to collection after import
-        if edge.image:
-            self.media_uris_2_add.append(edge.image)
-        if edge.media:
-            self.media_uris_2_add.append(edge.media)
+        if topic.image:
+            self.media_uris_2_add.append(topic.image)
+        if topic.media:
+            self.media_uris_2_add.append(topic.media)
         # add the edge to the list of edges to add to the smr_world
-        self.edges_2_import.append(XmindNodeDto(
-            node_id=edge.id, sheet_id=edge.sheet_id, title=edge.title, image=edge.image,
-            link=edge.media, last_modified=edge.last_modified, order_number=edge.order_number))
+        topic_2_import = topic.dto
+        if type_is_node:
+            self.nodes_2_import.append(topic_2_import)
+        else:
+            self.edges_2_import.append(topic_2_import)
 
     def finish_import(self) -> None:
         """

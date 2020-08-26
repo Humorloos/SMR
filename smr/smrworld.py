@@ -13,7 +13,7 @@ from smr.dto.smrtripledto import SmrTripleDto
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
-from smr.dto.xmindnodedto import XmindNodeDto
+from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.dto.xmindsheetdto import XmindSheetDto
 from smr.fieldtranslator import FieldTranslator
 from smr.utils import replace_embedded_media
@@ -24,14 +24,14 @@ ANKI_COLLECTION_DB_NAME = "anki_collection"
 SMR_WORLD_PATH = os.path.join(USER_PATH, FILE_NAME)
 ANNOTATED_PROPERTY_STORID = 85
 
-Node2Remove: Dict[str, Union[XmindNodeDto, List[str]]]
+Node2Remove: Dict[str, Union[XmindTopicDto, List[str]]]
 
 
 def get_node_2_remove(record) -> 'Node2Remove':
     return {'parent_node_ids': [record.parent_node_id],
-            'xmind_edge': XmindNodeDto(node_id=record.edge_id, title=record.title,
-                                       image=record.image, link=record.link),
-            'xmind_node': XmindNodeDto(node_id=record.node_id)}
+            'xmind_edge': XmindTopicDto(node_id=record.edge_id, title=record.title,
+                                        image=record.image, link=record.link),
+            'xmind_node': XmindTopicDto(node_id=record.node_id)}
 
 
 def get_xmind_content_selection_clause(relation_name: str) -> str:
@@ -197,7 +197,7 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
         self.graph.db.executemany("INSERT INTO main.xmind_sheets VALUES (?, ?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
-    def add_or_replace_xmind_nodes(self, entities: List[XmindNodeDto]) -> None:
+    def add_or_replace_xmind_nodes(self, entities: List[XmindTopicDto]) -> None:
         """
         Adds entries for xmind nodes to the relation xmind_nodes, replaces them if entries with the same node ids
         already exist
@@ -206,7 +206,7 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
         self.graph.db.executemany("REPLACE INTO main.xmind_nodes VALUES (?, ?, ?, ?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
-    def add_or_replace_xmind_edges(self, entities: List[XmindNodeDto]) -> None:
+    def add_or_replace_xmind_edges(self, entities: List[XmindTopicDto]) -> None:
         """
         Adds entries for xmind edges to the relation xmind_edges, replaces them if entries with the same edge ids
         already exist
@@ -265,7 +265,7 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
             f"SELECT * FROM xmind_sheets where file_directory = '{file_directory}' and file_name = '{file_name}'")}
 
     def get_changed_smr_notes(self, collection: Collection) -> Dict[str, Dict[str, Dict[str, Dict[str, Union[
-        SmrNoteDto, Dict[str, Union[XmindNodeDto, Set[int]]], str, Dict[int, Union[TopicContentDto, Any]]]]]]]:
+        SmrNoteDto, Dict[str, Union[XmindTopicDto, Set[int]]], str, Dict[int, Union[TopicContentDto, Any]]]]]]]:
         """
         Gets all notes belonging to xmind files that were changed since the last smr synchronization
         :return: A hierarchical structure of dictionaries
@@ -327,7 +327,7 @@ where sn.last_modified < cn.mod""")
                         smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
                             record.order_number]['children'] = children
                 except KeyError:
-                    node = {'node': XmindNodeDto(
+                    node = {'node': XmindTopicDto(
                         node_id=record.node_id, sheet_id=record.sheet_id, title=record.node_title,
                         image=record.node_image, link=record.node_link,
                         last_modified=record.node_last_modified, order_number=record.node_order_number),
@@ -336,7 +336,7 @@ where sn.last_modified < cn.mod""")
                         smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
                             record.order_number] = node
                     except KeyError:
-                        edge = XmindNodeDto(
+                        edge = XmindTopicDto(
                             node_id=record.edge_id, sheet_id=record.sheet_id, title=record.edge_title,
                             image=record.edge_image, link=record.edge_link,
                             last_modified=record.edge_last_modified, order_number=record.edge_order_number)
@@ -692,13 +692,13 @@ order by si.sort_id desc""")
         nodes_2_remove.append(node_2_remove)
         return nodes_2_remove
 
-    def get_xmind_nodes_in_sheet(self, sheet_id: str) -> Dict[str, XmindNodeDto]:
+    def get_xmind_nodes_in_sheet(self, sheet_id: str) -> Dict[str, XmindTopicDto]:
         """
         Gets all nodes that belong to the sheet with the specified id
         :param sheet_id: xmind id of the sheet to get the nodes for
         :return: The nodes in a dictionary where keys are the nodes' xmind ids and values are
         """
-        return {record.node_id: XmindNodeDto(*record) for record in self._get_records(f"""
+        return {record.node_id: XmindTopicDto(*record) for record in self._get_records(f"""
 SELECT * FROM xmind_nodes WHERE sheet_id = '{sheet_id}'""")}
 
     def get_root_node_id(self, sheet_id: str) -> str:

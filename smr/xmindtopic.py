@@ -8,8 +8,10 @@ from bs4 import Tag, BeautifulSoup
 from smr.consts import X_MEDIA_EXTENSIONS
 from smr.dto.topiccontentdto import TopicContentDto
 
-
 # noinspection PyAttributeOutsideInit
+from smr.dto.xmindtopicdto import XmindTopicDto
+
+
 class XmindTopic(ABC):
     """
     abstract basic implementation of xmind topics (edges or nodes)
@@ -266,6 +268,19 @@ class XmindTopic(ABC):
     @child_topic_tags_and_order_numbers.setter
     def child_topic_tags_and_order_numbers(self, value):
         self._child_topic_tags_and_order_numbers = value
+
+    @property
+    def dto(self) -> XmindTopicDto:
+        try:
+            return self._dto
+        except AttributeError:
+            self._dto = XmindTopicDto(node_id=self.id, sheet_id=self.sheet_id, title=self.title, image=self.image,
+                                      link=self.media, last_modified=self.last_modified, order_number=self.order_number)
+            return self._dto
+
+    @dto.setter
+    def dto(self, value: XmindTopicDto):
+        self._dto = value
 
     def decompose(self):
         """

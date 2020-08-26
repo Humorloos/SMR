@@ -6,7 +6,7 @@ from assertpy import assert_that
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.smrtripledto import SmrTripleDto
 from smr.dto.xmindfiledto import XmindFileDto
-from smr.dto.xmindnodedto import XmindNodeDto
+from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.dto.xmindsheetdto import XmindSheetDto
 from smr.smrworld import sort_id_from_order_number
 from tests import constants as cts
@@ -103,8 +103,8 @@ def test_add_xmind_sheet_wrong_path(smr_world_4_tests, x_manager_absent_file):
 def test_add_or_replace_xmind_nodes(smr_world_4_tests, x_manager):
     # given
     # noinspection PyTypeChecker
-    expected_entry = XmindNodeDto(node_id=cts.NEUROTRANSMITTERS_NODE_ID, title='neurotransmitters',
-                                  image='attachments/629d18n2i73im903jkrjmr98fg.png', link=None)
+    expected_entry = XmindTopicDto(node_id=cts.NEUROTRANSMITTERS_NODE_ID, title='neurotransmitters',
+                                   image='attachments/629d18n2i73im903jkrjmr98fg.png', link=None)
     # then
     verify_add_xmind_node(expected_entry, smr_world_4_tests, x_manager, cts.NEUROTRANSMITTERS_NODE_ID,
                           cts.NEUROTRANSMITTERS_NODE_CONTENT)
@@ -113,8 +113,8 @@ def test_add_or_replace_xmind_nodes(smr_world_4_tests, x_manager):
 def test_add_or_replace_xmind_nodes_with_media_hyperlink(smr_world_4_tests, x_manager):
     # given
     # noinspection PyTypeChecker
-    expected_entry = XmindNodeDto(node_id=cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID, title='',
-                                  link=cts.PATH_HYPERLINK_MEDIA_TEMPORARY, image=None)
+    expected_entry = XmindTopicDto(node_id=cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID, title='',
+                                   link=cts.PATH_HYPERLINK_MEDIA_TEMPORARY, image=None)
     # then
     verify_add_xmind_node(expected_entry, smr_world_4_tests, x_manager, cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID,
                           cts.MEDIA_HYPERLINK_NODE_CONTENT)
@@ -129,7 +129,7 @@ def test_add_or_replace_xmind_nodes_replace(smr_world_4_tests, x_manager):
     # when
     cut.add_or_replace_xmind_nodes([node])
     # then
-    new_entry = XmindNodeDto(*cut.graph.execute(
+    new_entry = XmindTopicDto(*cut.graph.execute(
         f"select * from xmind_nodes where node_id = '{node.node_id}'").fetchone())
     assert new_entry.image == cts.TEST_EDGE_IMAGE
     assert new_entry.link == cts.TEST_EDGE_MEDIA
@@ -140,7 +140,7 @@ def verify_add_xmind_node(expected_entry, cut, x_manager, tag_id, node_content):
     # given
     node = x_manager.get_node_by_id(tag_id)
     # when
-    cut.add_or_replace_xmind_nodes([XmindNodeDto(
+    cut.add_or_replace_xmind_nodes([XmindTopicDto(
         node_id=node.id, sheet_id=cts.TEST_SHEET_ID, title=node_content.title, image=node_content.image,
         link=node_content.media, last_modified=node.last_modified,
         order_number=1)])
@@ -162,7 +162,7 @@ def test_add_or_replace_xmind_edges(smr_world_4_tests, x_manager):
     edge_content = edge.content
     cut = smr_world_4_tests
     # when
-    cut.add_or_replace_xmind_edges([XmindNodeDto(
+    cut.add_or_replace_xmind_edges([XmindTopicDto(
         node_id=edge.id, sheet_id=cts.TEST_SHEET_ID,
         title=edge_content.title, image=edge_content.image, link=edge_content.media,
         last_modified=edge.last_modified, order_number=1)])
@@ -181,7 +181,7 @@ def test_add_or_replace_xmind_edges_replace(smr_world_4_tests, x_manager):
     # when
     cut.add_or_replace_xmind_edges([xmind_edge])
     # then
-    new_entry = XmindNodeDto(*cut.graph.execute(
+    new_entry = XmindTopicDto(*cut.graph.execute(
         f"select * from xmind_edges where edge_id = '{xmind_edge.node_id}'").fetchone())
     assert new_entry.image == cts.TEST_NODE_IMAGE
     assert new_entry.link == cts.TEST_NODE_MEDIA
