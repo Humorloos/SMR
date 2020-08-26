@@ -541,9 +541,9 @@ map and then synchronize.""")
     def _process_remote_changes(self, file: XmindFileDto, deck_id: int):
         sheets_status = self.smr_world.get_xmind_sheets_in_file(file_directory=file.directory, file_name=file.file_name)
         sheet_ids_remote = list(self.x_manager.sheets)
+        importer = XmindImporter(col=self.col, file=file.file_path)
         for sheet_id in set(list(sheets_status) + sheet_ids_remote):
             if sheet_id not in sheets_status:
-                importer = XmindImporter(col=self.col, file=file.file_path)
                 importer.import_sheet(sheet_id=sheet_id, deck_id=deck_id)
                 importer.finish_import()
             elif sheet_id not in sheet_ids_remote:
@@ -556,7 +556,7 @@ map and then synchronize.""")
         nodes_remote = self.x_manager.sheets[sheet_id].nodes
         for node_id in set(list(nodes_status) + list(nodes_remote)):
             if node_id not in nodes_status:
-                print('import node')
+                print('')
             elif node_id not in nodes_remote:
                 print('remove node')
             elif nodes_status[node_id].last_modified != nodes_remote[node_id]['last_modified']:

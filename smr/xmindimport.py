@@ -34,11 +34,10 @@ class XmindImporter(NoteImporter):
     def __init__(self, col: Collection, file: str):
         NoteImporter.__init__(self, col, file)
         self.mw: AnkiQt = aqt.mw
-        self.x_manager: List[XManager] = []
+        self.x_manager = []
         self.smr_world: SmrWorld = self.mw.smr_world
-        self._translator: FieldTranslator = FieldTranslator()
+        self.translator = None
         self.is_running: bool = True
-        self.current_sheet_import: str = ''
         self.edge_ids_2_make_notes_of: List[str] = []
         self.notes_2_import: Dict[str, ForeignNote] = {}
         self.media_uris_2_add = None
@@ -82,14 +81,6 @@ class XmindImporter(NoteImporter):
     @edge_ids_2_make_notes_of.setter
     def edge_ids_2_make_notes_of(self, value: List[str]):
         self._edges_2_make_notes_of = value
-
-    @property
-    def current_sheet_import(self):
-        return self._current_sheet_import
-
-    @current_sheet_import.setter
-    def current_sheet_import(self, value):
-        self._current_sheet_import = value
 
     @property
     def deck_id(self) -> Optional[int]:
@@ -222,6 +213,16 @@ class XmindImporter(NoteImporter):
     @media_uris_2_add.setter
     def media_uris_2_add(self, value: List[str]):
         self._media_uris_2_add = value
+
+    @property
+    def translator(self):
+        if not self._translator:
+            self._translator = FieldTranslator()
+        return self._translator
+
+    @translator.setter
+    def translator(self, value: FieldTranslator):
+        self._translator = value
 
     def newData(self, n: ForeignNote) -> List:
         """
@@ -444,7 +445,7 @@ class XmindImporter(NoteImporter):
         single_child_concepts = [[concept] for concept in all_child_concepts]
         # add the relation to the ontology
         relationship_class_name = self.smr_world.child_relation_name if edge.is_empty \
-            else self._translator.relation_class_from_content(edge.content)
+            else self.translator.relation_class_from_content(edge.content)
         relationship_property: ObjectPropertyClass = self.onto.add_relation(relationship_class_name)
         # if needed, add image and media to media files to add to collection after import
         if edge.image:
