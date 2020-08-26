@@ -41,6 +41,7 @@ class XmindImporter(NoteImporter):
         self.current_sheet_import: str = ''
         self.edge_ids_2_make_notes_of: List[str] = []
         self.notes_2_import: Dict[str, ForeignNote] = {}
+        self.media_uris_2_add = None
         # entity lists for imports
         self.files_2_import: List[XmindFileDto] = []
         self.sheets_2_import: List[XmindSheetDto] = []
@@ -212,6 +213,16 @@ class XmindImporter(NoteImporter):
     def smr_notes_2_add(self, value):
         self._smr_notes_2_add = value
 
+    @property
+    def media_uris_2_add(self) -> List[str]:
+        if self._media_uris_2_add is None:
+            self._media_uris_2_add = []
+        return self._media_uris_2_add
+
+    @media_uris_2_add.setter
+    def media_uris_2_add(self, value: List[str]):
+        self._media_uris_2_add = value
+
     def newData(self, n: ForeignNote) -> List:
         """
         overrides NoteImporter's method newData() to additionally call smr_world.add_or_replace_smr_notes()
@@ -255,9 +266,26 @@ class XmindImporter(NoteImporter):
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
         self._import_file()
+        self._add_media_2_anki_collection()
         self._add_entities_2_smr_world()
         # Create Notes from all edges
         self.notes_2_import = self.smr_world.generate_notes(self.col, edge_ids=self.edge_ids_2_make_notes_of)
+
+    def _add_media_2_anki_collection(self) -> None:
+        """
+        Adds all media that was registed in media_uris_2_add to the anki collection with the correct method for paths
+        or attachments
+        """
+        for uri in self.media_uris_2_add:
+            # if media file was not attached but only referenced via hyperlink, add it via add_file()
+            if os.path.isfile(uri):
+                new_media_name = self.col.media.add_file(uri)
+            # otherwise, extract the file and add it via write_data()
+            else:
+                new_media_name = self.col.media.write_data(desired_fname=uri,
+                                                           data=self.x_manager.read_attachment(uri))
+            self.media_2_anki_files_2_import.append(XmindMediaToAnkiFilesDto(
+                xmind_uri=uri, anki_file_name=new_media_name))
 
     def import_sheet(self, sheet_id: str, deck_id: int):
         """
@@ -268,6 +296,7 @@ class XmindImporter(NoteImporter):
         self.deck_id = deck_id
         self.onto = XOntology(deck_id=self.deck_id, smr_world=self.smr_world)
         self._import_sheet(sheet_id)
+        self._add_media_2_anki_collection()
         self._add_entities_2_smr_world()
         self.notes_2_import = self.smr_world.generate_notes(self.col, edge_ids=self.edge_ids_2_make_notes_of)
 
@@ -329,8 +358,11 @@ class XmindImporter(NoteImporter):
         if parent_concepts is None:
             parent_concepts = []
         if not node.is_empty:
-            # add image and media to the anki collection
-            self.add_image_and_media_to_collection(node.content)
+            # If needed, add media and image to files to add to the anki collection after the import
+            if node.image:
+                self.media_uris_2_add.append(node.image)
+            if node.media:
+                self.media_uris_2_add.append(node.media)
             # add the node to the smr world
             self.nodes_2_import.append(XmindNodeDto(
                 node_id=node.id, sheet_id=node.sheet_id,
@@ -348,29 +380,6 @@ class XmindImporter(NoteImporter):
         for order_number, following_relationship in enumerate(node.child_edges, start=1):
             self.import_edge(order_number=order_number, edge=following_relationship,
                              parent_node_ids=node_ids_preceding_next_edge, parent_concepts=concepts)
-
-    def add_image_and_media_to_collection(self, content: TopicContentDto) -> None:
-        """
-        - If present, adds media and image specified in the content DTO to the anki collection and media folder
-        - Records an entry linking the potentially new file name to the media attachment / hyperlink from the xmind map
-        to media_to_anki_files_2_import list
-        :param content: the content of the xmind node to add the image and media for
-        """
-        if content.media:
-            # xmind 8 adds prefix attachments, xmind zen adds prefix resources
-            if content.media.startswith(('attachments', 'resources')):
-                new_media_name = self.col.media.write_data(desired_fname=content.media,
-                                                           data=self.x_manager.read_attachment(content.media))
-            # if media file was not attached but only referenced via hyperlink
-            else:
-                new_media_name = self.col.media.add_file(content.media)
-            self.media_2_anki_files_2_import.append(XmindMediaToAnkiFilesDto(
-                xmind_uri=content.media, anki_file_name=new_media_name))
-        if content.image:
-            new_image_name = self.col.media.write_data(desired_fname=content.image,
-                                                       data=self.x_manager.read_attachment(content.image))
-            self.media_2_anki_files_2_import.append(XmindMediaToAnkiFilesDto(
-                xmind_uri=content.image, anki_file_name=new_image_name))
 
     def import_triple(self, parent_node_id: str, parent_thing: ThingClass, edge_id: str, relationship_class_name: str,
                       child_node_id: str, child_thing: ThingClass, ) -> None:
@@ -437,9 +446,11 @@ class XmindImporter(NoteImporter):
         relationship_class_name = self.smr_world.child_relation_name if edge.is_empty \
             else self._translator.relation_class_from_content(edge.content)
         relationship_property: ObjectPropertyClass = self.onto.add_relation(relationship_class_name)
-        # add node image and media to anki if edge is not empty
-        if relationship_class_name != self.smr_world.child_relation_name:
-            self.add_image_and_media_to_collection(edge.content)
+        # if needed, add image and media to media files to add to collection after import
+        if edge.image:
+            self.media_uris_2_add.append(edge.image)
+        if edge.media:
+            self.media_uris_2_add.append(edge.media)
         # add the edge to the smr world
         self.edges_2_import.append(XmindNodeDto(
             node_id=edge.id, sheet_id=edge.sheet_id, title=edge.title, image=edge.image,

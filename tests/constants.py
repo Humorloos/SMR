@@ -219,12 +219,14 @@ SEROTONIN_MEDIA_HYPERLINK_NODE_ID = '1s7h0rvsclrnvs8qq9u71acml5'
 EMPTY_NODE_ID = "6b0ho6vvcs4pcacchhsgju7513"
 ONE_OR_MORE_AMINE_GROUPS_NODE_ID = '0s0is5027b7r6akh3he0nbu478'
 ENZYMES_NODE_ID = '5e2cicue01ikp5vnq5pp46np83'
-NEUROTRANSMITTERS_NODE_CONTENT = TopicContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
+NEUROTRANSMITTERS_IMAGE_ATTACHMENT_NAME = 'attachments/629d18n2i73im903jkrjmr98fg.png'
+NEUROTRANSMITTERS_NODE_CONTENT = TopicContentDto(image=NEUROTRANSMITTERS_IMAGE_ATTACHMENT_NAME,
                                                  title='neurotransmitters')
 # Media hyperlink path as saved in content.xml, replace backslash with slash, since xmind saves paths with slashes
 UNIX_HYPERLINK_MEDIA_PATH = PATH_HYPERLINK_MEDIA_TEMPORARY.replace("\\", "/")
 MEDIA_HYPERLINK_NODE_CONTENT = TopicContentDto(media=PATH_HYPERLINK_MEDIA_TEMPORARY)
-MEDIA_ATTACHMENT_NODE_CONTENT: TopicContentDto = TopicContentDto(media='attachments/395ke7i9a6nkutu85fcpa66as2.mp4')
+DE_ATTACHMENT_NAME = 'attachments/395ke7i9a6nkutu85fcpa66as2.mp4'
+MEDIA_ATTACHMENT_NODE_CONTENT: TopicContentDto = TopicContentDto(media=DE_ATTACHMENT_NAME)
 NEUROTRANSMITTERS_CLASS_NAME = 'neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png'
 
 EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE = \

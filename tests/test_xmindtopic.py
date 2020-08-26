@@ -90,6 +90,15 @@ def test_hyperlink(x_manager):
     assert urllib.parse.unquote(node_media[5:]) == cts.NAME_HYPERLINK_MEDIA
 
 
+def test_media(x_manager):
+    # given
+    node = x_manager.get_node_by_id(cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID)
+    # when
+    node_media = node.media
+    # then
+    assert node_media == cts.PATH_HYPERLINK_MEDIA_TEMPORARY
+
+
 def test_get_child_nodes(x_manager):
     # when
     child_nodes = x_manager.get_edge_by_id(cts.CONSIST_OF_EDGE_ID).child_nodes
