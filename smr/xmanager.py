@@ -2,161 +2,17 @@
 
 import os
 import tempfile
-import urllib.parse
 from typing import Dict, List, Optional, Tuple, Union
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from bs4 import BeautifulSoup, Tag
 
-from smr.consts import X_MEDIA_EXTENSIONS
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from smr.smrworld import SmrWorld
-from smr.xmindsheet import XmindSheet, get_child_nodes
-
-
-def get_ancestry(topic, descendants):
-    if topic.parent.name == 'sheet':
-        descendants.reverse()
-        return descendants
-    else:
-        parent_topic = get_parent_node(topic)
-        descendants.append(parent_topic)
-        return get_ancestry(topic=parent_topic, descendants=descendants)
-
-
-def get_node_hyperlink(node: Tag) -> str:
-    """
-    Gets the hyperlink of an xmind node
-    :param node: the tag representing th node to get the hyperlink from
-    :return: node's raw hyperlink string, empty string if it has none
-    """
-    try:
-        return node['xlink:href']
-    except KeyError:
-        return ''
-
-
-def get_topic_image(node: Tag) -> Optional[str]:
-    """
-    Gets the image uri of an xmind node
-    :param node: the tag representing the node to get the image from
-    :return: node's raw image uri, None if it has none
-    """
-    image_attribute = node.find('xhtml:img', recursive=False)
-    if image_attribute:
-        return image_attribute['xhtml:src']
-    else:
-        return None
-
-
-def get_topic_content(node: Tag) -> str:
-    """
-    Gets the title of an xmind node
-    :param node: Tag representing the node to get the title from
-    :return: node's title, empty string if it has none
-    """
-    try:
-        return node.find('title', recursive=False).text
-    except AttributeError:
-        return ''
-
-
-def get_parent_a_topics(q_topic, parent_q):
-    parent_q_children = get_child_nodes(parent_q)
-    parent_topic = next(t for t in parent_q_children if
-                        q_topic.text in t.text)
-    if is_empty_node(parent_topic):
-        return [t for t in parent_q_children if not is_empty_node(t)]
-    else:
-        return [parent_topic]
-
-
-def get_parent_question_topic(tag):
-    parent_relation_topic = get_parent_node(get_parent_node(tag))
-    if is_anki_question(parent_relation_topic):
-        return parent_relation_topic
-    else:
-        return get_parent_question_topic(parent_relation_topic)
-
-
-def get_parent_node(tag: Tag) -> Tag:
-    """
-    gets the tag representing the parent node of the node represented by the specified tag
-    :param tag: the tag representing the node to get the parent node for
-    :return: the tag representing the parent node
-    """
-    return tag.parent.parent.parent
-
-
-def get_topic_index(tag):
-    return sum(1 for _ in tag.previous_siblings) + 1
-
-
-def isQuestionNode(tag, level=0):
-    # If the Tag is the root topic, return true if the length of the path is odd
-    if tag.parent.name == 'sheet':
-        return level % 2 == 1
-    # Else add one to the path length and test again
-    return isQuestionNode(tag.parent.parent.parent, level + 1)
-
-
-def get_non_empty_sibling_nodes(tag: Tag) -> List[Tag]:
-    """
-    gets all nodes that are siblings of the node represented by the specified tag and not empty
-    :param tag: the tag representing the node to get the sibling nodes for
-    :return: the sibling nodes as a list of tags
-    """
-    return [node for node in get_child_nodes(get_parent_node(tag)) if not is_empty_node(node)]
-
-
-def is_anki_question(tag):
-    """
-    Returns true if the tag would be represented as a question in anki,
-    that is, it is a relation, not empty and has at least one answer that is
-    not an empty topic
-    :param tag: The tag to check whether it is an anki question tag
-    :return: True if the tag is an anki question, false if it is not
-    """
-    if not isQuestionNode(tag):
-        return False
-    if is_empty_node(tag):
-        return False
-    children = get_child_nodes(tag)
-    if len(children) == 0:
-        return False
-    for child in children:
-        if not is_empty_node(child):
-            return True
-    return False
-
-
-def is_crosslink(href):
-    return href.startswith('xmind:#')
-
-
-def is_crosslink_node(tag):
-    href = get_node_hyperlink(tag)
-    if not href or get_topic_content(tag) or get_topic_image(tag) or not is_crosslink(
-            href):
-        return False
-    return True
-
-
-def is_empty_node(tag: Tag):
-    """
-    Checks whether the node represented by the specified tag does not contain any title, image or media
-    :param tag: tag to check for
-    :return: True if node does not contain any title, image or hyperlink
-    """
-    if get_topic_content(tag):
-        return False
-    if get_topic_image(tag):
-        return False
-    if get_node_hyperlink(tag):
-        return False
-    return True
+from smr.xmindsheet import XmindSheet
+from smr.xmindtopic import XmindNode, XmindEdge
 
 
 class NodeNotFoundError(Exception):
@@ -225,7 +81,7 @@ class XManager:
         if not self._sheets:
             sheets = {}
             for sheet in self.soup('sheet'):
-                sheets[sheet['id']] = XmindSheet(sheet)
+                sheets[sheet['id']] = XmindSheet(sheet, self.file)
             self.sheets = sheets
         return self._sheets
 
@@ -242,7 +98,7 @@ class XManager:
         self._file_bin = value
 
     @property
-    def node_dict(self) -> Dict[str, Tag]:
+    def node_dict(self) -> Dict[str, XmindNode]:
         if not self._node_dict:
             node_dict = {}
             for sheet in self.sheets.values():
@@ -251,11 +107,11 @@ class XManager:
         return self._node_dict
 
     @node_dict.setter
-    def node_dict(self, value: Dict[str, Tag]):
+    def node_dict(self, value: Dict[str, XmindNode]):
         self._node_dict = value
 
     @property
-    def edge_dict(self) -> Dict[str, Tag]:
+    def edge_dict(self) -> Dict[str, XmindEdge]:
         if not self._edge_dict:
             edge_dict = {}
             for sheet in self.sheets.values():
@@ -264,7 +120,7 @@ class XManager:
         return self._edge_dict
 
     @edge_dict.setter
-    def edge_dict(self, value: Dict[str, Tag]):
+    def edge_dict(self, value: Dict[str, XmindEdge]):
         self._edge_dict = value
 
     @property
@@ -303,47 +159,6 @@ class XManager:
     def did_introduce_changes(self, value: bool):
         self._did_introduce_changes = value
 
-    def get_hyperlink_uri(self, node: Tag) -> Optional[str]:
-        """
-        converts a path from the format that is provided in xmind files into the standard os format
-        :param node: the node to get the uri from
-        :return: the clean path in os format, a relative identifier if the hyperlink is embedded, and None if the
-        node has no hyperlink
-        """
-        href = get_node_hyperlink(node)
-        if not href:
-            return
-        # for media that was referenced via hyperlink, return an absolute path
-        if href.startswith('file'):
-            if href[5:7] == "//":
-                uri = os.path.normpath(urllib.parse.unquote(href[7:]))
-            else:
-                uri = os.path.join(os.path.split(self.file)[0], urllib.parse.unquote(href[5:]))
-        # for embedded media, return the relative path
-        else:
-            uri = href[4:]
-        return uri
-
-    def get_topic_content(self, tag: Tag) -> TopicContentDto:
-        """
-        Gets the content of the topic represented by the specified Tag in a dictionary
-        :param tag: the tag representing the topic to get the content of
-        :return: a TopicContentDto containing the contents of the topic
-        """
-        topic_content = TopicContentDto()
-        topic_content.title = get_topic_content(tag)
-
-        # if necessary add image
-        topic_image = get_topic_image(node=tag)
-        if topic_image:
-            topic_content.image = topic_image[4:]
-
-        # if necessary add sound
-        hyperlink_uri = self.get_hyperlink_uri(tag)
-        if hyperlink_uri and hyperlink_uri.endswith(X_MEDIA_EXTENSIONS):
-            topic_content.media = hyperlink_uri
-        return topic_content
-
     def get_node_content_by_id(self, node_id: str) -> TopicContentDto:
         """
         gets a node's content from its node id
@@ -351,7 +166,7 @@ class XManager:
         :return: the node content in a node content dto
         """
         node = self.get_node_by_id(node_id)
-        return self.get_topic_content(node)
+        return node.content
 
     def read_attachment(self, attachment_uri: str) -> bytes:
         """
@@ -363,7 +178,7 @@ class XManager:
             with zip_file.open(attachment_uri) as attachment:
                 return attachment.read()
 
-    def get_node_by_id(self, node_id: str) -> Tag:
+    def get_node_by_id(self, node_id: str) -> XmindNode:
         """
         Gets the node with the specified xmind id
         :param node_id: the node's xmind id
@@ -374,7 +189,7 @@ class XManager:
         except KeyError as exception_info:
             raise NodeNotFoundError(exception_info.args[0])
 
-    def get_edge_by_id(self, edge_id: str) -> Tag:
+    def get_edge_by_id(self, edge_id: str) -> XmindEdge:
         """
         Gets the edge with the specified xmind id
         :param edge_id: the edge's xmind id
@@ -394,56 +209,19 @@ class XManager:
         file_name = os.path.splitext(file_name)[0]
         return directory, file_name
 
-    def get_remote(self):
-        remote_sheets = self.get_remote_sheets()
-
-        for s in remote_sheets:
-            remote_questions = self.get_remote_questions(s)
-            remote_sheets[s]['questions'] = remote_questions
-
-        remote = self.remote_file(remote_sheets)
-        return remote
-
-    # def get_remote_questions(self, sheet_id):
-    #     remote_questions = dict()
-    #     for t in next(v for v in self.sheets.values() if
-    #                   v['tag']['id'] == sheet_id)['nodes']:
-    #         if is_anki_question(t):
-    #             answers = dict()
-    #             remote_questions[t['id']] = {'xMod': t['timestamp'],
-    #                                          'index': get_topic_index(t),
-    #                                          'answers': answers}
-    #             for a in self.get_answer_nodes(self.get_node_by_id(t['id'])):
-    #                 answers[a['src']['id']] = {
-    #                     'xMod': a['src']['timestamp'],
-    #                     'index': get_topic_index(a['src']),
-    #                     'crosslink': {}}
-    #                 if a['crosslink']:
-    #                     answers[a['src']['id']]['crosslink'] = {
-    #                         'xMod': a['crosslink']['timestamp'],
-    #                         'x_id': a['crosslink']['id']}
-    #     return remote_questions
-
-    # def get_remote_sheets(self):
-    #     content_keys = self.get_content_sheets()
-    #     content_sheets = [self.sheets[s] for s in content_keys]
-    #     sheets = dict()
-    #     for s in content_sheets:
-    #         sheets[s['tag']['id']] = {'xMod': s['tag']['timestamp']}
-    #     return sheets
-
     def remove_node(self, node_id: str):
         """
         Removes the node with the specified xmind id from the map
         :param node_id: the xmind node id of the node to remove
         """
-        tag = self.get_node_by_id(node_id)
-        if not get_child_nodes(tag):
-            tag.decompose()
-            del self.node_dict[node_id]
-            self.did_introduce_changes = True
+        node = self.get_node_by_id(node_id)
+        if not node.child_edges:
+            node.decompose()
         else:
             raise AttributeError('Topic has subtopics, can not remove.')
+        del self.node_dict[node_id]
+        del self.sheets[node.sheet_id].nodes[node_id]
+        self.did_introduce_changes = True
 
     def save_changes(self) -> None:
         """
@@ -474,93 +252,74 @@ class XManager:
         :param media_directory: the anki's collection.media directory to get images from
         :param smr_world: the smr world to register newly added and removed images
         """
-        node = self.get_edge_by_id(edge_id)
-        self._set_topic_content(topic=node, content=content, media_directory=media_directory, smr_world=smr_world)
+        edge = self.get_edge_by_id(edge_id)
+        self._set_topic_content(topic=edge, content=content, media_directory=media_directory, smr_world=smr_world)
 
-    def _set_topic_content(self, topic: Tag, content: TopicContentDto, media_directory: str,
+    def _set_topic_content(self, topic: Union[XmindEdge, XmindNode], content: TopicContentDto, media_directory: str,
                            smr_world: SmrWorld) -> None:
         """
-        Sets an xmind node's title and image to the ones specified in the content dto
+        Sets an xmind topic's title and image to the ones specified in the content dto
         :param topic: the topic to set the content for
         :param content: the topic's content
         :param media_directory: anki's collection.media directory to get images from
         :param smr_world: the smr world to register newly added and removed images
         """
-        if content.title != get_topic_content(topic):
-            self.set_node_title(tag=topic, title=content.title)
+        topic.content = content
+        if content.title != topic.title:
+            topic.title = content.title
+            self.did_introduce_changes = True
         # change the image if
         # - the note has an image and the node not
         # - the images of note and tag are different or
         # - the image was removed
-        node_image = get_topic_image(topic)
-        if (content.image and not node_image or content.image and content.image != node_image) or \
-                node_image and not content.image:
-            self.set_node_image(tag=topic, note_image=content.image, node_image=node_image,
-                                media_directory=media_directory, smr_world=smr_world)
+        if (content.image and not topic.image or content.image and content.image != topic.image) or \
+                topic.image and not content.image:
+            self.set_topic_image(topic=topic, image_name=content.image,
+                                 media_directory=media_directory, smr_world=smr_world)
 
-    def set_node_image(self, tag: Tag, note_image: Optional[str], node_image: Optional[str], media_directory: str,
-                       smr_world: SmrWorld) -> None:
+    def set_topic_image(self, topic: Union[XmindNode, XmindEdge], image_name: Optional[str],
+                        media_directory: str, smr_world: SmrWorld) -> None:
         """
         Sets the image of an xmind node.
         - If no note image is specified, removes the image from the specified node
         - If no node image is specified, adds the note image to the specified node
         - If both note and node image are specified, changes the node's image to the note's image
-        :param tag: the tag representing the node for which to set the image
-        :param note_image: an xmind uri acquired from the note's field that specifies the image to set or None if you
+        :param topic: the tag representing the topic for which to set the image
+        :param image_name: an xmind uri acquired from the note's field that specifies the image to set or None if you
         want to remove the image
-        :param node_image: the current image of the node that is to be removed, with 'xap:' prefix, None if you only
-        want to add an image
         :param media_directory: anki's collection.media directory where all media files are saved
         :param smr_world: the in which to save a new entry for new files or from which to delete removed images
         :return:
         """
         self.did_introduce_changes = True
         # only remove the image from the map if no note_image was specified
-        if not note_image:
-            tag.find('xhtml:img', recursive=False).decompose()
-            xmind_uri = node_image[4:]
-            self.manifest.find('file-entry', attrs={"full-path": xmind_uri}).decompose()
-            self.file_bin.append(xmind_uri)
-            smr_world.remove_xmind_media_to_anki_file(xmind_uri=xmind_uri)
+        if not image_name:
+            self.manifest.find('file-entry', attrs={"full-path": topic.image}).decompose()
+            self.file_bin.append(topic.image)
+            smr_world.remove_xmind_media_to_anki_file(xmind_uri=topic.image)
+            del topic.image
             return
         # Add image to list of images to add
-        with open(os.path.join(media_directory, note_image), "rb") as image:
-            self.files_2_add[note_image] = image.read()
-        new_media_type = "image/" + os.path.splitext(note_image)[1][1:]
+        with open(os.path.join(media_directory, image_name), "rb") as image:
+            self.files_2_add[image_name] = image.read()
+        new_media_type = "image/" + os.path.splitext(image_name)[1][1:]
         # Only create a new image tag and add it to the node Tag if the node does not have an image yet
-        if not node_image:
-            image_tag = self.manifest.new_tag(name='xhtml:img', align='bottom')
+        if topic.image is None:
+            topic.image = image_name
             file_entry = self.manifest.new_tag(name='file-entry')
-            image_tag['xhtml:src'] = 'xap:' + note_image
-            file_entry['full-path'] = note_image
+            file_entry['full-path'] = image_name
             file_entry['media-type'] = new_media_type
             self.manifest.find('manifest').append(file_entry)
-            tag.append(image_tag)
-            smr_world.add_xmind_media_to_anki_files([XmindMediaToAnkiFilesDto(*2 * [note_image])])
+            smr_world.add_xmind_media_to_anki_files([XmindMediaToAnkiFilesDto(*2 * [image_name])])
             return
         # Change the image if the node already has an image
-        xmind_uri = node_image[4:]
-        file_entry = self.manifest.find('file-entry', attrs={"full-path": xmind_uri})
-        self.file_bin.append(xmind_uri)
-        file_entry['full-path'] = note_image
+        file_entry = self.manifest.find('file-entry', attrs={"full-path": topic.image})
+        file_entry['full-path'] = image_name
         file_entry['media-type'] = new_media_type
-        tag.find('xhtml:img', recursive=False)['xhtml:src'] = 'xap:' + note_image
-        smr_world.remove_xmind_media_to_anki_file(xmind_uri=xmind_uri)
-        smr_world.add_xmind_media_to_anki_files([XmindMediaToAnkiFilesDto(*2 * [note_image])])
-
-    def set_node_title(self, tag: Tag, title: str):
-        """
-        Sets the title of an xmind node
-        :param tag: the tag representing the node to set the title for
-        :param title: the title to set for the node
-        """
-        try:
-            tag.find('title', recursive=False).string = title
-        except AttributeError:
-            title_tag = self.soup.new_tag(name='title')
-            title_tag.string = title
-            tag.append(title_tag)
-        self.did_introduce_changes = True
+        self.file_bin.append(topic.image)
+        smr_world.remove_xmind_media_to_anki_file(xmind_uri=topic.image)
+        smr_world.add_xmind_media_to_anki_files([XmindMediaToAnkiFilesDto(*2 * [image_name])])
+        topic.image = image_name
 
     def _update_zip(self) -> None:
         """

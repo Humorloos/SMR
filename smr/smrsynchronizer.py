@@ -34,6 +34,7 @@ class SmrSynchronizer:
         self.warnings = []
         self.translator = FieldTranslator()
         self.xmind_files_2_update = []
+        self.xmind_sheets_2_remove = []
         self.xmind_edges_2_update = []
         self.edge_ids_of_notes_2_update = []
         self.xmind_nodes_2_update = []
@@ -131,6 +132,14 @@ class SmrSynchronizer:
         self._xmind_nodes_2_remove = value
 
     @property
+    def xmind_sheets_2_remove(self) -> List[str]:
+        return self._xmind_sheets_2_remove
+
+    @xmind_sheets_2_remove.setter
+    def xmind_sheets_2_remove(self, value: List[str]):
+        self._xmind_sheets_2_remove = value
+
+    @property
     def xmind_nodes_2_update(self) -> List[XmindNodeDto]:
         return self._xmind_nodes_2_update
 
@@ -165,12 +174,14 @@ class SmrSynchronizer:
                 elif local_change and not remote_change:
                     self._process_local_changes(xmind_file)
                 elif not local_change and remote_change:
-                    self._process_remote_changes(xmind_file)
+                    self._process_remote_changes(file=xmind_file, deck_id=smr_deck.deck_id)
                 else:
                     self.process_local_and_remote_changes()
                 self.x_manager.save_changes()
         # process changes in smr world
         self.smr_world.add_or_replace_xmind_files(self.xmind_files_2_update)
+        # TODO: remove xmind sheets
+        print('remove xmind sheets')
         self.smr_world.add_or_replace_xmind_edges(self.xmind_edges_2_update)
         self.smr_world.add_or_replace_xmind_nodes(self.xmind_nodes_2_update)
         self.smr_world.remove_xmind_nodes(self.xmind_nodes_2_remove)
@@ -527,23 +538,30 @@ map and then synchronize.""")
                 if anki_note_was_changed:
                     self.edge_ids_of_notes_2_update.append(note_data['note'].edge_id)
 
-    def _process_remote_changes(self, file: XmindFileDto):
+    def _process_remote_changes(self, file: XmindFileDto, deck_id: int):
         sheets_status = self.smr_world.get_xmind_sheets_in_file(file_directory=file.directory, file_name=file.file_name)
         sheet_ids_remote = list(self.x_manager.sheets)
         for sheet_id in set(list(sheets_status) + sheet_ids_remote):
             if sheet_id not in sheets_status:
                 importer = XmindImporter(col=self.col, file=file.file_path)
-                importer.import_sheet(sheet_id)
+                importer.import_sheet(sheet_id=sheet_id, deck_id=deck_id)
                 importer.finish_import()
             elif sheet_id not in sheet_ids_remote:
                 self._remove_sheet(sheet_id)
-            elif sheets_status[sheet_id].last_modified != get_sheet_last_modified(self.x_manager.sheets, sheet_id):
+            elif sheets_status[sheet_id].last_modified != self.x_manager.sheets[sheet_id].last_modified:
                 self._process_remote_questions(sheet_id)
-            assert False
 
     def _process_remote_questions(self, sheet_id):
-        nodes_status = self.smr_world.get_nodes_and_edges_
-        # for node in self.x_manager.sheets[sheet_id]:
+        nodes_status = self.smr_world.get_xmind_nodes_in_sheet(sheet_id)
+        nodes_remote = self.x_manager.sheets[sheet_id].nodes
+        for node_id in set(list(nodes_status) + list(nodes_remote)):
+            if node_id not in nodes_status:
+                print('import node')
+            elif node_id not in nodes_remote:
+                print('remove node')
+            elif nodes_status[node_id].last_modified != nodes_remote[node_id]['last_modified']:
+                print('change node')
+        print('do the same for edges')
         #
         #
         # # Remove questions that were removed in map
@@ -654,7 +672,7 @@ map and then synchronize.""")
         :param sheet_id: xmind sheet id of the sheet to remove
         """
         self.note_manager.remove_notes_by_sheet_id(sheet_id, self.smr_world)
-        self.onto.remove_sheet(sheet_id, self.x_manager.sheets[sheet_id].root_node['id'])
+        self.onto.remove_sheet(sheet_id, self.smr_world.get_root_node_id(sheet_id))
         self.xmind_sheets_2_remove.append(sheet_id)
 
     def process_local_and_remote_changes(self):

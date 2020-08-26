@@ -694,6 +694,41 @@ order by si.sort_id desc""")
         nodes_2_remove.append(node_2_remove)
         return nodes_2_remove
 
+    def get_xmind_nodes_in_sheet(self, sheet_id: str) -> Dict[str, XmindNodeDto]:
+        """
+        Gets all nodes that belong to the sheet with the specified id
+        :param sheet_id: xmind id of the sheet to get the nodes for
+        :return: The nodes in a dictionary where keys are the nodes' xmind ids and values are
+        """
+        return {record.node_id: XmindNodeDto(*record) for record in self._get_records(f"""
+SELECT * FROM xmind_nodes WHERE sheet_id = '{sheet_id}'""")}
+
+    def get_root_node_id(self, sheet_id: str) -> str:
+        """
+        Gets the xmind node id of the root of the sheet with the specified xmind id
+        :param sheet_id: xmind id of the sheet to get the root node id for
+        :return: the xmind node id of the root node of the sheet with the specified id
+        """
+        return self.graph.execute(f"""
+WITH seed AS (
+    SELECT edge_id
+    FROM xmind_edges
+    WHERE sheet_id ='{sheet_id}'
+    LIMIT 1
+),
+ancestor AS (
+    SELECT t.parent_node_id, 0 as level
+    FROM smr_triples t
+    natural join seed
+    UNION ALL
+    SELECT t.parent_node_id, a.level + 1
+    FROM smr_triples t
+             JOIN ancestor a ON a.parent_node_id = t.child_node_id
+)
+SELECT parent_node_id FROM ancestor
+ORDER BY level DESC
+LIMIT 1""").fetchone()[0]
+
 
 class AnkiCollectionAttachement:
     """

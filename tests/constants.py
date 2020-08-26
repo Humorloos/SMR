@@ -190,9 +190,12 @@ ABSENT_XMIND_FILE_PATH = os.path.join(SUPPORT_PATH, 'absent_file.xmind')
 # IDs
 # sheets
 BIOLOGICAL_PSYCHOLOGY_SHEET_ID = '2485j5qgetfevlt00vhrn53961'
+CLINICAL_PSYCHOLOGY_SHEET_ID = '1bt0u8ahp0p8d41j6pto2d9q8t'
 # nodes
 BIOLOGICAL_PSYCHOLOGY_NODE_ID = '0pbme7b9sg9en8qqmmn9jj06od'
 CLINICAL_PSYCHOLOGY_1_NODE_ID = '29qkib9g6gqsfqqmcqk2495kgc'
+BIOGENIC_AMINES_NODE_ID = "3oqcv5qlqhn28u1opce5i27709"
+DE_EMBEDDED_MEDIA_NODE_ID = '23nu73chqkkkem455dit5p8stu'
 PAIN_1_NODE_ID = '3nb97928e68dcu5512pft7gkcg'
 CAN_BE_TRIGGERED_BY_NODE_ID = '7ite3obkfmbchr1pc6ib0o7rga'
 # edges
@@ -213,6 +216,7 @@ INFORMATION_TRANSFER_AND_PROCESSING_NODE_ID = '4okvq29odoin406qmiq86vv1i1'
 PERCEPTION_NODE_ID = '4jf2lp878e4rn7pm85lca1vahr'
 NEUROTRANSMITTERS_NODE_ID = "4r6avbt0pbuam4fg07jod0ubec"
 SEROTONIN_MEDIA_HYPERLINK_NODE_ID = '1s7h0rvsclrnvs8qq9u71acml5'
+EMPTY_NODE_ID = "6b0ho6vvcs4pcacchhsgju7513"
 ONE_OR_MORE_AMINE_GROUPS_NODE_ID = '0s0is5027b7r6akh3he0nbu478'
 ENZYMES_NODE_ID = '5e2cicue01ikp5vnq5pp46np83'
 NEUROTRANSMITTERS_NODE_CONTENT = TopicContentDto(image='attachments/629d18n2i73im903jkrjmr98fg.png',
@@ -222,7 +226,6 @@ UNIX_HYPERLINK_MEDIA_PATH = PATH_HYPERLINK_MEDIA_TEMPORARY.replace("\\", "/")
 MEDIA_HYPERLINK_NODE_CONTENT = TopicContentDto(media=PATH_HYPERLINK_MEDIA_TEMPORARY)
 MEDIA_ATTACHMENT_NODE_CONTENT: TopicContentDto = TopicContentDto(media='attachments/395ke7i9a6nkutu85fcpa66as2.mp4')
 NEUROTRANSMITTERS_CLASS_NAME = 'neurotransmittersximage_629d18n2i73im903jkrjmr98fg_extension_png'
-EMPTY_NODE_TAG_ID = "6b0ho6vvcs4pcacchhsgju7513"
 
 EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE = \
     b'\x80\x04\x95\xff\x02\x00\x00\x00\x00\x00\x00\x8c\x16anki.importing.noteimp\x94\x8c\x0bForeignNote\x94\x93\x94' \

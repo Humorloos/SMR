@@ -13,3 +13,15 @@ class TopicContentDto:
 
     def is_empty(self):
         return not (self.image or self.media or self.title)
+
+    def to_string(self) -> str:
+        content_string = self.title
+        if self.image:
+            if content_string != '':
+                content_string += ' '
+            content_string += '(image)'
+        if self.media:
+            if content_string != '':
+                content_string += ''
+            content_string += '(media)'
+        return content_string

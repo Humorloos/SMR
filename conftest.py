@@ -16,6 +16,7 @@ import smr.xontology as xontology
 import tests.constants as cts
 from anki import Collection
 from smr.config import get_or_create_smr_world
+from smr.xmindtopic import XmindNode
 
 
 @pytest.fixture(scope="session")
@@ -123,8 +124,9 @@ def collection_4_migration():
 
 @pytest.fixture(scope="function")
 def real_collection_4_migration():
-    generate_new_file(src=os.path.join(cts.TEST_COLLECTIONS_DIRECTORY, 'real_collection_version_0.0.1', 'collection.anki2'),
-                      dst=cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
+    generate_new_file(
+        src=os.path.join(cts.TEST_COLLECTIONS_DIRECTORY, 'real_collection_version_0.0.1', 'collection.anki2'),
+        dst=cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
     col = Collection(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
     yield col
     col.close()
@@ -166,12 +168,12 @@ def ontology_with_example_map(smr_world_with_example_map, collection_with_exampl
 
 
 @pytest.fixture
-def xmind_importer(mocker, empty_anki_collection_session) -> xmindimport.XmindImporter:
+def xmind_importer(mocker, empty_anki_collection_function) -> xmindimport.XmindImporter:
     """
     XmindImporter instance for file example map.xmind
     """
     mocker.patch("aqt.mw")
-    importer = xmindimport.XmindImporter(col=empty_anki_collection_session, file=cts.PATH_EXAMPLE_MAP_TEMPORARY)
+    importer = xmindimport.XmindImporter(col=empty_anki_collection_function, file=cts.PATH_EXAMPLE_MAP_TEMPORARY)
     yield importer
 
 
@@ -185,7 +187,8 @@ def patch_aqt_mw_empty_smr_world(mocker, set_up_empty_smr_world):
 
 @pytest.fixture
 def collection_with_example_map():
-    generate_new_file(src=cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_PATH, dst=cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
+    generate_new_file(src=cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_PATH,
+                      dst=cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
     col = Collection(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
     yield col
     col.close()
@@ -241,3 +244,9 @@ def generate_new_tree(src: str, dst: str):
     except FileNotFoundError:
         pass
     shutil.copytree(src=src, dst=dst)
+
+
+@pytest.fixture
+def xmind_node(tag_for_tests):
+    yield XmindNode(tag=tag_for_tests, sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID,
+                    file_path=cts.PATH_EXAMPLE_MAP_TEMPORARY)

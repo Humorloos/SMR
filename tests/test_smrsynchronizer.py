@@ -132,7 +132,6 @@ def test_synchronize_center_node_removed_error(mocker, smr_world_with_example_ma
                'processing\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f|']
 
 
-@pytest.mark.skip
 def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collection_with_example_map):
     # given
     generate_new_file(cts.PATH_EXAMPLE_MAP_CHANGED, cts.PATH_EXAMPLE_MAP_TEMPORARY)

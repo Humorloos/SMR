@@ -141,8 +141,8 @@ def verify_add_xmind_node(expected_entry, cut, x_manager, tag_id, node_content):
     node = x_manager.get_node_by_id(tag_id)
     # when
     cut.add_or_replace_xmind_nodes([XmindNodeDto(
-        node_id=node['id'], sheet_id=cts.TEST_SHEET_ID, title=node_content.title, image=node_content.image,
-        link=node_content.media, ontology_storid=cts.TEST_CONCEPT_STORID, last_modified=node['timestamp'],
+        node_id=node.id, sheet_id=cts.TEST_SHEET_ID, title=node_content.title, image=node_content.image,
+        link=node_content.media, ontology_storid=cts.TEST_CONCEPT_STORID, last_modified=node.last_modified,
         order_number=1)])
     # then
     # noinspection PyProtectedMember
@@ -159,13 +159,13 @@ def test_add_or_replace_xmind_edges(smr_world_4_tests, x_manager):
                       1573032291149, 1)
     manager = x_manager
     edge = manager.get_edge_by_id(cts.TYPES_EDGE_ID)
-    edge_content = manager.get_topic_content(edge)
+    edge_content = edge.content
     cut = smr_world_4_tests
     # when
     cut.add_or_replace_xmind_edges([XmindNodeDto(
-        node_id=edge['id'], sheet_id=cts.TEST_SHEET_ID,
+        node_id=edge.id, sheet_id=cts.TEST_SHEET_ID,
         title=edge_content.title, image=edge_content.image, link=edge_content.media,
-        ontology_storid=cts.TEST_RELATION_STORID, last_modified=edge['timestamp'], order_number=1)])
+        ontology_storid=cts.TEST_RELATION_STORID, last_modified=edge.last_modified, order_number=1)])
     # then
     assert list(cut.graph.execute(
         "SELECT * FROM main.xmind_edges WHERE edge_id = '{}'".format(cts.TYPES_EDGE_ID)).fetchall())[
@@ -395,3 +395,19 @@ def test_sort_id_from_order_number():
     sort_ids = [sort_id_from_order_number(i) for i in range(1, 21)]
     # then
     assert sort_ids == sorted(sort_ids)
+
+
+def test_get_xmind_nodes_in_sheet(smr_world_with_example_map):
+    # given
+    cut = smr_world_with_example_map
+    # when
+    nodes = cut.get_xmind_nodes_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
+    # then
+    assert len(nodes) == 29
+
+
+def test_get_root_node_id(smr_world_with_example_map):
+    # when
+    root_id = smr_world_with_example_map.get_root_node_id(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
+    # then
+    assert root_id == cts.BIOLOGICAL_PSYCHOLOGY_NODE_ID

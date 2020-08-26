@@ -46,12 +46,6 @@ def deep_merge(remote, local, path=None):
     return local
 
 
-# Receives a sortId of an anki note and returns the path that leads to the
-# corresponding node in the xmind document
-def get_edge_coordinates_from_parent_node(order_number, parent_node_ids):
-    raise NotImplementedError
-
-
 # receives a topic's id attribute, a BeautifulSoup object representing an
 # xmind content xml file and a WorkbookDocument for the same map and returns
 # the corresponding topic as a WorkbookElement
