@@ -58,7 +58,7 @@ class XmindSheet:
     @property
     def root_node(self) -> XmindNode:
         if not self._root_node:
-            self.root_node = XmindNode(tag=self.tag.topic, file_path=self.file_path, sheet_id=self.id)
+            self.root_node = XmindNode(tag=self.tag.topic, file_path=self.file_path, sheet_id=self.id, order_number=1)
         return self._root_node
 
     @root_node.setter
@@ -97,7 +97,7 @@ class XmindSheet:
 
     def _set_nodes_and_edges(self):
         """
-        Recursively walks through the whole map collects all nodes and edges and indexes them in the respective
+        Recursively walks through the whole map, collects all nodes and edges and indexes them in the respective
         dictionaries
         """
         def _append_node(sheet: XmindSheet, node: XmindNode):

@@ -143,3 +143,10 @@ def test_get_reference(x_manager):
 biological psychology
 investigates: information transfer and processing
 requires: neurotransmitters (image)"""
+
+
+def test_order_number(x_manager):
+    # given
+    node = x_manager.get_node_by_id(cts.EMPTY_NODE_ID)
+    # then
+    assert node.order_number == 5

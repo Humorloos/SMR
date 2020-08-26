@@ -333,7 +333,7 @@ class XmindImporter(NoteImporter):
         self.import_node_if_concept(node=root_node, concepts=[root_concept])
 
     def import_node_if_concept(
-            self, node: XmindNode, concepts: List[ThingClass], order_number: int = 1) -> None:
+            self, node: XmindNode, concepts: List[ThingClass]) -> None:
         """
         If the node is not empty:
         - adds a node to the smr world
@@ -344,7 +344,6 @@ class XmindImporter(NoteImporter):
         :param concepts: A list of concepts that only contains one concept if the node that is imported is not
         empty. Multiple concepts if the node is empty to serve as a representation of multiple concepts preceding a
         relation. In this case the list serves
-        :param order_number: order number of the node with respect to its siblings
         """
         if not node.is_empty:
             # If needed, add media and image to files to add to the anki collection after the import
@@ -356,10 +355,10 @@ class XmindImporter(NoteImporter):
             self.nodes_2_import.append(XmindNodeDto(
                 node_id=node.id, sheet_id=node.sheet_id,
                 title=node.title, image=node.image, link=node.media,
-                ontology_storid=concepts[0].storid, last_modified=node.last_modified, order_number=order_number))
+                ontology_storid=concepts[0].storid, last_modified=node.last_modified, order_number=node.order_number))
         # import each child edge
-        for order_number, following_relationship in enumerate(node.child_edges, start=1):
-            self.import_edge(order_number=order_number, edge=following_relationship)
+        for child_edge in node.child_edges:
+            self.import_edge(edge=child_edge)
 
     def import_triple(self, parent_node_id: str, edge_id: str, relationship_class_name: str,
                       child_node_id: str) -> None:
@@ -377,14 +376,13 @@ class XmindImporter(NoteImporter):
         self.triples_2_import.append(SmrTripleDto(
             parent_node_id=parent_node_id, edge_id=edge_id, child_node_id=child_node_id))
 
-    def import_edge(self, order_number: int, edge: XmindEdge) -> None:
+    def import_edge(self, edge: XmindEdge) -> None:
         """
         - creates concepts for all non-empty all the edge represented by the specified tag
         - adds the relationship property to the ontology
         - adds the edge to the smr world
         - adds image and media from the edge to the anki collection
         - calls import_node_if_concept() for each child node following the edge.
-        :param order_number: order number of the edge with respect to its siblings
         :param edge: tag that represents the edge to be imported
         """
         # stop execution and warn if an edge is not followed by any nodes
@@ -436,16 +434,14 @@ class XmindImporter(NoteImporter):
         self.edges_2_import.append(XmindNodeDto(
             node_id=edge.id, sheet_id=edge.sheet_id, title=edge.title, image=edge.image,
             link=edge.media, ontology_storid=relationship_property.storid, last_modified=edge.last_modified,
-            order_number=order_number))
+            order_number=edge.order_number))
         # if the edge is not empty, add it to the list of edges to make notes from
         if not edge.is_empty:
             self.edge_ids_2_make_notes_of.append(edge.id)
         # import each child_node either with a list of the single concept or a list of all concepts if they are empty
-        for order_number, (child_node, child_concepts) in enumerate(zip(
-                non_empty_child_nodes + empty_child_nodes,
-                single_child_concepts + len(empty_child_nodes) * [all_child_concepts]), start=1):
-            self.import_node_if_concept(
-                node=child_node, concepts=child_concepts, order_number=order_number)
+        for child_node, child_concepts in zip(non_empty_child_nodes + empty_child_nodes,
+                                              single_child_concepts + len(empty_child_nodes) * [all_child_concepts]):
+            self.import_node_if_concept(node=child_node, concepts=child_concepts)
 
     def finish_import(self) -> None:
         """

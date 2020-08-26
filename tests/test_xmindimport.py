@@ -168,7 +168,7 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
     concepts = [x_ontology.concept_from_node_content(t.content, node_id='some_id') for t in
                 node.non_empty_sibling_nodes]
     # when
-    cut.import_node_if_concept(node=node, concepts=concepts, order_number=5)
+    cut.import_node_if_concept(node=node, concepts=concepts)
     # then
     assert cut._smr_world.add_or_replace_xmind_nodes.call_count == 0
     assert cut.import_edge.call_count == 1
@@ -181,7 +181,7 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
     node = cut.x_manager.get_node_by_id(cts.BIOGENIC_AMINES_NODE_ID)
     concepts = [x_ontology.concept_from_node_content(node.content, node_id='some_id')]
     # when
-    cut.import_node_if_concept(node=node, concepts=concepts, order_number=1)
+    cut.import_node_if_concept(node=node, concepts=concepts)
     # then
     assert cut.import_edge.call_count == 1
     assert len(cut.nodes_2_import) == 1
@@ -192,7 +192,7 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     # given
     cut = xmind_importer_import_edge
     # when
-    cut.import_edge(order_number=1, edge=cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID))
+    cut.import_edge(edge=cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID))
     # then
     assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
@@ -207,7 +207,7 @@ def test_import_edge_no_child_nodes(xmind_importer_import_edge):
     edge = cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID)
     edge.child_nodes = []
     # when
-    cut.import_edge(order_number=1, edge=edge)
+    cut.import_edge(edge=edge)
     # then
     assert_import_edge_not_executed(cut)
     assert cut.log == ["""\
@@ -221,11 +221,11 @@ def test_import_edge_too_many_child_nodes(xmind_importer_import_edge):
     # given
     cut = xmind_importer_import_edge
     edge = cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID)
-    edge.child_nodes = [XmindNode(None, '', '')] * (X_MAX_ANSWERS + 1)
+    edge.child_nodes = [XmindNode(None, '', 0, '')] * (X_MAX_ANSWERS + 1)
     for n in edge.child_nodes:
         n.is_empty = False
     # when
-    cut.import_edge(order_number=1, edge=edge)
+    cut.import_edge(edge=edge)
     # then
     assert_import_edge_not_executed(cut)
     assert cut.log == ["""\
@@ -241,7 +241,7 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge):
     cut = xmind_importer_import_edge
     edge = cut.x_manager.get_edge_by_id(cts.SPLITS_UP_EDGE_ID)
     # when
-    cut.import_edge(order_number=1, edge=edge)
+    cut.import_edge(edge=edge)
     # then
     assert cut.onto.concept_from_node_content.call_count == 4
     assert cut.import_node_if_concept.call_count == 5
@@ -255,7 +255,7 @@ def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     cut = xmind_importer_import_edge
     edge = cut.x_manager.get_edge_by_id(cts.EMPTY_EDGE_3_ID)
     # when
-    cut.import_edge(order_number=1, edge=edge)
+    cut.import_edge(edge=edge)
     # then
     assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.import_node_if_concept.call_count == 1

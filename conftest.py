@@ -248,5 +248,5 @@ def generate_new_tree(src: str, dst: str):
 
 @pytest.fixture
 def xmind_node(tag_for_tests):
-    yield XmindNode(tag=tag_for_tests, sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID,
+    yield XmindNode(tag=tag_for_tests, sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID, order_number=1,
                     file_path=cts.PATH_EXAMPLE_MAP_TEMPORARY)

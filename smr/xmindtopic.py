@@ -1,7 +1,7 @@
 import os
 import urllib
 from abc import ABC
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from bs4 import Tag, BeautifulSoup
 
@@ -15,17 +15,12 @@ class XmindTopic(ABC):
     abstract basic implementation of xmind topics (edges or nodes)
     """
 
-    def __init__(self, tag, sheet_id, file_path):
+    def __init__(self, tag: Tag, sheet_id: str, file_path: str, order_number: int):
         self._tag = tag
         self._sheet_id = sheet_id
         self._file_path = file_path
-        self._title = None
-        self._title_tag = None
-        self._content = None
+        self._order_number = order_number
         self._content_string = None
-        self._is_empty = None
-        self._hyperlink = None
-        self._hyperlink_uri = None
         self._id = None
         self._last_modified = None
         self._soup = None
@@ -56,9 +51,11 @@ class XmindTopic(ABC):
 
     @property
     def title_tag(self):
-        if self._title_tag is None:
+        try:
+            return self._title_tag
+        except AttributeError:
             self.title_tag = self.tag.find('title', recursive=False)
-        return self._title_tag
+            return self._title_tag
 
     @title_tag.setter
     def title_tag(self, value):
@@ -66,12 +63,14 @@ class XmindTopic(ABC):
 
     @property
     def title(self) -> str:
-        if not self._title:
+        try:
+            return self._title
+        except AttributeError:
             try:
                 self._title = self.title_tag.text
             except AttributeError:
                 self._title = ''
-        return self._title
+            return self._title
 
     @title.setter
     def title(self, title: str):
@@ -84,12 +83,14 @@ class XmindTopic(ABC):
 
     @property
     def hyperlink(self) -> str:
-        if not self._hyperlink:
+        try:
+            return self._hyperlink
+        except AttributeError:
             try:
                 self.hyperlink = self.tag['xlink:href']
             except KeyError:
                 self.hyperlink = ''
-        return self._hyperlink
+            return self._hyperlink
 
     @hyperlink.setter
     def hyperlink(self, value: str):
@@ -97,7 +98,9 @@ class XmindTopic(ABC):
 
     @property
     def hyperlink_uri(self):
-        if not self._hyperlink_uri:
+        try:
+            return self._hyperlink_uri
+        except AttributeError:
             if self.hyperlink == '':
                 self._hyperlink_uri = ''
             else:
@@ -112,7 +115,7 @@ class XmindTopic(ABC):
                 # for embedded media, return the relative path
                 else:
                     self._hyperlink_uri = self.hyperlink[4:]
-        return self._hyperlink_uri
+            return self._hyperlink_uri
 
     @hyperlink_uri.setter
     def hyperlink_uri(self, value: str):
@@ -177,9 +180,11 @@ class XmindTopic(ABC):
 
     @property
     def content(self) -> TopicContentDto:
-        if not self._content:
+        try:
+            return self._content
+        except AttributeError:
             self._content = TopicContentDto(image=self.image, media=self.media, title=self.title)
-        return self._content
+            return self._content
 
     @content.setter
     def content(self, content: TopicContentDto):
@@ -187,9 +192,11 @@ class XmindTopic(ABC):
 
     @property
     def is_empty(self) -> bool:
-        if self._is_empty is None:
+        try:
+            return self._is_empty
+        except AttributeError:
             self._is_empty = self.content.is_empty()
-        return self._is_empty
+            return self._is_empty
 
     @is_empty.setter
     def is_empty(self, value: bool):
@@ -235,22 +242,36 @@ class XmindTopic(ABC):
     def content_string(self, value: str):
         self._content_string = value
 
+    @property
+    def order_number(self) -> int:
+        return self._order_number
+
+    @order_number.setter
+    def order_number(self, value: int):
+        self._order_number = value
+
+    @property
+    def child_topic_tags_and_order_numbers(self) -> List[Tuple[Tag, int]]:
+        try:
+            return self._child_topic_tags_and_order_numbers
+        except AttributeError:
+            try:
+                self._child_topic_tags_and_order_numbers = [(tag, i) for i, tag in enumerate(
+                    self.tag.find('children', recursive=False).find('topics', recursive=False).find_all(
+                        'topic', recursive=False), start=1)]
+            except AttributeError:
+                self._child_topic_tags_and_order_numbers = []
+            return self._child_topic_tags_and_order_numbers
+
+    @child_topic_tags_and_order_numbers.setter
+    def child_topic_tags_and_order_numbers(self, value):
+        self._child_topic_tags_and_order_numbers = value
+
     def decompose(self):
         """
         Destroys the tag associated with this node
         """
         self.tag.decompose()
-
-    def _get_child_topic_tags(self) -> List[Tag]:
-        """
-        Gets all topics directly following the topic
-        :return: the child topics as a list of tags, an empty list if it doesn't have any
-        """
-        try:
-            return self.tag.find('children', recursive=False).find('topics', recursive=False).find_all('topic',
-                                                                                                       recursive=False)
-        except AttributeError:
-            return []
 
     def _get_parent_topic_tag(self) -> Optional[Tag]:
         """
@@ -265,8 +286,8 @@ class XmindTopic(ABC):
 
 
 class XmindEdge(XmindTopic):
-    def __init__(self, tag: Tag, sheet_id: str, file_path: str, direct_parent_node: 'XmindNode'):
-        super().__init__(tag=tag, file_path=file_path, sheet_id=sheet_id)
+    def __init__(self, tag: Tag, sheet_id: str, file_path: str, order_number: int, direct_parent_node: 'XmindNode'):
+        super().__init__(tag=tag, file_path=file_path, sheet_id=sheet_id, order_number=order_number)
         self.direct_parent_node = direct_parent_node
         self.child_nodes = None
         self.parent_nodes = None
@@ -274,8 +295,9 @@ class XmindEdge(XmindTopic):
     @property
     def child_nodes(self) -> List['XmindNode']:
         if self._child_nodes is None:
-            self.child_nodes = [XmindNode(tag=tag, sheet_id=self.sheet_id, file_path=self.file_path, parent_edge=self)
-                                for tag in self._get_child_topic_tags()]
+            self.child_nodes = [
+                XmindNode(tag=tag, sheet_id=self.sheet_id, file_path=self.file_path, order_number=i, parent_edge=self)
+                for tag, i in self.child_topic_tags_and_order_numbers]
         return self._child_nodes
 
     @child_nodes.setter
@@ -318,21 +340,23 @@ class XmindEdge(XmindTopic):
         return reference
 
 
+# noinspection PyAttributeOutsideInit
 class XmindNode(XmindTopic):
 
-    def __init__(self, tag: Tag, sheet_id: str, file_path: str, parent_edge: Optional[XmindEdge] = None):
-        super().__init__(tag=tag, file_path=file_path, sheet_id=sheet_id)
-        self.child_edges = None
-        self.non_empty_sibling_nodes = None
+    def __init__(self, tag: Tag, sheet_id: str, file_path: str, order_number: int,
+                 parent_edge: Optional[XmindEdge] = None):
         self.parent_edge = parent_edge
+        super().__init__(tag=tag, file_path=file_path, sheet_id=sheet_id, order_number=order_number)
 
     @property
     def child_edges(self) -> List[XmindEdge]:
-        if not self._child_edges:
-            self.child_edges = [XmindEdge(tag=tag, sheet_id=self.sheet_id, file_path=self.file_path,
-                                          direct_parent_node=self) for tag in
-                                self._get_child_topic_tags()]
-        return self._child_edges
+        try:
+            return self._child_edges
+        except AttributeError:
+            self._child_edges = [
+                XmindEdge(tag=tag, sheet_id=self.sheet_id, file_path=self.file_path, order_number=i,
+                          direct_parent_node=self) for tag, i in self.child_topic_tags_and_order_numbers]
+            return self._child_edges
 
     @child_edges.setter
     def child_edges(self, value: List[XmindEdge]):
@@ -340,9 +364,11 @@ class XmindNode(XmindTopic):
 
     @property
     def non_empty_sibling_nodes(self) -> List['XmindNode']:
-        if self._non_empty_sibling_nodes is None:
-            self.non_empty_sibling_nodes = [node for node in self.parent_edge.child_nodes if not node.is_empty]
-        return self._non_empty_sibling_nodes
+        try:
+            return self._non_empty_sibling_nodes
+        except AttributeError:
+            self._non_empty_sibling_nodes = [node for node in self.parent_edge.child_nodes if not node.is_empty]
+            return self._non_empty_sibling_nodes
 
     @non_empty_sibling_nodes.setter
     def non_empty_sibling_nodes(self, value: List['XmindNode']):
@@ -355,3 +381,10 @@ class XmindNode(XmindTopic):
     @parent_edge.setter
     def parent_edge(self, value: Optional[XmindEdge]):
         self._parent_edge = value
+
+    @property
+    def order_number(self):
+        if self.is_empty:
+            return len(self.non_empty_sibling_nodes) + 1
+        else:
+            return self._order_number
