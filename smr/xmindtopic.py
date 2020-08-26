@@ -305,6 +305,18 @@ class XmindEdge(XmindTopic):
         self._child_nodes = value
 
     @property
+    def non_empty_child_nodes(self) -> List['XmindNode']:
+        try:
+            return self._non_empty_child_nodes
+        except AttributeError:
+            self._non_empty_child_nodes = [n for n in self.child_nodes if n.is_empty]
+            return self._non_empty_child_nodes
+
+    @non_empty_child_nodes.setter
+    def non_empty_child_nodes(self, value: List['XmindNode']):
+        self._non_empty_child_nodes = value
+
+    @property
     def parent_nodes(self) -> List['XmindNode']:
         if not self._parent_nodes:
             if self.direct_parent_node.is_empty:

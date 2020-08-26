@@ -2,7 +2,6 @@ import pickle
 
 import pytest
 from assertpy import assert_that
-from bs4 import Tag
 
 import aqt
 import tests.constants as cts
@@ -38,7 +37,7 @@ def xmind_importer_4_integration(empty_anki_collection_function, mocker, patch_a
 @pytest.fixture
 def xmind_importer_import_node_if_concept(mocker, active_xmind_importer):
     importer = active_xmind_importer
-    mocker.patch.object(importer, "import_edge")
+    mocker.patch.object(importer, "_onto")
     yield importer
 
 
@@ -47,7 +46,6 @@ def xmind_importer_import_edge(active_xmind_importer, mocker):
     importer = active_xmind_importer
     mocker.patch.object(importer, "_onto")
     mocker.patch.object(importer, "_mw")
-    mocker.patch.object(importer, "import_node_if_concept")
     mocker.patch.object(importer, "import_triple")
     return importer
 
@@ -62,9 +60,7 @@ def add_image_and_media_importer(active_xmind_importer, mocker):
 
 
 def assert_import_edge_not_executed(cut):
-    assert cut.onto.concept_from_node_content.call_count == 0
     assert cut.smr_world.add_xmind_edge.call_count == 0
-    assert cut.import_node_if_concept.call_count == 0
     assert cut.is_running is False
     assert len(cut.media_uris_2_add) == 0
     assert cut.import_triple.call_count == 0
@@ -134,6 +130,7 @@ def test__import_sheet(xmind_importer, mocker, x_manager):
     cut = xmind_importer
     mocker.patch.object(cut, "_mw")
     mocker.patch.object(cut, "import_node_if_concept")
+    mocker.patch.object(cut, "import_edge")
     mocker.patch.object(cut, "_onto")
     cut._active_manager = x_manager
     # when
@@ -141,9 +138,9 @@ def test__import_sheet(xmind_importer, mocker, x_manager):
     # then
     assert cut.mw.progress.update.call_count == 1
     assert cut.mw.app.processEvents.call_count == 1
-    assert cut.import_node_if_concept.call_count == 1
+    assert cut.import_node_if_concept.call_count == 30
+    assert cut.import_edge.call_count == 22
     assert cut.current_sheet_import == sheet_2_import
-    assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.sheets_2_import[0].sheet_id == cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID
     assert cut.sheets_2_import[0].file_directory == cts.DIRECTORY_MAPS_TEMPORARY
     assert cut.sheets_2_import[0].file_name == cts.NAME_EXAMPLE_MAP
@@ -153,10 +150,9 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, xmin
     # given
     cut = xmind_importer_import_node_if_concept
     # when
-    cut.import_node_if_concept(node=xmind_node, concepts=[x_ontology.Root(
-        x_ontology.field_translator.class_from_content(xmind_node.content))])
+    cut.import_node_if_concept(node=xmind_node)
     # then
-    assert cut.import_edge.call_count == 2
+    assert cut._onto.concept_from_node_content.call_count == 1
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.nodes_2_import) == 1
 
@@ -165,27 +161,24 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
     # given
     cut = xmind_importer_import_node_if_concept
     node = cut.x_manager.get_node_by_id(cts.EMPTY_NODE_ID)
-    concepts = [x_ontology.concept_from_node_content(t.content, node_id='some_id') for t in
-                node.non_empty_sibling_nodes]
     # when
-    cut.import_node_if_concept(node=node, concepts=concepts)
+    cut.import_node_if_concept(node=node)
     # then
     assert cut._smr_world.add_or_replace_xmind_nodes.call_count == 0
-    assert cut.import_edge.call_count == 1
     assert len(cut.media_uris_2_add) == 0
+    assert cut._onto.concept_from_node_content.call_count == 0
 
 
 def test_import_node_if_concept_following_multiple_concepts(xmind_importer_import_node_if_concept, x_ontology):
     # given
     cut = xmind_importer_import_node_if_concept
     node = cut.x_manager.get_node_by_id(cts.BIOGENIC_AMINES_NODE_ID)
-    concepts = [x_ontology.concept_from_node_content(node.content, node_id='some_id')]
     # when
-    cut.import_node_if_concept(node=node, concepts=concepts)
+    cut.import_node_if_concept(node=node)
     # then
-    assert cut.import_edge.call_count == 1
     assert len(cut.nodes_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
+    assert cut._onto.concept_from_node_content.call_count == 1
 
 
 def test_import_edge(xmind_importer_import_edge, x_ontology):
@@ -194,8 +187,6 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     # when
     cut.import_edge(edge=cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID))
     # then
-    assert cut.onto.concept_from_node_content.call_count == 1
-    assert cut.import_node_if_concept.call_count == 1
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
     assert cut.import_triple.call_count == 1
@@ -221,9 +212,8 @@ def test_import_edge_too_many_child_nodes(xmind_importer_import_edge):
     # given
     cut = xmind_importer_import_edge
     edge = cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID)
-    edge.child_nodes = [XmindNode(None, '', 0, '')] * (X_MAX_ANSWERS + 1)
-    for n in edge.child_nodes:
-        n.is_empty = False
+    # noinspection PyTypeChecker
+    edge.non_empty_child_nodes = [XmindNode(None, '', 0, '')] * (X_MAX_ANSWERS + 1)
     # when
     cut.import_edge(edge=edge)
     # then
@@ -243,8 +233,6 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge):
     # when
     cut.import_edge(edge=edge)
     # then
-    assert cut.onto.concept_from_node_content.call_count == 4
-    assert cut.import_node_if_concept.call_count == 5
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
     assert cut.import_triple.call_count == 4
@@ -257,8 +245,6 @@ def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     # when
     cut.import_edge(edge=edge)
     # then
-    assert cut.onto.concept_from_node_content.call_count == 1
-    assert cut.import_node_if_concept.call_count == 1
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
     assert cut.import_triple.call_count == 1

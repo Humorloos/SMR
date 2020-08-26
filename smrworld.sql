@@ -44,7 +44,6 @@ CREATE TABLE xmind_edges
     title           TEXT,
     image           TEXT,
     link            TEXT,
-    ontology_storid INTEGER,
     last_modified   INTEGER,
     order_number    INTEGER,
     FOREIGN KEY (sheet_id) REFERENCES xmind_sheets (sheet_id)
@@ -54,9 +53,6 @@ CREATE TABLE xmind_edges
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (link) REFERENCES xmind_media_to_anki_files (xmind_uri)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (ontology_storid) references resources (storid)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -76,12 +72,8 @@ CREATE TABLE xmind_nodes
     title           TEXT,
     image           TEXT,
     link            TEXT,
-    ontology_storid INTEGER,
     last_modified   INTEGER,
     order_number    INTEGER,
-    FOREIGN KEY (ontology_storid) references resources (storid)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
     FOREIGN KEY (sheet_id) REFERENCES xmind_sheets (sheet_id)
         ON DELETE CASCADE
         ON UPDATE CASCADE

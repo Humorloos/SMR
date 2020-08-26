@@ -327,13 +327,14 @@ class XmindImporter(NoteImporter):
         self.sheets_2_import.append(XmindSheetDto(
             sheet_id=sheet_id, name=sheet_name, file_directory=directory, file_name=file_name,
             last_modified=self.x_manager.sheets[sheet_id].last_modified))
-        root_node = self.x_manager.sheets[sheet_id].root_node
-        root_concept = self.onto.concept_from_node_content(root_node.content, node_id=root_node.id,
-                                                           node_is_root=True)
-        self.import_node_if_concept(node=root_node, concepts=[root_concept])
+        # import nodes in sheet
+        for node in self.x_manager.sheets[sheet_id].nodes.values():
+            self.import_node_if_concept(node=node)
+        # import edges in sheet
+        for edge in self.x_manager.sheets[sheet_id].edges.values():
+            self.import_edge(edge=edge)
 
-    def import_node_if_concept(
-            self, node: XmindNode, concepts: List[ThingClass]) -> None:
+    def import_node_if_concept(self, node: XmindNode) -> None:
         """
         If the node is not empty:
         - adds a node to the smr world
@@ -341,24 +342,20 @@ class XmindImporter(NoteImporter):
         - calls import_triple() for each parent node preceding the parent edge
         Finally calls import_edge() for each edge following the node.
         :param node: the node to import
-        :param concepts: A list of concepts that only contains one concept if the node that is imported is not
-        empty. Multiple concepts if the node is empty to serve as a representation of multiple concepts preceding a
-        relation. In this case the list serves
         """
         if not node.is_empty:
+            # create the concept for this node in the ontology
+            self.onto.concept_from_node_content(node_content=node.content, node_id=node.id, node_is_root=False)
             # If needed, add media and image to files to add to the anki collection after the import
             if node.image:
                 self.media_uris_2_add.append(node.image)
             if node.media:
                 self.media_uris_2_add.append(node.media)
-            # add the node to the smr world
+            # remember to add the node to the smr world on finishing the import
             self.nodes_2_import.append(XmindNodeDto(
                 node_id=node.id, sheet_id=node.sheet_id,
-                title=node.title, image=node.image, link=node.media,
-                ontology_storid=concepts[0].storid, last_modified=node.last_modified, order_number=node.order_number))
-        # import each child edge
-        for child_edge in node.child_edges:
-            self.import_edge(edge=child_edge)
+                title=node.title, image=node.image, link=node.media, last_modified=node.last_modified,
+                order_number=node.order_number))
 
     def import_triple(self, parent_node_id: str, edge_id: str, relationship_class_name: str,
                       child_node_id: str) -> None:
@@ -393,32 +390,23 @@ class XmindImporter(NoteImporter):
                 'Concept Map and try again.'.format(
                     title=edge.title, reference=edge.get_reference())]
             return
-        # split the child nodes into two lists with empty and non empty child nodes to differentiate between them
-        # when importing the triples
-        non_empty_child_nodes = []
-        empty_child_nodes = []
-        for n in edge.child_nodes:
-            if n.is_empty:
-                empty_child_nodes.append(n)
-            else:
-                non_empty_child_nodes.append(n)
-        # If the current relation is a question and has too many answers give a warning and stop running
-        if not edge.is_empty and len(non_empty_child_nodes) > X_MAX_ANSWERS:
-            self.is_running = False
-            self.log = [
-                "Warning:\nA Question titled \"{title}\" (reference: {reference}) has more than {n_answers} answers. "
-                "Make sure every Question in your Map is followed by no more than {n_answers} Answers and try "
-                "again.".format(title=edge.title, reference=edge.get_reference(), n_answers=X_MAX_ANSWERS)]
-            return
-        # create the concepts for the next iteration beforehand to be able to assign a list of all sibling concepts
-        # to empty nodes for creating relationships following multiple concepts
-        all_child_concepts = [self.onto.concept_from_node_content(
-            node_content=n.content, node_id=n.id, node_is_root=False) for n in non_empty_child_nodes]
-        single_child_concepts = [[concept] for concept in all_child_concepts]
+        # if the edge is not empty, add it to the list of edges to make notes from and get the relation class name
+        if not edge.is_empty:
+            # If the current relation is a question and has too many answers give a warning and stop running
+            if len(edge.non_empty_child_nodes) > X_MAX_ANSWERS:
+                self.is_running = False
+                self.log = [
+                    "Warning:\nA Question titled \"{title}\" (reference: {reference}) has more than {n_answers} answers. "
+                    "Make sure every Question in your Map is followed by no more than {n_answers} Answers and try "
+                    "again.".format(title=edge.title, reference=edge.get_reference(), n_answers=X_MAX_ANSWERS)]
+                return
+            self.edge_ids_2_make_notes_of.append(edge.id)
+            relationship_class_name = self.translator.relation_class_from_content(edge.content)
+        # else just add triples with child and parent relations
+        else:
+            relationship_class_name = self.smr_world.child_relation_name
         # add the relation to the ontology
-        relationship_class_name = self.smr_world.child_relation_name if edge.is_empty \
-            else self.translator.relation_class_from_content(edge.content)
-        relationship_property: ObjectPropertyClass = self.onto.add_relation(relationship_class_name)
+        self.onto.add_relation(relationship_class_name)
         # import a triple for each parent and child node
         for parent_node in edge.parent_nodes:
             for child_node in edge.child_nodes:
@@ -430,18 +418,10 @@ class XmindImporter(NoteImporter):
             self.media_uris_2_add.append(edge.image)
         if edge.media:
             self.media_uris_2_add.append(edge.media)
-        # add the edge to the smr world
+        # add the edge to the list of edges to add to the smr_world
         self.edges_2_import.append(XmindNodeDto(
             node_id=edge.id, sheet_id=edge.sheet_id, title=edge.title, image=edge.image,
-            link=edge.media, ontology_storid=relationship_property.storid, last_modified=edge.last_modified,
-            order_number=edge.order_number))
-        # if the edge is not empty, add it to the list of edges to make notes from
-        if not edge.is_empty:
-            self.edge_ids_2_make_notes_of.append(edge.id)
-        # import each child_node either with a list of the single concept or a list of all concepts if they are empty
-        for child_node, child_concepts in zip(non_empty_child_nodes + empty_child_nodes,
-                                              single_child_concepts + len(empty_child_nodes) * [all_child_concepts]):
-            self.import_node_if_concept(node=child_node, concepts=child_concepts)
+            link=edge.media, last_modified=edge.last_modified, order_number=edge.order_number))
 
     def finish_import(self) -> None:
         """

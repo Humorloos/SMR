@@ -15,7 +15,6 @@ class XmindNodeDto(EntityDto):
     title: str = ""
     image: str = ""
     link: str = ""
-    ontology_storid: Optional[int] = None
     last_modified: Optional[int] = None
     order_number: Optional[int] = None
 

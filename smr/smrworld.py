@@ -203,7 +203,7 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
         already exist
         :param entities: List of entries for the xmind nodes relation
         """
-        self.graph.db.executemany("REPLACE INTO main.xmind_nodes VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        self.graph.db.executemany("REPLACE INTO main.xmind_nodes VALUES (?, ?, ?, ?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
     def add_or_replace_xmind_edges(self, entities: List[XmindNodeDto]) -> None:
@@ -212,7 +212,7 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
         already exist
         :param entities: List of entries for the xmind edges relation
         """
-        self.graph.db.executemany("REPLACE INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        self.graph.db.executemany("REPLACE INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
     def add_smr_triples(self, entities: List[SmrTripleDto]) -> None:
@@ -289,13 +289,11 @@ xe.sheet_id,
        xe.title                 edge_title,
        xe.image                 edge_image,
        xe.link                  edge_link,
-xe.ontology_storid edge_storid,
 xe.last_modified edge_last_modified,
 xe.order_number edge_order_number,
        xcn.title                node_title,
        xcn.image                node_image,
        xcn.link                 node_link,
-xcn.ontology_storid node_storid,
 xcn.last_modified node_last_modified,
 xcn.order_number node_order_number,
        xcn.node_id,
@@ -331,7 +329,7 @@ where sn.last_modified < cn.mod""")
                 except KeyError:
                     node = {'node': XmindNodeDto(
                         node_id=record.node_id, sheet_id=record.sheet_id, title=record.node_title,
-                        image=record.node_image, link=record.node_link, ontology_storid=record.node_storid,
+                        image=record.node_image, link=record.node_link,
                         last_modified=record.node_last_modified, order_number=record.node_order_number),
                         'children': children}
                     try:
@@ -340,7 +338,7 @@ where sn.last_modified < cn.mod""")
                     except KeyError:
                         edge = XmindNodeDto(
                             node_id=record.edge_id, sheet_id=record.sheet_id, title=record.edge_title,
-                            image=record.edge_image, link=record.edge_link, ontology_storid=record.edge_storid,
+                            image=record.edge_image, link=record.edge_link,
                             last_modified=record.edge_last_modified, order_number=record.edge_order_number)
                         smr_note = SmrNoteDto(*record[3:6])
                         edge_dict = {'note': smr_note, 'edge': edge, 'note_fields': record.note_fields,

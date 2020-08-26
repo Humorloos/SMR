@@ -142,7 +142,7 @@ def verify_add_xmind_node(expected_entry, cut, x_manager, tag_id, node_content):
     # when
     cut.add_or_replace_xmind_nodes([XmindNodeDto(
         node_id=node.id, sheet_id=cts.TEST_SHEET_ID, title=node_content.title, image=node_content.image,
-        link=node_content.media, ontology_storid=cts.TEST_CONCEPT_STORID, last_modified=node.last_modified,
+        link=node_content.media, last_modified=node.last_modified,
         order_number=1)])
     # then
     # noinspection PyProtectedMember
@@ -155,7 +155,7 @@ def verify_add_xmind_node(expected_entry, cut, x_manager, tag_id, node_content):
 
 def test_add_or_replace_xmind_edges(smr_world_4_tests, x_manager):
     # given
-    expected_entry = (cts.TYPES_EDGE_ID, cts.TEST_SHEET_ID, 'types', None, None, cts.TEST_RELATION_STORID,
+    expected_entry = (cts.TYPES_EDGE_ID, cts.TEST_SHEET_ID, 'types', None, None,
                       1573032291149, 1)
     manager = x_manager
     edge = manager.get_edge_by_id(cts.TYPES_EDGE_ID)
@@ -165,7 +165,7 @@ def test_add_or_replace_xmind_edges(smr_world_4_tests, x_manager):
     cut.add_or_replace_xmind_edges([XmindNodeDto(
         node_id=edge.id, sheet_id=cts.TEST_SHEET_ID,
         title=edge_content.title, image=edge_content.image, link=edge_content.media,
-        ontology_storid=cts.TEST_RELATION_STORID, last_modified=edge.last_modified, order_number=1)])
+        last_modified=edge.last_modified, order_number=1)])
     # then
     assert list(cut.graph.execute(
         "SELECT * FROM main.xmind_edges WHERE edge_id = '{}'".format(cts.TYPES_EDGE_ID)).fetchall())[
