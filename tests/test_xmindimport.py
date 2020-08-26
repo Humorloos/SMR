@@ -172,9 +172,8 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
     parent_node = parent_edge.parent_nodes[0]
     # when
     cut.import_node_if_concept(
-        node=node, concepts=concepts, parent_node_ids=[parent_node.id],
+        node=node, concepts=concepts,
         parent_concepts=[x_ontology.concept_from_node_content(parent_node.content, node_id='some_id')],
-        parent_edge_id=parent_edge.id,
         parent_relationship_class_name=x_ontology.field_translator.class_from_content(parent_edge.content),
         order_number=5)
     # then
@@ -193,9 +192,9 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
     parent_nodes = parent_edge.parent_nodes
     # when
     cut.import_node_if_concept(
-        node=node, concepts=concepts, parent_node_ids=[n.id for n in parent_nodes], parent_concepts=[
-            x_ontology.concept_from_node_content(n.content, node_id='some_id') for
-            n in parent_nodes], parent_edge_id=parent_edge.id,
+        node=node, concepts=concepts,
+        parent_concepts=[x_ontology.concept_from_node_content(n.content, node_id='some_id') for
+                         n in parent_nodes],
         parent_relationship_class_name=x_ontology.field_translator.class_from_content(parent_edge.content),
         order_number=1)
     # then
@@ -209,8 +208,8 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     # given
     cut = xmind_importer_import_edge
     # when
-    cut.import_edge(order_number=1, edge=cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID), parent_node_ids=[
-        cts.NEUROTRANSMITTERS_NODE_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
+    cut.import_edge(order_number=1, edge=cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID),
+                    parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
     # then
     assert cut.onto.concept_from_node_content.call_count == 1
     assert cut.import_node_if_concept.call_count == 1
@@ -224,8 +223,7 @@ def test_import_edge_no_child_nodes(xmind_importer_import_edge, x_ontology):
     edge = cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID)
     edge.child_nodes = []
     # when
-    cut.import_edge(order_number=1, edge=edge, parent_node_ids=[
-        cts.NEUROTRANSMITTERS_NODE_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
+    cut.import_edge(order_number=1, edge=edge, parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
     # then
     assert_import_edge_not_executed(cut)
     assert cut.log == ["""\
@@ -243,8 +241,7 @@ def test_import_edge_too_many_child_nodes(xmind_importer_import_edge, x_ontology
     for n in edge.child_nodes:
         n.is_empty = False
     # when
-    cut.import_edge(order_number=1, edge=edge, parent_node_ids=[
-        cts.NEUROTRANSMITTERS_NODE_ID], parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
+    cut.import_edge(order_number=1, edge=edge, parent_concepts=x_ontology.Concept(cts.NEUROTRANSMITTERS_CLASS_NAME))
     # then
     assert_import_edge_not_executed(cut)
     assert cut.log == ["""\
@@ -261,7 +258,7 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge, x_o
     edge = cut.x_manager.get_edge_by_id(cts.SPLITS_UP_EDGE_ID)
     parent_node = edge.parent_nodes[0]
     # when
-    cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node.id],
+    cut.import_edge(order_number=1, edge=edge,
                     parent_concepts=[x_ontology.concept_from_node_content(parent_node.content, node_id='some_id')])
     # then
     assert cut.onto.concept_from_node_content.call_count == 4
@@ -276,7 +273,7 @@ def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     edge = cut.x_manager.get_edge_by_id(cts.EMPTY_EDGE_ID)
     parent_node = edge.parent_nodes[0]
     # when
-    cut.import_edge(order_number=1, edge=edge, parent_node_ids=[parent_node.id],
+    cut.import_edge(order_number=1, edge=edge,
                     parent_concepts=[x_ontology.concept_from_node_content(parent_node.content, node_id='some_id')])
     # then
     assert cut.onto.concept_from_node_content.call_count == 1

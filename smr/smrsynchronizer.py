@@ -30,6 +30,7 @@ class SmrSynchronizer:
         self.note_manager = XNoteManager(col=aqt.mw.col)
         self.smr_world = aqt.mw.smr_world
         self.x_manager = None
+        self.importer = None
         self.current_sheet_sync = None
         self.warnings = []
         self.translator = FieldTranslator()
@@ -146,6 +147,14 @@ class SmrSynchronizer:
     @xmind_nodes_2_update.setter
     def xmind_nodes_2_update(self, value: List[XmindNodeDto]):
         self._xmind_nodes_2_update = value
+
+    @property
+    def importer(self):
+        return self._importer
+
+    @importer.setter
+    def importer(self, value):
+        self._importer = value
 
     def synchronize(self):
         """
@@ -541,11 +550,11 @@ map and then synchronize.""")
     def _process_remote_changes(self, file: XmindFileDto, deck_id: int):
         sheets_status = self.smr_world.get_xmind_sheets_in_file(file_directory=file.directory, file_name=file.file_name)
         sheet_ids_remote = list(self.x_manager.sheets)
-        importer = XmindImporter(col=self.col, file=file.file_path)
+        self.importer = XmindImporter(col=self.col, file=file.file_path)
         for sheet_id in set(list(sheets_status) + sheet_ids_remote):
             if sheet_id not in sheets_status:
-                importer.import_sheet(sheet_id=sheet_id, deck_id=deck_id)
-                importer.finish_import()
+                self.importer.import_sheet(sheet_id=sheet_id, deck_id=deck_id)
+                self.importer.finish_import()
             elif sheet_id not in sheet_ids_remote:
                 self._remove_sheet(sheet_id)
             elif sheets_status[sheet_id].last_modified != self.x_manager.sheets[sheet_id].last_modified:

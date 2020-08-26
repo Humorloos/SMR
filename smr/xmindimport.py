@@ -333,8 +333,7 @@ class XmindImporter(NoteImporter):
         self.import_node_if_concept(node=root_node, concepts=[root_concept])
 
     def import_node_if_concept(
-            self, node: XmindNode, concepts: List[ThingClass], parent_node_ids: Optional[List[str]] = None,
-            parent_concepts: Optional[List[ThingClass]] = None, parent_edge_id: Optional[str] = None,
+            self, node: XmindNode, concepts: List[ThingClass], parent_concepts: Optional[List[ThingClass]] = None,
             parent_relationship_class_name: Optional[str] = None, order_number: int = 1) -> None:
         """
         If the node is not empty:
@@ -346,16 +345,16 @@ class XmindImporter(NoteImporter):
         :param concepts: A list of concepts that only contains one concept if the node that is imported is not
         empty. Multiple concepts if the node is empty to serve as a representation of multiple concepts preceding a
         relation. In this case the list serves
-        :param parent_node_ids: list of xmind ids of parent nodes for the triples that are imported for this node
         :param parent_concepts: list of concepts of parent nodes for creating the ontology relationships preceding
         this node
-        :param parent_edge_id: xmind id of the node's parent edge
         :param parent_relationship_class_name: class name for the relationship in the triple that we import into the
         ontology
         :param order_number: order number of the node with respect to its siblings
         """
-        if parent_node_ids is None:
+        if node.parent_edge is None:
             parent_node_ids = []
+        else:
+            parent_node_ids = [n.id for n in node.parent_edge.parent_nodes]
         if parent_concepts is None:
             parent_concepts = []
         if not node.is_empty:
@@ -371,16 +370,13 @@ class XmindImporter(NoteImporter):
                 ontology_storid=concepts[0].storid, last_modified=node.last_modified, order_number=order_number))
             # import a triple for each parent concept
             for parent_node_id, parent_concept in zip(parent_node_ids, parent_concepts):
-                self.import_triple(parent_node_id=parent_node_id, parent_thing=parent_concept, edge_id=parent_edge_id,
+                self.import_triple(parent_node_id=parent_node_id, parent_thing=parent_concept,
+                                   edge_id=node.parent_edge.id,
                                    child_node_id=node.id, child_thing=concepts[0],
                                    relationship_class_name=parent_relationship_class_name)
-            node_ids_preceding_next_edge: List[str] = [node.id]
-        else:
-            node_ids_preceding_next_edge: List[str] = [n.id for n in node.non_empty_sibling_nodes]
         # import each child edge
         for order_number, following_relationship in enumerate(node.child_edges, start=1):
-            self.import_edge(order_number=order_number, edge=following_relationship,
-                             parent_node_ids=node_ids_preceding_next_edge, parent_concepts=concepts)
+            self.import_edge(order_number=order_number, edge=following_relationship, parent_concepts=concepts)
 
     def import_triple(self, parent_node_id: str, parent_thing: ThingClass, edge_id: str, relationship_class_name: str,
                       child_node_id: str, child_thing: ThingClass, ) -> None:
@@ -399,8 +395,7 @@ class XmindImporter(NoteImporter):
         self.triples_2_import.append(SmrTripleDto(
             parent_node_id=parent_node_id, edge_id=edge_id, child_node_id=child_node_id))
 
-    def import_edge(self, order_number: int, edge: XmindEdge, parent_node_ids: List[str],
-                    parent_concepts: List[ThingClass]) -> None:
+    def import_edge(self, order_number: int, edge: XmindEdge, parent_concepts: List[ThingClass]) -> None:
         """
         - creates concepts for all non-empty all the edge represented by the specified tag
         - adds the relationship property to the ontology
@@ -465,8 +460,7 @@ class XmindImporter(NoteImporter):
                 non_empty_child_nodes + empty_child_nodes,
                 single_child_concepts + len(empty_child_nodes) * [all_child_concepts]), start=1):
             self.import_node_if_concept(
-                node=child_node, concepts=child_concepts, parent_node_ids=parent_node_ids,
-                parent_concepts=parent_concepts, parent_edge_id=edge.id,
+                node=child_node, concepts=child_concepts, parent_concepts=parent_concepts,
                 parent_relationship_class_name=relationship_class_name, order_number=order_number)
 
     def finish_import(self) -> None:

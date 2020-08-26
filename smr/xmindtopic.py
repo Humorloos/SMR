@@ -265,16 +265,17 @@ class XmindTopic(ABC):
 
 
 class XmindEdge(XmindTopic):
-    def __init__(self, tag: Tag, sheet_id: str, file_path: str):
+    def __init__(self, tag: Tag, sheet_id: str, file_path: str, direct_parent_node: 'XmindNode'):
         super().__init__(tag=tag, file_path=file_path, sheet_id=sheet_id)
+        self.direct_parent_node = direct_parent_node
         self.child_nodes = None
         self.parent_nodes = None
 
     @property
     def child_nodes(self) -> List['XmindNode']:
         if self._child_nodes is None:
-            self.child_nodes = [XmindNode(tag=tag, sheet_id=self.sheet_id, file_path=self.file_path) for tag in
-                                self._get_child_topic_tags()]
+            self.child_nodes = [XmindNode(tag=tag, sheet_id=self.sheet_id, file_path=self.file_path, parent_edge=self)
+                                for tag in self._get_child_topic_tags()]
         return self._child_nodes
 
     @child_nodes.setter
@@ -284,17 +285,23 @@ class XmindEdge(XmindTopic):
     @property
     def parent_nodes(self) -> List['XmindNode']:
         if not self._parent_nodes:
-            direct_parent_node = XmindNode(tag=self._get_parent_topic_tag(), sheet_id=self.sheet_id,
-                                           file_path=self.file_path)
-            if direct_parent_node.is_empty:
-                self.parent_nodes = direct_parent_node.non_empty_sibling_nodes
+            if self.direct_parent_node.is_empty:
+                self.parent_nodes = self.direct_parent_node.non_empty_sibling_nodes
             else:
-                self.parent_nodes = [direct_parent_node]
+                self.parent_nodes = [self.direct_parent_node]
         return self._parent_nodes
 
     @parent_nodes.setter
     def parent_nodes(self, value: List['XmindNode']):
         self._parent_nodes = value
+
+    @property
+    def direct_parent_node(self) -> 'XmindNode':
+        return self._direct_parent_node
+
+    @direct_parent_node.setter
+    def direct_parent_node(self, value: 'XmindNode'):
+        self._direct_parent_node = value
 
     def get_reference(self, reference: str = '') -> str:
         """
@@ -302,10 +309,10 @@ class XmindEdge(XmindTopic):
         :param reference: content strings of all prior topics arranged to a reference
         :return: the reference
         """
-        if self.parent_nodes[0].parent_edge.tag:
+        if self.parent_nodes[0].parent_edge:
             reference = reference + self.parent_nodes[0].parent_edge.get_reference(reference)
             reference = reference + '\n' + self.parent_nodes[0].parent_edge.content_string + ': ' + \
-                ', '.join(n.content_string for n in self.parent_nodes)
+                        ', '.join(n.content_string for n in self.parent_nodes)
         else:
             reference = reference + self.parent_nodes[0].content_string
         return reference
@@ -313,33 +320,23 @@ class XmindEdge(XmindTopic):
 
 class XmindNode(XmindTopic):
 
-    def __init__(self, tag: Tag, sheet_id: str, file_path: str):
+    def __init__(self, tag: Tag, sheet_id: str, file_path: str, parent_edge: Optional[XmindEdge] = None):
         super().__init__(tag=tag, file_path=file_path, sheet_id=sheet_id)
         self.child_edges = None
-        self.parent_edge = None
         self.non_empty_sibling_nodes = None
+        self.parent_edge = parent_edge
 
     @property
     def child_edges(self) -> List[XmindEdge]:
         if not self._child_edges:
-            self.child_edges = [XmindEdge(tag=tag, sheet_id=self.sheet_id, file_path=self.file_path) for tag in
+            self.child_edges = [XmindEdge(tag=tag, sheet_id=self.sheet_id, file_path=self.file_path,
+                                          direct_parent_node=self) for tag in
                                 self._get_child_topic_tags()]
         return self._child_edges
 
     @child_edges.setter
     def child_edges(self, value: List[XmindEdge]):
         self._child_edges = value
-
-    @property
-    def parent_edge(self) -> XmindEdge:
-        if not self._parent_edge:
-            self.parent_edge = XmindEdge(tag=self._get_parent_topic_tag(), sheet_id=self.sheet_id,
-                                         file_path=self.file_path)
-        return self._parent_edge
-
-    @parent_edge.setter
-    def parent_edge(self, value: XmindEdge):
-        self._parent_edge = value
 
     @property
     def non_empty_sibling_nodes(self) -> List['XmindNode']:
@@ -350,3 +347,11 @@ class XmindNode(XmindTopic):
     @non_empty_sibling_nodes.setter
     def non_empty_sibling_nodes(self, value: List['XmindNode']):
         self._non_empty_sibling_nodes = value
+
+    @property
+    def parent_edge(self) -> Optional[XmindEdge]:
+        return self._parent_edge
+
+    @parent_edge.setter
+    def parent_edge(self, value: Optional[XmindEdge]):
+        self._parent_edge = value
