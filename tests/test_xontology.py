@@ -39,36 +39,38 @@ def test_add_relation(x_ontology):
     assert getattr(cut, relation_name).name == relation_name
 
 
-def test_connect_concepts(x_ontology):
+def test_connect_concepts(ontology_with_example_map):
     # given
-    cut = x_ontology
-    parent_concept = cut.Concept('parent')
-    parent_2_concept = cut.Concept('parent2')
-    child_1_concept = cut.Concept('child')
-    child_2_concept = cut.Concept('child2')
+    cut = ontology_with_example_map
     relationship_class_name = 'relationship'
     edge_id = 'some_edge_id'
-    x_ontology.add_relation(relationship_class_name)
+    cut.add_relation(relationship_class_name)
+    child_1 = cut.get_concept_from_node_id(cts.DE_EMBEDDED_MEDIA_NODE_ID)
+    child_2 = cut.get_concept_from_node_id(cts.PAIN_1_NODE_ID)
+    parent_1 = cut.get_concept_from_node_id(cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID)
+    parent_2 = cut.get_concept_from_node_id(cts.BIOLOGICAL_PSYCHOLOGY_NODE_ID)
     # when
-    cut.connect_concepts(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
-                         child_thing=child_1_concept, edge_id=edge_id)
+    cut.connect_concepts(parent_node_id=cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID,
+                         relationship_class_name=relationship_class_name,
+                         child_node_id=cts.DE_EMBEDDED_MEDIA_NODE_ID, edge_id=edge_id)
     # then
-    assert cut.parent.relationship == [child_1_concept]
-    assert getattr(cut.child, cut.smr_world.parent_relation_name) == [parent_concept]
+    assert parent_1.relationship == [child_1]
+    assert parent_1 in getattr(child_1, cut.smr_world.parent_relation_name)
     # when
-    cut.connect_concepts(parent_thing=parent_concept, relationship_class_name=relationship_class_name,
-                         child_thing=child_2_concept, edge_id=edge_id)
+    cut.connect_concepts(parent_node_id=cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID, relationship_class_name=relationship_class_name,
+                         child_node_id=cts.PAIN_1_NODE_ID, edge_id=edge_id)
     # then
-    assert cut.parent.relationship == [child_1_concept, child_2_concept]
+    assert parent_1.relationship == [child_1, child_2]
     # when
-    cut.connect_concepts(parent_thing=parent_2_concept, relationship_class_name=relationship_class_name,
-                         child_thing=child_1_concept, edge_id=edge_id)
+    cut.connect_concepts(parent_node_id=cts.BIOLOGICAL_PSYCHOLOGY_NODE_ID, relationship_class_name=relationship_class_name,
+                         child_node_id=cts.DE_EMBEDDED_MEDIA_NODE_ID, edge_id=edge_id)
     # then
-    assert cut.parent.relationship == [child_1_concept, child_2_concept]
-    assert getattr(cut.child, cut.smr_world.parent_relation_name) == [parent_concept, parent_2_concept]
-    assert cut.XmindId[parent_concept, getattr(cut, relationship_class_name), child_1_concept][0] == edge_id
-    assert cut.XmindId[parent_concept, getattr(cut, relationship_class_name), child_2_concept][0] == edge_id
-    assert cut.XmindId[parent_2_concept, getattr(cut, relationship_class_name), child_1_concept][0] == edge_id
+    assert parent_1.relationship == [child_1, child_2]
+    assert {parent_1, parent_2}.issubset({*getattr(child_1, cut.smr_world.parent_relation_name)})
+
+    assert cut.XmindId[parent_1, getattr(cut, relationship_class_name), child_1][0] == edge_id
+    assert cut.XmindId[parent_1, getattr(cut, relationship_class_name), child_2][0] == edge_id
+    assert cut.XmindId[parent_2, getattr(cut, relationship_class_name), child_1][0] == edge_id
 
 
 def test_get_concept(ontology_with_example_map):
@@ -95,7 +97,7 @@ def test_remove_relations(ontology_with_example_map):
     relation_name = cts.MULTIPLE_PARENTS_RELATION_CLASS_NAME
     # when
     onto.remove_relations(children=[child], parents=parents, relation_name=relation_name,
-                          edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
+                          edge_id=cts.ARE_EDGE_ID)
     # then
     assert [getattr(p, relation_name) for p in parents] == 4 * [[]]
     assert len(getattr(child, onto.smr_world.parent_relation_name)) == 1
@@ -110,7 +112,7 @@ def test_change_relationship_class_name(ontology_with_example_map):
     new_property = cut.change_relationship_class_name(
         parent_node_ids=parent_node_ids, child_node_ids=[child_node_id],
         new_question_content=TopicContentDto(title='new question', image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI),
-        edge_id=cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID)
+        edge_id=cts.ARE_EDGE_ID)
     # then
     assert new_property.name == 'new_questionximage_09r2e442o8lppjfeblf7il2rmd_extension_png_xrelation'
 

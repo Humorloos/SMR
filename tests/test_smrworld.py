@@ -254,7 +254,7 @@ def test_get_smr_note_tags(smr_world_4_tests, collection_4_migration):
     # when
     tag = smr_world_4_tests.get_smr_note_tags(anki_collection=collection_4_migration,
                                               edge_ids=[cts.TEST_RELATION_EDGE_ID,
-                                                        cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
+                                                        cts.ARE_EDGE_ID])
     # then
     assert tag == {'6iivm8tpoqj2c0euaabtput14l': ' Example::test_file::test_sheet ',
                    'edge id': ' Example::test_file::test_sheet '}
@@ -321,7 +321,7 @@ def test_get_smr_note_reference_fields(smr_world_with_example_map):
     cut = smr_world_with_example_map
     # when
     reference_fields = cut.get_smr_note_reference_fields(edge_ids=[
-        cts.PRONOUNCIATION_EDGE_ID, '1soij3rlgbkct9eq3uo7117sa9', cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
+        cts.PRONOUNCIATION_EDGE_ID, '1soij3rlgbkct9eq3uo7117sa9', cts.ARE_EDGE_ID])
     # then
     assert reference_fields == {
         '1soij3rlgbkct9eq3uo7117sa9': 'biological psychology<li>investigates: information transfer and '
@@ -340,7 +340,7 @@ def test_get_smr_note_reference_fields(smr_world_with_example_map):
 def test_get_smr_note_sort_fields(smr_world_4_tests):
     # when
     sort_fields = smr_world_4_tests.get_smr_note_sort_fields(
-        edge_ids=[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID, cts.EDGE_WITH_MEDIA_XMIND_ID])
+        edge_ids=[cts.ARE_EDGE_ID, cts.EDGE_WITH_MEDIA_XMIND_ID])
     # then
     assert sort_fields == {'6iivm8tpoqj2c0euaabtput14l': '|{|{{{|\x7f{', '7ite3obkfmbcasdf12asd123ga': '||{{{'}
 
@@ -357,14 +357,14 @@ def test_generate_notes(smr_world_4_tests, collection_4_migration):
     # given
     cut = smr_world_4_tests
     # when
-    notes = cut.generate_notes(col=collection_4_migration, edge_ids=[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID])
+    notes = cut.generate_notes(col=collection_4_migration, edge_ids=[cts.ARE_EDGE_ID])
     # then
-    imported_note = notes[cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
+    imported_note = notes[cts.ARE_EDGE_ID]
     assert imported_note.fieldsStr == 'biological psychology<li>investigates: information transfer and ' \
                                       'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits ' \
                                       'up: Serotonin, dopamine, adrenaline, noradrenaline</li>arebiogenic ' \
                                       'amines|{|{{{|{'
-    assert imported_note.tags == [' Example::test_file::test_sheet ', cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID]
+    assert imported_note.tags == [' Example::test_file::test_sheet ', cts.ARE_EDGE_ID]
 
 
 def test_get_xmind_sheets_in_file(smr_world_with_example_map):

@@ -333,8 +333,8 @@ class XmindImporter(NoteImporter):
         self.import_node_if_concept(node=root_node, concepts=[root_concept])
 
     def import_node_if_concept(
-            self, node: XmindNode, concepts: List[ThingClass], parent_concepts: Optional[List[ThingClass]] = None,
-            parent_relationship_class_name: Optional[str] = None, order_number: int = 1) -> None:
+            self, node: XmindNode, concepts: List[ThingClass], parent_relationship_class_name: Optional[str] = None,
+            order_number: int = 1) -> None:
         """
         If the node is not empty:
         - adds a node to the smr world
@@ -345,8 +345,6 @@ class XmindImporter(NoteImporter):
         :param concepts: A list of concepts that only contains one concept if the node that is imported is not
         empty. Multiple concepts if the node is empty to serve as a representation of multiple concepts preceding a
         relation. In this case the list serves
-        :param parent_concepts: list of concepts of parent nodes for creating the ontology relationships preceding
-        this node
         :param parent_relationship_class_name: class name for the relationship in the triple that we import into the
         ontology
         :param order_number: order number of the node with respect to its siblings
@@ -355,8 +353,6 @@ class XmindImporter(NoteImporter):
             parent_node_ids = []
         else:
             parent_node_ids = [n.id for n in node.parent_edge.parent_nodes]
-        if parent_concepts is None:
-            parent_concepts = []
         if not node.is_empty:
             # If needed, add media and image to files to add to the anki collection after the import
             if node.image:
@@ -369,29 +365,26 @@ class XmindImporter(NoteImporter):
                 title=node.title, image=node.image, link=node.media,
                 ontology_storid=concepts[0].storid, last_modified=node.last_modified, order_number=order_number))
             # import a triple for each parent concept
-            for parent_node_id, parent_concept in zip(parent_node_ids, parent_concepts):
-                self.import_triple(parent_node_id=parent_node_id, parent_thing=parent_concept,
-                                   edge_id=node.parent_edge.id,
-                                   child_node_id=node.id, child_thing=concepts[0],
-                                   relationship_class_name=parent_relationship_class_name)
+            for parent_node_id in parent_node_ids:
+                self.import_triple(parent_node_id=parent_node_id, edge_id=node.parent_edge.id,
+                                   child_node_id=node.id, relationship_class_name=parent_relationship_class_name)
         # import each child edge
         for order_number, following_relationship in enumerate(node.child_edges, start=1):
             self.import_edge(order_number=order_number, edge=following_relationship, parent_concepts=concepts)
 
-    def import_triple(self, parent_node_id: str, parent_thing: ThingClass, edge_id: str, relationship_class_name: str,
-                      child_node_id: str, child_thing: ThingClass, ) -> None:
+    def import_triple(self, parent_node_id: str, edge_id: str, relationship_class_name: str,
+                      child_node_id: str) -> None:
         """
         connects the specified concepts in the ontology using the specified relationship class name and adds the
         triple of parent node, edge, and concept to the smr world
         :param parent_node_id: xmind id of the parent node
-        :param parent_thing: ontology concept representing the parent node
         :param edge_id: xmind id of the edge
         :param relationship_class_name: ontology class name of the relationship
         :param child_node_id: xmind id of the child node
-        :param child_thing: ontology concept representing the child node
         """
-        self.onto.connect_concepts(child_thing=child_thing, relationship_class_name=relationship_class_name,
-                                   parent_thing=parent_thing, edge_id=edge_id)
+        self.onto.connect_concepts(
+            edge_id=edge_id, parent_node_id=parent_node_id, relationship_class_name=relationship_class_name,
+            child_node_id=child_node_id)
         self.triples_2_import.append(SmrTripleDto(
             parent_node_id=parent_node_id, edge_id=edge_id, child_node_id=child_node_id))
 

@@ -330,7 +330,7 @@ def test_newData(xmind_importer, smr_world_4_tests):
     # when
     data = importer.newData(foreign_note)
     # then
-    assert importer.smr_notes_2_add[0].edge_id == cts.EDGE_FOLLOWING_MULTIPLE_NODES_XMIND_ID
+    assert importer.smr_notes_2_add[0].edge_id == cts.ARE_EDGE_ID
     assert importer.smr_notes_2_add[0].note_id == next_note_id
     assert len(data) == 11
 

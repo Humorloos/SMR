@@ -136,31 +136,32 @@ class XOntology(Ontology):
         :param parent_node_ids: xmind node ids of the parent nodes of the node to add
         :return: the node's concept
         """
-        parent_concepts = [self.get_concept_from_node_id(i) for i in parent_node_ids]
         new_concept = self.concept_from_node_content(node_content=node_2_add.content, node_id=node_2_add.node_id)
-        for parent_concept in parent_concepts:
-            self.connect_concepts(child_thing=new_concept, parent_thing=parent_concept,
+        for parent_node_id in parent_node_ids:
+            self.connect_concepts(child_node_id=node_2_add.node_id, parent_node_id=parent_node_id,
                                   relationship_class_name=relationship_class_name, edge_id=parent_edge.node_id)
         return new_concept
 
-    def connect_concepts(self, child_thing: ThingClass, parent_thing: ThingClass, relationship_class_name: str,
-                         edge_id: str) -> None:
+    def connect_concepts(self, parent_node_id: str, relationship_class_name: str,
+                         edge_id: str, child_node_id: str) -> None:
         """
         - assigns the child concept to the parent concept with the specified relation
         - assigns the parent concept to the child concept with the relation 'Parent'
-        :param child_thing: the child concept in the relation
-        :param parent_thing: the parent concept in the relation
+        :param child_node_id: the child concept in the relation
+        :param parent_node_id: the parent concept in the relation
         :param relationship_class_name: the relation's class name
         :param edge_id: id of the xmind edge that belongs to the added relation
         """
-        current_children = getattr(parent_thing, relationship_class_name)
-        new_children = current_children + [child_thing]
-        setattr(parent_thing, relationship_class_name, new_children)
-        self.XmindId[parent_thing, getattr(self, relationship_class_name), child_thing].append(edge_id)
-        current_parents = getattr(child_thing, self.smr_world.parent_relation_name)
-        new_parents = current_parents + [parent_thing]
-        setattr(child_thing, self.smr_world.parent_relation_name, new_parents)
-        self.XmindId[child_thing, getattr(self, self.smr_world.parent_relation_name), parent_thing].append(edge_id)
+        parent_concept = self.get_concept_from_node_id(parent_node_id)
+        child_concept = self.get_concept_from_node_id(child_node_id)
+        current_children = getattr(parent_concept, relationship_class_name)
+        new_children = current_children + [child_concept]
+        setattr(parent_concept, relationship_class_name, new_children)
+        self.XmindId[parent_concept, getattr(self, relationship_class_name), child_concept].append(edge_id)
+        current_parents = getattr(child_concept, self.smr_world.parent_relation_name)
+        new_parents = current_parents + [parent_concept]
+        setattr(child_concept, self.smr_world.parent_relation_name, new_parents)
+        self.XmindId[child_concept, getattr(self, self.smr_world.parent_relation_name), parent_concept].append(edge_id)
 
     def concept_from_node_content(self, node_content: TopicContentDto, node_id: str,
                                   node_is_root: bool = False) -> ThingClass:
@@ -250,7 +251,7 @@ class XOntology(Ontology):
         for (edge_id, child_node_ids), child_relation_name in zip(children.items(), child_relation_names):
             for child_node_id in child_node_ids:
                 self.connect_concepts(
-                    child_thing=self.get_concept_from_node_id(child_node_id), parent_thing=new_concept,
+                    child_node_id=child_node_id, parent_node_id=xmind_node.node_id,
                     relationship_class_name=child_relation_name, edge_id=edge_id)
         return new_concept
 
@@ -274,10 +275,11 @@ class XOntology(Ontology):
         # Add new relation
         class_text = self.field_translator.relation_class_from_content(new_question_content)
         new_relation = self.add_relation(class_text)
-        for parent in parents:
-            for child in children:
-                self.connect_concepts(parent_thing=parent, relationship_class_name=class_text, child_thing=child,
-                                      edge_id=edge_id)
+        for parent_node_id in parent_node_ids:
+            for child_node_id in child_node_ids:
+                self.connect_concepts(
+                    parent_node_id=parent_node_id, relationship_class_name=class_text, child_node_id=child_node_id,
+                    edge_id=edge_id)
         return new_relation
 
     def remove_relations(self, parents: List[ThingClass], relation_name: str, children: List[ThingClass],
