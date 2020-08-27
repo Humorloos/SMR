@@ -13,6 +13,7 @@ from smr.fieldtranslator import FieldTranslator
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
 from smr.xmindimport import XmindImporter
+from smr.xmindtopic import XmindNode
 from smr.xnotemanager import field_by_identifier, XNoteManager, field_from_content, meta_from_fields, \
     content_from_field, field_content_by_identifier
 from smr.xontology import XOntology
@@ -149,11 +150,23 @@ class SmrSynchronizer:
         self._xmind_nodes_2_update = value
 
     @property
-    def importer(self):
+    def smr_notes_2_update(self) -> List[SmrNoteDto]:
+        try:
+            return self._smr_notes_2_update
+        except AttributeError:
+            self._smr_notes_2_update = []
+            return self._smr_notes_2_update
+
+    @smr_notes_2_update.setter
+    def smr_notes_2_update(self, value: List[SmrNoteDto]):
+        self._smr_notes_2_update = value
+
+    @property
+    def importer(self) -> XmindImporter:
         return self._importer
 
     @importer.setter
-    def importer(self, value):
+    def importer(self, value: XmindImporter):
         self._importer = value
 
     def synchronize(self):
@@ -194,18 +207,18 @@ class SmrSynchronizer:
         self.smr_world.add_or_replace_xmind_edges(self.xmind_edges_2_update)
         self.smr_world.add_or_replace_xmind_nodes(self.xmind_nodes_2_update)
         self.smr_world.remove_xmind_nodes(self.xmind_nodes_2_remove)
-        smr_notes_2_update = self.smr_world.get_updated_child_smr_notes(list(self.edge_ids_of_notes_2_update))
-        self.smr_world.add_or_replace_smr_notes(list(smr_notes_2_update.values()))
+        self.smr_notes_2_update = self.smr_world.get_updated_child_smr_notes(list(self.edge_ids_of_notes_2_update))
+        self.smr_world.add_or_replace_smr_notes(list(self.smr_notes_2_update.values()))
         # update smr notes affected by changes
-        changed_notes = self.smr_world.generate_notes(self.col, list(smr_notes_2_update))
+        changed_notes = self.smr_world.generate_notes(self.col, list(self.smr_notes_2_update))
         importer = XmindImporter(col=self.col, file='')
         importer.tagModified = 'yes'
         importer.addUpdates(rows=[
-            [smr_notes_2_update[edge_id].last_modified, self.col.usn(), foreign_note.fieldsStr,
-             foreign_note.tags[0], smr_notes_2_update[edge_id].note_id, foreign_note.fieldsStr] for
+            [self.smr_notes_2_update[edge_id].last_modified, self.col.usn(), foreign_note.fieldsStr,
+             foreign_note.tags[0], self.smr_notes_2_update[edge_id].note_id, foreign_note.fieldsStr] for
             edge_id, foreign_note in changed_notes.items()])
         # generate cards + update field cache
-        self.col.after_note_updates(nids=[n.note_id for n in smr_notes_2_update.values()], mark_modified=False)
+        self.col.after_note_updates(nids=[n.note_id for n in self.smr_notes_2_update.values()], mark_modified=False)
         self.note_manager.save_col()
         aqt.mw.progress.finish()
 
@@ -286,8 +299,8 @@ note.""")
         self.x_manager.set_node_content(node_id=xmind_node.node_id, content=xmind_node.content,
                                         media_directory=self.note_manager.media_directory, smr_world=self.smr_world)
         # Change answer in Ontology
-        xmind_node.ontology_storid = self.onto.rename_node(
-            xmind_node=xmind_node, xmind_edge=xmind_edge, parent_node_ids=parent_node_ids, children=children).storid
+        self.onto.rename_node(
+            xmind_node=xmind_node, xmind_edge=xmind_edge, parent_node_ids=parent_node_ids, children=children)
 
     # def change_remote_as(self, status, remote, q_id, level, import_dict):
     #     for a_id in {**status, **remote}:
@@ -546,6 +559,8 @@ map and then synchronize.""")
                             continue
                 if anki_note_was_changed:
                     self.edge_ids_of_notes_2_update.append(note_data['note'].edge_id)
+                else:
+                    self.smr_notes_2_update.append(note_data['note'])
 
     def _process_remote_changes(self, file: XmindFileDto, deck_id: int):
         sheets_status = self.smr_world.get_xmind_sheets_in_file(file_directory=file.directory, file_name=file.file_name)
@@ -565,9 +580,9 @@ map and then synchronize.""")
         nodes_remote = self.x_manager.sheets[sheet_id].nodes
         for node_id in set(list(nodes_status) + list(nodes_remote)):
             if node_id not in nodes_status:
-                print('')
+                self.importer.import_node_if_concept(nodes_remote[node_id])
             elif node_id not in nodes_remote:
-                print('remove node')
+                self.onto.world.graph.db.rollback()
             elif nodes_status[node_id].last_modified != nodes_remote[node_id]['last_modified']:
                 print('change node')
         print('do the same for edges')

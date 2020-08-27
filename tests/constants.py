@@ -158,6 +158,11 @@ EXAMPLE_MAP_N_EDGES = 34
 NAME_MAP_GENERAL_PSYCHOLOGY = 'example_general_psychology'
 NAME_HYPERLINK_MEDIA = "serotonin.mp3"
 NEUROTRANSMITTERS_IMAGE_XMIND_URI = "attachments/09r2e442o8lppjfeblf7il2rmd.png"
+# original in support
+DIRECTORY_MAPS_ORIGINAL = os.path.join(MAPS_DIRECTORY, 'original')
+# question without answer
+NAME_MAP_QUESTION_WITHOUT_ANSWERS = 'question_without_answers'
+PATH_MAP_QUESTION_WITHOUT_ANSWERS = os.path.join(DIRECTORY_MAPS_ORIGINAL, NAME_MAP_QUESTION_WITHOUT_ANSWERS + '.xmind')
 # original
 PATH_EXAMPLE_MAP_ORIGINAL = os.path.join(RESOURCES_PATH, NAME_EXAMPLE_MAP + '.xmind')
 PATH_MAP_GENERAL_PSYCHOLOGY_ORIGINAL = os.path.join(RESOURCES_PATH, NAME_MAP_GENERAL_PSYCHOLOGY + '.xmind')
@@ -194,6 +199,7 @@ CLINICAL_PSYCHOLOGY_1_NODE_ID = '29qkib9g6gqsfqqmcqk2495kgc'
 BIOGENIC_AMINES_NODE_ID = "3oqcv5qlqhn28u1opce5i27709"
 DE_EMBEDDED_MEDIA_NODE_ID = '23nu73chqkkkem455dit5p8stu'
 PAIN_1_NODE_ID = '3nb97928e68dcu5512pft7gkcg'
+PAIN_2_NODE_ID = '5asru7kdmre8059cemi8p5lm3v'
 CAN_BE_TRIGGERED_BY_NODE_ID = '7ite3obkfmbchr1pc6ib0o7rga'
 # edges
 SPLITS_UP_EDGE_ID = '61irckf1nloq42brfmbu0ke92v'

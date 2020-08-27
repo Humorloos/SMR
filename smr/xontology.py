@@ -11,6 +11,7 @@ from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.fieldtranslator import FieldTranslator
 from smr.smrworld import SmrWorld
+from smr.xmindtopic import XmindNode
 
 
 def get_question_sets(q_id_elements):
@@ -134,13 +135,11 @@ class XOntology(Ontology):
         :param relationship_class_name: class name of the relationship with which to connect the new node
         :param node_2_add: xmind node dto of the node to add with already updated content
         :param parent_node_ids: xmind node ids of the parent nodes of the node to add
-        :return: the node's concept
         """
-        new_concept = self.concept_from_node_content(node_content=node_2_add.content, node_id=node_2_add.node_id)
+        new_concept = self.add_concept_from_node(node_2_add)
         for parent_node_id in parent_node_ids:
             self.connect_concepts(child_node_id=node_2_add.node_id, parent_node_id=parent_node_id,
                                   relationship_class_name=relationship_class_name, edge_id=parent_edge.node_id)
-        return new_concept
 
     def connect_concepts(self, parent_node_id: str, relationship_class_name: str,
                          edge_id: str, child_node_id: str) -> None:
@@ -163,26 +162,18 @@ class XOntology(Ontology):
         setattr(child_concept, self.smr_world.parent_relation_name, new_parents)
         self.XmindId[child_concept, getattr(self, self.smr_world.parent_relation_name), parent_concept].append(edge_id)
 
-    def concept_from_node_content(self, node_content: TopicContentDto, node_id: str,
-                                  node_is_root: bool = False) -> ThingClass:
+    def add_concept_from_node(self, node: XmindTopicDto):
         """
         Adds a new concept to the ontology and returns it
-        :param node_content: node content DTO containing concept's title, image, and media.
-        :param node_id: xmind id of the node for which to create the concept
-        :param node_is_root: Whether the concept is the xmind file's root or not
+        :param node: the node dto to create the concept from
         :return: the concept
         """
-        if node_is_root:
-            generate_concept: ThingClass = self.Root
-        else:
-            generate_concept: ThingClass = self.Concept
         # Some concept names (e.g. 'are') can lead to errors, so catch them
         try:
-            concept: ThingClass = generate_concept(self.field_translator.class_from_content(node_content))
+            concept = self.Concept(self.field_translator.class_from_content(node.content))
         except TypeError:
             raise NameError('Invalid concept name')
-        concept.XmindId.append(node_id)
-        return concept
+        concept.XmindId.append(node.node_id)
 
     def add_relation(self, relationship_class_name: str) -> ObjectPropertyClass:
         """
@@ -230,7 +221,7 @@ class XOntology(Ontology):
                                       children=child_concepts, edge_id=edge_id)
 
     def rename_node(self, parent_node_ids: List[str], xmind_edge: XmindTopicDto, xmind_node: XmindTopicDto,
-                    children: Dict[str, List[str]]) -> ThingClass:
+                    children: Dict[str, List[str]]) -> None:
         """
         changes the name of a node while retaining the relations to related concepts (children and parents)
         :param parent_node_ids: node ids of all nodes preceding the node to change
@@ -238,22 +229,20 @@ class XOntology(Ontology):
         :param xmind_edge: the xmind edge preceding the node to rename
         :param children: dictionary where keys are edge_ids of edges following the node to change and values are
         lists of node ids belonging to the edge's child nodes
-        :return:
         """
         # get names of relations up front in case they are deleted together with the node
         parent_relation_name = self.get_relation_from_edge_id(xmind_edge.node_id).name
         child_relation_names = [self.get_relation_from_edge_id(i).name for i in children]
         self.remove_node(xmind_node=xmind_node, xmind_edge=xmind_edge, parent_node_ids=parent_node_ids,
                          children=children)
-        new_concept = self.add_node(parent_edge=xmind_edge, relationship_class_name=parent_relation_name,
-                                    node_2_add=xmind_node, parent_node_ids=parent_node_ids)
+        self.add_node(parent_edge=xmind_edge, relationship_class_name=parent_relation_name,
+                      node_2_add=xmind_node, parent_node_ids=parent_node_ids)
         # connect concept to former children of removed node
         for (edge_id, child_node_ids), child_relation_name in zip(children.items(), child_relation_names):
             for child_node_id in child_node_ids:
                 self.connect_concepts(
                     child_node_id=child_node_id, parent_node_id=xmind_node.node_id,
                     relationship_class_name=child_relation_name, edge_id=edge_id)
-        return new_concept
 
     def change_relationship_class_name(self, parent_node_ids: List[str], child_node_ids: List[str],
                                        new_question_content: TopicContentDto, edge_id: str) -> ObjectPropertyClass:

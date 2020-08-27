@@ -117,7 +117,11 @@ WHERE did = ? and mid = ?""", smr_deck_id, self.note_manager.col.models.id_for_n
             aqt.mw.app.processEvents()
             importer = XmindImporter(col=self.collection, file=file_path)
             importer.initialize_import(user_inputs=DeckSelectionDialogUserInputsDTO(deck_id=smr_deck_id))
-            notes_2_update = {n: importer.notes_2_import.pop(n) for n in list(importer.notes_2_import) if
+            importer.add_media_2_anki_collection()
+            importer.add_entities_2_smr_world()
+            notes_2_import = self.smr_world.generate_notes(
+                col=self.collection, edge_ids=importer.edge_ids_2_make_notes_of)
+            notes_2_update = {n: notes_2_import.pop(n) for n in list(notes_2_import) if
                               n in notes}
             if notes_2_update:
                 importer.tagModified = 'yes'

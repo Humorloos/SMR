@@ -22,14 +22,18 @@ def active_xmind_importer(xmind_importer):
 
 @pytest.fixture
 def xmind_importer_4_integration(empty_anki_collection_function, mocker, patch_aqt_mw_empty_smr_world):
-    collection = empty_anki_collection_function
+    return set_up_importer_4_integration(map_path=cts.PATH_EXAMPLE_MAP_DEFAULT, col=empty_anki_collection_function,
+                                         mocker=mocker)
+
+
+def set_up_importer_4_integration(col, mocker, map_path):
+    collection = col
     add_x_model(collection)
-    cut = XmindImporter(col=collection, file=cts.PATH_EXAMPLE_MAP_DEFAULT)
+    cut = XmindImporter(col=collection, file=map_path)
     test_deck_id = cut.col.decks.id(name="test_deck")
     mocker.spy(cut, "import_edge")
     mocker.spy(cut, "import_node_if_concept")
     mocker.spy(cut, "_import_sheet")
-    mocker.spy(cut, "import_triple")
     mocker.spy(cut, "_import_file")
     return cut, test_deck_id
 
@@ -46,7 +50,6 @@ def xmind_importer_import_edge(active_xmind_importer, mocker):
     importer = active_xmind_importer
     mocker.patch.object(importer, "_onto")
     mocker.patch.object(importer, "_mw")
-    mocker.patch.object(importer, "import_triple")
     return importer
 
 
@@ -60,10 +63,11 @@ def add_image_and_media_importer(active_xmind_importer, mocker):
 
 
 def assert_import_edge_not_executed(cut):
-    assert cut.smr_world.add_xmind_edge.call_count == 0
     assert cut.is_running is False
+    assert len(cut.edges_2_import) == 0
     assert len(cut.media_uris_2_add) == 0
-    assert cut.import_triple.call_count == 0
+    assert len(cut.edge_ids_2_make_notes_of) == 0
+    assert len(cut.smr_triples_2_import) == 0
 
 
 def test_xmind_importer(xmind_importer):
@@ -152,9 +156,9 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, xmin
     # when
     cut.import_node_if_concept(node=xmind_node)
     # then
-    assert cut._onto.concept_from_node_content.call_count == 1
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.nodes_2_import) == 1
+    assert len(cut.nodes_4_concepts) == 1
 
 
 def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept, x_ontology):
@@ -166,7 +170,7 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
     # then
     assert cut._smr_world.add_or_replace_xmind_nodes.call_count == 0
     assert len(cut.media_uris_2_add) == 0
-    assert cut._onto.concept_from_node_content.call_count == 0
+    assert len(cut.nodes_4_concepts) == 0
 
 
 def test_import_node_if_concept_following_multiple_concepts(xmind_importer_import_node_if_concept, x_ontology):
@@ -178,7 +182,7 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
     # then
     assert len(cut.nodes_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
-    assert cut._onto.concept_from_node_content.call_count == 1
+    assert len(cut.nodes_4_concepts) == 1
 
 
 def test_import_edge(xmind_importer_import_edge, x_ontology):
@@ -189,7 +193,8 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     # then
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
-    assert cut.import_triple.call_count == 1
+    assert len(cut.edge_ids_2_make_notes_of) == 1
+    assert len(cut.smr_triples_2_import) == 1
 
 
 def test_import_edge_no_child_nodes(xmind_importer_import_edge):
@@ -235,7 +240,8 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge):
     # then
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
-    assert cut.import_triple.call_count == 4
+    assert len(cut.edge_ids_2_make_notes_of) == 1
+    assert len(cut.smr_triples_2_import) == 1
 
 
 def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
@@ -247,7 +253,8 @@ def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     # then
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
-    assert cut.import_triple.call_count == 1
+    assert len(cut.edge_ids_2_make_notes_of) == 0
+    assert len(cut.smr_triples_2_import) == 1
 
 
 def test_finish_import(patch_aqt_mw_smr_world_and_col_with_example_map, mocker):
@@ -274,7 +281,6 @@ def test_initialize_import_import_import_notes_to_correct_deck(xmind_importer_4_
     assert cut._import_sheet.call_count == 2
     assert cut.import_edge.call_count == 31
     assert cut.import_node_if_concept.call_count == 42
-    assert cut.import_triple.call_count == 42
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == n_cards_example_map
     assert cut.col.db.execute('select type from cards') == n_cards_example_map * [[0]]
@@ -316,7 +322,7 @@ def test__add_media_2_anki_collection(add_image_and_media_importer):
     cut = add_image_and_media_importer
     cut.media_uris_2_add.append(cts.NEUROTRANSMITTERS_IMAGE_ATTACHMENT_NAME)
     # when
-    cut._add_media_2_anki_collection()
+    cut.add_media_2_anki_collection()
     # then
     validate_add_image_and_media(cut=cut, add_file_call_count=0)
 
@@ -326,7 +332,7 @@ def test__add_media_2_anki_collection_with_media_hyperlink(add_image_and_media_i
     cut = add_image_and_media_importer
     cut.media_uris_2_add.append(cts.PATH_HYPERLINK_MEDIA_TEMPORARY)
     # when
-    cut._add_media_2_anki_collection()
+    cut.add_media_2_anki_collection()
     # then
     validate_add_image_and_media(cut=cut, add_file_call_count=1)
 
@@ -344,8 +350,24 @@ def test_import_sheet(xmind_importer_4_integration):
     assert cut._import_sheet.call_count == 1
     assert cut.import_edge.call_count == 22
     assert cut.import_node_if_concept.call_count == 30
-    assert cut.import_triple.call_count == 31
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == 25
     assert cut.col.db.execute('select type from cards') == 25 * [[0]]
     assert len(cut.smr_world.graph.execute('select distinct card_id from main.smr_triples').fetchall()) == 26
+
+
+def test_question_without_answer(xmind_importer_4_integration, empty_anki_collection_function, mocker):
+    # given
+    cut, deck_id = set_up_importer_4_integration(col=empty_anki_collection_function, mocker=mocker,
+                                                 map_path=cts.PATH_MAP_QUESTION_WITHOUT_ANSWERS)
+    # when
+    cut.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=deck_id))
+    cut.finish_import()
+    # then
+    assert not cut.onto.psychological_disorders
+    assert len(cut.smr_world.get_xmind_files_in_decks()) == 0
+    assert cut.log == ["""\
+Warning:
+A Question titled "possible causes" (reference: clinical psychology
+investigates: psychological disorders
+examples: schizophrenia) is missing answers. Please adjust your Concept Map and try again."""]
