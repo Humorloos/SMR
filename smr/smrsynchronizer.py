@@ -193,6 +193,18 @@ class SmrSynchronizer:
     def relations_2_change(self, value: List[Dict[str, Union[List[str], XmindTopicDto]]]):
         self._relations_2_change = value
 
+    @property
+    def concepts_2_remove(self) -> List[Dict[str, Union[List[str], XmindTopicDto, Dict[str, List[str]]]]]:
+        try:
+            return self._concepts_2_remove
+        except AttributeError:
+            self._concepts_2_remove = []
+            return self._concepts_2_remove
+
+    @concepts_2_remove.setter
+    def concepts_2_remove(self, value: List[Dict[str, Union[List[str], XmindTopicDto, Dict[str, List[str]]]]]):
+        self._concepts_2_remove = value
+
     def synchronize(self):
         """
         Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
@@ -224,6 +236,12 @@ class SmrSynchronizer:
                 else:
                     self.process_local_and_remote_changes()
                 self.x_manager.save_changes()
+            # make changes to ontology
+            # Remove nodes from ontology
+            for concept in self.concepts_2_remove:
+                self.onto.remove_node(xmind_node=concept['xmind_node'], xmind_edge=concept['xmind_edge'],
+                                      parent_node_ids=concept['parent_node_ids'], children={})
+            # Change relation names in ontology
             for relation in self.relations_2_change:
                 self.onto.change_relationship_class_name(
                     parent_node_ids=relation['parent_node_ids'], child_node_ids=relation['child_node_ids'],
@@ -519,9 +537,9 @@ Invalid answer removal: Cannot remove answer "{field_from_content(xmind_node.con
 {self.smr_world.get_smr_note_reference_fields([xmind_edge.node_id])[xmind_edge.node_id]}), because more questions \
 follow this answer in the xmind map. I restored the answer. If you want to remove the answer, do it in the concept \
 map and then synchronize.""")
-        # Remove node from ontology
-        self.onto.remove_node(xmind_node=xmind_node, xmind_edge=xmind_edge,
-                              parent_node_ids=parent_node_ids, children={})
+        # Add node to concepts to remove
+        self.concepts_2_remove.append({'xmind_node': xmind_node, 'xmind_edge': xmind_edge,
+                                       'parent_node_ids': parent_node_ids})
         # Add node to nodes to remove
         self.xmind_nodes_2_remove.append(xmind_node.node_id)
 
