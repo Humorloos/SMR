@@ -205,6 +205,18 @@ class SmrSynchronizer:
     def concepts_2_remove(self, value: List[Dict[str, Union[List[str], XmindTopicDto, Dict[str, List[str]]]]]):
         self._concepts_2_remove = value
 
+    @property
+    def concepts_2_rename(self) -> List[Dict[str, Union[List[str], XmindTopicDto, Dict[str, List[str]]]]]:
+        try:
+            return self._concepts_2_rename
+        except AttributeError:
+            self._concepts_2_rename = []
+            return self._concepts_2_rename
+
+    @concepts_2_rename.setter
+    def concepts_2_rename(self, value: List[Dict[str, Union[List[str], XmindTopicDto, Dict[str, List[str]]]]]):
+        self._concepts_2_rename = value
+
     def synchronize(self):
         """
         Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
@@ -236,16 +248,7 @@ class SmrSynchronizer:
                 else:
                     self.process_local_and_remote_changes()
                 self.x_manager.save_changes()
-            # make changes to ontology
-            # Remove nodes from ontology
-            for concept in self.concepts_2_remove:
-                self.onto.remove_node(xmind_node=concept['xmind_node'], xmind_edge=concept['xmind_edge'],
-                                      parent_node_ids=concept['parent_node_ids'], children={})
-            # Change relation names in ontology
-            for relation in self.relations_2_change:
-                self.onto.change_relationship_class_name(
-                    parent_node_ids=relation['parent_node_ids'], child_node_ids=relation['child_node_ids'],
-                    xmind_edge=relation['xmind_edge'])
+            self._synchronize_ontology()
         # process changes in smr world
         self.smr_world.add_or_replace_xmind_files(self.xmind_files_2_update)
         # TODO: remove xmind sheets
@@ -269,6 +272,25 @@ class SmrSynchronizer:
         self.col.after_note_updates(nids=[n.note_id for n in self.smr_notes_2_update.values()], mark_modified=False)
         self.note_manager.save_col()
         aqt.mw.progress.finish()
+
+    def _synchronize_ontology(self):
+        """
+        Makes all necessary changes to the ontology that are not covered by xmindimport
+        """
+        # First perform updates to avoid conflicts with removed entities
+        # Rename nodes in ontology
+        for concept in self.concepts_2_rename:
+            self.onto.rename_node(parent_node_ids=concept['parent_node_ids'], xmind_edge=concept['xmind_edge'],
+                                  xmind_node=concept['xmind_node'], children=concept['children'])
+        # Change relation names in ontology
+        for relation in self.relations_2_change:
+            self.onto.change_relationship_class_name(
+                parent_node_ids=relation['parent_node_ids'], child_node_ids=relation['child_node_ids'],
+                xmind_edge=relation['xmind_edge'])
+        # Remove nodes from ontology
+        for concept in self.concepts_2_remove:
+            self.onto.remove_node(xmind_node=concept['xmind_node'], xmind_edge=concept['xmind_edge'],
+                                  parent_node_ids=concept['parent_node_ids'], children={})
 
     # TODO: Implement this, do not forget here that we need to add smr triples in this case
     def _add_answer(self, answer_content: TopicContentDto, xmind_edge: XmindTopicDto):
@@ -347,144 +369,8 @@ note.""")
         self.x_manager.set_node_content(node_id=xmind_node.node_id, content=xmind_node.content,
                                         media_directory=self.note_manager.media_directory, smr_world=self.smr_world)
         # Change answer in Ontology
-        self.onto.rename_node(
-            xmind_node=xmind_node, xmind_edge=xmind_edge, parent_node_ids=parent_node_ids, children=children)
-
-    # def change_remote_as(self, status, remote, q_id, level, import_dict):
-    #     for a_id in {**status, **remote}:
-    #         if not status[a_id]['xMod'] == remote[a_id]['xMod']:
-    #             if not import_dict['note']:
-    #                 note = self.note_manager.get_note_from_q_id(q_id)
-    #
-    #             # Change answer in note
-    #             a_content = self.map_manager.get_node_content_by_id(a_id)
-    #             a_field = field_from_content(a_content)
-    #             old_field = import_dict['note'].fields[get_index_by_a_id(
-    #                 note=import_dict['note'], a_id=a_id)]
-    #             if not a_field == old_field:
-    #                 import_dict['note'].fields[
-    #                     get_field_index_by_field_name('a' + str(
-    #                         remote[a_id]['index']))] = a_field
-    #                 old_content = content_from_field(old_field)
-    #                 self.maybe_add_media(content=a_content,
-    #                                      old_content=old_content,
-    #                                      importer=import_dict['importer'])
-    #
-    #                 # Change answer in ontology
-    #                 self.onto.rename_node(q_id=q_id, a_id=a_id,
-    #                                       a_field=a_field)
-    #
-    #                 # Change answer content in status and xmod
-    #                 status[a_id]['content'] = a_field
-    #
-    #                 # Add change to ref_change_list
-    #                 import_dict['ref_changes'][a_id] = change_dict(
-    #                     old=old_field, new=a_field)
-    #             status[a_id]['xMod'] = remote[a_id]['xMod']
-    #
-    #             # If index has changed:
-    #         if not status[a_id]['index'] == remote[a_id]['index']:
-    #
-    #             # Change index in note
-    #             if not import_dict['note']:
-    #                 import_dict['note'] = \
-    #                     self.note_manager.get_note_from_q_id(q_id)
-    #             a_field = import_dict['note'].fields[get_index_by_a_id(
-    #                 note=import_dict['note'], a_id=a_id)]
-    #             a_content = content_from_field(a_field)
-    #             a_class = self.translator.class_from_content(a_content)
-    #             import_dict['index_dict'][remote[a_id]['index']] = a_field
-    #
-    #             # Change index in ontology
-    #             self.onto.set_trpl_a_index(a_id=a_id, q_id=q_id,
-    #                                        a_index=remote[a_id]['index'])
-    #
-    #             # Change index in status
-    #             status[a_id]['index'] = remote[a_id]['index']
-    #
-    #             # Add change to sort_id_changes
-    #             new_sort_id = sort_id_from_order_number(remote[a_id]['index'])
-    #             if not level:
-    #                 q_topic = self.map_manager.get_node_by_id(q_id)
-    #                 level = len(self.map_manager.ref_and_sort_id(q_topic)[1])
-    #             import_dict['sort_id_changes'][a_id] = change_dict(
-    #                 old=level, new=new_sort_id)
-    #
-    #     # Assign answer fields with new indices to note fields
-    #     if import_dict['index_dict']:
-    #         self.note_manager.rearrange_answers(
-    #             note=import_dict['note'], index_dict=import_dict['index_dict'])
-    #
-    #     return import_dict
-
-    # def process_note(self, q_id, status, remote, import_dict):
-    #     q_content = None
-    #     level = None
-    #     if not status['xMod'] == remote['xMod']:
-    #         note = self.note_manager.get_note_from_q_id(q_id)
-    #         q_content = self.map_manager.get_node_content_by_id(q_id)
-    #         new_q_field = field_from_content(q_content)
-    #         q_index = get_field_index_by_field_name('qt')
-    #
-    #         # Add change to changes dict
-    #         import_dict['ref_changes']['question'] = change_dict(
-    #             old=note.fields[q_index], new=new_q_field)
-    #
-    #         # Change question field to new question
-    #         note.fields[q_index] = new_q_field
-    #
-    #         # Change question in ontology
-    #         self.onto.change_relationship_class_name(x_id=q_id, new_question_content=new_q_field)
-    #
-    #         # Adjust question in status
-    #         status['xMod'] = remote['xMod']
-    #
-    #     # Adjust index if it has changed
-    #     if not status['index'] == remote['index']:
-    #         q_topic = self.map_manager.get_node_by_id(q_id)
-    #         level = len(self.map_manager.ref_and_sort_id(q_topic)[1])
-    #         new_sort_id = sort_id_from_order_number(remote['index'])
-    #
-    #         # Add change to changes dict
-    #         import_dict['sort_id_changes']['question'] = change_dict(
-    #             old=level, new=new_sort_id)
-    #
-    #         # Adjust index in status
-    #         status['index'] = remote['index']
-    #
-    #     # Add new answers if there are any
-    #     # TODO: check whether answers meta is adjusted correctly
-    #     import_dict = self.add_remote_as(
-    #         q_content=q_content, q_id=q_id, remote=remote,
-    #         status=status, import_dict=import_dict)
-    #
-    #     # Remove old answers if there are any
-    #     # TODO: check whether answers meta is adjusted correctly
-    #     import_dict = self.remove_remote_as(
-    #         status=status['answers'], remote=remote['answers'], q_id=q_id,
-    #         import_dict=import_dict)
-    #
-    #     # Change answers that have changed content
-    #     import_dict = self.change_remote_as(
-    #         status=status['answers'], remote=remote['answers'], q_id=q_id,
-    #         level=level, import_dict=import_dict)
-
-    # Change answer in note fields
-    # Change answer in ontology
-    # Change answer in status
-
-    # Adjust answer index for answers that have changed position
-    # Adjust ref of all following notes and set new fields
-    # if note:
-    #     if ref_changes:
-    #         self.note_manager.update_ref(note=note, changes=ref_changes)
-    #     if sort_id_changes:
-    #         self.note_manager.update_sort_id(note=note,
-    #                                          changes=sort_id_changes)
-    #     # self.note_manager.set_fields(...)
-    # if importer:
-    #     importer.finish_import()
-    # print('change note in anki and status and put changes in change_list')
+        self.concepts_2_rename.append({'xmind_node': xmind_node, 'xmind_edge': xmind_edge,
+                                       'parent_node_ids': parent_node_ids, 'children': children})
 
     def _change_remote_question(self, xmind_edge: XmindTopicDto, parent_node_ids: List[str],
                                 child_node_ids: List[str]):
