@@ -1,5 +1,5 @@
 from itertools import zip_longest
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Union
 
 import aqt as aqt
 import smr.consts as cts
@@ -181,6 +181,18 @@ class SmrSynchronizer:
     def xmind_edges_2_remove(self, value: Set[str]):
         self._xmind_edges_2_remove = value
 
+    @property
+    def relations_2_change(self) -> List[Dict[str, Union[List[str], XmindTopicDto]]]:
+        try:
+            return self._relations_2_change
+        except AttributeError:
+            self._relations_2_change = []
+            return self._relations_2_change
+
+    @relations_2_change.setter
+    def relations_2_change(self, value: List[Dict[str, Union[List[str], XmindTopicDto]]]):
+        self._relations_2_change = value
+
     def synchronize(self):
         """
         Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
@@ -212,6 +224,10 @@ class SmrSynchronizer:
                 else:
                     self.process_local_and_remote_changes()
                 self.x_manager.save_changes()
+            for relation in self.relations_2_change:
+                self.onto.change_relationship_class_name(
+                    parent_node_ids=relation['parent_node_ids'], child_node_ids=relation['child_node_ids'],
+                    xmind_edge=relation['xmind_edge'])
         # process changes in smr world
         self.smr_world.add_or_replace_xmind_files(self.xmind_files_2_update)
         # TODO: remove xmind sheets
@@ -465,9 +481,9 @@ note.""")
         # Change edge in map
         self.x_manager.set_edge_content(edge=xmind_edge, media_directory=self.note_manager.media_directory,
                                         smr_world=self.smr_world)
-        # Change question in ontology
-        self.onto.change_relationship_class_name(
-            parent_node_ids=parent_node_ids, xmind_edge=xmind_edge, child_node_ids=child_node_ids)
+        # Add node ids and edge to relations to change
+        self.relations_2_change.append({
+            'parent_node_ids': parent_node_ids, 'xmind_edge': xmind_edge, 'child_node_ids': child_node_ids})
 
     def maybe_add_media(self, content, importer, old_content=None):
         a_media = content['media']
@@ -597,6 +613,9 @@ map and then synchronize.""")
             elif edge_id not in edges_remote:
                 self.xmind_edges_2_remove.append(edge_id)
             # elif edges_status[edge_id].last_modified != edges_remote[edge_id].last_modified:
+            #     # update ontology relation
+            #     # update note
+            #     # add edge id to edge ids of notes 2 update
             #     self.
         nodes_status = self.smr_world.get_xmind_nodes_in_sheet(sheet_id)
         nodes_remote = self.x_manager.sheets[sheet_id].nodes

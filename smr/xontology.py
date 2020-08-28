@@ -212,12 +212,10 @@ class XOntology(Ontology):
             # remove the relations between the node and its parents and its children in case the concept itself is not
             # removed
             self.remove_relations(parents=[self.get_concept_from_node_id(i) for i in parent_node_ids],
-                                  relation_name=self.field_translator.relation_class_from_content(xmind_edge.content),
                                   children=[concept], edge_id=xmind_edge.node_id)
             for edge_id, child_node_ids in children.items():
                 child_concepts = [self.get_concept_from_node_id(i) for i in child_node_ids]
-                self.remove_relations(parents=[concept], relation_name=self.get_relation_from_edge_id(edge_id).name,
-                                      children=child_concepts, edge_id=edge_id)
+                self.remove_relations(parents=[concept], children=child_concepts, edge_id=edge_id)
 
     def rename_node(self, parent_node_ids: List[str], xmind_edge: XmindTopicDto, xmind_node: XmindTopicDto,
                     children: Dict[str, List[str]]) -> None:
@@ -257,8 +255,7 @@ class XOntology(Ontology):
         parents = [self.get_concept_from_node_id(node_id) for node_id in parent_node_ids]
         children = [self.get_concept_from_node_id(node_id) for node_id in child_node_ids]
         # Remove old relation
-        self.remove_relations(parents=parents, relation_name=self.get_relation_from_edge_id(xmind_edge.node_id).name,
-                              children=children, edge_id=xmind_edge.node_id)
+        self.remove_relations(parents=parents, children=children, edge_id=xmind_edge.node_id)
         # Add new relation
         class_text = self.field_translator.relation_class_from_content(xmind_edge.content)
         self.add_relation(class_text)
@@ -268,25 +265,25 @@ class XOntology(Ontology):
                     parent_node_id=parent_node_id, relationship_class_name=class_text, child_node_id=child_node_id,
                     edge_id=xmind_edge.node_id)
 
-    def remove_relations(self, parents: List[ThingClass], relation_name: str, children: List[ThingClass],
+    def remove_relations(self, parents: List[ThingClass], children: List[ThingClass],
                          edge_id: str):
         """
         For both the specified relation from parents to children and the parent relations from children to parents:
         - removes the edge_id from the relation triples
         - if there are no more edge_ids associated with the triple, removes the relation triple
         :param parents: List of subject concepts the relations refer to
-        :param relation_name: name of the relations to remove
         :param children: List of object concepts the relations refer to
         :param edge_id: xmind id of the edge for which to remove the relations
         """
+        relation = self.get_relation_from_edge_id(edge_id)
         for parent in parents:
             for child in children:
                 # Remove edge from edge list for this relation
-                relation_triples = self.XmindId[parent, getattr(self, relation_name), child]
+                relation_triples = self.XmindId[parent, relation, child]
                 relation_triples.remove(edge_id)
                 # If edge list has become empty, remove the relation
                 if not relation_triples:
-                    getattr(parent, relation_name).remove(child)
+                    getattr(parent, relation.name).remove(child)
                 # Remove edge from edge list for parent relation
                 parent_triples = self.XmindId[child, self.smrparent_xrelation, parent]
                 parent_triples.remove(edge_id)

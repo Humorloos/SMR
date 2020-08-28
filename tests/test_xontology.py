@@ -96,10 +96,9 @@ def test_remove_relations(ontology_with_example_map):
     onto = ontology_with_example_map
     child = getattr(onto, cts.MULTIPLE_PARENTS_CHILD_CLASS_NAME)
     parents = [getattr(onto, i) for i in cts.MULTIPLE_PARENTS_CLASS_NAMES]
-    relation_name = cts.MULTIPLE_PARENTS_RELATION_CLASS_NAME
+    relation_name = onto.get_relation_from_edge_id(cts.ARE_EDGE_ID).name
     # when
-    onto.remove_relations(children=[child], parents=parents, relation_name=relation_name,
-                          edge_id=cts.ARE_EDGE_ID)
+    onto.remove_relations(children=[child], parents=parents, edge_id=cts.ARE_EDGE_ID)
     # then
     assert [getattr(p, relation_name) for p in parents] == 4 * [[]]
     assert len(getattr(child, onto.smr_world.parent_relation_name)) == 1
