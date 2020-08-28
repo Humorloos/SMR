@@ -340,7 +340,7 @@ class XmindImporter(NoteImporter):
         # import edges in sheet
         for edge in self.x_manager.sheets[sheet_id].edges.values():
             if self.is_running:
-                self.import_edge(edge=edge)
+                self.read_edge(edge=edge)
             else:
                 return
 
@@ -356,7 +356,7 @@ class XmindImporter(NoteImporter):
             self.nodes_4_concepts.append(node)
             self._append_topic_data(topic=node, type_is_node=True)
 
-    def import_edge(self, edge: XmindEdge) -> None:
+    def read_edge(self, edge: XmindEdge) -> None:
         """
         - if the edge is not empty:
             - adds the edge to the list of edges to make notes of
@@ -495,6 +495,6 @@ class XmindImporter(NoteImporter):
             self.onto.add_relation(relation_class_name)
             # connect concepts in triples
             for triple in self.smr_triples_2_import[relation_class_name]:
-                self.onto.connect_concepts(edge_id=triple.edge_id, parent_node_id=triple.parent_node_id,
-                                           relationship_class_name=relation_class_name,
-                                           child_node_id=triple.child_node_id)
+                self.onto.connect_concepts(
+                    edge_id=triple.edge_id, parent_node_id=triple.parent_node_id,
+                    relationship_class_name=relation_class_name, child_node_id=triple.child_node_id)

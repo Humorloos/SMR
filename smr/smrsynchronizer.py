@@ -1,5 +1,5 @@
 from itertools import zip_longest
-from typing import List, Dict
+from typing import List, Dict, Set
 
 import aqt as aqt
 import smr.consts as cts
@@ -169,6 +169,18 @@ class SmrSynchronizer:
     def importer(self, value: XmindImporter):
         self._importer = value
 
+    @property
+    def xmind_edges_2_remove(self) -> Set[str]:
+        try:
+            return self._xmind_edges_2_remove
+        except AttributeError:
+            self._xmind_edges_2_remove = set()
+            return self._xmind_edges_2_remove
+
+    @xmind_edges_2_remove.setter
+    def xmind_edges_2_remove(self, value: Set[str]):
+        self._xmind_edges_2_remove = value
+
     def synchronize(self):
         """
         Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
@@ -205,6 +217,8 @@ class SmrSynchronizer:
         # TODO: remove xmind sheets
         print('remove xmind sheets')
         self.smr_world.add_or_replace_xmind_edges(self.xmind_edges_2_update)
+        # remove all edges from the smr world, the notes associated to them from the collection, and the relations
+        # associated to them from the ontology (together with the concepts)
         self.smr_world.add_or_replace_xmind_nodes(self.xmind_nodes_2_update)
         self.smr_world.remove_xmind_nodes(self.xmind_nodes_2_remove)
         self.smr_notes_2_update = self.smr_world.get_updated_child_smr_notes(list(self.edge_ids_of_notes_2_update))
@@ -449,12 +463,11 @@ note.""")
         :param child_node_ids: list of xmind node ids of the child nodes of the edge to change
         """
         # Change edge in map
-        self.x_manager.set_edge_content(edge_id=xmind_edge.node_id, content=xmind_edge.content,
-                                        media_directory=self.note_manager.media_directory, smr_world=self.smr_world)
+        self.x_manager.set_edge_content(edge=xmind_edge, media_directory=self.note_manager.media_directory,
+                                        smr_world=self.smr_world)
         # Change question in ontology
-        xmind_edge.ontology_storid = self.onto.change_relationship_class_name(
-            parent_node_ids=parent_node_ids, child_node_ids=child_node_ids,
-            new_question_content=xmind_edge.content, edge_id=xmind_edge.node_id).storid
+        self.onto.change_relationship_class_name(
+            parent_node_ids=parent_node_ids, xmind_edge=xmind_edge, child_node_ids=child_node_ids)
 
     def maybe_add_media(self, content, importer, old_content=None):
         a_media = content['media']
@@ -576,14 +589,28 @@ map and then synchronize.""")
                 self._process_remote_questions(sheet_id)
 
     def _process_remote_questions(self, sheet_id):
+        edges_remote = self.x_manager.sheets[sheet_id].edges
+        edges_status = self.smr_world.get_xmind_edges_in_sheet(sheet_id)
+        for edge_id in set(list(edges_status) + list(edges_remote)):
+            if edge_id not in edges_status:
+                self.importer.read_edge(edges_remote[edge_id])
+            elif edge_id not in edges_remote:
+                self.xmind_edges_2_remove.append(edge_id)
+            # elif edges_status[edge_id].last_modified != edges_remote[edge_id].last_modified:
+            #     self.
         nodes_status = self.smr_world.get_xmind_nodes_in_sheet(sheet_id)
         nodes_remote = self.x_manager.sheets[sheet_id].nodes
+        # for edge_id in set(list(edges_status) + list(edges_remote)):
         for node_id in set(list(nodes_status) + list(nodes_remote)):
             if node_id not in nodes_status:
+                # check if node in edges
+                # if not, check whether parent edge exceeds limit max answers before importing
                 self.importer.import_node_if_concept(nodes_remote[node_id])
             elif node_id not in nodes_remote:
-                self.onto.world.graph.db.rollback()
-            elif nodes_status[node_id].last_modified != nodes_remote[node_id]['last_modified']:
+                node_status = nodes_status[node_id]
+                # try:
+                #     self.edge_ids_of_anki_notes_2_remove[node_status.].append()
+            elif nodes_status[node_id].last_modified != nodes_remote[node_id].last_modified:
                 print('change node')
         print('do the same for edges')
         #

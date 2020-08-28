@@ -31,7 +31,7 @@ def set_up_importer_4_integration(col, mocker, map_path):
     add_x_model(collection)
     cut = XmindImporter(col=collection, file=map_path)
     test_deck_id = cut.col.decks.id(name="test_deck")
-    mocker.spy(cut, "import_edge")
+    mocker.spy(cut, "read_edge")
     mocker.spy(cut, "import_node_if_concept")
     mocker.spy(cut, "_import_sheet")
     mocker.spy(cut, "_import_file")
@@ -134,7 +134,7 @@ def test__import_sheet(xmind_importer, mocker, x_manager):
     cut = xmind_importer
     mocker.patch.object(cut, "_mw")
     mocker.patch.object(cut, "import_node_if_concept")
-    mocker.patch.object(cut, "import_edge")
+    mocker.patch.object(cut, "read_edge")
     mocker.patch.object(cut, "_onto")
     cut._active_manager = x_manager
     # when
@@ -143,7 +143,7 @@ def test__import_sheet(xmind_importer, mocker, x_manager):
     assert cut.mw.progress.update.call_count == 1
     assert cut.mw.app.processEvents.call_count == 1
     assert cut.import_node_if_concept.call_count == 30
-    assert cut.import_edge.call_count == 22
+    assert cut.read_edge.call_count == 22
     assert cut.current_sheet_import == sheet_2_import
     assert cut.sheets_2_import[0].sheet_id == cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID
     assert cut.sheets_2_import[0].file_directory == cts.DIRECTORY_MAPS_TEMPORARY
@@ -189,7 +189,7 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     # given
     cut = xmind_importer_import_edge
     # when
-    cut.import_edge(edge=cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID))
+    cut.read_edge(edge=cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID))
     # then
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
@@ -203,7 +203,7 @@ def test_import_edge_no_child_nodes(xmind_importer_import_edge):
     edge = cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID)
     edge.child_nodes = []
     # when
-    cut.import_edge(edge=edge)
+    cut.read_edge(edge=edge)
     # then
     assert_import_edge_not_executed(cut)
     assert cut.log == ["""\
@@ -220,7 +220,7 @@ def test_import_edge_too_many_child_nodes(xmind_importer_import_edge):
     # noinspection PyTypeChecker
     edge.non_empty_child_nodes = [XmindNode(None, '', 0, '')] * (X_MAX_ANSWERS + 1)
     # when
-    cut.import_edge(edge=edge)
+    cut.read_edge(edge=edge)
     # then
     assert_import_edge_not_executed(cut)
     assert cut.log == ["""\
@@ -236,7 +236,7 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge):
     cut = xmind_importer_import_edge
     edge = cut.x_manager.get_edge_by_id(cts.SPLITS_UP_EDGE_ID)
     # when
-    cut.import_edge(edge=edge)
+    cut.read_edge(edge=edge)
     # then
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
@@ -249,7 +249,7 @@ def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     cut = xmind_importer_import_edge
     edge = cut.x_manager.get_edge_by_id(cts.EMPTY_EDGE_3_ID)
     # when
-    cut.import_edge(edge=edge)
+    cut.read_edge(edge=edge)
     # then
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
@@ -279,7 +279,7 @@ def test_initialize_import_import_import_notes_to_correct_deck(xmind_importer_4_
     # then
     assert cut._import_file.call_count == 1
     assert cut._import_sheet.call_count == 2
-    assert cut.import_edge.call_count == 31
+    assert cut.read_edge.call_count == 31
     assert cut.import_node_if_concept.call_count == 42
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == n_cards_example_map
@@ -348,7 +348,7 @@ def test_import_sheet(xmind_importer_4_integration):
     cut.finish_import()
     # then
     assert cut._import_sheet.call_count == 1
-    assert cut.import_edge.call_count == 22
+    assert cut.read_edge.call_count == 22
     assert cut.import_node_if_concept.call_count == 30
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == 25

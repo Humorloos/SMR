@@ -14,8 +14,8 @@ class XmindTopicDto(EntityDto):
     node_id: str = ""
     sheet_id: str = ""
     title: str = ""
-    image: str = ""
-    link: str = ""
+    image: Optional[str] = None
+    link: Optional[str] = None
     last_modified: Optional[int] = None
     order_number: Optional[int] = None
 

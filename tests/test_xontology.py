@@ -110,12 +110,13 @@ def test_change_relationship_class_name(ontology_with_example_map):
     cut = ontology_with_example_map
     parent_node_ids = cts.MULTIPLE_PARENTS_NODE_IDS
     child_node_id = cts.MULTIPLE_PARENTS_CHILD_NODE_ID
+    xmind_edge = XmindTopicDto(node_id=cts.ARE_EDGE_ID)
+    xmind_edge.content = TopicContentDto(title='new question', image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI)
     # when
-    new_property = cut.change_relationship_class_name(
-        parent_node_ids=parent_node_ids, child_node_ids=[child_node_id],
-        new_question_content=TopicContentDto(title='new question', image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI),
-        edge_id=cts.ARE_EDGE_ID)
+    cut.change_relationship_class_name(
+        parent_node_ids=parent_node_ids, child_node_ids=[child_node_id], xmind_edge=xmind_edge)
     # then
+    new_property = cut.get_relation_from_edge_id(cts.ARE_EDGE_ID)
     assert new_property.name == 'new_questionximage_09r2e442o8lppjfeblf7il2rmd_extension_png_xrelation'
 
 

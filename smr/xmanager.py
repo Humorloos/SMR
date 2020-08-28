@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
+from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.smrworld import SmrWorld
 from smr.xmindsheet import XmindSheet
 from smr.xmindtopic import XmindNode, XmindEdge
@@ -243,17 +244,15 @@ class XManager:
         node = self.get_node_by_id(node_id)
         self._set_topic_content(topic=node, content=content, media_directory=media_directory, smr_world=smr_world)
 
-    def set_edge_content(self, edge_id: str, content: TopicContentDto, media_directory: str,
-                         smr_world: SmrWorld) -> None:
+    def set_edge_content(self, edge: XmindTopicDto, media_directory: str, smr_world: SmrWorld) -> None:
         """
         Sets an xmind edge's title and image to the ones specified in the content dto
-        :param edge_id: the node's xmind_id
-        :param content: the node's content
+        :param edge: xmind topic dto of the edge of which to set the content
         :param media_directory: the anki's collection.media directory to get images from
         :param smr_world: the smr world to register newly added and removed images
         """
-        edge = self.get_edge_by_id(edge_id)
-        self._set_topic_content(topic=edge, content=content, media_directory=media_directory, smr_world=smr_world)
+        edge = self.get_edge_by_id(edge.node_id)
+        self._set_topic_content(topic=edge, content=edge.content, media_directory=media_directory, smr_world=smr_world)
 
     def _set_topic_content(self, topic: Union[XmindEdge, XmindNode], content: TopicContentDto, media_directory: str,
                            smr_world: SmrWorld) -> None:

@@ -699,10 +699,19 @@ order by si.sort_id desc""")
         """
         Gets all nodes that belong to the sheet with the specified id
         :param sheet_id: xmind id of the sheet to get the nodes for
-        :return: The nodes in a dictionary where keys are the nodes' xmind ids and values are
+        :return: The nodes in a dictionary where keys are the nodes' xmind ids and values are Xmind nodes
         """
         return {record.node_id: XmindTopicDto(*record) for record in self._get_records(f"""
 SELECT * FROM xmind_nodes WHERE sheet_id = '{sheet_id}'""")}
+
+    def get_xmind_edges_in_sheet(self, sheet_id: str) -> Dict[str, XmindTopicDto]:
+        """
+        Gets all edges that belong to the sheet with the specified id
+        :param sheet_id: xmind id of the sheet to get the edges for
+        :return: The edges in a dictionary where keys are the edges' xmind ids and values are Xmind edges
+        """
+        return {record.edge_id: XmindTopicDto(*record) for record in self._get_records(f"""
+SELECT * FROM xmind_edges WHERE sheet_id = '{sheet_id}'""")}
 
     def get_root_node_id(self, sheet_id: str) -> str:
         """

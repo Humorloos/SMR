@@ -411,3 +411,12 @@ def test_get_root_node_id(smr_world_with_example_map):
     root_id = smr_world_with_example_map.get_root_node_id(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
     assert root_id == cts.BIOLOGICAL_PSYCHOLOGY_NODE_ID
+
+
+def test_get_xmind_edges_in_sheet(smr_world_with_example_map):
+    # given
+    cut = smr_world_with_example_map
+    # when
+    edges = cut.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
+    # then
+    assert len(edges) == 22
