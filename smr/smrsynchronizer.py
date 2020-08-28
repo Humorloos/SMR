@@ -38,7 +38,7 @@ class SmrSynchronizer:
         self.xmind_files_2_update = []
         self.xmind_sheets_2_remove = []
         self.xmind_edges_2_update = []
-        self.edge_ids_of_notes_2_update = []
+        self.edge_ids_of_anki_notes_2_update = []
         self.xmind_nodes_2_update = []
         self.xmind_nodes_2_remove = []
         self.changed_smr_notes = {}
@@ -86,11 +86,11 @@ class SmrSynchronizer:
         self._xmind_edges_2_update = value
 
     @property
-    def edge_ids_of_notes_2_update(self) -> List[str]:
+    def edge_ids_of_anki_notes_2_update(self) -> List[str]:
         return self._edge_ids_of_notes_2_update
 
-    @edge_ids_of_notes_2_update.setter
-    def edge_ids_of_notes_2_update(self, value: List[str]):
+    @edge_ids_of_anki_notes_2_update.setter
+    def edge_ids_of_anki_notes_2_update(self, value: List[str]):
         self._edge_ids_of_notes_2_update = value
 
     @property
@@ -217,6 +217,18 @@ class SmrSynchronizer:
     def concepts_2_rename(self, value: List[Dict[str, Union[List[str], XmindTopicDto, Dict[str, List[str]]]]]):
         self._concepts_2_rename = value
 
+    @property
+    def anki_notes_2_update(self) -> Dict[str, SmrNoteDto]:
+        try:
+            return self._anki_notes_2_update
+        except AttributeError:
+            self._anki_notes_2_update = {}
+            return self._anki_notes_2_update
+
+    @anki_notes_2_update.setter
+    def anki_notes_2_update(self, value: Dict[str, SmrNoteDto]):
+        self._anki_notes_2_update = value
+
     def synchronize(self):
         """
         Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
@@ -249,7 +261,27 @@ class SmrSynchronizer:
                     self.process_local_and_remote_changes()
                 self.x_manager.save_changes()
             self._synchronize_ontology()
-        # process changes in smr world
+        self._synchronize_smr_world()
+        self._synchronize_anki_collection()
+        aqt.mw.progress.finish()
+
+    def _synchronize_anki_collection(self):
+        # update anki notes affected by changes
+        changed_notes = self.smr_world.generate_notes(self.col, list(self.anki_notes_2_update))
+        importer = XmindImporter(col=self.col, file='')
+        importer.tagModified = 'yes'
+        importer.addUpdates(rows=[
+            [self.anki_notes_2_update[edge_id].last_modified, self.col.usn(), foreign_note.fieldsStr,
+             foreign_note.tags[0], self.anki_notes_2_update[edge_id].note_id, foreign_note.fieldsStr] for
+            edge_id, foreign_note in changed_notes.items()])
+        # generate cards + update field cache
+        self.col.after_note_updates(nids=[n.note_id for n in self.anki_notes_2_update.values()], mark_modified=False)
+        self.note_manager.save_col()
+
+    def _synchronize_smr_world(self):
+        """
+        makes all necessary changes to the smr world
+        """
         self.smr_world.add_or_replace_xmind_files(self.xmind_files_2_update)
         # TODO: remove xmind sheets
         print('remove xmind sheets')
@@ -258,20 +290,12 @@ class SmrSynchronizer:
         # associated to them from the ontology (together with the concepts)
         self.smr_world.add_or_replace_xmind_nodes(self.xmind_nodes_2_update)
         self.smr_world.remove_xmind_nodes(self.xmind_nodes_2_remove)
-        self.smr_notes_2_update = self.smr_world.get_updated_child_smr_notes(list(self.edge_ids_of_notes_2_update))
-        self.smr_world.add_or_replace_smr_notes(list(self.smr_notes_2_update.values()))
-        # update smr notes affected by changes
-        changed_notes = self.smr_world.generate_notes(self.col, list(self.smr_notes_2_update))
-        importer = XmindImporter(col=self.col, file='')
-        importer.tagModified = 'yes'
-        importer.addUpdates(rows=[
-            [self.smr_notes_2_update[edge_id].last_modified, self.col.usn(), foreign_note.fieldsStr,
-             foreign_note.tags[0], self.smr_notes_2_update[edge_id].note_id, foreign_note.fieldsStr] for
-            edge_id, foreign_note in changed_notes.items()])
-        # generate cards + update field cache
-        self.col.after_note_updates(nids=[n.note_id for n in self.smr_notes_2_update.values()], mark_modified=False)
-        self.note_manager.save_col()
-        aqt.mw.progress.finish()
+        # get notes that have to be updated because they follow notes with updated fields
+        self.anki_notes_2_update = self.smr_world.get_updated_child_smr_notes(
+            list(self.edge_ids_of_anki_notes_2_update))
+        # update smr notes where only last modified has to be adjusted and those where anki notes' fields need to be
+        # adjusted
+        self.smr_world.add_or_replace_smr_notes(self.smr_notes_2_update + list(self.anki_notes_2_update.values()))
 
     def _synchronize_ontology(self):
         """
@@ -491,7 +515,7 @@ map and then synchronize.""")
                         else:
                             continue
                 if anki_note_was_changed:
-                    self.edge_ids_of_notes_2_update.append(note_data['note'].edge_id)
+                    self.edge_ids_of_anki_notes_2_update.append(note_data['note'].edge_id)
                 else:
                     self.smr_notes_2_update.append(note_data['note'])
 

@@ -30,7 +30,6 @@ class XmindImporter(NoteImporter):
     def __init__(self, col: Collection, file: str):
         NoteImporter.__init__(self, col, file)
         self.mw: AnkiQt = aqt.mw
-        self.x_manager = []
         self.smr_world: SmrWorld = self.mw.smr_world
         self.translator = None
         self.is_running: bool = True
@@ -135,9 +134,11 @@ class XmindImporter(NoteImporter):
 
     @property
     def x_manager(self) -> XManager:
-        if not self._x_manager:
+        try:
+            return self._x_manager
+        except AttributeError:
             self.x_manager = XManager(os.path.normpath(self.file))
-        return self._x_manager
+            return self._x_manager
 
     @x_manager.setter
     def x_manager(self, value: XManager):
@@ -254,9 +255,8 @@ class XmindImporter(NoteImporter):
 
     def open(self) -> None:
         """
-        Starts deck selection dialog and runs import sheets with selected sheets
+        checks whether the file has already been imported before
         """
-        # check whether the file has already been imported before
         directory, file_name = os.path.split(self.file)
         file_name = os.path.splitext(file_name)[0]
         if self.smr_world.graph.execute(f"select * from xmind_files where directory = '{directory}' and "
