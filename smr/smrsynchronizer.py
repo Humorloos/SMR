@@ -260,9 +260,9 @@ class SmrSynchronizer:
                 else:
                     self.process_local_and_remote_changes()
                 self.x_manager.save_changes()
-            self._synchronize_ontology()
-        self._synchronize_smr_world()
-        self._synchronize_anki_collection()
+                self._synchronize_ontology()
+                self._synchronize_smr_world()
+                self._synchronize_anki_collection()
         aqt.mw.progress.finish()
 
     def _synchronize_anki_collection(self):
@@ -276,6 +276,7 @@ class SmrSynchronizer:
             edge_id, foreign_note in changed_notes.items()])
         # generate cards + update field cache
         self.col.after_note_updates(nids=[n.note_id for n in self.anki_notes_2_update.values()], mark_modified=False)
+        self.anki_notes_2_update = {}
         self.note_manager.save_col()
 
     def _synchronize_smr_world(self):
@@ -283,19 +284,23 @@ class SmrSynchronizer:
         makes all necessary changes to the smr world
         """
         self.smr_world.add_or_replace_xmind_files(self.xmind_files_2_update)
-        # TODO: remove xmind sheets
-        print('remove xmind sheets')
+        self.xmind_files_2_update = []
         self.smr_world.add_or_replace_xmind_edges(self.xmind_edges_2_update)
-        # remove all edges from the smr world, the notes associated to them from the collection, and the relations
-        # associated to them from the ontology (together with the concepts)
+        self.xmind_edges_2_update = []
         self.smr_world.add_or_replace_xmind_nodes(self.xmind_nodes_2_update)
-        self.smr_world.remove_xmind_nodes(self.xmind_nodes_2_remove)
+        self.xmind_nodes_2_update = []
         # get notes that have to be updated because they follow notes with updated fields
         self.anki_notes_2_update = self.smr_world.get_updated_child_smr_notes(
             list(self.edge_ids_of_anki_notes_2_update))
         # update smr notes where only last modified has to be adjusted and those where anki notes' fields need to be
         # adjusted
         self.smr_world.add_or_replace_smr_notes(self.smr_notes_2_update + list(self.anki_notes_2_update.values()))
+        self.smr_notes_2_update = []
+        self._edge_ids_of_notes_2_update = []
+        self.smr_world.remove_xmind_nodes(self.xmind_nodes_2_remove)
+        self.xmind_nodes_2_remove = []
+        # TODO: remove xmind sheets
+        print('remove xmind sheets')
 
     def _synchronize_ontology(self):
         """
@@ -306,15 +311,18 @@ class SmrSynchronizer:
         for concept in self.concepts_2_rename:
             self.onto.rename_node(parent_node_ids=concept['parent_node_ids'], xmind_edge=concept['xmind_edge'],
                                   xmind_node=concept['xmind_node'], children=concept['children'])
+        self.concepts_2_rename = []
         # Change relation names in ontology
         for relation in self.relations_2_change:
             self.onto.change_relationship_class_name(
                 parent_node_ids=relation['parent_node_ids'], child_node_ids=relation['child_node_ids'],
                 xmind_edge=relation['xmind_edge'])
+        self.relations_2_change = []
         # Remove nodes from ontology
         for concept in self.concepts_2_remove:
             self.onto.remove_node(xmind_node=concept['xmind_node'], xmind_edge=concept['xmind_edge'],
                                   parent_node_ids=concept['parent_node_ids'], children={})
+        self.concepts_2_remove = []
 
     # TODO: Implement this, do not forget here that we need to add smr triples in this case
     def _add_answer(self, answer_content: TopicContentDto, xmind_edge: XmindTopicDto):
