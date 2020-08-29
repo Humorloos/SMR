@@ -229,6 +229,30 @@ class SmrSynchronizer:
     def anki_notes_2_update(self, value: Dict[str, SmrNoteDto]):
         self._anki_notes_2_update = value
 
+    @property
+    def anki_sheets_2_remove(self) -> List[str]:
+        try:
+            return self._anki_sheets_2_remove
+        except AttributeError:
+            self._anki_sheets_2_remove = []
+            return self._anki_sheets_2_remove
+
+    @anki_sheets_2_remove.setter
+    def anki_sheets_2_remove(self, value: List[str]):
+        self._anki_sheets_2_remove = value
+
+    @property
+    def onto_sheets_2_remove(self) -> Dict[str, str]:
+        try:
+            return self._onto_sheets_2_remove
+        except AttributeError:
+            self._onto_sheets_2_remove = {}
+            return self._onto_sheets_2_remove
+
+    @onto_sheets_2_remove.setter
+    def onto_sheets_2_remove(self, value: Dict[str, str]):
+        self._onto_sheets_2_remove = value
+
     def synchronize(self):
         """
         Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
@@ -243,6 +267,7 @@ class SmrSynchronizer:
             self.onto = XOntology(smr_deck.deck_id, self.smr_world)
             for xmind_file in files_in_deck:
                 self.x_manager = XManager(xmind_file)
+                # look for local and remote changes in the file
                 remote_change = False
                 if xmind_file.file_last_modified != self.x_manager.file_last_modified:
                     xmind_file.file_last_modified = self.x_manager.file_last_modified
@@ -251,6 +276,7 @@ class SmrSynchronizer:
                         xmind_file.map_last_modified = self.x_manager.map_last_modified
                     self.xmind_files_2_update.append(xmind_file)
                 local_change = xmind_file.file_path in self.changed_smr_notes
+                # use the appropriate strategy for getting updates
                 if not local_change and not remote_change:
                     continue
                 elif local_change and not remote_change:
@@ -259,6 +285,7 @@ class SmrSynchronizer:
                     self._process_remote_changes(file=xmind_file, deck_id=smr_deck.deck_id)
                 else:
                     self.process_local_and_remote_changes()
+                # apply updates to the all mediums
                 self.x_manager.save_changes()
                 self._synchronize_ontology()
                 self._synchronize_smr_world()
@@ -277,6 +304,8 @@ class SmrSynchronizer:
         # generate cards + update field cache
         self.col.after_note_updates(nids=[n.note_id for n in self.anki_notes_2_update.values()], mark_modified=False)
         self.anki_notes_2_update = {}
+        for sheet_id in self.anki_sheets_2_remove:
+            self.note_manager.remove_notes_by_sheet_id(sheet_id, self.smr_world)
         self.note_manager.save_col()
 
     def _synchronize_smr_world(self):
@@ -323,6 +352,9 @@ class SmrSynchronizer:
             self.onto.remove_node(xmind_node=concept['xmind_node'], xmind_edge=concept['xmind_edge'],
                                   parent_node_ids=concept['parent_node_ids'], children={})
         self.concepts_2_remove = []
+        # Remove nodes from ontology by sheets
+        for sheet_id, root_node_id in self.onto_sheets_2_remove.items():
+            self.onto.remove_sheet(sheet_id=sheet_id, root_node_id=root_node_id)
 
     # TODO: Implement this, do not forget here that we need to add smr triples in this case
     def _add_answer(self, answer_content: TopicContentDto, xmind_edge: XmindTopicDto):
@@ -481,7 +513,7 @@ map and then synchronize.""")
             for note_id, note_data in sheet_data.items():
                 anki_note_was_changed = False
                 fields = splitFields(note_data['note_fields'])
-                # change question if necessary
+                # get data for changing question if necessary
                 question_content_local = field_content_by_identifier(
                     fields=fields, identifier='qt', smr_world=self.smr_world)
                 if question_content_local != note_data['edge'].content:
@@ -489,11 +521,10 @@ map and then synchronize.""")
                     self._change_remote_question(
                         xmind_edge=note_data['edge'], parent_node_ids=note_data['parents'],
                         child_node_ids=[a['node'].node_id for a in note_data['answers'].values()])
-                    # Add edge to edges to be updated
                     self.xmind_edges_2_update.append(note_data['edge'])
                     anki_note_was_changed = True
+                # get data for changing answers if necessary
                 sorted_answers = sorted(note_data['answers'].items(), key=lambda item: item[0])
-                # change answers if necessary
                 local_answer_fields = [field_by_identifier(fields=fields, identifier='a' + str(i))
                                        for i in range(1, cts.X_MAX_ANSWERS + 1)]
                 for local_answer_field, answer_id, answer_data in zip_longest(
@@ -514,9 +545,9 @@ map and then synchronize.""")
                         # change answer if content was changed
                         elif local_answer_content != answer_data['node'].content:
                             answer_data['node'].content = local_answer_content
-                            self._change_remote_node(xmind_edge=note_data['edge'],
-                                                     parent_node_ids=note_data['parents'],
-                                                     xmind_node=answer_data['node'], children=answer_data['children'])
+                            self._change_remote_node(
+                                xmind_edge=note_data['edge'], parent_node_ids=note_data['parents'],
+                                xmind_node=answer_data['node'], children=answer_data['children'])
                             self.xmind_nodes_2_update.append(answer_data['node'])
                             anki_note_was_changed = True
                         # do nothing if answer has not changed
@@ -673,12 +704,11 @@ map and then synchronize.""")
 
     def _remove_sheet(self, sheet_id: str) -> None:
         """
-        Removes all notes belonging to a sheet from the collection and the ontology and adds the sheet to the list of
-        sheets to remove.
+        adds the needed data for removing the sheet with the specified id to the respective data structures
         :param sheet_id: xmind sheet id of the sheet to remove
         """
-        self.note_manager.remove_notes_by_sheet_id(sheet_id, self.smr_world)
-        self.onto.remove_sheet(sheet_id, self.smr_world.get_root_node_id(sheet_id))
+        self.anki_sheets_2_remove.append(sheet_id)
+        self.onto_sheets_2_remove[sheet_id] = self.smr_world.get_root_node_id(sheet_id)
         self.xmind_sheets_2_remove.append(sheet_id)
 
     def process_local_and_remote_changes(self):

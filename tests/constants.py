@@ -200,6 +200,7 @@ BIOGENIC_AMINES_NODE_ID = "3oqcv5qlqhn28u1opce5i27709"
 DE_EMBEDDED_MEDIA_NODE_ID = '23nu73chqkkkem455dit5p8stu'
 PAIN_1_NODE_ID = '3nb97928e68dcu5512pft7gkcg'
 PAIN_2_NODE_ID = '5asru7kdmre8059cemi8p5lm3v'
+MAO_1_NODE_ID = '7qb9l39bs8p1b0ivvausne94q4'
 CAN_BE_TRIGGERED_BY_NODE_ID = '7ite3obkfmbchr1pc6ib0o7rga'
 # edges
 SPLITS_UP_EDGE_ID = '61irckf1nloq42brfmbu0ke92v'

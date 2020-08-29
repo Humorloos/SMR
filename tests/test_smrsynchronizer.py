@@ -80,6 +80,13 @@ def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker, chang
                'MAO</li><li>splits up: Serotonin, dopamine, adrenaline</li><li>are changed question: biogenic '
                'amines</li>\x1fconsist of\x1fone or more amine '
                'groups\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f|{|{{{|~{{{']
+    assert cut.onto.biogenic_amines.former_image_xrelation == [cut.onto.Serotonin_new]
+    assert cut.onto.Serotonin_new.pronounciation_xrelation == [cut.onto.get_concept_from_node_id(
+        cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID)]
+    assert getattr(cut.onto.Serotonin_new, cut.smr_world.child_relation_name) == [cut.onto.get_concept_from_node_id(
+        cts.MAO_1_NODE_ID)]
+    assert len(cut.smr_world._get_records("SELECT * from main.xmind_nodes where title = 'Serotonin new'")) == 1
+    assert len(cut.smr_world.get_changed_smr_notes(cut.col)) == 0
 
 
 def test_synchronize_answer_added_error(mocker, smr_world_with_example_map):
