@@ -1,6 +1,6 @@
 node_id,sheet_id,title,image,link,last_modified,order_number
 node id,sheet id,node title,node image,node media,1.57831E+12,1
-node id2,sheet id,node title2,None,node media,1.57831E+12,1
+node id2,sheet id,node title2,,node media,1.57831E+12,1
 0pbme7b9sg9en8qqmmn9jj06od,sheet id,biological psychology,,,1.57304E+12,1
 29qkib9g6gqsfqqmcqk2495kgc,sheet id,clinical psychology,,,1.59482E+12,1
 4okvq29odoin406qmiq86vv1i1,sheet id,information transfer and processing,,,1.57303E+12,1

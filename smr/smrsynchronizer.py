@@ -87,11 +87,11 @@ class SmrSynchronizer:
 
     @property
     def edge_ids_of_anki_notes_2_update(self) -> List[str]:
-        return self._edge_ids_of_notes_2_update
+        return self._edge_ids_of_anki_notes_2_update
 
     @edge_ids_of_anki_notes_2_update.setter
     def edge_ids_of_anki_notes_2_update(self, value: List[str]):
-        self._edge_ids_of_notes_2_update = value
+        self._edge_ids_of_anki_notes_2_update = value
 
     @property
     def changed_smr_notes(self) -> Dict[str, SmrNoteDto]:
@@ -253,6 +253,18 @@ class SmrSynchronizer:
     def onto_sheets_2_remove(self, value: Dict[str, str]):
         self._onto_sheets_2_remove = value
 
+    @property
+    def anki_notes_2_remove(self) -> List[int]:
+        try:
+            return self._anki_notes_2_remove
+        except AttributeError:
+            self._anki_notes_2_remove = []
+            return self._anki_notes_2_remove
+
+    @anki_notes_2_remove.setter
+    def anki_notes_2_remove(self, value: List[int]):
+        self._anki_notes_2_remove = value
+
     def synchronize(self):
         """
         Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
@@ -283,6 +295,7 @@ class SmrSynchronizer:
                     self._process_local_changes(xmind_file)
                 elif not local_change and remote_change:
                     self._process_remote_changes(file=xmind_file, deck_id=smr_deck.deck_id)
+                    self.importer.finish_import()
                 else:
                     self.process_local_and_remote_changes()
                 # apply updates to the all mediums
@@ -304,9 +317,14 @@ class SmrSynchronizer:
         # generate cards + update field cache
         self.col.after_note_updates(nids=[n.note_id for n in self.anki_notes_2_update.values()], mark_modified=False)
         self.anki_notes_2_update = {}
+        # remove notes with note_ids from list of anki notes to remove
+        self.col.remove_notes(self.anki_notes_2_remove)
+        self.anki_notes_2_remove = []
+        # bulk remove notes for removed sheets
         for sheet_id in self.anki_sheets_2_remove:
             self.note_manager.remove_notes_by_sheet_id(sheet_id, self.smr_world)
         self.note_manager.save_col()
+        self.anki_sheets_2_remove = []
 
     def _synchronize_smr_world(self):
         """
@@ -325,9 +343,10 @@ class SmrSynchronizer:
         # adjusted
         self.smr_world.add_or_replace_smr_notes(self.smr_notes_2_update + list(self.anki_notes_2_update.values()))
         self.smr_notes_2_update = []
-        self._edge_ids_of_notes_2_update = []
+        self._edge_ids_of_anki_notes_2_update = []
         self.smr_world.remove_xmind_nodes(self.xmind_nodes_2_remove)
         self.xmind_nodes_2_remove = []
+        self.smr_world.remove_xmind_sheets(sheet_ids=self.xmind_sheets_2_remove)
         # TODO: remove xmind sheets
         print('remove xmind sheets')
 
@@ -347,6 +366,7 @@ class SmrSynchronizer:
                 parent_node_ids=relation['parent_node_ids'], child_node_ids=relation['child_node_ids'],
                 xmind_edge=relation['xmind_edge'])
         self.relations_2_change = []
+
         # Remove nodes from ontology
         for concept in self.concepts_2_remove:
             self.onto.remove_node(xmind_node=concept['xmind_node'], xmind_edge=concept['xmind_edge'],
@@ -576,20 +596,35 @@ map and then synchronize.""")
         edges_status = self.smr_world.get_xmind_edges_in_sheet(sheet_id)
         for edge_id in set(list(edges_status) + list(edges_remote)):
             if edge_id not in edges_status:
+                # the importer takes care of everything necessary concerining pure imports
                 self.importer.read_edge(edges_remote[edge_id])
             elif edge_id not in edges_remote:
-                self.xmind_edges_2_remove.append(edge_id)
-            # elif edges_status[edge_id].last_modified != edges_remote[edge_id].last_modified:
-            #     # update ontology relation
-            #     # update note
-            #     # add edge id to edge ids of notes 2 update
-            #     self.
+                # add edge to notes to remove if it belongs to a note
+                edge_data = edges_status[edge_id]
+                note_id = edge_data.pop(-1)
+                if note_id is not None:
+                    self.anki_notes_2_remove.append(note_id)
+                # add edge to smr world xmind edges to remove
+                self.xmind_edges_2_remove.add(edge_id)
+                # we do not remove relations from the ontology explicitly since that is already part of removing nodes
+            elif edges_status[edge_id].last_modified != edges_remote[edge_id].last_modified:
+                edge_remote = edges_remote[edge_id]
+                # update ontology relation
+                xmind_edge = edge_remote.dto
+                self.relations_2_change.append({
+                    'parent_node_ids': [node.id for node in edge_remote.parent_nodes],
+                    'xmind_edge': xmind_edge,
+                    'child_node_ids': [node.id for node in edge_remote.child_nodes]})
+                # update note
+                self.edge_ids_of_anki_notes_2_update.append(edge_id)
+                # add edge id to edge ids of notes 2 update
+                self.xmind_edges_2_update.append(xmind_edge)
         nodes_status = self.smr_world.get_xmind_nodes_in_sheet(sheet_id)
         nodes_remote = self.x_manager.sheets[sheet_id].nodes
-        # for edge_id in set(list(edges_status) + list(edges_remote)):
         for node_id in set(list(nodes_status) + list(nodes_remote)):
             if node_id not in nodes_status:
                 # check if node in edges
+                # if nodes_remote[node_id].parent_edge.id in
                 # if not, check whether parent edge exceeds limit max answers before importing
                 self.importer.import_node_if_concept(nodes_remote[node_id])
             elif node_id not in nodes_remote:

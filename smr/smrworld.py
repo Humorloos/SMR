@@ -112,7 +112,7 @@ class SmrWorld(World):
         self.field_translator = None
         super().__init__()
         self.set_backend(filename=SMR_WORLD_PATH)
-        self.graph.execute('PRAGMA foreign_keys = ON')
+        self.turn_on_foreign_keys()
         self.save()
 
     @property
@@ -599,6 +599,7 @@ limit 1""").fetchone()[0]
         Removes all entries with the specified node ids from the relation xmind nodes
         :param xmind_nodes_2_remove: List of node ids of the nodes to remove
         """
+        self.turn_on_foreign_keys()
         self.graph.execute(f"""DELETE FROM xmind_nodes WHERE node_id IN ('{"', '".join(xmind_nodes_2_remove)}')""")
 
     def generate_notes(self, col, edge_ids) -> Dict[str, ForeignNote]:
@@ -704,14 +705,19 @@ order by si.sort_id desc""")
         return {record.node_id: XmindTopicDto(*record) for record in self._get_records(f"""
 SELECT * FROM xmind_nodes WHERE sheet_id = '{sheet_id}'""")}
 
-    def get_xmind_edges_in_sheet(self, sheet_id: str) -> Dict[str, XmindTopicDto]:
+    def get_xmind_edges_in_sheet(self, sheet_id: str) -> Dict[str, 'Record']:
         """
-        Gets all edges that belong to the sheet with the specified id
+        Gets all edges that belong to the sheet with the specified id together with the respective anki note id if
+        there is one
         :param sheet_id: xmind id of the sheet to get the edges for
-        :return: The edges in a dictionary where keys are the edges' xmind ids and values are Xmind edges
+        :return: The edges in a dictionary where keys are the edges' xmind ids and values are records with data for
+        xmind edges in the first fields and the anki note id in the last field
         """
-        return {record.edge_id: XmindTopicDto(*record) for record in self._get_records(f"""
-SELECT * FROM xmind_edges WHERE sheet_id = '{sheet_id}'""")}
+        return {record.edge_id: record for record in self._get_records(f"""
+SELECT xe.*, sn.note_id
+FROM xmind_edges xe
+         left outer join smr_notes sn on xe.edge_id = sn.edge_id
+WHERE sheet_id = '{sheet_id}'""")}
 
     def get_root_node_id(self, sheet_id: str) -> str:
         """
@@ -738,6 +744,23 @@ ancestor AS (
 SELECT parent_node_id FROM ancestor
 ORDER BY level DESC
 LIMIT 1""").fetchone()[0]
+
+    def remove_xmind_sheets(self, sheet_ids: List[str]) -> None:
+        """
+        Removes the xmind sheet entries belonging to the specified sheet ids from the relation xmind_sheets. By
+        cascading also removes all nodes and edges, and smr notes and triples belonging to the sheet
+        :param sheet_ids: xmind ids of the sheets to remove
+        """
+        self.turn_on_foreign_keys()
+        self.graph.execute(f"""
+DELETE from main.xmind_sheets where main.xmind_sheets.sheet_id IN ('{"', '".join(sheet_ids)}')""")
+
+    def turn_on_foreign_keys(self):
+        """
+        turns on foreign key features for the sqlite database, has to be called before deletions or updates of
+        referenced keys to make use of cascade clauses and foreign key constraints
+        """
+        self.graph.execute('PRAGMA foreign_keys=ON')
 
 
 class AnkiCollectionAttachement:

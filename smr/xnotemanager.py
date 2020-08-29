@@ -344,7 +344,7 @@ class XNoteManager:
         :param smr_world: the smr world to get the note ids from
         """
         note_ids_in_sheet = smr_world.get_note_ids_from_sheet_id(sheet_id)
-        self.col.remNotes(note_ids_in_sheet)
+        self.col.remove_notes(note_ids_in_sheet)
 
     def save_col(self):
         self.col.save()

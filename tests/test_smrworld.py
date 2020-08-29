@@ -305,15 +305,17 @@ def test_storid_from_edge_id(ontology_with_example_map):
     assert ontology_with_example_map.get(storid) == ontology_with_example_map.types_xrelation
 
 
-def test_remove_xmind_nodes(smr_world_4_tests):
+def test_remove_xmind_nodes(smr_world_with_example_map):
     # given
-    cut = smr_world_4_tests
+    cut = smr_world_with_example_map
     # when
-    cut.remove_xmind_nodes([cts.TEST_CONCEPT_NODE_ID, cts.TEST_CONCEPT_2_NODE_ID])
+    cut.remove_xmind_nodes([cts.NEUROTRANSMITTERS_NODE_ID, cts.MAO_1_NODE_ID])
     # then
     remaining_node_ids = [e[0] for e in cut.graph.execute("select node_id from xmind_nodes").fetchall()]
-    assert cts.TEST_CONCEPT_NODE_ID not in remaining_node_ids
-    assert cts.TEST_CONCEPT_2_NODE_ID not in remaining_node_ids
+    assert cts.NEUROTRANSMITTERS_NODE_ID not in remaining_node_ids
+    assert cts.MAO_1_NODE_ID not in remaining_node_ids
+    assert cut._get_records(f"""
+select * from main.smr_triples where parent_node_id = '{cts.MAO_1_NODE_ID}'""") == []
 
 
 def test_get_smr_note_reference_fields(smr_world_with_example_map):
@@ -420,3 +422,15 @@ def test_get_xmind_edges_in_sheet(smr_world_with_example_map):
     edges = cut.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
     assert len(edges) == 22
+
+
+def test_remove_xmind_sheets(smr_world_with_example_map):
+    # given
+    cut = smr_world_with_example_map
+    # when
+    cut.remove_xmind_sheets([cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID])
+    # then
+    assert cut.get_note_ids_from_sheet_id(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == []
+    assert cut.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
+    assert cut.get_xmind_nodes_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
+    assert len(cut.get_xmind_sheets_in_file(cts.DIRECTORY_MAPS_TEMPORARY, cts.NAME_EXAMPLE_MAP)) == 1

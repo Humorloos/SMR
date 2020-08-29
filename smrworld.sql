@@ -50,10 +50,8 @@ CREATE TABLE xmind_edges
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (image) REFERENCES xmind_media_to_anki_files (xmind_uri)
-        ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (link) REFERENCES xmind_media_to_anki_files (xmind_uri)
-        ON DELETE CASCADE
         ON UPDATE CASCADE
 );
 CREATE TABLE smr_notes
@@ -76,6 +74,10 @@ CREATE TABLE xmind_nodes
     order_number    INTEGER,
     FOREIGN KEY (sheet_id) REFERENCES xmind_sheets (sheet_id)
         ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (image) REFERENCES xmind_media_to_anki_files (xmind_uri)
+        ON UPDATE CASCADE,
+    FOREIGN KEY (link) REFERENCES xmind_media_to_anki_files (xmind_uri)
         ON UPDATE CASCADE
 );
 CREATE TABLE smr_triples
