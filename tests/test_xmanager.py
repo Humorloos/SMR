@@ -1,7 +1,7 @@
 import pytest
 
 from smr.dto.topiccontentdto import TopicContentDto
-from smr.xmanager import XManager, NodeNotFoundError
+from smr.xmanager import XManager, TopicNotFoundError
 from smr.xmindtopic import XmindNode
 from tests import constants as cts
 
@@ -83,7 +83,7 @@ def test_remove_node(x_manager):
     # when
     x_manager.remove_node(node_id)
     # then
-    with pytest.raises(NodeNotFoundError):
+    with pytest.raises(TopicNotFoundError):
         x_manager.get_node_by_id(node_id)
 
 
@@ -129,10 +129,10 @@ def test_get_tag_by_id_tag_not_found(x_manager):
     # given
     node_id = 'absent_id'
     # when
-    with pytest.raises(NodeNotFoundError) as exception_info:
+    with pytest.raises(TopicNotFoundError) as exception_info:
         x_manager.get_node_by_id(node_id)
     # then
-    assert exception_info.value.message == NodeNotFoundError.ERROR_MESSAGE.format(node_id)
+    assert exception_info.value.message == TopicNotFoundError.ERROR_MESSAGE.format(node_id)
 
 
 def test_map_last_modified(x_manager):

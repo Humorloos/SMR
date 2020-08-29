@@ -1,7 +1,8 @@
 import os
-from typing import List, Optional, Dict, Collection, Union, Tuple
+from typing import List, Optional, Dict, Union, Set
 
 import aqt as aqt
+from anki import Collection
 from anki.importing.noteimp import NoteImporter, ForeignNote, ADD_MODE
 from anki.models import NoteType
 from aqt.main import AnkiQt
@@ -16,13 +17,14 @@ from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.fieldtranslator import FieldTranslator
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
+from smr.xmindsheet import MapError
 from smr.xmindtopic import XmindNode, XmindEdge
 from smr.xontology import XOntology
 
 
 class XmindImporter(NoteImporter):
     """
-    Importer for Xmind files. You can add this class to anki.importing.Importers list to add it to ankis importers.
+    Importer for Xmind files. You can add this class to anki.importing.Importers list to add it to anki's importers.
     """
     log: List[str]
     needMapper = False
@@ -33,7 +35,6 @@ class XmindImporter(NoteImporter):
         self.smr_world: SmrWorld = self.mw.smr_world
         self.translator = None
         self.is_running: bool = True
-        self.edge_ids_2_make_notes_of: List[str] = []
         self.notes_2_import: Dict[str, ForeignNote] = {}
         self.media_uris_2_add = None
         # entity lists for imports
@@ -43,13 +44,13 @@ class XmindImporter(NoteImporter):
         self.nodes_2_import: List[XmindTopicDto] = []
         self.edges_2_import: List[XmindTopicDto] = []
         self.smr_notes_2_add: List[SmrNoteDto] = []
-        # deck id, deck name, and repair are speciefied in deck selection dialog
+        # deck id, deck name, and repair are specified in deck selection dialog
         self.deck_id: Optional[int] = None
         self.deck_name: str = ''
         self.repair: bool = False
         # ontology is assigned when deck_id was selected
         self.onto: Optional[XOntology] = None
-        # fields from Noteimporter:
+        # fields from NoteImporter:
         self.model: NoteType = col.models.byName(X_MODEL_NAME)
         self.allowHTML: bool = True
         # Fields to make methods from super class work
@@ -69,12 +70,16 @@ class XmindImporter(NoteImporter):
         self._deck_name = value
 
     @property
-    def edge_ids_2_make_notes_of(self) -> List[str]:
-        return self._edges_2_make_notes_of
+    def edge_ids_2_make_notes_of(self) -> Set[str]:
+        try:
+            return self._edge_ids_2_make_notes_of
+        except AttributeError:
+            self._edge_ids_2_make_notes_of = set()
+            return self._edge_ids_2_make_notes_of
 
     @edge_ids_2_make_notes_of.setter
-    def edge_ids_2_make_notes_of(self, value: List[str]):
-        self._edges_2_make_notes_of = value
+    def edge_ids_2_make_notes_of(self, value: Set[str]):
+        self._edge_ids_2_make_notes_of = value
 
     @property
     def deck_id(self) -> Optional[int]:
@@ -284,7 +289,7 @@ class XmindImporter(NoteImporter):
 
     def add_media_2_anki_collection(self) -> None:
         """
-        Adds all media that was registed in media_uris_2_add to the anki collection with the correct method for paths
+        Adds all media that was registered in media_uris_2_add to the anki collection with the correct method for paths
         or attachments
         """
         for uri in self.media_uris_2_add:
@@ -319,7 +324,8 @@ class XmindImporter(NoteImporter):
             map_last_modified=self.x_manager.map_last_modified, file_last_modified=self.x_manager.file_last_modified,
             deck_id=self.deck_id))
         for sheet in self.x_manager.sheets:
-            self._import_sheet(sheet)
+            if self.is_running:
+                self._import_sheet(sheet)
 
     def _import_sheet(self, sheet_id: str) -> None:
         """
@@ -335,8 +341,12 @@ class XmindImporter(NoteImporter):
             sheet_id=sheet_id, name=sheet_name, file_directory=directory, file_name=file_name,
             last_modified=self.x_manager.sheets[sheet_id].last_modified))
         # import nodes in sheet
-        for node in self.x_manager.sheets[sheet_id].nodes.values():
-            self.import_node_if_concept(node=node)
+        try:
+            for node in self.x_manager.sheets[sheet_id].nodes.values():
+                self.read_node_if_concept(node=node)
+        except MapError as error_info:
+            self.log.append(error_info.message)
+            self.is_running = False
         # import edges in sheet
         for edge in self.x_manager.sheets[sheet_id].edges.values():
             if self.is_running:
@@ -344,7 +354,7 @@ class XmindImporter(NoteImporter):
             else:
                 return
 
-    def import_node_if_concept(self, node: XmindNode) -> None:
+    def read_node_if_concept(self, node: XmindNode) -> None:
         """
         If the node is not empty:
         - adds a concept for the node to the ontology
@@ -366,26 +376,10 @@ class XmindImporter(NoteImporter):
         - adds the edge's data to the lists for finishing the import
         :param edge: tag that represents the edge to be imported
         """
-        # stop execution and warn if an edge is not followed by any nodes
-        if len(edge.child_nodes) == 0:
-            self.is_running = False
-            self.log = [
-                'Warning:\nA Question titled "{title}" (reference: {reference}) is missing answers. Please adjust your '
-                'Concept Map and try again.'.format(
-                    title=edge.title, reference=edge.get_reference())]
-            return
         # if the edge is not empty, add it to the list of edges to make notes from and get the relation class name
         if not edge.is_empty:
-            # If the current relation is a question and has too many answers give a warning and stop running
-            if len(edge.non_empty_child_nodes) > X_MAX_ANSWERS:
-                self.is_running = False
-                self.log = [
-                    "Warning:\nA Question titled \"{title}\" (reference: {reference}) has more than {n_answers} "
-                    "answers. Make sure every Question in your Map is followed by no more than {n_answers} Answers "
-                    "and try again.".format(title=edge.title, reference=edge.get_reference(), n_answers=X_MAX_ANSWERS)]
-                return
             # add edge to edge ids to make notes of
-            self.edge_ids_2_make_notes_of.append(edge.id)
+            self.edge_ids_2_make_notes_of.add(edge.id)
             relation_class_name = self.translator.relation_class_from_content(edge.content)
         # else connect concepts with child and parent relations
         else:
@@ -466,7 +460,7 @@ class XmindImporter(NoteImporter):
 
     def add_entities_2_smr_world(self) -> None:
         """
-        Adds all entities in the respectives lists to the respective relations (except notes and cards since they
+        Adds all entities in the respective lists to the respective relations (except notes and cards since they
         need to be imported to the anki collection first)
         """
         # Add all files to the smr world

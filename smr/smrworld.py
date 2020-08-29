@@ -1,6 +1,6 @@
 import os
 from collections import namedtuple
-from typing import List, TextIO, Tuple, Dict, Any, Union, Optional, Set
+from typing import List, TextIO, Tuple, Dict, Any, Union, Optional, Set, NamedTuple
 
 from anki import Collection
 from anki.importing.noteimp import ForeignNote, ForeignCard
@@ -602,6 +602,15 @@ limit 1""").fetchone()[0]
         self.turn_on_foreign_keys()
         self.graph.execute(f"""DELETE FROM xmind_nodes WHERE node_id IN ('{"', '".join(xmind_nodes_2_remove)}')""")
 
+    def remove_xmind_edges(self, edge_ids: Set[str]):
+        """
+        Removes all entries with the specified edge ids from the relation xmind edges and via sqlite foreign key
+        cascade also all smr notes and smr triples with the specified edge ids from the respective relations
+        :param edge_ids: Set of edge ids of the edges to remove
+        """
+        self.turn_on_foreign_keys()
+        self.graph.execute(f"""DELETE FROM xmind_edges WHERE edge_id IN ('{"', '".join(edge_ids)}')""")
+
     def generate_notes(self, col, edge_ids) -> Dict[str, ForeignNote]:
         """
         Creates Notes for the specified edge_ids from the data saved in the smr world and returns them in a
@@ -696,16 +705,16 @@ order by si.sort_id desc""")
         nodes_2_remove.append(node_2_remove)
         return nodes_2_remove
 
-    def get_xmind_nodes_in_sheet(self, sheet_id: str) -> Dict[str, XmindTopicDto]:
+    def get_xmind_nodes_in_sheet(self, sheet_id: str) -> Dict[str, NamedTuple]:
         """
         Gets all nodes that belong to the sheet with the specified id
         :param sheet_id: xmind id of the sheet to get the nodes for
         :return: The nodes in a dictionary where keys are the nodes' xmind ids and values are Xmind nodes
         """
-        return {record.node_id: XmindTopicDto(*record) for record in self._get_records(f"""
+        return {record.node_id: record for record in self._get_records(f"""
 SELECT * FROM xmind_nodes WHERE sheet_id = '{sheet_id}'""")}
 
-    def get_xmind_edges_in_sheet(self, sheet_id: str) -> Dict[str, 'Record']:
+    def get_xmind_edges_in_sheet(self, sheet_id: str) -> Dict[str, NamedTuple]:
         """
         Gets all edges that belong to the sheet with the specified id together with the respective anki note id if
         there is one

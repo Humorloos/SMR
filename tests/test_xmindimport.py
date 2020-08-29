@@ -14,13 +14,6 @@ from smr.xmindtopic import XmindNode
 
 
 @pytest.fixture
-def active_xmind_importer(xmind_importer):
-    importer = xmind_importer
-    importer._current_sheet_import = "biological psychology"
-    return importer
-
-
-@pytest.fixture
 def xmind_importer_4_integration(empty_anki_collection_function, mocker, patch_aqt_mw_empty_smr_world):
     return set_up_importer_4_integration(map_path=cts.PATH_EXAMPLE_MAP_DEFAULT, col=empty_anki_collection_function,
                                          mocker=mocker)
@@ -32,31 +25,31 @@ def set_up_importer_4_integration(col, mocker, map_path):
     cut = XmindImporter(col=collection, file=map_path)
     test_deck_id = cut.col.decks.id(name="test_deck")
     mocker.spy(cut, "read_edge")
-    mocker.spy(cut, "import_node_if_concept")
+    mocker.spy(cut, "read_node_if_concept")
     mocker.spy(cut, "_import_sheet")
     mocker.spy(cut, "_import_file")
     return cut, test_deck_id
 
 
 @pytest.fixture
-def xmind_importer_import_node_if_concept(mocker, active_xmind_importer):
-    importer = active_xmind_importer
+def xmind_importer_import_node_if_concept(mocker, xmind_importer):
+    importer = xmind_importer
     mocker.patch.object(importer, "_onto")
     yield importer
 
 
 @pytest.fixture(scope='function')
-def xmind_importer_import_edge(active_xmind_importer, mocker):
-    importer = active_xmind_importer
+def xmind_importer_import_edge(xmind_importer, mocker):
+    importer = xmind_importer
     mocker.patch.object(importer, "_onto")
     mocker.patch.object(importer, "_mw")
     return importer
 
 
 @pytest.fixture
-def add_image_and_media_importer(active_xmind_importer, mocker):
+def add_image_and_media_importer(xmind_importer, mocker):
     # given
-    importer = active_xmind_importer
+    importer = xmind_importer
     mocker.spy(importer.col.media, "write_data")
     mocker.spy(importer.col.media, "add_file")
     yield importer
@@ -133,7 +126,7 @@ def test__import_sheet(xmind_importer, mocker, x_manager):
     sheet_2_import = cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID
     cut = xmind_importer
     mocker.patch.object(cut, "_mw")
-    mocker.patch.object(cut, "import_node_if_concept")
+    mocker.patch.object(cut, "read_node_if_concept")
     mocker.patch.object(cut, "read_edge")
     mocker.patch.object(cut, "_onto")
     cut._active_manager = x_manager
@@ -142,7 +135,7 @@ def test__import_sheet(xmind_importer, mocker, x_manager):
     # then
     assert cut.mw.progress.update.call_count == 1
     assert cut.mw.app.processEvents.call_count == 1
-    assert cut.import_node_if_concept.call_count == 30
+    assert cut.read_node_if_concept.call_count == 30
     assert cut.read_edge.call_count == 22
     assert cut.current_sheet_import == sheet_2_import
     assert cut.sheets_2_import[0].sheet_id == cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID
@@ -154,7 +147,7 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, xmin
     # given
     cut = xmind_importer_import_node_if_concept
     # when
-    cut.import_node_if_concept(node=xmind_node)
+    cut.read_node_if_concept(node=xmind_node)
     # then
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.nodes_2_import) == 1
@@ -166,7 +159,7 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
     cut = xmind_importer_import_node_if_concept
     node = cut.x_manager.get_node_by_id(cts.EMPTY_NODE_ID)
     # when
-    cut.import_node_if_concept(node=node)
+    cut.read_node_if_concept(node=node)
     # then
     assert cut._smr_world.add_or_replace_xmind_nodes.call_count == 0
     assert len(cut.media_uris_2_add) == 0
@@ -178,7 +171,7 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
     cut = xmind_importer_import_node_if_concept
     node = cut.x_manager.get_node_by_id(cts.BIOGENIC_AMINES_NODE_ID)
     # when
-    cut.import_node_if_concept(node=node)
+    cut.read_node_if_concept(node=node)
     # then
     assert len(cut.nodes_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
@@ -195,40 +188,6 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.edge_ids_2_make_notes_of) == 1
     assert len(cut.smr_triples_2_import) == 1
-
-
-def test_import_edge_no_child_nodes(xmind_importer_import_edge):
-    # given
-    cut = xmind_importer_import_edge
-    edge = cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID)
-    edge.child_nodes = []
-    # when
-    cut.read_edge(edge=edge)
-    # then
-    assert_import_edge_not_executed(cut)
-    assert cut.log == ["""\
-Warning:
-A Question titled "types" (reference: biological psychology
-investigates: information transfer and processing
-requires: neurotransmitters (image)) is missing answers. Please adjust your Concept Map and try again."""]
-
-
-def test_import_edge_too_many_child_nodes(xmind_importer_import_edge):
-    # given
-    cut = xmind_importer_import_edge
-    edge = cut.x_manager.get_edge_by_id(cts.TYPES_EDGE_ID)
-    # noinspection PyTypeChecker
-    edge.non_empty_child_nodes = [XmindNode(None, '', 0, '')] * (X_MAX_ANSWERS + 1)
-    # when
-    cut.read_edge(edge=edge)
-    # then
-    assert_import_edge_not_executed(cut)
-    assert cut.log == ["""\
-Warning:
-A Question titled "types" (reference: biological psychology
-investigates: information transfer and processing
-requires: neurotransmitters (image)) has more than 20 answers. Make sure every Question in your Map is followed by no \
-more than 20 Answers and try again."""]
 
 
 def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge):
@@ -280,7 +239,7 @@ def test_initialize_import_import_import_notes_to_correct_deck(xmind_importer_4_
     assert cut._import_file.call_count == 1
     assert cut._import_sheet.call_count == 2
     assert cut.read_edge.call_count == 31
-    assert cut.import_node_if_concept.call_count == 42
+    assert cut.read_node_if_concept.call_count == 42
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == n_cards_example_map
     assert cut.col.db.execute('select type from cards') == n_cards_example_map * [[0]]
@@ -349,14 +308,15 @@ def test_import_sheet(xmind_importer_4_integration):
     # then
     assert cut._import_sheet.call_count == 1
     assert cut.read_edge.call_count == 22
-    assert cut.import_node_if_concept.call_count == 30
+    assert cut.read_node_if_concept.call_count == 30
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == 25
     assert cut.col.db.execute('select type from cards') == 25 * [[0]]
     assert len(cut.smr_world.graph.execute('select distinct card_id from main.smr_triples').fetchall()) == 26
 
 
-def test_question_without_answer(xmind_importer_4_integration, empty_anki_collection_function, mocker):
+def test_initialize_import_question_without_answer(xmind_importer_4_integration, empty_anki_collection_function,
+                                                   mocker):
     # given
     cut, deck_id = set_up_importer_4_integration(col=empty_anki_collection_function, mocker=mocker,
                                                  map_path=cts.PATH_MAP_QUESTION_WITHOUT_ANSWERS)
@@ -366,8 +326,25 @@ def test_question_without_answer(xmind_importer_4_integration, empty_anki_collec
     # then
     assert not cut.onto.psychological_disorders
     assert len(cut.smr_world.get_xmind_files_in_decks()) == 0
-    assert cut.log == ["""\
+    assert cut.log == [f"""\
 Warning:
-A Question titled "possible causes" (reference: clinical psychology
+A Question titled "possible causes" in map "clinical psychology", file "{cts.PATH_MAP_QUESTION_WITHOUT_ANSWERS}" \
+(reference: clinical psychology
 investigates: psychological disorders
-examples: schizophrenia) is missing answers. Please adjust your Concept Map and try again."""]
+examples: schizophrenia) is missing answers."""]
+
+
+def test_initialize_import_too_many_answers(xmind_importer_4_integration, empty_anki_collection_function, mocker):
+    # given
+    cut, deck_id = set_up_importer_4_integration(col=empty_anki_collection_function, mocker=mocker,
+                                                 map_path=cts.PATH_MAP_TOO_MANY_ANSWERS)
+    # when
+    cut.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=deck_id))
+    cut.finish_import()
+    # then
+    assert not cut.onto.psychological_disorders
+    assert len(cut.smr_world.get_xmind_files_in_decks()) == 0
+    assert cut.log == [f"""\
+Warning:
+A Question titled "investigates" in map "general psychology", file "{cts.PATH_MAP_TOO_MANY_ANSWERS}" (reference: \
+general psychology) has more than 20 answers."""]

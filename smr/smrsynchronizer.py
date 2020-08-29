@@ -1,5 +1,5 @@
 from itertools import zip_longest
-from typing import List, Dict, Set, Union
+from typing import List, Dict, Set, Union, NamedTuple
 
 import aqt as aqt
 import smr.consts as cts
@@ -13,7 +13,7 @@ from smr.fieldtranslator import FieldTranslator
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
 from smr.xmindimport import XmindImporter
-from smr.xmindtopic import XmindNode
+from smr.xmindtopic import XmindNode, XmindEdge
 from smr.xnotemanager import field_by_identifier, XNoteManager, field_from_content, meta_from_fields, \
     content_from_field, field_content_by_identifier
 from smr.xontology import XOntology
@@ -38,7 +38,6 @@ class SmrSynchronizer:
         self.xmind_files_2_update = []
         self.xmind_sheets_2_remove = []
         self.xmind_edges_2_update = []
-        self.edge_ids_of_anki_notes_2_update = []
         self.xmind_nodes_2_update = []
         self.xmind_nodes_2_remove = []
         self.changed_smr_notes = {}
@@ -86,11 +85,15 @@ class SmrSynchronizer:
         self._xmind_edges_2_update = value
 
     @property
-    def edge_ids_of_anki_notes_2_update(self) -> List[str]:
-        return self._edge_ids_of_anki_notes_2_update
+    def edge_ids_of_anki_notes_2_update(self) -> Set[str]:
+        try:
+            return self._edge_ids_of_anki_notes_2_update
+        except AttributeError:
+            self._edge_ids_of_anki_notes_2_update = set()
+            return self._edge_ids_of_anki_notes_2_update
 
     @edge_ids_of_anki_notes_2_update.setter
-    def edge_ids_of_anki_notes_2_update(self, value: List[str]):
+    def edge_ids_of_anki_notes_2_update(self, value: Set[str]):
         self._edge_ids_of_anki_notes_2_update = value
 
     @property
@@ -265,6 +268,18 @@ class SmrSynchronizer:
     def anki_notes_2_remove(self, value: List[int]):
         self._anki_notes_2_remove = value
 
+    @property
+    def is_running(self) -> bool:
+        try:
+            return self._is_running
+        except AttributeError:
+            self._is_running = True
+            return self._is_running
+
+    @is_running.setter
+    def is_running(self, value: bool):
+        self._is_running = value
+
     def synchronize(self):
         """
         Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
@@ -330,6 +345,7 @@ class SmrSynchronizer:
         """
         makes all necessary changes to the smr world
         """
+        # updates
         self.smr_world.add_or_replace_xmind_files(self.xmind_files_2_update)
         self.xmind_files_2_update = []
         self.smr_world.add_or_replace_xmind_edges(self.xmind_edges_2_update)
@@ -343,12 +359,14 @@ class SmrSynchronizer:
         # adjusted
         self.smr_world.add_or_replace_smr_notes(self.smr_notes_2_update + list(self.anki_notes_2_update.values()))
         self.smr_notes_2_update = []
-        self._edge_ids_of_anki_notes_2_update = []
+        self._edge_ids_of_anki_notes_2_update = set()
+        # removals
         self.smr_world.remove_xmind_nodes(self.xmind_nodes_2_remove)
         self.xmind_nodes_2_remove = []
+        self.smr_world.remove_xmind_edges(self.xmind_edges_2_remove)
+        self.xmind_edges_2_remove = []
         self.smr_world.remove_xmind_sheets(sheet_ids=self.xmind_sheets_2_remove)
-        # TODO: remove xmind sheets
-        print('remove xmind sheets')
+        self.xmind_sheets_2_remove = []
 
     def _synchronize_ontology(self):
         """
@@ -574,7 +592,7 @@ map and then synchronize.""")
                         else:
                             continue
                 if anki_note_was_changed:
-                    self.edge_ids_of_anki_notes_2_update.append(note_data['note'].edge_id)
+                    self.edge_ids_of_anki_notes_2_update.add(note_data['note'].edge_id)
                 else:
                     self.smr_notes_2_update.append(note_data['note'])
 
@@ -596,41 +614,24 @@ map and then synchronize.""")
         edges_status = self.smr_world.get_xmind_edges_in_sheet(sheet_id)
         for edge_id in set(list(edges_status) + list(edges_remote)):
             if edge_id not in edges_status:
-                # the importer takes care of everything necessary concerining pure imports
+                # the importer takes care of everything necessary concerning pure imports
                 self.importer.read_edge(edges_remote[edge_id])
             elif edge_id not in edges_remote:
-                # add edge to notes to remove if it belongs to a note
-                edge_data = edges_status[edge_id]
-                note_id = edge_data.pop(-1)
-                if note_id is not None:
-                    self.anki_notes_2_remove.append(note_id)
-                # add edge to smr world xmind edges to remove
-                self.xmind_edges_2_remove.add(edge_id)
-                # we do not remove relations from the ontology explicitly since that is already part of removing nodes
+                self._register_remote_edge_removal(edge_data=edges_status[edge_id])
             elif edges_status[edge_id].last_modified != edges_remote[edge_id].last_modified:
-                edge_remote = edges_remote[edge_id]
-                # update ontology relation
-                xmind_edge = edge_remote.dto
-                self.relations_2_change.append({
-                    'parent_node_ids': [node.id for node in edge_remote.parent_nodes],
-                    'xmind_edge': xmind_edge,
-                    'child_node_ids': [node.id for node in edge_remote.child_nodes]})
-                # update note
-                self.edge_ids_of_anki_notes_2_update.append(edge_id)
-                # add edge id to edge ids of notes 2 update
-                self.xmind_edges_2_update.append(xmind_edge)
+                self._register_remote_edge_update(remote_edge=edges_remote[edge_id])
         nodes_status = self.smr_world.get_xmind_nodes_in_sheet(sheet_id)
         nodes_remote = self.x_manager.sheets[sheet_id].nodes
         for node_id in set(list(nodes_status) + list(nodes_remote)):
             if node_id not in nodes_status:
-                # check if node in edges
-                # if nodes_remote[node_id].parent_edge.id in
-                # if not, check whether parent edge exceeds limit max answers before importing
-                self.importer.import_node_if_concept(nodes_remote[node_id])
+                node_remote = nodes_remote[node_id]
+                if node_remote.parent_edge.id not in self.importer.edge_ids_2_make_notes_of:
+                    self.edge_ids_of_anki_notes_2_update.add(node_remote.parent_edge.id)
+                else:
+                    self.importer.read_node_if_concept(node_remote)
             elif node_id not in nodes_remote:
                 node_status = nodes_status[node_id]
-                # try:
-                #     self.edge_ids_of_anki_notes_2_remove[node_status.].append()
+                print('remove node')
             elif nodes_status[node_id].last_modified != nodes_remote[node_id].last_modified:
                 print('change node')
         print('do the same for edges')
@@ -713,6 +714,36 @@ map and then synchronize.""")
         #                       remote=remote[question],
         #                       import_dict=import_dict)
         # print()
+
+    def _register_remote_edge_removal(self, edge_data: NamedTuple):
+        """
+        registers data for removing data belonging to an xmind edge from all required data structures
+        :param edge_data: A named tuple containing the note id belonging to the edge in the last slot and all the data
+        from the xmind edges relation in the first slots
+        """
+        # we do not remove relations from the ontology explicitly since that is already part of removing nodes
+        # add edge to notes to remove if it belongs to a note
+        note_id = edge_data.pop(-1)
+        if note_id is not None:
+            self.anki_notes_2_remove.append(note_id)
+        # add edge to smr world xmind edges to remove
+        self.xmind_edges_2_remove.add(edge_data.node_id)
+
+    def _register_remote_edge_update(self, remote_edge: XmindEdge):
+        """
+        registers data for updating data belonging to an xmind edge in all required data structures
+        :param remote_edge: Xmind edge with the data for the updates from an xmind file
+        """
+        # update ontology relation
+        xmind_edge = remote_edge.dto
+        self.relations_2_change.append({
+            'parent_node_ids': [node.id for node in remote_edge.parent_nodes],
+            'xmind_edge': xmind_edge,
+            'child_node_ids': [node.id for node in remote_edge.child_nodes]})
+        # add edge id to edge ids of notes 2 update
+        self.xmind_edges_2_update.append(xmind_edge)
+        # add edge id to list of edge ids of anki notes to update
+        self.edge_ids_of_anki_notes_2_update.add(remote_edge.id)
 
     def remove_questions(self, q_ids, status):
         self.note_manager.remove_notes_by_q_ids(q_ids)

@@ -16,7 +16,7 @@ from smr.xmindsheet import XmindSheet
 from smr.xmindtopic import XmindNode, XmindEdge
 
 
-class NodeNotFoundError(Exception):
+class TopicNotFoundError(Exception):
     """
     Exception that occurs when a node is not found in the manager's node dict.
     """
@@ -188,7 +188,7 @@ class XManager:
         try:
             return self.node_dict[node_id]
         except KeyError as exception_info:
-            raise NodeNotFoundError(exception_info.args[0])
+            raise TopicNotFoundError(exception_info.args[0])
 
     def get_edge_by_id(self, edge_id: str) -> XmindEdge:
         """
@@ -199,7 +199,7 @@ class XManager:
         try:
             return self.edge_dict[edge_id]
         except KeyError as exception_info:
-            raise NodeNotFoundError(exception_info.args[0])
+            raise TopicNotFoundError(exception_info.args[0])
 
     def get_directory_and_file_name(self) -> Tuple[str, str]:
         """

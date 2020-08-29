@@ -163,6 +163,9 @@ DIRECTORY_MAPS_ORIGINAL = os.path.join(MAPS_DIRECTORY, 'original')
 # question without answer
 NAME_MAP_QUESTION_WITHOUT_ANSWERS = 'question_without_answers'
 PATH_MAP_QUESTION_WITHOUT_ANSWERS = os.path.join(DIRECTORY_MAPS_ORIGINAL, NAME_MAP_QUESTION_WITHOUT_ANSWERS + '.xmind')
+# edge with too many child nodes
+NAME_MAP_TOO_MANY_ANSWERS = 'question_with_too_many_answers'
+PATH_MAP_TOO_MANY_ANSWERS = os.path.join(DIRECTORY_MAPS_ORIGINAL, NAME_MAP_TOO_MANY_ANSWERS + '.xmind')
 # original
 PATH_EXAMPLE_MAP_ORIGINAL = os.path.join(RESOURCES_PATH, NAME_EXAMPLE_MAP + '.xmind')
 PATH_MAP_GENERAL_PSYCHOLOGY_ORIGINAL = os.path.join(RESOURCES_PATH, NAME_MAP_GENERAL_PSYCHOLOGY + '.xmind')

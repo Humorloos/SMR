@@ -324,7 +324,7 @@ class XmindEdge(XmindTopic):
         try:
             return self._non_empty_child_nodes
         except AttributeError:
-            self._non_empty_child_nodes = [n for n in self.child_nodes if n.is_empty]
+            self._non_empty_child_nodes = [n for n in self.child_nodes if not n.is_empty]
             return self._non_empty_child_nodes
 
     @non_empty_child_nodes.setter

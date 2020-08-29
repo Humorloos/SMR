@@ -110,16 +110,6 @@ def test_add_or_replace_xmind_nodes(smr_world_4_tests, x_manager):
                           cts.NEUROTRANSMITTERS_NODE_CONTENT)
 
 
-def test_add_or_replace_xmind_nodes_with_media_hyperlink(smr_world_4_tests, x_manager):
-    # given
-    # noinspection PyTypeChecker
-    expected_entry = XmindTopicDto(node_id=cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID, title='',
-                                   link=cts.PATH_HYPERLINK_MEDIA_TEMPORARY, image=None)
-    # then
-    verify_add_xmind_node(expected_entry, smr_world_4_tests, x_manager, cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID,
-                          cts.MEDIA_HYPERLINK_NODE_CONTENT)
-
-
 def test_add_or_replace_xmind_nodes_replace(smr_world_4_tests, x_manager):
     # given
     node = cts.TEST_XMIND_NODE
@@ -434,3 +424,17 @@ def test_remove_xmind_sheets(smr_world_with_example_map):
     assert cut.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
     assert cut.get_xmind_nodes_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
     assert len(cut.get_xmind_sheets_in_file(cts.DIRECTORY_MAPS_TEMPORARY, cts.NAME_EXAMPLE_MAP)) == 1
+
+
+def test_remove_xmind_edges(smr_world_with_example_map):
+    # given
+    cut = smr_world_with_example_map
+    # when
+    cut.remove_xmind_edges({cts.EXAMPLE_IMAGE_EDGE_ID, cts.ARE_EDGE_ID})
+    # then
+    assert cts.EXAMPLE_IMAGE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.xmind_edges")]
+    assert cts.ARE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.xmind_edges")]
+    assert cts.EXAMPLE_IMAGE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_triples")]
+    assert cts.ARE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_triples")]
+    assert cts.EXAMPLE_IMAGE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_notes")]
+    assert cts.ARE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_notes")]
