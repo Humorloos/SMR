@@ -104,6 +104,9 @@ class SmrWorld(World):
     CHILD_NAME = 'smrchild'
     PARENT_NAME = 'smrparent'
 
+    ChangedSmrNotes: Dict[str, Dict[str, Dict[str, Dict[str, Union[SmrNoteDto, Dict[str, Union[XmindTopicDto, Set[
+        int]]], str, Dict[int, Union[TopicContentDto, Any]]]]]]]
+
     def __init__(self):
         self.parent_storid = None
         self.parent_relation_name = None
@@ -214,8 +217,9 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
         for e in entities:
             self.graph.db.execute("REPLACE INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?)",
                                   tuple(e))
-# self.graph.db.executemany("REPLACE INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?)",
-#                                   (tuple(e) for e in entities))
+
+    # self.graph.db.executemany("REPLACE INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?)",
+    #                                   (tuple(e) for e in entities))
 
     def add_smr_triples(self, entities: List[SmrTripleDto]) -> None:
         """
@@ -266,8 +270,7 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
         return {record.sheet_id: XmindSheetDto(*record) for record in self._get_records(
             f"SELECT * FROM xmind_sheets where file_directory = '{file_directory}' and file_name = '{file_name}'")}
 
-    def get_changed_smr_notes(self, collection: Collection) -> Dict[str, Dict[str, Dict[str, Dict[str, Union[
-        SmrNoteDto, Dict[str, Union[XmindTopicDto, Set[int]]], str, Dict[int, Union[TopicContentDto, Any]]]]]]]:
+    def get_changed_smr_notes(self, collection: Collection) -> 'ChangedSmrNotes':
         """
         Gets all notes belonging to xmind files that were changed since the last smr synchronization
         :return: A hierarchical structure of dictionaries
@@ -279,7 +282,7 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
         - on the fourth level, keys are order numbers of child nodes for the respective edge and values are Xmind
         node dtos for adjusting the xmind node relation
         """
-        with AnkiCollectionAttachement(self, collection):
+        with AnkiCollectionAttachment(self, collection):
             data = self._get_records(f"""-- noinspection SqlResolve
 select xs.file_directory,
        xs.file_name || '.xmind' file_name,
@@ -383,7 +386,7 @@ where sn.last_modified < cn.mod""")
         the card with the card id to add to each triple
         :param collection: The collection that contains the cards whose ids to add
         """
-        with AnkiCollectionAttachement(self, collection):
+        with AnkiCollectionAttachment(self, collection):
             self.graph.db.executemany("""with card_triples(edge_id, child_node_id, card_id) as (
     select smr_triples.edge_id, child_node_id, cards.id
     from smr_triples
@@ -478,7 +481,7 @@ WHERE edge_id in ({"'" + "', '".join(edge_ids) + "'"})
         :param edge_ids: the xmind edge ids to get the tags for
         :return: the tags in a dictionary where keys are the edge ids and values are the tags for the respective notes
         """
-        with AnkiCollectionAttachement(smr_world=self, anki_collection=anki_collection):
+        with AnkiCollectionAttachment(smr_world=self, anki_collection=anki_collection):
             tags = self.graph.execute(f"""-- noinspection SqlResolveForFile
 select xe.edge_id edge_id, ad.name || '::' || xf.file_name || '::' || xs.name tag
 from xmind_edges xe
@@ -679,7 +682,7 @@ where sheet_id = ?""", (sheet_id,))]
         sort ids of edges so that leave nodes are positioned before center nodes and nodes can be deleted without
         having to consider their children
         :param sheet_id: xmind id of the sheet to get the nodes for
-        :return: List of Dictionaries with all required data for xontology's function remove_node()
+        :return: List of Dictionaries with all required data for XOntology's function remove_node()
         """
         sort_id_cte_clause = get_sort_id_recursive_cte_clause(f"e.sheet_id = '{sheet_id}'")
         records = self._get_records(f"""{sort_id_cte_clause},
@@ -703,14 +706,28 @@ order by si.sort_id desc""")
         nodes_2_remove.append(node_2_remove)
         return nodes_2_remove
 
-    def get_xmind_nodes_in_sheet(self, sheet_id: str) -> Dict[str, NamedTuple]:
+    def get_xmind_nodes_in_sheet(self, sheet_id: str) -> Dict[str, Dict[str, Union[XmindTopicDto, str, List[str]]]]:
         """
         Gets all nodes that belong to the sheet with the specified id
         :param sheet_id: xmind id of the sheet to get the nodes for
         :return: The nodes in a dictionary where keys are the nodes' xmind ids and values are Xmind nodes
         """
-        return {record.node_id: record for record in self._get_records(f"""
-SELECT * FROM xmind_nodes WHERE sheet_id = '{sheet_id}'""")}
+        records = self._get_records(f"""
+SELECT xn.*, st.edge_id, st.parent_node_id, sn.note_id
+FROM xmind_nodes xn
+         left outer join smr_triples st on xn.node_id = st.child_node_id
+        left outer join main.smr_notes sn on st.edge_id = sn.edge_id
+WHERE xn.sheet_id = '{sheet_id}'""")
+        nodes = {}
+        for record in records:
+            try:
+                nodes[record.node_id]['parent_node_ids'].append(record.parent_node_id)
+            except KeyError:
+                nodes[record.node_id] = {'xmind_node': XmindTopicDto(*record[:-3]),
+                                         'parent_edge_id': record.edge_id,
+                                         'note_id': record.note_id,
+                                         'parent_node_ids': [record.parent_node_id]}
+        return nodes
 
     def get_xmind_edges_in_sheet(self, sheet_id: str) -> Dict[str, NamedTuple]:
         """
@@ -770,7 +787,7 @@ DELETE from main.xmind_sheets where main.xmind_sheets.sheet_id IN ('{"', '".join
         self.graph.execute('PRAGMA foreign_keys=ON')
 
 
-class AnkiCollectionAttachement:
+class AnkiCollectionAttachment:
     """
     Context Manager for queries that use joins with the anki collection
     """

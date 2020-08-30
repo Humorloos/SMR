@@ -396,6 +396,7 @@ def test_get_xmind_nodes_in_sheet(smr_world_with_example_map):
     nodes = cut.get_xmind_nodes_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
     assert len(nodes) == 29
+    assert nodes[cts.BIOGENIC_AMINES_NODE_ID]['parent_node_ids'] == cts.MULTIPLE_PARENTS_NODE_IDS
 
 
 def test_get_root_node_id(smr_world_with_example_map):
@@ -422,7 +423,7 @@ def test_remove_xmind_sheets(smr_world_with_example_map):
     # then
     assert cut.get_note_ids_from_sheet_id(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == []
     assert cut.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
-    assert cut.get_nodes_2_remove_by_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == []
+    assert cut.get_xmind_nodes_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
     assert len(cut.get_xmind_sheets_in_file(cts.DIRECTORY_MAPS_TEMPORARY, cts.NAME_EXAMPLE_MAP)) == 1
 
 

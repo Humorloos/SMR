@@ -13,8 +13,8 @@ from smr.fieldtranslator import FieldTranslator
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
 from smr.xmindimport import XmindImporter
-from smr.xmindtopic import XmindNode, XmindEdge
-from smr.xnotemanager import field_by_identifier, XNoteManager, field_from_content, meta_from_fields, \
+from smr.xmindtopic import XmindEdge
+from smr.xnotemanager import field_by_identifier, XNoteManager, field_from_content, \
     content_from_field, field_content_by_identifier
 from smr.xontology import XOntology
 
@@ -40,7 +40,6 @@ class SmrSynchronizer:
         self.xmind_edges_2_update = []
         self.xmind_nodes_2_update = []
         self.xmind_nodes_2_remove = []
-        self.changed_smr_notes = {}
         self.log = []
         self.onto = None
 
@@ -97,11 +96,15 @@ class SmrSynchronizer:
         self._edge_ids_of_anki_notes_2_update = value
 
     @property
-    def changed_smr_notes(self) -> Dict[str, SmrNoteDto]:
-        return self._changed_smr_notes
+    def changed_smr_notes(self) -> 'ChangedSmrNotes':
+        try:
+            return self._changed_smr_notes
+        except AttributeError:
+            self._changed_smr_notes = {}
+            return self._changed_smr_notes
 
     @changed_smr_notes.setter
-    def changed_smr_notes(self, value: Dict[str, SmrNoteDto]):
+    def changed_smr_notes(self, value: 'ChangedSmrNotes'):
         self._changed_smr_notes = value
 
     @property
@@ -257,15 +260,15 @@ class SmrSynchronizer:
         self._onto_sheets_2_remove = value
 
     @property
-    def anki_notes_2_remove(self) -> List[int]:
+    def anki_notes_2_remove(self) -> Set[int]:
         try:
             return self._anki_notes_2_remove
         except AttributeError:
-            self._anki_notes_2_remove = []
+            self._anki_notes_2_remove = set()
             return self._anki_notes_2_remove
 
     @anki_notes_2_remove.setter
-    def anki_notes_2_remove(self, value: List[int]):
+    def anki_notes_2_remove(self, value: Set[int]):
         self._anki_notes_2_remove = value
 
     @property
@@ -333,8 +336,8 @@ class SmrSynchronizer:
         self.col.after_note_updates(nids=[n.note_id for n in self.anki_notes_2_update.values()], mark_modified=False)
         self.anki_notes_2_update = {}
         # remove notes with note_ids from list of anki notes to remove
-        self.col.remove_notes(self.anki_notes_2_remove)
-        self.anki_notes_2_remove = []
+        self.col.remove_notes(list(self.anki_notes_2_remove))
+        self.anki_notes_2_remove = set()
         # bulk remove notes for removed sheets
         for sheet_id in self.anki_sheets_2_remove:
             self.note_manager.remove_notes_by_sheet_id(sheet_id, self.smr_world)
@@ -370,7 +373,7 @@ class SmrSynchronizer:
 
     def _synchronize_ontology(self):
         """
-        Makes all necessary changes to the ontology that are not covered by xmindimport
+        Makes all necessary changes to the ontology that are not covered by XmindImport
         """
         # First perform updates to avoid conflicts with removed entities
         # Rename nodes in ontology
@@ -446,16 +449,16 @@ note.""")
     #     status['answers'][a_tag['id']] = remote['answers'][a_tag['id']]
     #     return import_dict
 
-    def add_remote_as(self, q_content, q_id, remote, status, import_dict):
-        not_in_status = [a for a in remote['answers'] if a not in status[
-            'answers']]
-        for a_id in not_in_status:
-            a_tag = self.map_manager.get_node_by_id(a_id)
-            import_dict = self.add_remote_a(
-                import_dict=import_dict,
-                q_content=q_content,
-                q_id=q_id, remote=remote, status=status, a_tag=a_tag)
-        return import_dict
+    # def add_remote_as(self, q_content, q_id, remote, status, import_dict):
+    #    not_in_status = [a for a in remote['answers'] if a not in status[
+    #        'answers']]
+    #    for a_id in not_in_status:
+    #        a_tag = self.map_manager.get_node_by_id(a_id)
+    #        import_dict = self.add_remote_a(
+    #            import_dict=import_dict,
+    #            q_content=q_content,
+    #            q_id=q_id, remote=remote, status=status, a_tag=a_tag)
+    #    return import_dict
 
     def _change_remote_node(self, xmind_edge: XmindTopicDto, parent_node_ids: List[str], xmind_node: XmindTopicDto,
                             children: Dict[str, List[str]]) -> None:
@@ -491,21 +494,21 @@ note.""")
         self.relations_2_change.append({
             'parent_node_ids': parent_node_ids, 'xmind_edge': xmind_edge, 'child_node_ids': child_node_ids})
 
-    def maybe_add_media(self, content, importer, old_content=None):
-        a_media = content['media']
-        if old_content:
-            old_media = old_content['media']
-        else:
-            old_media = a_media
-        if a_media['image'] or a_media['media']:
-            if not importer:
-                importer = XmindImporter(col=self.note_manager.col,
-                                         file=self.map_manager.file)
-            if a_media['image'] and not a_media['image'] == old_media['image']:
-                importer.images.append(a_media['image'])
-            if a_media['media'] and not a_media['media'] == old_media['media']:
-                importer.media.append(a_media['media'])
-        return importer
+    # def maybe_add_media(self, content, importer, old_content=None):
+    #    a_media = content['media']
+    #    if old_content:
+    #        old_media = old_content['media']
+    #    else:
+    #        old_media = a_media
+    #    if a_media['image'] or a_media['media']:
+    #        if not importer:
+    #            importer = XmindImporter(col=self.note_manager.col,
+    #                                     file=self.map_manager.file)
+    #        if a_media['image'] and not a_media['image'] == old_media['image']:
+    #            importer.images.append(a_media['image'])
+    #        if a_media['media'] and not a_media['media'] == old_media['media']:
+    #            importer.media.append(a_media['media'])
+    #    return importer
 
     def _try_to_remove_answer(self, xmind_edge: XmindTopicDto, xmind_node: XmindTopicDto,
                               parent_node_ids: List[str]):
@@ -531,15 +534,15 @@ map and then synchronize.""")
         # Add node to nodes to remove
         self.xmind_nodes_2_remove.append(xmind_node.node_id)
 
-    def process_change_list(self):
-        for sheet in self.change_list:
-            changed_notes = [self.note_manager.get_note_from_q_id(q_id) for
-                             q_id in self.change_list[sheet]]
-            for note in changed_notes:
-                meta = meta_from_fields(note.fields)
-                changes = self.change_list[sheet][meta['questionId']]
-                self.note_manager.update_ref(note=note, changes=changes,
-                                             meta=meta)
+    # def process_change_list(self):
+    #    for sheet in self.change_list:
+    #        changed_notes = [self.note_manager.get_note_from_q_id(q_id) for
+    #                         q_id in self.change_list[sheet]]
+    #        for note in changed_notes:
+    #            meta = meta_from_fields(note.fields)
+    #            changes = self.change_list[sheet][meta['questionId']]
+    #            self.note_manager.update_ref(note=note, changes=changes,
+    #                                         meta=meta)
 
     def _process_local_changes(self, file: XmindFileDto):
         """
@@ -619,107 +622,34 @@ map and then synchronize.""")
             elif edge_id not in edges_remote:
                 self._register_remote_edge_removal(edge_data=edges_status[edge_id])
             elif edges_status[edge_id].last_modified != edges_remote[edge_id].last_modified:
+                edges_remote[edge_id].last_modified = edges_status[edge_id].last_modified
                 self._register_remote_edge_update(remote_edge=edges_remote[edge_id])
-        nodes_status = self.smr_world.get_nodes_2_remove_by_sheet(sheet_id)
+        nodes_status = self.smr_world.get_xmind_nodes_in_sheet(sheet_id)
         nodes_remote = self.x_manager.sheets[sheet_id].nodes
         for node_id in set(list(nodes_status) + list(nodes_remote)):
             if node_id not in nodes_status:
                 node_remote = nodes_remote[node_id]
+                # if the node does not belong to a newly imported edge, do not import it via importer but add
                 if node_remote.parent_edge.id not in self.importer.edge_ids_2_make_notes_of:
                     self.edge_ids_of_anki_notes_2_update.add(node_remote.parent_edge.id)
-                else:
-                    self.importer.read_node_if_concept(node_remote)
+                self.importer.read_node_if_concept(node_remote)
             elif node_id not in nodes_remote:
-                node_data = nodes_status[node_id]
-                parent_edge_id = node_data.pop(-1)
-                # self.concepts_2_remove.append({'xmind_node': XmindTopicDto(*node_data), 'xmind_edge': xmind_edge,
-                #                                'parent_node_ids': parent_node_ids})
-                # if parent_edge_id not in self.xmind_edges_2_remove:
-
-
-                print('remove node')
+                node_status = nodes_status[node_id]
+                self._register_remote_node_removal(node_status)
             elif nodes_status[node_id].last_modified != nodes_remote[node_id].last_modified:
                 print('change node')
-        print('do the same for edges')
-        #
-        #
-        # # Remove questions that were removed in map
-        # not_in_remote = [q for q in status if q not in remote]
-        # self.remove_questions(q_ids=not_in_remote, status=status)
-        #
-        # # Add questions that were added in map
-        # not_in_status = [q for q in remote if q not in status]
-        # tags_to_add = [self.map_manager.get_node_by_id(q) for q in not_in_status]
-        # if tags_to_add:
-        #     tags_and_parent_qs = [{'tag': t,
-        #                            'parent_q': get_parent_question_topic(t)} for
-        #                           t in tags_to_add]
-        #
-        #     # Get all questions whose parent question is already in status,
-        #     # since they are the starting points for the imports
-        #     seed_dicts = [d for d in tags_and_parent_qs if
-        #                   d['parent_q']['id'] in status]
-        #     importer = XmindImporter(col=self.note_manager.col,
-        #                              file=self.map_manager.file,
-        #                              status_manager=self.status_manager)
-        #     for seed_dict in seed_dicts:
-        #         parent_as = get_parent_a_topics(
-        #             q_topic=seed_dict['tag'], parent_q=seed_dict['parent_q'])
-        #
-        #         # If the parent answer of this new question is not yet in
-        #         # status, add the answer before importing from the question
-        #         for a in parent_as:
-        #             if a['id'] not in \
-        #                     status[seed_dict['parent_q']['id']]['answers']:
-        #                 if not note:
-        #                     note = self.note_manager.get_note_from_q_id(
-        #                         seed_dict['parent_q']['id'])
-        #                 q_content = self.map_manager.get_topic_content(
-        #                     seed_dict['parent_q'])
-        #                 import_dict = {
-        #                     'meta': meta_from_fields(note.fields),
-        #                     'note': note,
-        #                     'importer': importer,
-        #                     'index_dict': {},
-        #                     'ref_changes': {},
-        #                     'sort_id_changes': {}}
-        #                 import_dicts[seed_dict['parent_q'][
-        #                     'id']] = self.add_remote_a(
-        #                     q_content=q_content,
-        #                     q_id=seed_dict['parent_q']['id'],
-        #                     remote=remote[seed_dict['parent_q']['id']],
-        #                     status=status[seed_dict['parent_q']['id']],
-        #                     a_tag=a, import_dict=import_dict)['index_dict']
-        #                 self.note_manager.save_note(note)
-        #         importer.partial_import(
-        #             seed_topic=seed_dict['tag'], sheet_id=sheet_id,
-        #             deck_id=deck_id, parent_q=seed_dict['parent_q'],
-        #             parent_as=parent_as, onto=self.onto)
-        #     importer.finish_import()
-        #
-        #     # Add questions to status
-        #     importer_status = next(
-        #         f for f in importer.status_manager.status if
-        #         f['file'] == self.map_manager.file)['sheets'][sheet_id][
-        #         'questions']
-        #     for q_id in importer_status:
-        #         if q_id not in status:
-        #             status[q_id] = importer_status[q_id]
-        #
-        # for question in {**status, **remote}:
-        #     if question in import_dicts:
-        #         import_dict = import_dicts[question]
-        #     else:
-        #         import_dict = {'note': note,
-        #                        'meta': meta,
-        #                        'importer': importer,
-        #                        'index_dict': {},
-        #                        'ref_changes': {},
-        #                        'sort_id_changes': {}}
-        #     self.process_note(q_id=question, status=status[question],
-        #                       remote=remote[question],
-        #                       import_dict=import_dict)
-        # print()
+
+    def _register_remote_node_removal(self, node_status):
+        # register node for removal from ontology
+        self.concepts_2_remove.append(
+            {'node_id': node_status['xmind_node'].node_id,
+             'parent_edge_id': node_status['parent_edge_id'],
+             'parent_node_ids': node_status['parent_node_ids']})
+        # register node for removal from smr world
+        self.xmind_nodes_2_remove.append(node_status['xmind_node'].node_id)
+        # add parent edge to edges of anki notes to update
+        if node_status['note_id'] not in self.anki_notes_2_remove:
+            self.edge_ids_of_anki_notes_2_update.add(node_status['parent_edge_id'])
 
     def _register_remote_edge_removal(self, edge_data: NamedTuple):
         """
@@ -728,12 +658,12 @@ map and then synchronize.""")
         from the xmind edges relation in the first slots
         """
         # we do not remove relations from the ontology explicitly since that is already part of removing nodes
+        # add edge to smr world xmind edges to remove
+        self.xmind_edges_2_remove.add(edge_data.node_id)
         # add edge to notes to remove if it belongs to a note
         note_id = edge_data.pop(-1)
         if note_id is not None:
-            self.anki_notes_2_remove.append(note_id)
-        # add edge to smr world xmind edges to remove
-        self.xmind_edges_2_remove.add(edge_data.node_id)
+            self.anki_notes_2_remove.add(note_id)
 
     def _register_remote_edge_update(self, remote_edge: XmindEdge):
         """
