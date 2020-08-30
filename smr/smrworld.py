@@ -13,8 +13,8 @@ from smr.dto.smrtripledto import SmrTripleDto
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
-from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.dto.xmindsheetdto import XmindSheetDto
+from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.fieldtranslator import FieldTranslator
 from smr.utils import replace_embedded_media
 
@@ -29,9 +29,8 @@ Node2Remove: Dict[str, Union[XmindTopicDto, List[str]]]
 
 def get_node_2_remove(record) -> 'Node2Remove':
     return {'parent_node_ids': [record.parent_node_id],
-            'xmind_edge': XmindTopicDto(node_id=record.edge_id, title=record.title,
-                                        image=record.image, link=record.link),
-            'xmind_node': XmindTopicDto(node_id=record.node_id)}
+            'parent_edge_id': record.edge_id,
+            'node_id': record.node_id}
 
 
 def get_xmind_content_selection_clause(relation_name: str) -> str:
@@ -688,16 +687,15 @@ where sheet_id = ?""", (sheet_id,))]
          select root_id edge_id, group_concat(row, '') sort_id
          from rows
          group by root_id)
-select st.parent_node_id, xe.edge_id, xe.title, xe.image, xe.link, st.child_node_id node_id
+select st.parent_node_id, si.edge_id, st.child_node_id node_id
 from sort_ids si
-         join xmind_edges xe on si.edge_id = xe.edge_id
-         join smr_triples st on xe.edge_id = st.edge_id
+         join smr_triples st on si.edge_id = st.edge_id
 order by si.sort_id desc""")
         nodes_2_remove = []
         first_record = records.pop(0)
         node_2_remove = get_node_2_remove(first_record)
         for record in records:
-            if record.node_id == node_2_remove['xmind_node'].node_id:
+            if record.node_id == node_2_remove['node_id']:
                 node_2_remove['parent_node_ids'].append(record.parent_node_id)
             else:
                 nodes_2_remove.append(node_2_remove)

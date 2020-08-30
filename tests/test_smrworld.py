@@ -378,8 +378,8 @@ def test_get_nodes_2_remove_by_sheet(smr_world_with_example_map):
     # when
     nodes_2_remove = smr_world_with_example_map.get_nodes_2_remove_by_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
-    assert nodes_2_remove[-1]['xmind_node'].node_id == cts.CLINICAL_PSYCHOLOGY_1_NODE_ID
-    assert nodes_2_remove[0]['xmind_edge'].node_id == cts.CAN_BE_TRIGGERED_BY_NODE_ID
+    assert nodes_2_remove[-1]['node_id'] == cts.CLINICAL_PSYCHOLOGY_1_NODE_ID
+    assert nodes_2_remove[0]['parent_edge_id'] == cts.CAN_BE_TRIGGERED_BY_NODE_ID
 
 
 def test_sort_id_from_order_number():
@@ -422,7 +422,7 @@ def test_remove_xmind_sheets(smr_world_with_example_map):
     # then
     assert cut.get_note_ids_from_sheet_id(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == []
     assert cut.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
-    assert cut.get_xmind_nodes_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
+    assert cut.get_nodes_2_remove_by_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == []
     assert len(cut.get_xmind_sheets_in_file(cts.DIRECTORY_MAPS_TEMPORARY, cts.NAME_EXAMPLE_MAP)) == 1
 
 

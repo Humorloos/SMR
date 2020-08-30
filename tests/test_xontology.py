@@ -123,8 +123,8 @@ def test_remove_node(ontology_with_example_map):
     # given
     cut = ontology_with_example_map
     # when
-    cut.remove_node(xmind_node=XmindTopicDto(node_id=cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID),
-                    xmind_edge=XmindTopicDto(), parent_node_ids=[], children={})
+    cut.remove_node(node_id=cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID,
+                    parent_edge_id='', parent_node_ids=[], children={})
     # then
     assert not cut.one_or_more_amine_groups
     assert not cut.biogenic_amines.consist_of_xrelation
@@ -136,10 +136,9 @@ def test_remove_node_does_not_remove_concept_if_nodes_left(ontology_with_example
     cut.nociceptors.XmindId.append('new_id')
     # when
     cut.remove_node(
-        xmind_node=XmindTopicDto(node_id='2mbb2crv3tdgr131i9j538n0ga'),
-        xmind_edge=XmindTopicDto(title="triggered by", node_id="4rdraflh6n2hl4a459g2urdkr6"),
-        parent_node_ids=["5asru7kdmre8059cemi8p5lm3v"],
-        children={'4q3e21ritrvitgmjialvadn2m6': ['2jf5kkori2h7sdja7cgje5i71e']})
+        node_id=cts.NOCICEPTORS_NODE_ID,
+        parent_edge_id=cts.TRIGGERED_BY_EDGE_ID, parent_node_ids=[cts.PAIN_2_NODE_ID],
+        children={cts.CAN_BE_EDGE_ID: [cts.CHEMICAL_NODE_ID]})
     # then
     assert type(cut.nociceptors) == cut.Concept
     assert not cut.nociceptors.can_be_xrelation

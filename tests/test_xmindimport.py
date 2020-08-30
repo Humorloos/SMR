@@ -5,12 +5,11 @@ from assertpy import assert_that
 
 import aqt
 import tests.constants as cts
-from smr.consts import X_MAX_ANSWERS, X_MODEL_NAME
+from smr.consts import X_MODEL_NAME
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.template import add_x_model
 from smr.xmindimport import XmindImporter
-from smr.xmindtopic import XmindNode
 
 
 @pytest.fixture

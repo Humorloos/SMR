@@ -189,7 +189,7 @@ class XOntology(Ontology):
                 relationship_property.domain = [self.Concept]
                 relationship_property.range = [self.Concept]
 
-    def remove_node(self, parent_node_ids: List[str], xmind_edge: XmindTopicDto, xmind_node: XmindTopicDto,
+    def remove_node(self, parent_node_ids: List[str], parent_edge_id: str, node_id: str,
                     children: Dict[str, List[str]]):
         """
         Removes the node's xmind id from the respective concept
@@ -197,25 +197,26 @@ class XOntology(Ontology):
          nodes and specified node
          - if there are no more nodes left belonging to the concept, destroys the concept
         :param parent_node_ids: list of node ids belonging to the parent nodes of the edge preceding the node to remove
-        :param xmind_node: xmind node dto belonging to the node to be deleted
-        :param xmind_edge: xmind node dto belonging to the parent edge of the node to be deleted
+        :param node_id: xmind id of the node to delete
+        :param parent_edge_id: xmind id of the node's parent edge
         :param children: dictionary where keys are edge_ids of edges following the node to remove and values are
-        dictionaries containing the edge's storid and a list of storids belonging to the edge's child nodes
-        parent nodes of the node to be deleted
+        dictionaries containing the edge's node_ids and a list of node ids belonging to the edge's child nodes
+        parent nodes of the node to be deleted (only necessary when removing a node in the middle of a map which is
+        only necessary in case of renaming a node)
         """
-        concept = self.get_concept_from_node_id(xmind_node.node_id)
+        concept = self.get_concept_from_node_id(node_id)
         currently_associated_ids = concept.XmindId
-        currently_associated_ids.remove(xmind_node.node_id)
+        currently_associated_ids.remove(node_id)
         if not currently_associated_ids:
             destroy_entity(concept)
         else:
             # remove the relations between the node and its parents and its children in case the concept itself is not
             # removed
             self.remove_relations(parents=[self.get_concept_from_node_id(i) for i in parent_node_ids],
-                                  children=[concept], edge_id=xmind_edge.node_id)
-            for edge_id, child_node_ids in children.items():
+                                  children=[concept], edge_id=parent_edge_id)
+            for parent_edge_id, child_node_ids in children.items():
                 child_concepts = [self.get_concept_from_node_id(i) for i in child_node_ids]
-                self.remove_relations(parents=[concept], children=child_concepts, edge_id=edge_id)
+                self.remove_relations(parents=[concept], children=child_concepts, edge_id=parent_edge_id)
 
     def rename_node(self, parent_node_ids: List[str], xmind_edge: XmindTopicDto, xmind_node: XmindTopicDto,
                     children: Dict[str, List[str]]) -> None:
@@ -230,7 +231,7 @@ class XOntology(Ontology):
         # get names of relations up front in case they are deleted together with the node
         parent_relation_name = self.get_relation_from_edge_id(xmind_edge.node_id).name
         child_relation_names = [self.get_relation_from_edge_id(i).name for i in children]
-        self.remove_node(xmind_node=xmind_node, xmind_edge=xmind_edge, parent_node_ids=parent_node_ids,
+        self.remove_node(parent_node_ids=parent_node_ids, parent_edge_id=xmind_edge.node_id, node_id=xmind_node.node_id,
                          children=children)
         self.add_node(parent_edge=xmind_edge, relationship_class_name=parent_relation_name,
                       node_2_add=xmind_node, parent_node_ids=parent_node_ids)
@@ -302,13 +303,10 @@ class XOntology(Ontology):
         nodes_2_remove = self.smr_world.get_nodes_2_remove_by_sheet(sheet_id)
         # remove all nodes starting from leave nodes continuing towards the root
         for node in nodes_2_remove:
-            if node['xmind_edge'].content.is_empty():
-                node['xmind_edge'].title = self.smr_world.CHILD_NAME
-            self.remove_node(parent_node_ids=node['parent_node_ids'],
-                             xmind_edge=node['xmind_edge'], xmind_node=node['xmind_node'], children={})
+            self.remove_node(parent_node_ids=node['parent_node_ids'], parent_edge_id=node['parent_edge_id'],
+                             node_id=node['node_id'], children={})
         # finally, remove the root node which is not included in the output of nodes_2_remove and has no parent_node_ids
-        self.remove_node(parent_node_ids=[], xmind_edge=XmindTopicDto(), xmind_node=XmindTopicDto(node_id=root_node_id),
-                         children={})
+        self.remove_node(parent_node_ids=[], parent_edge_id='', node_id=root_node_id, children={})
 
     def _set_up_classes(self):
         """

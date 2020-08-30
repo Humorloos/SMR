@@ -197,7 +197,7 @@ class SmrSynchronizer:
         self._relations_2_change = value
 
     @property
-    def concepts_2_remove(self) -> List[Dict[str, Union[List[str], XmindTopicDto, Dict[str, List[str]]]]]:
+    def concepts_2_remove(self) -> List[Dict[str, Union[List[str], str]]]:
         try:
             return self._concepts_2_remove
         except AttributeError:
@@ -387,8 +387,8 @@ class SmrSynchronizer:
 
         # Remove nodes from ontology
         for concept in self.concepts_2_remove:
-            self.onto.remove_node(xmind_node=concept['xmind_node'], xmind_edge=concept['xmind_edge'],
-                                  parent_node_ids=concept['parent_node_ids'], children={})
+            self.onto.remove_node(parent_node_ids=concept['parent_node_ids'], parent_edge_id=concept['edge_id'],
+                                  node_id=concept['node_id'], children={})
         self.concepts_2_remove = []
         # Remove nodes from ontology by sheets
         for sheet_id, root_node_id in self.onto_sheets_2_remove.items():
@@ -526,7 +526,7 @@ Invalid answer removal: Cannot remove answer "{field_from_content(xmind_node.con
 follow this answer in the xmind map. I restored the answer. If you want to remove the answer, do it in the concept \
 map and then synchronize.""")
         # Add node to concepts to remove
-        self.concepts_2_remove.append({'xmind_node': xmind_node, 'xmind_edge': xmind_edge,
+        self.concepts_2_remove.append({'node_id': xmind_node.node_id, 'edge_id': xmind_edge.node_id,
                                        'parent_node_ids': parent_node_ids})
         # Add node to nodes to remove
         self.xmind_nodes_2_remove.append(xmind_node.node_id)
@@ -607,9 +607,9 @@ map and then synchronize.""")
             elif sheet_id not in sheet_ids_remote:
                 self._remove_sheet(sheet_id)
             elif sheets_status[sheet_id].last_modified != self.x_manager.sheets[sheet_id].last_modified:
-                self._process_remote_questions(sheet_id)
+                self._register_remote_sheet_changes(sheet_id)
 
-    def _process_remote_questions(self, sheet_id):
+    def _register_remote_sheet_changes(self, sheet_id):
         edges_remote = self.x_manager.sheets[sheet_id].edges
         edges_status = self.smr_world.get_xmind_edges_in_sheet(sheet_id)
         for edge_id in set(list(edges_status) + list(edges_remote)):
@@ -620,7 +620,7 @@ map and then synchronize.""")
                 self._register_remote_edge_removal(edge_data=edges_status[edge_id])
             elif edges_status[edge_id].last_modified != edges_remote[edge_id].last_modified:
                 self._register_remote_edge_update(remote_edge=edges_remote[edge_id])
-        nodes_status = self.smr_world.get_xmind_nodes_in_sheet(sheet_id)
+        nodes_status = self.smr_world.get_nodes_2_remove_by_sheet(sheet_id)
         nodes_remote = self.x_manager.sheets[sheet_id].nodes
         for node_id in set(list(nodes_status) + list(nodes_remote)):
             if node_id not in nodes_status:
@@ -630,7 +630,13 @@ map and then synchronize.""")
                 else:
                     self.importer.read_node_if_concept(node_remote)
             elif node_id not in nodes_remote:
-                node_status = nodes_status[node_id]
+                node_data = nodes_status[node_id]
+                parent_edge_id = node_data.pop(-1)
+                # self.concepts_2_remove.append({'xmind_node': XmindTopicDto(*node_data), 'xmind_edge': xmind_edge,
+                #                                'parent_node_ids': parent_node_ids})
+                # if parent_edge_id not in self.xmind_edges_2_remove:
+
+
                 print('remove node')
             elif nodes_status[node_id].last_modified != nodes_remote[node_id].last_modified:
                 print('change node')

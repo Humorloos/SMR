@@ -205,10 +205,14 @@ PAIN_1_NODE_ID = '3nb97928e68dcu5512pft7gkcg'
 PAIN_2_NODE_ID = '5asru7kdmre8059cemi8p5lm3v'
 MAO_1_NODE_ID = '7qb9l39bs8p1b0ivvausne94q4'
 CAN_BE_TRIGGERED_BY_NODE_ID = '7ite3obkfmbchr1pc6ib0o7rga'
+NOCICEPTORS_NODE_ID = '2mbb2crv3tdgr131i9j538n0ga'
+CHEMICAL_NODE_ID = '2jf5kkori2h7sdja7cgje5i71e'
 # edges
 SPLITS_UP_EDGE_ID = '61irckf1nloq42brfmbu0ke92v'
 ARE_EDGE_ID = "6iivm8tpoqj2c0euaabtput14l"
 EMPTY_EDGE_3_ID = '668iln3nrlmk5ibhnf4lvbbnmo'
+TRIGGERED_BY_EDGE_ID = '4rdraflh6n2hl4a459g2urdkr6'
+CAN_BE_EDGE_ID = '4q3e21ritrvitgmjialvadn2m6'
 
 # edges from smr_world
 EDGE_WITH_MEDIA_XMIND_ID = "7ite3obkfmbcasdf12asd123ga"
