@@ -187,9 +187,14 @@ DIRECTORY_MAPS_TEMPORARY = os.path.join(MAPS_DIRECTORY, 'temporary')
 PATH_EXAMPLE_MAP_TEMPORARY = os.path.join(DIRECTORY_MAPS_TEMPORARY, NAME_EXAMPLE_MAP + '.xmind')
 PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY = os.path.join(DIRECTORY_MAPS_TEMPORARY, NAME_MAP_GENERAL_PSYCHOLOGY + '.xmind')
 PATH_HYPERLINK_MEDIA_TEMPORARY = os.path.join(DIRECTORY_MAPS_TEMPORARY, NAME_HYPERLINK_MEDIA)
-# content xml
+# content xmls
 NAME_CONTENT = 'content.xml'
-PATH_CONTENT = os.path.join(MAPS_DIRECTORY, NAME_CONTENT)
+DIRECTORY_CONTENT = os.path.join(MAPS_DIRECTORY, 'xml')
+# example map
+PATH_CONTENT_EXAMPLE_MAP = os.path.join(DIRECTORY_CONTENT, 'example_map', NAME_CONTENT)
+# map general psychology
+PATH_CONTENT_GENERAL_PSYCHOLOGY = os.path.join(DIRECTORY_CONTENT, 'general_psychology', NAME_CONTENT)
+
 # absent file
 ABSENT_XMIND_FILE_PATH = os.path.join(SUPPORT_PATH, 'absent_file.xmind')
 # IDs
@@ -201,19 +206,27 @@ BIOLOGICAL_PSYCHOLOGY_NODE_ID = '0pbme7b9sg9en8qqmmn9jj06od'
 CLINICAL_PSYCHOLOGY_1_NODE_ID = '29qkib9g6gqsfqqmcqk2495kgc'
 BIOGENIC_AMINES_NODE_ID = "3oqcv5qlqhn28u1opce5i27709"
 DE_EMBEDDED_MEDIA_NODE_ID = '23nu73chqkkkem455dit5p8stu'
+ADRENALINE_NODE_ID = '3f5lmmd8mjhe3gkbnaih1m9q8j'
 PAIN_1_NODE_ID = '3nb97928e68dcu5512pft7gkcg'
 PAIN_2_NODE_ID = '5asru7kdmre8059cemi8p5lm3v'
 MAO_1_NODE_ID = '7qb9l39bs8p1b0ivvausne94q4'
+MAO_2_NODE_ID = '7blr5ubl6uf6c9beflm85jte19'
 CAN_BE_TRIGGERED_BY_NODE_ID = '7ite3obkfmbchr1pc6ib0o7rga'
 NOCICEPTORS_NODE_ID = '2mbb2crv3tdgr131i9j538n0ga'
 CHEMICAL_NODE_ID = '2jf5kkori2h7sdja7cgje5i71e'
+SEROTONIN_3_NODE_ID = "56ru8hj8k8361ppfrftrbahgvv"
+DOPAMINE_NODE_ID = "03eokjlomuockpeaqn2923nvvp"
+NORADRENALINE_NODE_ID = "73mo29opsuegqobtttlt2vbaqj"
+MULTIPLE_PARENTS_NODE_IDS = [SEROTONIN_3_NODE_ID, DOPAMINE_NODE_ID, ADRENALINE_NODE_ID, NORADRENALINE_NODE_ID]
 # edges
 SPLITS_UP_EDGE_ID = '61irckf1nloq42brfmbu0ke92v'
 ARE_EDGE_ID = "6iivm8tpoqj2c0euaabtput14l"
 EMPTY_EDGE_3_ID = '668iln3nrlmk5ibhnf4lvbbnmo'
 TRIGGERED_BY_EDGE_ID = '4rdraflh6n2hl4a459g2urdkr6'
 CAN_BE_EDGE_ID = '4q3e21ritrvitgmjialvadn2m6'
-
+EXAMPLE_EDGE_ID = '7e1s0urn8376a2q371nujihuab'
+AFFECTS_EDGE_ID = '4lrqok8ac9hec8u2c2ul4mpo4k'
+DIFFERENCE_EDGE_ID = '077tf3ovn4gc1j1dqte7or33fl'
 # edges from smr_world
 EDGE_WITH_MEDIA_XMIND_ID = "7ite3obkfmbcasdf12asd123ga"
 # edge from xmind test file
@@ -256,8 +269,6 @@ EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE = \
 EDGE_FOLLOWING_MULTIPLE_NODES_NOTE_ID = 12345
 MULTIPLE_PARENTS_CONTENTS = [TopicContentDto(title=i) for i in ["Serotonin", "dopamine", "adrenaline", "noradrenaline"]]
 MULTIPLE_PARENTS_CLASS_NAMES = [FieldTranslator().class_from_content(i) for i in MULTIPLE_PARENTS_CONTENTS]
-MULTIPLE_PARENTS_NODE_IDS = ["56ru8hj8k8361ppfrftrbahgvv", "03eokjlomuockpeaqn2923nvvp", "3f5lmmd8mjhe3gkbnaih1m9q8j",
-                             "73mo29opsuegqobtttlt2vbaqj"]
 MULTIPLE_PARENTS_CHILD_CONTENT = TopicContentDto(title="biogenic amines")
 MULTIPLE_PARENTS_CHILD_CLASS_NAME = FieldTranslator().class_from_content(MULTIPLE_PARENTS_CHILD_CONTENT)
 MULTIPLE_PARENTS_CHILD_NODE_ID = "3oqcv5qlqhn28u1opce5i27709"

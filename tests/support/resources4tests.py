@@ -28,12 +28,20 @@ def main():
     generate_new_file(src=cts.PATH_HYPERLINK_MEDIA_DEFAULT, dst=cts.PATH_HYPERLINK_MEDIA_TEMPORARY)
     # Extract to maps directory
     try:
-        os.unlink(cts.PATH_CONTENT)
+        os.unlink(cts.PATH_CONTENT_EXAMPLE_MAP)
     except FileNotFoundError:
         pass
-    open(cts.PATH_CONTENT, 'x')
-    with open(cts.PATH_CONTENT, 'w') as content_file:
+    open(cts.PATH_CONTENT_EXAMPLE_MAP, 'x')
+    with open(cts.PATH_CONTENT_EXAMPLE_MAP, 'w') as content_file:
         content_file.write(BeautifulSoup(ZipFile(cts.PATH_EXAMPLE_MAP_DEFAULT, 'r').read(
+            cts.NAME_CONTENT), features="html.parser").prettify())
+    try:
+        os.unlink(cts.PATH_CONTENT_GENERAL_PSYCHOLOGY)
+    except FileNotFoundError:
+        pass
+    open(cts.PATH_CONTENT_GENERAL_PSYCHOLOGY, 'x')
+    with open(cts.PATH_CONTENT_GENERAL_PSYCHOLOGY, 'w') as content_file:
+        content_file.write(BeautifulSoup(ZipFile(cts.PATH_MAP_GENERAL_PSYCHOLOGY_DEFAULT, 'r').read(
             cts.NAME_CONTENT), features="html.parser").prettify())
     # Get an empty anki collection
     try:

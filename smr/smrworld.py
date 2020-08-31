@@ -320,9 +320,9 @@ where sn.last_modified < cn.mod""")
             file_path = os.path.join(record.file_directory, record.file_name)
             try:
                 smr_notes_in_files[file_path][record.sheet_name][record.note_id]['answers'][
-                    record.order_number]['children'][record.child_edge_id].append(record.child_node_id)
+                    record.order_number]['children'][record.child_edge_id].add(record.child_node_id)
             except KeyError:
-                child_node_ids = [record.child_node_id]
+                child_node_ids = {record.child_node_id}
                 children = {record.child_edge_id: child_node_ids} if record.child_edge_id else {}
                 try:
                     if record.child_edge_id:
@@ -356,8 +356,8 @@ where sn.last_modified < cn.mod""")
                                 smr_notes_in_files[file_path][record.sheet_name] = sheet_dict
                             except KeyError:
                                 smr_notes_in_files[file_path] = {record.sheet_name: sheet_dict}
-                finally:
-                    smr_notes_in_files[file_path][record.sheet_name][record.note_id]['parents'].add(
+            finally:
+                smr_notes_in_files[file_path][record.sheet_name][record.note_id]['parents'].add(
                         record.parent_node_id)
         return smr_notes_in_files
 
@@ -728,8 +728,8 @@ WHERE xn.sheet_id = '{sheet_id}'""")
                                          'note_id': record.note_id,
                                          'parent_node_ids': [record.parent_node_id]}
         return nodes
-
-    def get_xmind_edges_in_sheet(self, sheet_id: str) -> Dict[str, NamedTuple]:
+# TODO: check that in get_changed_smr_notes there are no duplicates in parent ids
+    def get_xmind_edges_in_sheet(self, sheet_id: str) -> Dict[str, Dict[str, Union[XmindTopicDto, int, Set[str]]]]:
         """
         Gets all edges that belong to the sheet with the specified id together with the respective anki note id if
         there is one
@@ -737,11 +737,23 @@ WHERE xn.sheet_id = '{sheet_id}'""")
         :return: The edges in a dictionary where keys are the edges' xmind ids and values are records with data for
         xmind edges in the first fields and the anki note id in the last field
         """
-        return {record.edge_id: record for record in self._get_records(f"""
-SELECT xe.*, sn.note_id
+        records = self._get_records(f"""
+SELECT xe.*, sn.note_id, st.parent_node_id, st.child_node_id
 FROM xmind_edges xe
          left outer join smr_notes sn on xe.edge_id = sn.edge_id
-WHERE sheet_id = '{sheet_id}'""")}
+left outer join smr_triples st on xe.edge_id = st.edge_id
+WHERE sheet_id = '{sheet_id}'""")
+        edges = {}
+        for record in records:
+            try:
+                edges[record.edge_id]['parent_node_ids'].add(record.parent_node_id)
+                edges[record.edge_id]['child_node_ids'].add(record.child_node_id)
+            except KeyError:
+                edges[record.edge_id] = {'xmind_edge': XmindTopicDto(record[:-3]),
+                                         'note_id': record.note_id,
+                                         'parent_node_ids': {record.parent_node_id},
+                                         'child_node_ids': {record.child_node_id}}
+        return edges
 
     def get_root_node_id(self, sheet_id: str) -> str:
         """

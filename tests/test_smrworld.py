@@ -273,12 +273,18 @@ def test_get_changed_smr_notes(smr_world_with_example_map, changed_collection_wi
     # then
     assert list(changed_smr_notes.keys()) == [cts.PATH_EXAMPLE_MAP_TEMPORARY, cts.PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY]
     values = list(changed_smr_notes.values())
-    assert list(values[0].keys()) == ['biological psychology', 'clinical psychology']
     assert list(values[1].keys()) == ['general psychology']
+    assert_that(values[0].keys()).contains('biological psychology', 'clinical psychology')
     example_map_sheets = changed_smr_notes[cts.PATH_EXAMPLE_MAP_TEMPORARY]
-    assert len(example_map_sheets['biological psychology']) == 5
+    sheet_biological_psychology = example_map_sheets['biological psychology']
+    assert len(sheet_biological_psychology) == 5
     assert len(example_map_sheets['clinical psychology']) == 4
     assert len(list(values[1].values())[0]) == 1
+    note_following_multiple_answers = next(edge for edge in sheet_biological_psychology.values() if
+                                           edge['edge'].node_id == cts.ARE_EDGE_ID)
+    assert_that(note_following_multiple_answers['parents']).contains(*cts.MULTIPLE_PARENTS_NODE_IDS)
+    assert note_following_multiple_answers['answers'][1]['children'][cts.CONSIST_OF_EDGE_ID] == {
+        cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID}
 
 
 def test_storid_from_node_id(ontology_with_example_map):
@@ -341,8 +347,8 @@ def test_get_updated_child_smr_notes(smr_world_with_example_map):
     # when
     child_notes = smr_world_with_example_map.get_updated_child_smr_notes([cts.EXAMPLE_IMAGE_EDGE_ID])
     # then
-    assert list(child_notes) == [cts.EXAMPLE_IMAGE_EDGE_ID, '4lrqok8ac9hec8u2c2ul4mpo4k', cts.PRONOUNCIATION_EDGE_ID,
-                                 '077tf3ovn4gc1j1dqte7or33fl']
+    assert_that(list(child_notes)).contains(
+        cts.EXAMPLE_IMAGE_EDGE_ID, cts.AFFECTS_EDGE_ID, cts.PRONOUNCIATION_EDGE_ID, cts.DIFFERENCE_EDGE_ID)
 
 
 def test_generate_notes(smr_world_4_tests, collection_4_migration):
@@ -413,6 +419,9 @@ def test_get_xmind_edges_in_sheet(smr_world_with_example_map):
     edges = cut.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
     assert len(edges) == 22
+    assert len(edges[cts.ARE_EDGE_ID]['parent_node_ids']) == 4
+    assert len(edges[cts.AFFECTS_EDGE_ID]['child_node_ids']) == 3
+    assert len(edges[cts.AFFECTS_EDGE_ID]['parent_node_ids']) == 1
 
 
 def test_remove_xmind_sheets(smr_world_with_example_map):

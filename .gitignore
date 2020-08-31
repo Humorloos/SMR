@@ -23,3 +23,5 @@
 /tests/UI tests/.pytest_cache/
 /user_files/smrworld.sqlite3
 /user_files/smrworld.sqlite3-journal
+/tests/support/maps/xml/example_map/content.xml
+/tests/support/maps/xml/general_psychology/content.xml

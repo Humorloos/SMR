@@ -283,6 +283,18 @@ class SmrSynchronizer:
     def is_running(self, value: bool):
         self._is_running = value
 
+    @property
+    def relations_2_move(self) -> List[Dict[str, Union[str, List[str]]]]:
+        try:
+            return self._relations_2_move
+        except AttributeError:
+            self._relations_2_move = []
+            return self._relations_2_move
+
+    @relations_2_move.setter
+    def relations_2_move(self, value: List[Dict[str, Union[str, List[str]]]]):
+        self._relations_2_move = value
+
     def synchronize(self):
         """
         Checks whether there were changes in notes or xmind files since the last synchronization and triggers the
@@ -375,6 +387,13 @@ class SmrSynchronizer:
         """
         Makes all necessary changes to the ontology that are not covered by XmindImport
         """
+        # First move entities to avoid conflicts when trying to rename moved entities
+        for relation in self.relations_2_move:
+            self.onto.move_relation(old_parent_node_ids=relation['old_parent_node_ids'],
+                                    new_parent_node_ids=relation['new_parent_node_ids'],
+                                    edge_id=relation['edge_id'],
+                                    old_child_node_ids=relation['old_child_node_ids'],
+                                    new_child_node_ids=relation['new_child_node_ids'])
         # First perform updates to avoid conflicts with removed entities
         # Rename nodes in ontology
         for concept in self.concepts_2_rename:
@@ -606,7 +625,6 @@ map and then synchronize.""")
         for sheet_id in set(list(sheets_status) + sheet_ids_remote):
             if sheet_id not in sheets_status:
                 self.importer.import_sheet(sheet_id=sheet_id, deck_id=deck_id)
-                self.importer.finish_import()
             elif sheet_id not in sheet_ids_remote:
                 self._remove_sheet(sheet_id)
             elif sheets_status[sheet_id].last_modified != self.x_manager.sheets[sheet_id].last_modified:
@@ -622,22 +640,48 @@ map and then synchronize.""")
             elif edge_id not in edges_remote:
                 self._register_remote_edge_removal(edge_data=edges_status[edge_id])
             elif edges_status[edge_id].last_modified != edges_remote[edge_id].last_modified:
-                edges_remote[edge_id].last_modified = edges_status[edge_id].last_modified
-                self._register_remote_edge_update(remote_edge=edges_remote[edge_id])
+                edge_remote = edges_remote[edge_id]
+                edge_status = edges_status[edge_id]
+                remote_parent_node_ids = [pn.id for pn in edge_remote.parent_nodes]
+                if remote_parent_node_ids != edge_status['parent_node_ids']:
+                    self.relations_2_move.append({
+                        'old_parent_node_ids': edge_status['parent_node_ids'],
+                        'new_parent_node_ids': remote_parent_node_ids,
+                        'edge_id': edge_id,
+                        'old_child_node_ids': edge_status['child_node_ids'],
+                        'new_child_node_ids': [cn.id for cn in edge_remote.child_nodes]})
+                edge_remote.last_modified = edges_status[edge_id]['xmind_edge'].last_modified
+            # TODO: figure out how to handle edges and nodes that were moved
+                self._register_remote_edge_update(remote_edge=edge_remote)
         nodes_status = self.smr_world.get_xmind_nodes_in_sheet(sheet_id)
         nodes_remote = self.x_manager.sheets[sheet_id].nodes
         for node_id in set(list(nodes_status) + list(nodes_remote)):
             if node_id not in nodes_status:
                 node_remote = nodes_remote[node_id]
-                # if the node does not belong to a newly imported edge, do not import it via importer but add
+                # if the node does not belong to a newly imported edge, also register its parent node for updating
                 if node_remote.parent_edge.id not in self.importer.edge_ids_2_make_notes_of:
                     self.edge_ids_of_anki_notes_2_update.add(node_remote.parent_edge.id)
                 self.importer.read_node_if_concept(node_remote)
             elif node_id not in nodes_remote:
                 node_status = nodes_status[node_id]
                 self._register_remote_node_removal(node_status)
-            elif nodes_status[node_id].last_modified != nodes_remote[node_id].last_modified:
-                print('change node')
+            elif nodes_status[node_id]['xmind_node'].last_modified != nodes_remote[node_id].last_modified:
+                # add node to changes in ontology
+                node_remote = nodes_remote[node_id]
+                parent_edge = node_remote.parent_edge
+                parent_node_ids = [n.id for n in parent_edge.parent_nodes] if parent_edge is not None else []
+                parent_edge_dto = parent_edge.dto if parent_edge is not None else None
+                self.concepts_2_rename.append(
+                    {'xmind_node': node_remote.dto, 'xmind_edge': parent_edge_dto, 'parent_node_ids': parent_node_ids,
+                     'children': {ce.id: [cn.id for cn in ce.non_empty_child_nodes] for ce in node_remote.child_edges}})
+                # add node to changes in smr world
+                self.xmind_nodes_2_update.append(node_remote.dto)
+                # add parent edge to edge ids of anki notes to update
+                if parent_edge is not None:
+                    self.edge_ids_of_anki_notes_2_update.add(parent_edge.id)
+                else:
+                    self.edge_ids_of_anki_notes_2_update = self.edge_ids_of_anki_notes_2_update.union(
+                        set(ce.id for ce in node_remote.child_edges))
 
     def _register_remote_node_removal(self, node_status):
         # register node for removal from ontology
@@ -651,7 +695,7 @@ map and then synchronize.""")
         if node_status['note_id'] not in self.anki_notes_2_remove:
             self.edge_ids_of_anki_notes_2_update.add(node_status['parent_edge_id'])
 
-    def _register_remote_edge_removal(self, edge_data: NamedTuple):
+    def _register_remote_edge_removal(self, edge_data: Dict[str, Union[XmindTopicDto, int, List[str]]]):
         """
         registers data for removing data belonging to an xmind edge from all required data structures
         :param edge_data: A named tuple containing the note id belonging to the edge in the last slot and all the data
@@ -659,9 +703,9 @@ map and then synchronize.""")
         """
         # we do not remove relations from the ontology explicitly since that is already part of removing nodes
         # add edge to smr world xmind edges to remove
-        self.xmind_edges_2_remove.add(edge_data.node_id)
+        self.xmind_edges_2_remove.add(edge_data['xmind_edge'].node_id)
         # add edge to notes to remove if it belongs to a note
-        note_id = edge_data.pop(-1)
+        note_id = edge_data['note_id']
         if note_id is not None:
             self.anki_notes_2_remove.add(note_id)
 

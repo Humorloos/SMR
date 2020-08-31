@@ -197,3 +197,17 @@ def test_remove_sheet(ontology_with_example_map):
     assert not cut.information_transfer_and_processing
     assert not cut.chemical
     assert not cut.Serotonin.pronounciation_xrelation
+
+
+def test_move_relation(ontology_with_example_map):
+    # given
+    cut = ontology_with_example_map
+    # when
+    cut.move_relation(old_parent_node_ids=[cts.ENZYMES_NODE_ID], new_parent_node_ids=cts.MULTIPLE_PARENTS_NODE_IDS,
+                      edge_id=cts.EXAMPLE_EDGE_ID, old_child_node_ids=[cts.MAO_2_NODE_ID],
+                      new_child_node_ids=[cts.MAO_2_NODE_ID])
+    # then
+    assert cut.get_concept_from_node_id(cts.ENZYMES_NODE_ID).example_xrelation == []
+    assert cut.get_concept_from_node_id(cts.NORADRENALINE_NODE_ID).example_xrelation == [
+        cut.get_concept_from_node_id(cts.MAO_2_NODE_ID)]
+

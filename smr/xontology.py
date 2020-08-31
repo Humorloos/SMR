@@ -1,6 +1,6 @@
 import os
 import types
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Optional
 
 import owlready2
 from owlready2 import ThingClass
@@ -136,7 +136,7 @@ class XOntology(Ontology):
         :param node_2_add: xmind node dto of the node to add with already updated content
         :param parent_node_ids: xmind node ids of the parent nodes of the node to add
         """
-        new_concept = self.add_concept_from_node(node_2_add)
+        self.add_concept_from_node(node_2_add)
         for parent_node_id in parent_node_ids:
             self.connect_concepts(child_node_id=node_2_add.node_id, parent_node_id=parent_node_id,
                                   relationship_class_name=relationship_class_name, edge_id=parent_edge.node_id)
@@ -214,11 +214,11 @@ class XOntology(Ontology):
             # removed
             self.remove_relations(parents=[self.get_concept_from_node_id(i) for i in parent_node_ids],
                                   children=[concept], edge_id=parent_edge_id)
-            for parent_edge_id, child_node_ids in children.items():
+            for child_edge_id, child_node_ids in children.items():
                 child_concepts = [self.get_concept_from_node_id(i) for i in child_node_ids]
-                self.remove_relations(parents=[concept], children=child_concepts, edge_id=parent_edge_id)
+                self.remove_relations(parents=[concept], children=child_concepts, edge_id=child_edge_id)
 
-    def rename_node(self, parent_node_ids: List[str], xmind_edge: XmindTopicDto, xmind_node: XmindTopicDto,
+    def rename_node(self, parent_node_ids: List[str], xmind_edge: Optional[XmindTopicDto], xmind_node: XmindTopicDto,
                     children: Dict[str, List[str]]) -> None:
         """
         changes the name of a node while retaining the relations to related concepts (children and parents)
@@ -229,9 +229,14 @@ class XOntology(Ontology):
         lists of node ids belonging to the edge's child nodes
         """
         # get names of relations up front in case they are deleted together with the node
-        parent_relation_name = self.get_relation_from_edge_id(xmind_edge.node_id).name
+        if xmind_edge:
+            parent_edge_id = xmind_edge.node_id
+            parent_relation_name = self.get_relation_from_edge_id(parent_edge_id).name
+        else:
+            parent_edge_id = None
+            parent_relation_name = None
         child_relation_names = [self.get_relation_from_edge_id(i).name for i in children]
-        self.remove_node(parent_node_ids=parent_node_ids, parent_edge_id=xmind_edge.node_id, node_id=xmind_node.node_id,
+        self.remove_node(parent_node_ids=parent_node_ids, parent_edge_id=parent_edge_id, node_id=xmind_node.node_id,
                          children=children)
         self.add_node(parent_edge=xmind_edge, relationship_class_name=parent_relation_name,
                       node_2_add=xmind_node, parent_node_ids=parent_node_ids)
@@ -243,15 +248,13 @@ class XOntology(Ontology):
                     relationship_class_name=child_relation_name, edge_id=edge_id)
 
     def change_relationship_class_name(self, parent_node_ids: List[str], child_node_ids: List[str],
-                                       xmind_edge: XmindTopicDto):
+                                       xmind_edge: XmindTopicDto) -> None:
         """
         - Changes a relation in the ontology by removing the old relation from parents and children and adding the new
-        relation specified by new_question_field to them
-        - Returns the newly assigned relationship property
+        relation from the specified xmind edge
         :param child_node_ids: ontology storids of the children to assign the new relation to
         :param parent_node_ids: xmind node ids of the parents to assign the new relation to
         :param xmind_edge: xmind topic dto containing id and content of the edge representing the new relation to be set
-        :return the newly assigned relationship property
         """
         parents = [self.get_concept_from_node_id(node_id) for node_id in parent_node_ids]
         children = [self.get_concept_from_node_id(node_id) for node_id in child_node_ids]
@@ -265,6 +268,26 @@ class XOntology(Ontology):
                 self.connect_concepts(
                     parent_node_id=parent_node_id, relationship_class_name=class_text, child_node_id=child_node_id,
                     edge_id=xmind_edge.node_id)
+
+    def move_relation(self, old_parent_node_ids: List[str], new_parent_node_ids: List[str], edge_id: str,
+                      old_child_node_ids: List[str], new_child_node_ids: List[str]):
+        """
+        Moves a relation in the ontology by removing it at its old place and adding it at the new place
+        :param old_parent_node_ids: xmind node ids of the relation's old parents
+        :param new_parent_node_ids: xmind node ids of the relation's new parents
+        :param edge_id: xmind node id of the edge representing the moved relation
+        :param old_child_node_ids: xmind node ids of the relation's old children
+        :param new_child_node_ids: xmind node ids of the relation's new children
+        :return:
+        """
+        relation_class_name = self.get_relation_from_edge_id(edge_id).name
+        old_parents = [self.get_concept_from_node_id(i) for i in old_parent_node_ids]
+        old_children = [self.get_concept_from_node_id(i) for i in old_child_node_ids]
+        self.remove_relations(parents=old_parents, children=old_children, edge_id=edge_id)
+        for parent_node_id in new_parent_node_ids:
+            for child_node_id in new_child_node_ids:
+                self.connect_concepts(parent_node_id=parent_node_id, relationship_class_name=relation_class_name,
+                                      edge_id=edge_id, child_node_id=child_node_id)
 
     def remove_relations(self, parents: List[ThingClass], children: List[ThingClass],
                          edge_id: str):
