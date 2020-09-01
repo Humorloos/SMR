@@ -223,7 +223,7 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
         adds entries for triples of parent node, edge, and child node to the relation smr_triples
         :param entities: List of entries to add to the smr triples relation
         """
-        self.graph.db.executemany("INSERT INTO main.smr_triples VALUES (?, ?, ?, ?)",
+        self.graph.db.executemany("INSERT INTO main.smr_triples VALUES (?, ?, ?)",
                                   (tuple(e) for e in entities))
 
     def add_xmind_media_to_anki_files(self, entities: List[XmindMediaToAnkiFilesDto]) -> None:
@@ -380,28 +380,6 @@ where sn.last_modified < cn.mod""")
         cursor.row_factory = record_factory
         data = cursor.fetchall()
         return data
-
-    def update_smr_triples_card_ids(self, data: List[Tuple[int, int]], collection: Collection) -> None:
-        """
-        updates the card ids for all triples belonging to certain answers in smr notes
-        :param data: List of tuples containing the note_id of the note the card belongs to and the order_number of
-        the card with the card id to add to each triple
-        :param collection: The collection that contains the cards whose ids to add
-        """
-        with AnkiCollectionAttachment(self, collection):
-            self.graph.db.executemany("""with card_triples(edge_id, child_node_id, card_id) as (
-    select smr_triples.edge_id, child_node_id, cards.id
-    from smr_triples
-             join smr_notes using (edge_id)
-             join cards on smr_notes.note_id = cards.nid
-             join xmind_nodes on smr_triples.child_node_id = xmind_nodes.node_id
-    where smr_notes.note_id = ?
-      and xmind_nodes.order_number = ?
-      and ord = order_number - 1)
-update smr_triples
-set card_id = (select card_id from card_triples)
-where edge_id = (select edge_id from card_triples)
-  and child_node_id = (select child_node_id from card_triples)""", data)
 
     def add_or_replace_smr_notes(self, entities: List[SmrNoteDto]):
         """
@@ -811,7 +789,7 @@ DELETE from main.xmind_sheets where main.xmind_sheets.sheet_id IN ('{"', '".join
         """
         self.graph.db.executemany("""
 INSERT INTO smr_triples
-SELECT distinct ?, edge_id, child_node_id, card_id
+SELECT distinct ?, edge_id, child_node_id
 from smr_triples
 WHERE edge_id = ?""", new_data)
         self.graph.db.executemany("""
@@ -829,7 +807,7 @@ WHERE parent_node_id = ? and edge_id = ?""", old_data)
         """
         self.graph.db.executemany("""
 INSERT INTO smr_triples
-SELECT distinct parent_node_id, edge_id, ?, null
+SELECT distinct parent_node_id, edge_id, ?
 from smr_triples
 WHERE edge_id = ?""", new_data)
         self.graph.db.executemany("""

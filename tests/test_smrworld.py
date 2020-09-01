@@ -181,7 +181,7 @@ def test_add_or_replace_xmind_edges_replace(smr_world_4_tests, x_manager):
 def test_add_smr_triples(smr_world_4_tests):
     # given
     test_edge_id = 'edge id'
-    expected_entry = ('node id', test_edge_id, 'node id2', None)
+    expected_entry = ('node id', test_edge_id, 'node id2')
     cut = smr_world_4_tests
     # when
     cut.add_smr_triples([SmrTripleDto(
@@ -211,16 +211,6 @@ def test_get_smr_note_answer_fields(smr_world_4_tests):
         '4vfsmbd1fmn6s0tqmlj4cei7pe': ['[sound:attachments395ke7i9a6nkutu85fcpa66as2.mp4]'],
         '61irckf1nloq42brfmbu0ke92v': ['Serotonin', 'dopamine', 'adrenaline', 'noradrenaline'],
         '730ahk5oc4himfrdvkqc5ci1o2': ['neurotransmitters<br><img src="attachments629d18n2i73im903jkrjmr98fg.png">']})
-
-
-def test_update_smr_triples_card_ids(smr_world_4_tests, collection_4_migration):
-    # given
-    cut = smr_world_4_tests
-    # when
-    cut.update_smr_triples_card_ids(data=[(1581184936757, 1)], collection=collection_4_migration)
-    # then
-    assert cut.graph.execute("select card_id from smr_triples where edge_id = ?",
-                             ('4kdqkutdha46uns1j8jndi43ht',)).fetchall() == [(1581184936819,), (None,)]
 
 
 # noinspection SqlResolve

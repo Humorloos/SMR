@@ -454,9 +454,6 @@ class XmindImporter(NoteImporter):
         self.smr_world.add_or_replace_smr_notes(self.smr_notes_2_add)
         # remove log entries informing about duplicate fields
         self.log = [self.log[-1]]
-        # Add card ids to smr triples relation in smr world
-        self.smr_world.update_smr_triples_card_ids(data=[(card[0], card[1]) for card in self._cards],
-                                                   collection=self.col)
 
     def add_entities_2_smr_world(self) -> None:
         """

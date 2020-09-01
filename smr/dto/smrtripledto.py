@@ -1,5 +1,4 @@
 import dataclasses as dc
-from typing import Optional
 
 from smr.dto.entitydto import EntityDto
 
@@ -12,4 +11,3 @@ class SmrTripleDto(EntityDto):
     parent_node_id: str = ""
     edge_id: str = ""
     child_node_id: str = ""
-    card_id: Optional[int] = None

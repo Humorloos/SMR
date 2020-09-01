@@ -242,7 +242,6 @@ def test_initialize_import_import_import_notes_to_correct_deck(xmind_importer_4_
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == n_cards_example_map
     assert cut.col.db.execute('select type from cards') == n_cards_example_map * [[0]]
-    assert len(cut.smr_world.graph.execute('select distinct card_id from main.smr_triples').fetchall()) == 36
 
 
 # noinspection PyPep8Naming
@@ -311,7 +310,6 @@ def test_import_sheet(xmind_importer_4_integration):
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == 25
     assert cut.col.db.execute('select type from cards') == 25 * [[0]]
-    assert len(cut.smr_world.graph.execute('select distinct card_id from main.smr_triples').fetchall()) == 26
 
 
 def test_initialize_import_question_without_answer(xmind_importer_4_integration, empty_anki_collection_function,
