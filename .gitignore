@@ -11,6 +11,7 @@
 /tests/support/collections/with_example_map/removed_center_node/default/collection.media/
 /tests/support/collections/with_example_map/removed_center_node/default/collection.anki2
 /tests/support/collections/with_example_map/removed_center_node/temporary/
+/tests/support/smr_world/smr_world_with_example_map/smr_world.sqlite3
 /tests/support/smr_world/smr_world_for_tests.sqlite3
 /tests/support/smr_world/empty_smr_world.sqlite3
 /tests/support/smr_world/smr_world_with_example_map.sqlite3

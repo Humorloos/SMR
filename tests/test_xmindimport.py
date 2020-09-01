@@ -168,7 +168,7 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
 def test_import_node_if_concept_following_multiple_concepts(xmind_importer_import_node_if_concept, x_ontology):
     # given
     cut = xmind_importer_import_node_if_concept
-    node = cut.x_manager.get_node_by_id(cts.BIOGENIC_AMINES_NODE_ID)
+    node = cut.x_manager.get_node_by_id(cts.BIOGENIC_AMINES_2_NODE_ID)
     # when
     cut.read_node_if_concept(node=node)
     # then

@@ -263,7 +263,6 @@ class XManager:
         :param media_directory: anki's collection.media directory to get images from
         :param smr_world: the smr world to register newly added and removed images
         """
-        topic.content = content
         if content.title != topic.title:
             topic.title = content.title
             self.did_introduce_changes = True

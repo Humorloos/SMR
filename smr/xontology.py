@@ -1,6 +1,6 @@
 import os
 import types
-from typing import List, Union, Dict, Optional
+from typing import List, Union, Dict, Optional, Set
 
 import owlready2
 from owlready2 import ThingClass
@@ -269,28 +269,47 @@ class XOntology(Ontology):
                     parent_node_id=parent_node_id, relationship_class_name=class_text, child_node_id=child_node_id,
                     edge_id=xmind_edge.node_id)
 
-    def move_relation(self, old_parent_node_ids: List[str], new_parent_node_ids: List[str], edge_id: str,
-                      old_child_node_ids: List[str], new_child_node_ids: List[str]):
+    def move_edge(self, old_parent_node_ids: List[str], new_parent_node_ids: List[str], edge_id: str,
+                  child_node_ids: List[str]) -> None:
         """
         Moves a relation in the ontology by removing it at its old place and adding it at the new place
         :param old_parent_node_ids: xmind node ids of the relation's old parents
         :param new_parent_node_ids: xmind node ids of the relation's new parents
         :param edge_id: xmind node id of the edge representing the moved relation
-        :param old_child_node_ids: xmind node ids of the relation's old children
-        :param new_child_node_ids: xmind node ids of the relation's new children
+        :param child_node_ids: xmind node ids of the relation's children
         :return:
         """
         relation_class_name = self.get_relation_from_edge_id(edge_id).name
         old_parents = [self.get_concept_from_node_id(i) for i in old_parent_node_ids]
-        old_children = [self.get_concept_from_node_id(i) for i in old_child_node_ids]
-        self.remove_relations(parents=old_parents, children=old_children, edge_id=edge_id)
+        children = [self.get_concept_from_node_id(i) for i in child_node_ids]
+        self.remove_relations(parents=old_parents, children=children, edge_id=edge_id)
         for parent_node_id in new_parent_node_ids:
-            for child_node_id in new_child_node_ids:
+            for child_node_id in child_node_ids:
                 self.connect_concepts(parent_node_id=parent_node_id, relationship_class_name=relation_class_name,
                                       edge_id=edge_id, child_node_id=child_node_id)
 
+    def move_node(self, old_parent_node_ids: Set[str], new_parent_node_ids: List[str], old_parent_edge_id: str,
+                  new_parent_edge_id: str, node_id: str) -> None:
+        """
+        Moves a node in the ontology by removing it from its old parents and adding it to the new parents with the
+        specified edge
+        :param old_parent_node_ids: xmind node ids of the former parent nodes
+        :param new_parent_node_ids: xmind node ids of the new parent nodes
+        :param old_parent_edge_id: xmind edge id of the node's former parent edge
+        :param new_parent_edge_id: xmind edge id of the node's new parent edge
+        :param node_id: xmind id of the node to move
+        :return:
+        """
+        relation_class_name = self.get_relation_from_edge_id(new_parent_edge_id).name
+        self.remove_relations(parents=[self.get_concept_from_node_id(i) for i in old_parent_node_ids],
+                              children=[self.get_concept_from_node_id(node_id)],
+                              edge_id=old_parent_edge_id)
+        for parent_node_id in new_parent_node_ids:
+            self.connect_concepts(parent_node_id=parent_node_id, relationship_class_name=relation_class_name,
+                                  edge_id=new_parent_edge_id, child_node_id=node_id)
+
     def remove_relations(self, parents: List[ThingClass], children: List[ThingClass],
-                         edge_id: str):
+                         edge_id: str) -> None:
         """
         For both the specified relation from parents to children and the parent relations from children to parents:
         - removes the edge_id from the relation triples
@@ -331,7 +350,7 @@ class XOntology(Ontology):
         # finally, remove the root node which is not included in the output of nodes_2_remove and has no parent_node_ids
         self.remove_node(parent_node_ids=[], parent_edge_id='', node_id=root_node_id, children={})
 
-    def _set_up_classes(self):
+    def _set_up_classes(self) -> None:
         """
         Sets up all necessary classes and relationships for representing concept maps as ontologies.
         """
@@ -350,250 +369,3 @@ class XOntology(Ontology):
 
             class XmindId(owlready2.AnnotationProperty):
                 pass
-
-    # def relation_from_triple(self, parent: ThingClass, relation_name: str, child: ThingClass):
-    #     """
-    #     Creates a new relation between the child and the parent with the
-    #     given name and the attributes of the relation described in
-    #     question_triple
-    #     :param child: Object concept (answer)
-    #     :param relation_name: Name of the relation to add (question name)
-    #     :param parent: Subject concept (parent to question)
-    #     """
-    #     self.add_relation(
-    #         child_thing=child, relationship_class_name=relation_name, parent_thing=parent,
-    #         rel_dict=self.rel_dict_from_triple(question_triple=question_triple))
-
-    # def get_answer_by_a_id(self, a_id, q_id):
-    #     return self.search(Xid='*"' + q_id + '": {"src": "' + a_id + '*')[0]
-    #
-    # def get_all_parent_triples(self):
-    #     return [t for t in self.get_triples() if t[1] == self.Parent.storid]
-    #
-    # def getChildQuestionIds(self, childElements):
-    #     children = {'childQuestions': set(), 'bridges': list()}
-    #     for elements in childElements:
-    #         if elements['p'].name != 'Child':
-    #             children['childQuestions'].add(self.get_trpl_x_id(elements))
-    #         else:
-    #             nextChildElements = self.get_child_elements(
-    #                 elements['o'].storid)
-    #             bridge = {'objectTitle': elements['s'].name}
-    #             bridge.update(self.getChildQuestionIds(nextChildElements))
-    #             children['bridges'].append(bridge)
-    #     children['childQuestions'] = list(children['childQuestions'])
-    #     return children
-    #
-    # def get_child_elements(self, s_storid):
-    #     nextChildTriples = self.getChildTriples(s=s_storid)
-    #     nextChildElements = [
-    #         self.getElements(t) for t in nextChildTriples]
-    #     return nextChildElements
-    #
-    # def getChildTriples(self, s):
-    #     questionStorids = [p.storid for p in self.object_properties() if
-    #                        p.name != 'Parent']
-    #     return [t for t in self.get_triples(s=s) if t[1] in questionStorids]
-    #
-    # def getElements(self, triple):
-    #     elements = [self.world._get_by_storid(s) for s in triple]
-    #     return {'s': elements[0], 'p': elements[1], 'o': elements[2]}
-    #
-    # def getFiles(self, elements):
-    #     files = [self.get_trpl_image(elements), self.get_trpl_media(elements)]
-    #     return [None if not f else file_dict(
-    #         identifier=f, doc=self.get_trpl_doc(elements)) for f in files]
-    #
-    # def get_inverse(self, x_id):
-    #     triples = self.get_all_parent_triples()
-    #     elements = [self.getElements(t) for t in triples]
-    #     inverse_elements = [e for e in elements if
-    #                         self.get_trpl_x_id(e) == x_id]
-    #     return inverse_elements
-    #
-    # def getNoteTag(self, elements):
-    #     return self.NoteTag[elements['s'], elements['p'], elements['o']][0]
-    #
-    # def getParentQuestionIds(self, parentElements):
-    #     parents = {'parentQuestions': set(), 'bridges': list()}
-    #     for elements in parentElements:
-    #         # Add id of question to set if parent is a normal question
-    #         if elements['p'].name != 'Child':
-    #             parents['parentQuestions'].add(self.get_trpl_x_id(elements))
-    #         # If parent is a bridge, add a dictionary titled by the answer
-    #         # containing parents of the bridge
-    #         else:
-    #             nextParentTriples = self.getParentTriples(o=elements[
-    #                 's'].storid)
-    #             nextParentElements = [
-    #                 self.getElements(t) for t in nextParentTriples]
-    #             # Named dictionary is necessary to understand map structure
-    #             # in case of bridges following bridges
-    #             bridge = {'subjectTitle': elements['o'].name}
-    #             bridge.update(self.getChildQuestionIds(nextParentElements))
-    #             parents['bridges'].append(bridge)
-    #     parents['parentQuestions'] = list(parents['parentQuestions'])
-    #     return parents
-    #
-    # def get_question(self, x_id):
-    #     # much faster:
-    #     # with rels as (select s, objs.o as o, objs.p as p
-    #     #               from datas
-    #     #                        join objs using (s)
-    #     #               where datas.o = '4lrqok8ac9hec8u2c2ul4mpo4k')
-    #     # select source, property, target
-    #     # from (select s, o as source
-    #     #       from rels
-    #     #       where p = (select storid
-    #     #                  from resources
-    #     #                  where iri like '%annotatedSource'))
-    #     #          join (select s, o as property
-    #     #                from rels
-    #     #                         join resources on o = storid
-    #     #                where p = (select storid
-    #     #                           from resources
-    #     #                           where iri like '%annotatedProperty')
-    #     #                  /*Do not include parent relationships*/
-    #     #                  and iri not like '%Parent') using (s)
-    #     #          join (select s, o as target
-    #     #                from rels
-    #     #                where p = (select storid
-    #     #                           from resources
-    #     #                           where iri like '%annotatedTarget'
-    #     #                )) using (s);
-    #     triples = self.getNoteTriples()
-    #     elements = [self.getElements(t) for t in triples]
-    #     question_elements = [e for e in elements if
-    #                          self.get_trpl_x_id(e) == x_id]
-    #     return question_elements
-    #
-    # def getNoteData(self, questionList):
-    #     question_elements = next(l['triple'] for l in questionList)
-    #     q_id = self.get_trpl_x_id(question_elements)
-    #     answers = set(l['triple']['o'] for l in questionList)
-    #
-    #     # Sort answers by answer index to get the answers' order right
-    #     answers = sorted(answers, key=lambda d: self.get_trpl_a_index(
-    #         next(t['triple'] for t in questionList if t['triple']['o'] == d)))
-    #     answerDicts = [dict() for _ in range(X_MAX_ANSWERS)]
-    #     images = []
-    #     media = []
-    #     for i, answerDict in enumerate(answerDicts[0:len(answers)]):
-    #         answerDict['text'] = self.field_translator.field_from_class(
-    #             answers[i].name)
-    #         id_dict = json.loads(answers[i].Xid[0])
-    #         answerDict['src'] = id_dict[q_id]['src']
-    #         answerDict['crosslink'] = id_dict[q_id]['crosslink']
-    #         if answers[i].Image:
-    #             images.append(file_dict(identifier=answers[i].Image[0],
-    #                                     doc=answers[i].Doc[0]))
-    #         if answers[i].Media:
-    #             media.append(file_dict(identifier=answers[i].Media[0],
-    #                                    doc=answers[i].Doc[0]))
-    #         childElements = self.get_child_elements(answers[i].storid)
-    #         answerDict['children'] = self.getChildQuestionIds(childElements)
-    #
-    #     parents = list(set(t['triple']['s'] for t in questionList))
-    #     parentDicts = []
-    #     for parent in parents:
-    #         parentDict = dict()
-    #         parentDict['text'] = parent.name
-    #         parentDict['id'] = parent.Xid[0]
-    #         parentTriples = self.getParentTriples(o=parent.storid)
-    #         parentElements = [self.getElements(t) for t in parentTriples]
-    #         parentDict['parents'] = self.getParentQuestionIds(parentElements)
-    #         parentDicts.append(parentDict)
-    #
-    #     files = self.getFiles(question_elements)
-    #     if files[0]:
-    #         images.append(files[0])
-    #     if files[1]:
-    #         media.append(files[1])
-    #     return {
-    #         'reference': self.get_trpl_ref(question_elements),
-    #         'question': self.field_translator.field_from_class(
-    #             question_elements['p'].name),
-    #         'answers': answerDicts,
-    #         'sortId': self.get_trpl_sort_id(question_elements),
-    #         'document': self.get_trpl_doc(question_elements),
-    #         'sheetId': self.get_trpl_sheet(question_elements),
-    #         'questionId': q_id,
-    #         'subjects': parentDicts,
-    #         'images': images,
-    #         'media': media,
-    #         'tag': self.getNoteTag(question_elements)
-    #     }
-    #
-    # def get_note_elements(self):
-    #     return [self.getElements(t) for t in self.getNoteTriples()]
-    #
-    # def getNoteTriples(self):
-    #     noNoteRels = ['Parent', 'Child']
-    #     questionsStorids = [p.storid for p in self.object_properties() if
-    #                         p.name not in noNoteRels]
-    #     return [t for t in self.get_triples() if t[1] in questionsStorids]
-    #
-    # def getParentTriples(self, o):
-    #     questionsStorids = [p.storid for p in self.object_properties() if
-    #                         p.name != 'Parent']
-    #     return [t for t in self.get_triples(o=o) if t[1] in questionsStorids]
-    #
-    # def get_trpl_a_index(self, elements):
-    #     return self.AIndex[elements['s'], elements['p'], elements['o']][0]
-    #
-    # def get_trpl_doc(self, elements):
-    #     return self.Doc[elements['s'], elements['p'], elements['o']][0]
-    #
-    # def get_trpl_image(self, elements):
-    #     try:
-    #         return self.Image[elements['s'], elements['p'], elements['o']][0]
-    #     except IndexError:
-    #         return ''
-    #
-    # def get_trpl_media(self, elements):
-    #     try:
-    #         return self.Media[elements['s'], elements['p'], elements['o']][0]
-    #     except IndexError:
-    #         return ''
-    #
-    # def get_trpl_ref(self, elements):
-    #     return self.Reference[elements['s'], elements['p'], elements['o']][
-    #         0]
-    #
-    # def get_trpl_sheet(self, elements):
-    #     return self.Sheet[elements['s'], elements['p'], elements['o']][0]
-    #
-    # def get_trpl_sort_id(self, elements):
-    #     return self.SortId[elements['s'], elements['p'], elements['o']][0]
-    #
-    # def get_trpl_x_id(self, elements):
-    #     return self.Xid[elements['s'], elements['p'], elements['o']][0]
-    #
-    # def q_id_elements(self, elements):
-    #     return {'triple': elements, 'q_id': self.get_trpl_x_id(elements)}
-    #
-    # def remove_answer(self, concept_storid: int, node_id: str):
-    #     question_triples = self.get_question(q_id)
-    #     parents = set(t['s'] for t in question_triples)
-    #     answer = next(t['o'] for t in question_triples if
-    #                   a_id == json.loads(t['o'].Xid[0])[q_id]['src'])
-    #
-    #     # Remove answer from question
-    #     remove_relations(answers=[answer], parents=parents,
-    #                      question_triples=question_triples)
-    #
-    #     remove_concept(concept_storid=answer, q_id=q_id)
-    #
-    # def remove_questions(self, q_ids):
-    #     question_elements = {q: self.get_question(q) for q in q_ids}
-    #     for q_id in question_elements:
-    #         remove_question(question_elements=question_elements[q_id],
-    #                         q_id=q_id)
-    #     print()
-
-    def set_trpl_a_index(self, a_id, q_id, a_index):
-        q_trpls = self.get_question(q_id)
-        a_concept = self.get_answer_by_a_id(a_id=a_id, q_id=q_id)
-        a_trpls = [t for t in q_trpls if t['o'] == a_concept]
-        for trpl in a_trpls:
-            self.AIndex[trpl['s'], trpl['p'], trpl['o']] = a_index

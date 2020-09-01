@@ -104,9 +104,6 @@ class SmrWorld(World):
     CHILD_NAME = 'smrchild'
     PARENT_NAME = 'smrparent'
 
-    ChangedSmrNotes: Dict[str, Dict[str, Dict[str, Dict[str, Union[SmrNoteDto, Dict[str, Union[XmindTopicDto, Set[
-        int]]], str, Dict[int, Union[TopicContentDto, Any]]]]]]]
-
     def __init__(self):
         self.parent_storid = None
         self.parent_relation_name = None
@@ -270,7 +267,8 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
         return {record.sheet_id: XmindSheetDto(*record) for record in self._get_records(
             f"SELECT * FROM xmind_sheets where file_directory = '{file_directory}' and file_name = '{file_name}'")}
 
-    def get_changed_smr_notes(self, collection: Collection) -> 'ChangedSmrNotes':
+    def get_changed_smr_notes(self, collection: Collection) -> Dict[str, Dict[str, Dict[int, Union[
+        SmrNoteDto, XmindTopicDto, Set[str], Dict[int, Dict[str, Union[XmindTopicDto, Dict[str, Set[str]]]]]]]]]:
         """
         Gets all notes belonging to xmind files that were changed since the last smr synchronization
         :return: A hierarchical structure of dictionaries
@@ -278,9 +276,13 @@ WHERE iri LIKE '%{self.parent_relation_name}'""").fetchone()[0]
         - on the second level, keys are sheet names in the respective files
         - on the third level, keys are anki note_ids of the changed smr_notes and values are
            - an Smr Note Dto for changing the smr notes relation
-           - an xmind node dto for changing the smind edges relation
-        - on the fourth level, keys are order numbers of child nodes for the respective edge and values are Xmind
-        node dtos for adjusting the xmind node relation
+           - an xmind topic dto for changing the xmind edges relation
+           - a set of xmind topic ids for the parent nodes of the edge
+        - on the fourth level, keys are order numbers of child nodes for the respective edge and values are
+        dictionaries with keys 'node', which contains an XmindTopicDto for the answer node and 'children' which
+        contains the fifth level dictionary
+        - on the fifth level, keys are xmind topic ids of child edges of the respective answers and values are Sets
+        of xmind ids of the child nodes of each respective edge
         """
         with AnkiCollectionAttachment(self, collection):
             data = self._get_records(f"""-- noinspection SqlResolve
@@ -358,7 +360,7 @@ where sn.last_modified < cn.mod""")
                                 smr_notes_in_files[file_path] = {record.sheet_name: sheet_dict}
             finally:
                 smr_notes_in_files[file_path][record.sheet_name][record.note_id]['parents'].add(
-                        record.parent_node_id)
+                    record.parent_node_id)
         return smr_notes_in_files
 
     def _get_records(self, sql: str) -> List['Record']:
@@ -721,14 +723,14 @@ WHERE xn.sheet_id = '{sheet_id}'""")
         nodes = {}
         for record in records:
             try:
-                nodes[record.node_id]['parent_node_ids'].append(record.parent_node_id)
+                nodes[record.node_id]['parent_node_ids'].add(record.parent_node_id)
             except KeyError:
                 nodes[record.node_id] = {'xmind_node': XmindTopicDto(*record[:-3]),
                                          'parent_edge_id': record.edge_id,
                                          'note_id': record.note_id,
-                                         'parent_node_ids': [record.parent_node_id]}
+                                         'parent_node_ids': {record.parent_node_id}}
         return nodes
-# TODO: check that in get_changed_smr_notes there are no duplicates in parent ids
+
     def get_xmind_edges_in_sheet(self, sheet_id: str) -> Dict[str, Dict[str, Union[XmindTopicDto, int, Set[str]]]]:
         """
         Gets all edges that belong to the sheet with the specified id together with the respective anki note id if
@@ -797,6 +799,42 @@ DELETE from main.xmind_sheets where main.xmind_sheets.sheet_id IN ('{"', '".join
         referenced keys to make use of cascade clauses and foreign key constraints
         """
         self.graph.execute('PRAGMA foreign_keys=ON')
+
+    def move_smr_triple_edges(self, new_data: List[Tuple[str, str]], old_data: List[Tuple[str, str]]):
+        """
+        Adds and removes records from the relation smr_triples so that the specified relations are moved from the old
+        parent nodes to the new parent nodes
+        :param new_data: list of tuples containing new parent node ids in the first index and the xmind id of the
+        edge to move in the second index
+        :param old_data: list of tuples containing old parent node ids in the first index and the xmind id of the
+        edge to move in the second index
+        """
+        self.graph.db.executemany("""
+INSERT INTO smr_triples
+SELECT distinct ?, edge_id, child_node_id, card_id
+from smr_triples
+WHERE edge_id = ?""", new_data)
+        self.graph.db.executemany("""
+DELETE FROM main.smr_triples
+WHERE parent_node_id = ? and edge_id = ?""", old_data)
+
+    def move_smr_triple_nodes(self, new_data, old_data):
+        """
+        Adds and removes records from the relation smr_triples so that the specified nodes are moved from the old
+        parent edge to the new parent edge
+        :param new_data: list of tuples containing the xmind id of the node to move in the first index and the new
+        edge id in the second index
+        :param old_data: list of tuples containing the old edge id in the first index and the xmind id of the node to
+        move in the second index
+        """
+        self.graph.db.executemany("""
+INSERT INTO smr_triples
+SELECT distinct parent_node_id, edge_id, ?, null
+from smr_triples
+WHERE edge_id = ?""", new_data)
+        self.graph.db.executemany("""
+DELETE FROM main.smr_triples
+WHERE edge_id = ? and child_node_id = ?""", old_data)
 
 
 class AnkiCollectionAttachment:

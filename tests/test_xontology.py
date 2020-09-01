@@ -164,11 +164,11 @@ def test_rename_node(ontology_with_example_map):
     # when
     cut.rename_node(xmind_edge=XmindTopicDto(
         title='are', node_id=cts.ARE_EDGE_ID), xmind_node=XmindTopicDto(
-        node_id=cts.BIOGENIC_AMINES_NODE_ID, title='nothing', image='abcde.png', link='fghij.mp3'),
+        node_id=cts.BIOGENIC_AMINES_2_NODE_ID, title='nothing', image='abcde.png', link='fghij.mp3'),
         parent_node_ids=cts.MULTIPLE_PARENTS_NODE_IDS,
         children={cts.CONSIST_OF_EDGE_ID: [cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID]})
     # then
-    new_concept = cut.get_concept_from_node_id(cts.BIOGENIC_AMINES_NODE_ID)
+    new_concept = cut.get_concept_from_node_id(cts.BIOGENIC_AMINES_2_NODE_ID)
     assert getattr(new_concept, cut.smr_world.parent_relation_name) == [
         getattr(cut, n) for n in cts.MULTIPLE_PARENTS_CLASS_NAMES]
     assert len(new_concept.consist_of_xrelation)
@@ -199,15 +199,27 @@ def test_remove_sheet(ontology_with_example_map):
     assert not cut.Serotonin.pronounciation_xrelation
 
 
-def test_move_relation(ontology_with_example_map):
+def test_move_edge(ontology_with_example_map):
     # given
     cut = ontology_with_example_map
     # when
-    cut.move_relation(old_parent_node_ids=[cts.ENZYMES_NODE_ID], new_parent_node_ids=cts.MULTIPLE_PARENTS_NODE_IDS,
-                      edge_id=cts.EXAMPLE_EDGE_ID, old_child_node_ids=[cts.MAO_2_NODE_ID],
-                      new_child_node_ids=[cts.MAO_2_NODE_ID])
+    cut.move_edge(old_parent_node_ids=[cts.MAO_2_NODE_ID], new_parent_node_ids=[cts.BIOGENIC_AMINES_1_NODE_ID],
+                  edge_id=cts.SPLITS_UP_EDGE_ID, child_node_ids=cts.MULTIPLE_PARENTS_NODE_IDS)
     # then
-    assert cut.get_concept_from_node_id(cts.ENZYMES_NODE_ID).example_xrelation == []
-    assert cut.get_concept_from_node_id(cts.NORADRENALINE_NODE_ID).example_xrelation == [
-        cut.get_concept_from_node_id(cts.MAO_2_NODE_ID)]
+    assert cut.get_concept_from_node_id(cts.MAO_2_NODE_ID).splits_up_xrelation == []
+    assert cut.get_concept_from_node_id(cts.BIOGENIC_AMINES_1_NODE_ID).splits_up_xrelation == [
+        cut.get_concept_from_node_id(i) for i in cts.MULTIPLE_PARENTS_NODE_IDS]
 
+
+def test_move_node(ontology_with_example_map):
+    # given
+    cut = ontology_with_example_map
+    # when
+    cut.move_node(old_parent_node_ids={cts.MAO_2_NODE_ID}, new_parent_node_ids=[cts.SEROTONIN_1_NODE_ID],
+                  old_parent_edge_id=cts.SPLITS_UP_EDGE_ID, new_parent_edge_id=cts.AFFECTS_EDGE_ID,
+                  node_id=cts.NORADRENALINE_NODE_ID)
+    # then
+    assert cut.get_concept_from_node_id(cts.MAO_2_NODE_ID).splits_up_xrelation == [
+        cut.get_concept_from_node_id(i) for i in cts.MULTIPLE_PARENTS_NODE_IDS if i != cts.NORADRENALINE_NODE_ID]
+    assert cut.get_concept_from_node_id(cts.SEROTONIN_1_NODE_ID).affects_xrelation == [
+        cut.get_concept_from_node_id(i) for i in cts.AFFECTS_MULTIPLE_CHILDREN_NODE_IDS + [cts.NORADRENALINE_NODE_ID]]

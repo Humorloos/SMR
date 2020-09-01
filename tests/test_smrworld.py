@@ -402,7 +402,7 @@ def test_get_xmind_nodes_in_sheet(smr_world_with_example_map):
     nodes = cut.get_xmind_nodes_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
     assert len(nodes) == 29
-    assert nodes[cts.BIOGENIC_AMINES_NODE_ID]['parent_node_ids'] == cts.MULTIPLE_PARENTS_NODE_IDS
+    assert nodes[cts.BIOGENIC_AMINES_2_NODE_ID]['parent_node_ids'] == set(cts.MULTIPLE_PARENTS_NODE_IDS)
 
 
 def test_get_root_node_id(smr_world_with_example_map):
@@ -448,3 +448,41 @@ def test_remove_xmind_edges(smr_world_with_example_map):
     assert cts.ARE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_triples")]
     assert cts.EXAMPLE_IMAGE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_notes")]
     assert cts.ARE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_notes")]
+
+
+def test_move_smr_triples(smr_world_with_example_map):
+    # given
+    cut = smr_world_with_example_map
+    # when
+    cut.move_smr_triple_edges(new_data=[
+        (cts.SEROTONIN_2_NODE_ID, cts.AFFECTS_EDGE_ID), (cts.DOPAMINE_NODE_ID, cts.AFFECTS_EDGE_ID),
+        (cts.ADRENALINE_NODE_ID, cts.AFFECTS_EDGE_ID), (cts.NORADRENALINE_NODE_ID, cts.AFFECTS_EDGE_ID),
+        (cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID, cts.CONSIST_OF_EDGE_ID)],
+        old_data=[(cts.SEROTONIN_1_NODE_ID, cts.AFFECTS_EDGE_ID),
+                  (cts.BIOGENIC_AMINES_2_NODE_ID, cts.CONSIST_OF_EDGE_ID)])
+    # then
+    references = cut.get_smr_note_reference_fields([cts.AFFECTS_EDGE_ID, cts.CONSIST_OF_EDGE_ID])
+    assert references[cts.AFFECTS_EDGE_ID] == 'biological psychology<li>investigates: information transfer and ' \
+                                              'processing</li><li>modulated by: enzymes</li><li>example: ' \
+                                              'MAO</li><li>splits up: Serotonin, dopamine, adrenaline, ' \
+                                              'noradrenaline</li>'
+    assert references[cts.CONSIST_OF_EDGE_ID] == 'biological psychology<li>investigates: information transfer and ' \
+                                                 'processing</li><li>requires: neurotransmitters<br><img ' \
+                                                 'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: ' \
+                                                 'biogenic amines</li><li><img ' \
+                                                 'src="attachments09r2e442o8lppjfeblf7il2rmd.png">: ' \
+                                                 'Serotonin</li><li>pronounciation: (media)</li>'
+
+
+def test_move_smr_triple_nodes(smr_world_with_example_map):
+    # given
+    cut = smr_world_with_example_map
+    # when
+    cut.move_smr_triple_nodes(new_data=[(cts.PERCEPTION_NODE_ID, cts.MODULATED_BY_EDGE_ID),
+                                        (cts.SLEEP_NODE_ID, cts.EMPTY_EDGE_3_ID)],
+                              old_data=[(cts.INVESTIGATES_EDGE_ID, cts.PERCEPTION_NODE_ID),
+                                        (cts.AFFECTS_EDGE_ID, cts.SLEEP_NODE_ID)])
+    # then
+    assert cut.get_smr_note_reference_fields([cts.EMPTY_EDGE_3_ID])[
+               cts.EMPTY_EDGE_3_ID] == 'biological psychology<li>investigates: information transfer and ' \
+                                       'processing</li><li>modulated by: perception</li>'
