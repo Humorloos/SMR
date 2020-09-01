@@ -28,12 +28,11 @@ class cached_property(object):
         self.fset(obj, value)
 
     def __delete__(self, obj):
-        if self.fdel is None:
-            try:
-                del obj.__dict__[self.__name__]
-            except KeyError:
-                pass
-        else:
+        try:
+            del obj.__dict__[self.__name__]
+        except KeyError:
+            pass
+        if self.fdel is not None:
             self.fdel(obj)
 
     def setter(self, fset):

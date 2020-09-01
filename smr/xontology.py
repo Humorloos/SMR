@@ -6,47 +6,12 @@ import owlready2
 from owlready2 import ThingClass
 from owlready2.namespace import Ontology
 from owlready2.prop import destroy_entity, ObjectPropertyClass
+from smr.cachedproperty import cached_property
 from smr.consts import USER_PATH
-from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindtopicdto import XmindTopicDto
-from smr.fieldtranslator import FieldTranslator
+from smr.fieldtranslator import PARENT_RELATION_NAME, CHILD_RELATION_NAME, class_from_content, \
+    relation_class_from_content
 from smr.smrworld import SmrWorld
-from smr.xmindtopic import XmindNode
-
-
-def get_question_sets(q_id_elements):
-    # Sort triples by question id for Triples pertaining to the same
-    # question to appear next to each other
-    ascendingQId = sorted(q_id_elements, key=lambda t: t['q_id'])
-    questionList = []
-
-    # Initiate tripleList with first triple
-    tripleList = [ascendingQId[0]]
-    for x, t in enumerate(ascendingQId[0:-1], start=1):
-
-        # Add the triple to the questionList if the next triple has a
-        # different question id
-        if t['q_id'] != ascendingQId[x]['q_id']:
-            questionList.append(tripleList)
-            tripleList = [ascendingQId[x]]
-
-        # Add the triple to the tripleList if it pertains to the same
-        # question as the next triple
-        else:
-            tripleList.append(ascendingQId[x])
-
-    # Finally add the last triple_list to the question_list
-    questionList.append(tripleList)
-    return questionList
-
-
-# def remove_question(question_elements, q_id):
-#     answers = set(t['o'] for t in question_elements)
-#     parents = set(t['s'] for t in question_elements)
-#     remove_relations(answers=answers, parents=parents,
-#                      question_triples=question_elements)
-#     for answer in answers:
-#         remove_concept(concept_storid=answer, q_id=q_id)
 
 
 class XOntology(Ontology):
@@ -54,8 +19,6 @@ class XOntology(Ontology):
     def __init__(self, deck_id: int, smr_world: SmrWorld):
         self.smr_world = smr_world
         self.deck_id = deck_id
-        self.field_translator = None
-        self.base_iri = None
         Ontology.__init__(self, world=self.smr_world, base_iri=self.base_iri)
         # set up classes and register ontology only if the ontology has not been set up before
         try:
@@ -64,41 +27,13 @@ class XOntology(Ontology):
             self._set_up_classes()
             self.smr_world.add_ontology_lives_in_deck(ontology_base_iri=self.base_iri, deck_id=self.deck_id)
 
-    @property
-    def smr_world(self) -> SmrWorld:
-        return self._smr_world
-
-    @smr_world.setter
-    def smr_world(self, value: SmrWorld):
-        self._smr_world = value
-
-    @property
-    def deck_id(self) -> int:
-        return self._deck_id
-
-    @deck_id.setter
-    def deck_id(self, value: int):
-        self._deck_id = value
-
-    @property
-    def field_translator(self) -> FieldTranslator:
-        if not self._field_translator:
-            self.field_translator = FieldTranslator()
-        return self._field_translator
-
-    @field_translator.setter
-    def field_translator(self, value: FieldTranslator):
-        self._field_translator = value
-
-    @property
+    @cached_property
     def base_iri(self) -> str:
-        if self._base_iri is None:
-            self.base_iri = os.path.join(USER_PATH, str(self.deck_id) + '#')
-        return self._base_iri
+        return os.path.join(USER_PATH, str(self.deck_id) + '#')
 
     @base_iri.setter
     def base_iri(self, value: str):
-        self._base_iri = value
+        self.__dict__['base_iri'] = value
 
     def get(self, storid: int) -> Union[ObjectPropertyClass, ThingClass]:
         """
@@ -157,10 +92,10 @@ class XOntology(Ontology):
         new_children = current_children + [child_concept]
         setattr(parent_concept, relationship_class_name, new_children)
         self.XmindId[parent_concept, getattr(self, relationship_class_name), child_concept].append(edge_id)
-        current_parents = getattr(child_concept, self.smr_world.parent_relation_name)
+        current_parents = getattr(child_concept, PARENT_RELATION_NAME)
         new_parents = current_parents + [parent_concept]
-        setattr(child_concept, self.smr_world.parent_relation_name, new_parents)
-        self.XmindId[child_concept, getattr(self, self.smr_world.parent_relation_name), parent_concept].append(edge_id)
+        setattr(child_concept, PARENT_RELATION_NAME, new_parents)
+        self.XmindId[child_concept, getattr(self, PARENT_RELATION_NAME), parent_concept].append(edge_id)
 
     def add_concept_from_node(self, node: XmindTopicDto):
         """
@@ -170,7 +105,7 @@ class XOntology(Ontology):
         """
         # Some concept names (e.g. 'are') can lead to errors, so catch them
         try:
-            concept = self.Concept(self.field_translator.class_from_content(node.content))
+            concept = self.Concept(class_from_content(node.content))
         except TypeError:
             raise NameError('Invalid concept name')
         concept.XmindId.append(node.node_id)
@@ -185,6 +120,7 @@ class XOntology(Ontology):
         # add objectproperty if not yet in ontology
         if not relationship_property or not isinstance(relationship_property, ObjectPropertyClass):
             with self:
+                # noinspection PyTypeChecker
                 relationship_property = types.new_class(relationship_class_name, (owlready2.ObjectProperty,))
                 relationship_property.domain = [self.Concept]
                 relationship_property.range = [self.Concept]
@@ -261,7 +197,7 @@ class XOntology(Ontology):
         # Remove old relation
         self.remove_relations(parents=parents, children=children, edge_id=xmind_edge.node_id)
         # Add new relation
-        class_text = self.field_translator.relation_class_from_content(xmind_edge.content)
+        class_text = relation_class_from_content(xmind_edge.content)
         self.add_relation(class_text)
         for parent_node_id in parent_node_ids:
             for child_node_id in child_node_ids:
@@ -363,9 +299,9 @@ class XOntology(Ontology):
                 pass
 
             # standard object properties
-            types.new_class(self.smr_world.parent_relation_name, (owlready2.ObjectProperty,))
+            types.new_class(PARENT_RELATION_NAME, (owlready2.ObjectProperty,))
 
-            types.new_class(self.smr_world.child_relation_name, (owlready2.ObjectProperty,))
+            types.new_class(CHILD_RELATION_NAME, (owlready2.ObjectProperty,))
 
             class XmindId(owlready2.AnnotationProperty):
                 pass

@@ -151,6 +151,7 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, xmin
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.nodes_2_import) == 1
     assert len(cut.nodes_4_concepts) == 1
+    assert len(cut.smr_triples_2_import) == 0
 
 
 def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept, x_ontology):
@@ -163,6 +164,7 @@ def test_import_node_if_concept_no_concept(xmind_importer_import_node_if_concept
     assert cut._smr_world.add_or_replace_xmind_nodes.call_count == 0
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.nodes_4_concepts) == 0
+    assert len(cut.smr_triples_2_import) == 0
 
 
 def test_import_node_if_concept_following_multiple_concepts(xmind_importer_import_node_if_concept, x_ontology):
@@ -175,6 +177,7 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
     assert len(cut.nodes_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.nodes_4_concepts) == 1
+    assert len(cut.smr_triples_2_import['are_xrelation']) == 4
 
 
 def test_import_edge(xmind_importer_import_edge, x_ontology):
@@ -186,7 +189,6 @@ def test_import_edge(xmind_importer_import_edge, x_ontology):
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.edge_ids_2_make_notes_of) == 1
-    assert len(cut.smr_triples_2_import) == 1
 
 
 def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge):
@@ -199,7 +201,6 @@ def test_import_edge_preceding_multiple_concepts(xmind_importer_import_edge):
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.edge_ids_2_make_notes_of) == 1
-    assert len(cut.smr_triples_2_import) == 1
 
 
 def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
@@ -212,7 +213,6 @@ def test_import_edge_empty_edge(xmind_importer_import_edge, x_ontology):
     assert len(cut.edges_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.edge_ids_2_make_notes_of) == 0
-    assert len(cut.smr_triples_2_import) == 1
 
 
 def test_finish_import(patch_aqt_mw_smr_world_and_col_with_example_map, mocker):

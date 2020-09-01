@@ -7,6 +7,7 @@ from typing import List, Optional, Tuple
 
 from bs4 import Tag, BeautifulSoup
 
+from smr import fieldtranslator
 from smr.cachedproperty import cached_property
 from smr.consts import X_MEDIA_EXTENSIONS
 from smr.dto.topiccontentdto import TopicContentDto
@@ -23,27 +24,6 @@ class XmindTopic(ABC):
         self.sheet_id = sheet_id
         self.file_path = file_path
         self.order_number = order_number
-
-    @cached_property
-    def title_tag(self):
-        return self.tag.find('title', recursive=False)
-
-    @cached_property
-    def title(self) -> str:
-        try:
-            return self.title_tag.text
-        except AttributeError:
-            return ''
-
-    @title.setter
-    def title(self, title: str):
-        if self.title == '':
-            del self.title_tag
-            title_tag = self.soup.new_tag(name='title')
-            self.tag.append(title_tag)
-        self.title_tag.string = title
-        del self.title
-        del self.content
 
     @cached_property
     def hyperlink(self) -> str:
@@ -72,11 +52,9 @@ class XmindTopic(ABC):
     def image_tag(self) -> Optional[Tag]:
         return self.tag.find('xhtml:img', recursive=False)
 
-    @image_tag.deleter
-    def image_tag(self):
-        if self.image_tag is not None:
-            self.image_tag.decompose()
-        del self.__dict__['image_tag']
+    @cached_property
+    def title_tag(self) -> Tag:
+        return self.tag.find('title', recursive=False)
 
     @cached_property
     def image(self) -> Optional[str]:
@@ -97,8 +75,35 @@ class XmindTopic(ABC):
 
     @image.deleter
     def image(self):
+        if self.image_tag is not None:
+            self.image_tag.decompose()
         del self.image_tag
-        del self.__dict__['image']
+        del self.content
+        del self.dto
+
+    @cached_property
+    def title(self) -> str:
+        try:
+            return self.title_tag.text
+        except AttributeError:
+            return ''
+
+    @title.setter
+    def title(self, title: str):
+        if self.title == '':
+            del self.title_tag
+            title_tag = self.soup.new_tag(name='title')
+            self.tag.append(title_tag)
+        self.title_tag.string = title
+        del self.__dict__['title']
+        del self.content
+
+    @title.deleter
+    def title(self):
+        self.title_tag.decompose()
+        del self.title_tag
+        del self.content
+        del self.dto
 
     @cached_property
     def media(self) -> Optional[str]:
@@ -110,6 +115,11 @@ class XmindTopic(ABC):
     @cached_property
     def content(self) -> TopicContentDto:
         return TopicContentDto(image=self.image, media=self.media, title=self.title)
+
+    @content.deleter
+    def content(self):
+        del self.content_string
+        del self.is_empty
 
     @cached_property
     def is_empty(self) -> bool:
@@ -125,7 +135,7 @@ class XmindTopic(ABC):
 
     @cached_property
     def soup(self):
-        return BeautifulSoup()
+        return BeautifulSoup(features="html.parser")
 
     @cached_property
     def content_string(self) -> str:
@@ -172,6 +182,18 @@ class XmindEdge(XmindTopic):
             return self.direct_parent_node.non_empty_sibling_nodes
         else:
             return [self.direct_parent_node]
+
+    @cached_property
+    def relation_class_name(self) -> str:
+        if self.is_empty:
+            return fieldtranslator.CHILD_RELATION_NAME
+        else:
+            return fieldtranslator.relation_class_from_content(self.content)
+
+    @XmindTopic.is_empty.deleter
+    def is_empty(self):
+        XmindTopic.is_empty.__delete__(self)
+        del self.relation_class_name
 
     def get_reference(self, reference: str = '') -> str:
         """

@@ -1,6 +1,7 @@
 import urllib
 
 from smr.dto.topiccontentdto import TopicContentDto
+from smr.fieldtranslator import CHILD_RELATION_NAME
 from tests import constants as cts
 
 
@@ -150,3 +151,18 @@ def test_order_number(x_manager):
     node = x_manager.get_node_by_id(cts.EMPTY_NODE_ID)
     # then
     assert node.order_number == 5
+
+
+def test_relation_class_name(x_manager):
+    # given
+    edge = x_manager.get_edge_by_id(cts.INVESTIGATES_EDGE_ID)
+    # then
+    assert edge.relation_class_name == 'investigates_xrelation'
+    # when
+    del edge.title
+    # then
+    assert edge.relation_class_name == CHILD_RELATION_NAME
+    # when
+    edge.image = 'some image.png'
+    # then
+    assert edge.relation_class_name == 'ximage_some_image_extension_png_xrelation'

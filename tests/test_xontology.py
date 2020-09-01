@@ -2,6 +2,7 @@ import tests.constants as cts
 from owlready2 import ObjectPropertyClass
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindtopicdto import XmindTopicDto
+from smr.fieldtranslator import PARENT_RELATION_NAME
 
 
 def test_xontology(x_ontology):
@@ -9,7 +10,6 @@ def test_xontology(x_ontology):
     cut = x_ontology
     # then
     cut._set_up_classes.assert_called()
-    assert cut.field_translator is not None
 
 
 def test_add_concept_from_node(x_ontology, x_manager):
@@ -55,7 +55,7 @@ def test_connect_concepts(ontology_with_example_map):
                          child_node_id=cts.DE_EMBEDDED_MEDIA_NODE_ID, edge_id=edge_id)
     # then
     assert parent_1.relationship == [child_1]
-    assert parent_1 in getattr(child_1, cut.smr_world.parent_relation_name)
+    assert parent_1 in getattr(child_1, PARENT_RELATION_NAME)
     # when
     cut.connect_concepts(parent_node_id=cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID,
                          relationship_class_name=relationship_class_name,
@@ -68,7 +68,7 @@ def test_connect_concepts(ontology_with_example_map):
                          child_node_id=cts.DE_EMBEDDED_MEDIA_NODE_ID, edge_id=edge_id)
     # then
     assert parent_1.relationship == [child_1, child_2]
-    assert {parent_1, parent_2}.issubset({*getattr(child_1, cut.smr_world.parent_relation_name)})
+    assert {parent_1, parent_2}.issubset({*getattr(child_1, PARENT_RELATION_NAME)})
 
     assert cut.XmindId[parent_1, getattr(cut, relationship_class_name), child_1][0] == edge_id
     assert cut.XmindId[parent_1, getattr(cut, relationship_class_name), child_2][0] == edge_id
@@ -101,7 +101,7 @@ def test_remove_relations(ontology_with_example_map):
     onto.remove_relations(children=[child], parents=parents, edge_id=cts.ARE_EDGE_ID)
     # then
     assert [getattr(p, relation_name) for p in parents] == 4 * [[]]
-    assert len(getattr(child, onto.smr_world.parent_relation_name)) == 1
+    assert len(getattr(child, PARENT_RELATION_NAME)) == 1
 
 
 def test_change_relationship_class_name(ontology_with_example_map):
@@ -142,7 +142,7 @@ def test_remove_node_does_not_remove_concept_if_nodes_left(ontology_with_example
     # then
     assert type(cut.nociceptors) == cut.Concept
     assert not cut.nociceptors.can_be_xrelation
-    assert not getattr(cut.chemical, cut.smr_world.parent_relation_name)
+    assert not getattr(cut.chemical, PARENT_RELATION_NAME)
 
 
 def test_add_node(ontology_with_example_map):
@@ -169,10 +169,9 @@ def test_rename_node(ontology_with_example_map):
         children={cts.CONSIST_OF_EDGE_ID: [cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID]})
     # then
     new_concept = cut.get_concept_from_node_id(cts.BIOGENIC_AMINES_2_NODE_ID)
-    assert getattr(new_concept, cut.smr_world.parent_relation_name) == [
-        getattr(cut, n) for n in cts.MULTIPLE_PARENTS_CLASS_NAMES]
+    assert getattr(new_concept, PARENT_RELATION_NAME) == [getattr(cut, n) for n in cts.MULTIPLE_PARENTS_CLASS_NAMES]
     assert len(new_concept.consist_of_xrelation)
-    assert new_concept in getattr(cut.one_or_more_amine_groups, cut.smr_world.parent_relation_name)
+    assert new_concept in getattr(cut.one_or_more_amine_groups, PARENT_RELATION_NAME)
 
 
 def test_get_concept_from_node_id(ontology_with_example_map):

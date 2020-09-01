@@ -6,7 +6,7 @@ from anki import Collection
 from anki.importing.noteimp import NoteImporter, ForeignNote, ADD_MODE
 from anki.models import NoteType
 from aqt.main import AnkiQt
-from smr.consts import X_MODEL_NAME, X_MAX_ANSWERS, SMR_NOTE_FIELD_NAMES
+from smr.consts import X_MODEL_NAME, SMR_NOTE_FIELD_NAMES
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.dto.smrtripledto import SmrTripleDto
@@ -14,7 +14,6 @@ from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from smr.dto.xmindsheetdto import XmindSheetDto
 from smr.dto.xmindtopicdto import XmindTopicDto
-from smr.fieldtranslator import FieldTranslator
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
 from smr.xmindsheet import MapError
@@ -220,16 +219,6 @@ class XmindImporter(NoteImporter):
         self._media_uris_2_add = value
 
     @property
-    def translator(self):
-        if not self._translator:
-            self._translator = FieldTranslator()
-        return self._translator
-
-    @translator.setter
-    def translator(self, value: FieldTranslator):
-        self._translator = value
-
-    @property
     def nodes_4_concepts(self) -> List[XmindNode]:
         try:
             return self._nodes_4_concepts
@@ -358,12 +347,22 @@ class XmindImporter(NoteImporter):
         """
         If the node is not empty:
         - adds a concept for the node to the ontology
+        - registers relations from this node to its parent nodes for the ontology
         - adds the node's data to the respective lists for finishing the import
         :param node: the node to import
         """
         if not node.is_empty:
-            # create the concept for this node in the ontology
+            # register the concept for this node in the ontology
             self.nodes_4_concepts.append(node)
+            # register relations of this node to its parent nodes
+            if node.parent_edge is not None:
+                smr_triples = [SmrTripleDto(parent_node_id=parent_node.id, edge_id=node.parent_edge.id,
+                                            child_node_id=node.id) for parent_node in node.parent_edge.parent_nodes]
+                try:
+                    self.smr_triples_2_import[node.parent_edge.relation_class_name].extend(smr_triples)
+                except KeyError:
+                    self.smr_triples_2_import[node.parent_edge.relation_class_name] = smr_triples
+            # register data for this node for the smr world
             self._append_topic_data(topic=node, type_is_node=True)
 
     def read_edge(self, edge: XmindEdge) -> None:
@@ -380,18 +379,6 @@ class XmindImporter(NoteImporter):
         if not edge.is_empty:
             # add edge to edge ids to make notes of
             self.edge_ids_2_make_notes_of.add(edge.id)
-            relation_class_name = self.translator.relation_class_from_content(edge.content)
-        # else connect concepts with child and parent relations
-        else:
-            relation_class_name = self.smr_world.child_relation_name
-        # add triples to list of smr triples for relations and smr triples
-        smr_triples = [SmrTripleDto(parent_node_id=parent_node.id, edge_id=edge.id, child_node_id=child_node.id)
-                       for parent_node in edge.parent_nodes
-                       for child_node in edge.child_nodes if not child_node.is_empty]
-        try:
-            self.smr_triples_2_import[relation_class_name].extend(smr_triples)
-        except KeyError:
-            self.smr_triples_2_import[relation_class_name] = smr_triples
         # add edge data to the respective lists
         self._append_topic_data(topic=edge, type_is_node=False)
 

@@ -4,7 +4,7 @@ from smr.consts import ADDON_PATH
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindtopicdto import XmindTopicDto
-from smr.fieldtranslator import FieldTranslator
+from smr.fieldtranslator import class_from_content, relation_class_from_content
 
 SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 RESOURCES_PATH = os.path.join(ADDON_PATH, 'resources')
@@ -275,9 +275,9 @@ EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE = \
     b'amines\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f|{|{{{|\x7f{\x94ub.'
 EDGE_FOLLOWING_MULTIPLE_NODES_NOTE_ID = 12345
 MULTIPLE_PARENTS_CONTENTS = [TopicContentDto(title=i) for i in ["Serotonin", "dopamine", "adrenaline", "noradrenaline"]]
-MULTIPLE_PARENTS_CLASS_NAMES = [FieldTranslator().class_from_content(i) for i in MULTIPLE_PARENTS_CONTENTS]
+MULTIPLE_PARENTS_CLASS_NAMES = [class_from_content(i) for i in MULTIPLE_PARENTS_CONTENTS]
 MULTIPLE_PARENTS_CHILD_CONTENT = TopicContentDto(title="biogenic amines")
-MULTIPLE_PARENTS_CHILD_CLASS_NAME = FieldTranslator().class_from_content(MULTIPLE_PARENTS_CHILD_CONTENT)
+MULTIPLE_PARENTS_CHILD_CLASS_NAME = class_from_content(MULTIPLE_PARENTS_CHILD_CONTENT)
 MULTIPLE_PARENTS_CHILD_NODE_ID = "3oqcv5qlqhn28u1opce5i27709"
 MULTIPLE_PARENTS_RELATION_CONTENT = TopicContentDto(title="are")
-MULTIPLE_PARENTS_RELATION_CLASS_NAME = FieldTranslator().relation_class_from_content(MULTIPLE_PARENTS_RELATION_CONTENT)
+MULTIPLE_PARENTS_RELATION_CLASS_NAME = relation_class_from_content(MULTIPLE_PARENTS_RELATION_CONTENT)

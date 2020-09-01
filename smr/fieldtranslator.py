@@ -3,41 +3,46 @@ import re
 from smr import consts as cts
 from smr.dto.topiccontentdto import TopicContentDto
 
+FIELD_RE_DICT = {
+    'ximage_': '<img src="',
+    'xmedia_': '[sound:',
+    'xlparenthesis_': '(',
+    '_xrparenthesis': ')',
+}
+FIELD_REGEX = re.compile("(%s)" % "|".join(FIELD_RE_DICT.keys()))
+INVERSE_DICT = {re.escape(FIELD_RE_DICT[k]): k for k in FIELD_RE_DICT}
+INVERSE_REGEX = re.compile("(%s)" % "|".join(INVERSE_DICT.keys()))
+CHILD_NAME = 'smrchild'
+PARENT_NAME = 'smrparent'
 
-class FieldTranslator:
-    def __init__(self):
-        self.field_re_dict = {
-            'ximage_': '<img src="',
-            'xmedia_': '[sound:',
-            'xlparenthesis_': '(',
-            '_xrparenthesis': ')',
-        }
-        self.field_regex = re.compile("(%s)" % "|".join(self.field_re_dict.keys()))
-        self.inverse_dict = {re.escape(self.field_re_dict[k]): k for k in self.field_re_dict}
-        self.inverse_regex = re.compile("(%s)" % "|".join(self.inverse_dict.keys()))
 
-    def class_from_content(self, content: TopicContentDto) -> str:
-        """
-        converts a node content dictionary into a string that can be used as an ontology class name
-        :param content: xmind node content DTO
-        :return: a class name generated from the node's content
-        """
-        classified: str = content.title.replace(" ", "_")
-        if content.image:
-            classified += "ximage_" + re.sub('attachments/', '', content.image)
-            classified = re.sub('(\\.)(' + '|'.join(cts.X_IMAGE_EXTENSIONS) + ')', '_extension_\\2', classified)
-        if content.media:
-            classified += "xmedia_" + re.sub('attachments/', '', content.media)
-            classified = re.sub('(\\.)(' + '|'.join(cts.X_MEDIA_EXTENSIONS) + ')', '_extension_\\2', classified)
-        classified = self.inverse_regex.sub(lambda mo: self.inverse_dict[re.escape(mo.string[mo.start():mo.end()])],
-                                            classified)
-        return classified
+def class_from_content(content: TopicContentDto) -> str:
+    """
+    converts a node content dictionary into a string that can be used as an ontology class name
+    :param content: xmind node content DTO
+    :return: a class name generated from the node's content
+    """
+    classified: str = content.title.replace(" ", "_")
+    if content.image:
+        classified += "ximage_" + re.sub('attachments/', '', content.image.replace(" ", "_"))
+        classified = re.sub('(\\.)(' + '|'.join(cts.X_IMAGE_EXTENSIONS) + ')', '_extension_\\2', classified)
+    if content.media:
+        classified += "xmedia_" + re.sub('attachments/', '', content.media.replace(" ", "_"))
+        classified = re.sub('(\\.)(' + '|'.join(cts.X_MEDIA_EXTENSIONS) + ')', '_extension_\\2', classified)
+    classified = INVERSE_REGEX.sub(lambda mo: INVERSE_DICT[re.escape(mo.string[mo.start():mo.end()])],
+                                   classified)
+    return classified
 
-    def relation_class_from_content(self, content: TopicContentDto) -> str:
-        """
-        converts a node content dictionary into a string that can be used as an ontology class name for a
-        relationship property (only difference to concepts is postfix "_xrelation"
-        :param content: xmind node content DTO
-        :return: a class name generated from the node's content
-        """
-        return self.class_from_content(content) + "_xrelation"
+
+def relation_class_from_content(content: TopicContentDto) -> str:
+    """
+    converts a node content dictionary into a string that can be used as an ontology class name for a
+    relationship property (only difference to concepts is postfix "_xrelation"
+    :param content: xmind node content DTO
+    :return: a class name generated from the node's content
+    """
+    return class_from_content(content) + "_xrelation"
+
+
+PARENT_RELATION_NAME = relation_class_from_content(TopicContentDto(title=PARENT_NAME))
+CHILD_RELATION_NAME = relation_class_from_content(TopicContentDto(title=CHILD_NAME))

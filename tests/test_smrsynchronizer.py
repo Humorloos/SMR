@@ -8,6 +8,7 @@ from anki import Collection
 from conftest import generate_new_file
 import smr.smrsynchronizer
 from smr.dto.topiccontentdto import TopicContentDto
+from smr.fieldtranslator import CHILD_RELATION_NAME
 from smr.smrsynchronizer import SmrSynchronizer
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
@@ -44,13 +45,13 @@ def test_synchronize_no_changes(smr_synchronizer_no_changes, mocker):
     # given
     cut = smr_synchronizer_no_changes
     mocker.spy(cut, '_process_local_changes')
-    mocker.spy(cut, '_process_remote_changes')
+    mocker.spy(cut, '_process_remote_file_changes')
     mocker.spy(cut, 'process_local_and_remote_changes')
     # when
     cut.synchronize()
     # then
     assert cut._process_local_changes.call_count == 0
-    assert cut._process_remote_changes.call_count == 0
+    assert cut._process_remote_file_changes.call_count == 0
     assert cut.process_local_and_remote_changes.call_count == 0
 
 
@@ -58,7 +59,7 @@ def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker, chang
     # given
     cut = smr_synchronizer_local_changes
     mocker.spy(cut, '_process_local_changes')
-    mocker.spy(cut, '_process_remote_changes')
+    mocker.spy(cut, '_process_remote_file_changes')
     mocker.spy(cut, 'process_local_and_remote_changes')
     # when
     cut.synchronize()
@@ -83,7 +84,7 @@ def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker, chang
     assert cut.onto.biogenic_amines.former_image_xrelation == [cut.onto.Serotonin_new]
     assert cut.onto.Serotonin_new.pronounciation_xrelation == [cut.onto.get_concept_from_node_id(
         cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID)]
-    assert getattr(cut.onto.Serotonin_new, cut.smr_world.child_relation_name) == [cut.onto.get_concept_from_node_id(
+    assert getattr(cut.onto.Serotonin_new, CHILD_RELATION_NAME) == [cut.onto.get_concept_from_node_id(
         cts.MAO_1_NODE_ID)]
     assert len(cut.smr_world._get_records("SELECT * from main.xmind_nodes where title = 'Serotonin new'")) == 1
     assert len(cut.smr_world.get_changed_smr_notes(cut.col)) == 0
