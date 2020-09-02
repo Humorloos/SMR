@@ -17,13 +17,13 @@ def test_on_profile_loaded(mocker, empty_anki_collection_session):
     mocker.patch("smr.main.SmrWorldMigrationDialog")
     # when
     main.on_profile_loaded()
-    tables_database_present = [
-        e[0] for e in main.mw.smr_world.graph.execute('SELECT name from sqlite_master where type = "table"').fetchall()]
+    tables_database_present = {e[0] for e in main.mw.smr_world.graph.execute(
+        'SELECT name from sqlite_master where type = "table"').fetchall()}
     main.mw.smr_world.close()
     os.unlink(os.path.join(USER_PATH, smrworld.FILE_NAME))
     main.on_profile_loaded()
-    tables_database_new = [
-        e[0] for e in main.mw.smr_world.graph.execute('SELECT name from sqlite_master where type = "table"').fetchall()]
+    tables_database_new = {
+        e[0] for e in main.mw.smr_world.graph.execute('SELECT name from sqlite_master where type = "table"').fetchall()}
     main.mw.smr_world.close()
     # then
     assert tables_database_new == tables_database_present

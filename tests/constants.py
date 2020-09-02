@@ -10,12 +10,12 @@ SUPPORT_PATH = os.path.join(ADDON_PATH, 'tests', 'support')
 RESOURCES_PATH = os.path.join(ADDON_PATH, 'resources')
 
 # smr worlds
-SMR_WORLD_DIRECTORY = os.path.join(SUPPORT_PATH, "smr_world")
+SMR_WORLD_DIRECTORY = os.path.join(SUPPORT_PATH, 'smr_world')
 # smr world for tests
-SMR_WORLD_CSV_DIRECTORY = os.path.join(SMR_WORLD_DIRECTORY, "csv")
+SMR_WORLD_CSV_DIRECTORY = os.path.join(SMR_WORLD_DIRECTORY, 'csv')
 # xmind files
-TEST_FILE_DIRECTORY = "mypath"
-TEST_FILE_NAME = "test_file"
+TEST_FILE_DIRECTORY = 'mypath'
+TEST_FILE_NAME = 'test_file'
 TEST_FILE_MAP_LAST_MODIFIED = 1594823958217
 TEST_FILE_FILE_LAST_MODIFIED = 1594823958.8585837
 TEST_DECK_ID = 1579442668731
@@ -23,9 +23,9 @@ TEST_XMIND_FILE = XmindFileDto(directory=TEST_FILE_DIRECTORY, file_name=TEST_FIL
                                map_last_modified=TEST_FILE_MAP_LAST_MODIFIED,
                                file_last_modified=TEST_FILE_FILE_LAST_MODIFIED, deck_id=TEST_DECK_ID)
 # xmind sheets
-TEST_SHEET_ID = "sheet id"
+TEST_SHEET_ID = 'sheet id'
 # xmind edges
-TEST_RELATION_EDGE_ID = "edge id"
+TEST_RELATION_EDGE_ID = 'edge id'
 TEST_EDGE_TITLE = 'edge title'
 TEST_EDGE_IMAGE = 'edge image'
 TEST_EDGE_MEDIA = 'edge media'
@@ -35,7 +35,7 @@ TEST_XMIND_EDGE = XmindTopicDto(node_id=TEST_RELATION_EDGE_ID, sheet_id=TEST_SHE
                                 image=TEST_EDGE_IMAGE, link=TEST_EDGE_MEDIA,
                                 last_modified=TEST_EDGE_LAST_MODIFIED, order_number=TEST_EDGE_ORDER_NUMBER)
 # xmind nodes
-TEST_CONCEPT_NODE_ID = "node id"
+TEST_CONCEPT_NODE_ID = 'node id'
 TEST_NODE_TITLE = 'node title'
 TEST_NODE_IMAGE = 'node image'
 TEST_NODE_MEDIA = 'node media'
@@ -45,17 +45,17 @@ TEST_XMIND_NODE = XmindTopicDto(node_id=TEST_CONCEPT_NODE_ID, sheet_id=TEST_SHEE
                                 image=TEST_NODE_IMAGE, link=TEST_NODE_MEDIA,
                                 last_modified=TEST_NODE_LAST_MODIFIED, order_number=TEST_NODE_ORDER_NUMBER)
 TEST_FILE_PATH = os.path.join(TEST_FILE_DIRECTORY, TEST_FILE_NAME + '.xmind')
-TEST_CONCEPT_CLASS_NAME = "test_concept"
-TEST_CONCEPT_2_NODE_ID = "node id2"
-TEST_CONCEPT_2_CLASS_NAME = "test_concept2"
-TEST_RELATION_CLASS_NAME = "test_relation"
+TEST_CONCEPT_CLASS_NAME = 'test_concept'
+TEST_CONCEPT_2_NODE_ID = 'node id2'
+TEST_CONCEPT_2_CLASS_NAME = 'test_concept2'
+TEST_RELATION_CLASS_NAME = 'test_relation'
 
 # smr world with example map
 ORIGINAL_SMR_WORLD_WITH_EXAMPLE_MAP_PATH = os.path.join(
-    SMR_WORLD_DIRECTORY, "smr_world_with_example_map", "smr_world.sqlite3")
+    SMR_WORLD_DIRECTORY, 'smr_world_with_example_map', 'smr_world.sqlite3')
 
 # empty smr world
-EMPTY_SMR_WORLD_NAME = "empty_smr_world.sqlite3"
+EMPTY_SMR_WORLD_NAME = 'empty_smr_world.sqlite3'
 
 # collections
 TEST_COLLECTIONS_DIRECTORY = os.path.join(SUPPORT_PATH, 'collections')
@@ -80,7 +80,7 @@ DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(DEFAULT_COLLECTION_WITH_
                                                         DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.anki2')
 DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
                                                          DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.media')
-NEUROTRANSMITTERS_IMAGE_ANKI_FILE_NAME = "attachments09r2e442o8lppjfeblf7il2rmd.png"
+NEUROTRANSMITTERS_IMAGE_ANKI_FILE_NAME = 'attachments09r2e442o8lppjfeblf7il2rmd.png'
 # with changes
 CHANGED_EXAMPLE_MAP_COLLECTION_DIRECTORY = os.path.join(EXAMPLE_MAP_COLLECTION_DIRECTORY, 'changed')
 # default
@@ -91,17 +91,17 @@ DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(
     DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY, DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.anki2')
 DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(
     DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY, DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.media')
-NEW_IMAGE_NAME = "paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg"
+NEW_IMAGE_NAME = 'paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg'
 # temporary
 TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY = os.path.join(
-    CHANGED_EXAMPLE_MAP_COLLECTION_DIRECTORY, "temporary")
-TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME = "changed_col_with_example_map"
+    CHANGED_EXAMPLE_MAP_COLLECTION_DIRECTORY, 'temporary')
+TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME = 'changed_col_with_example_map'
 TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH = os.path.join(
     TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
-    TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + ".anki2")
+    TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.anki2')
 TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA = os.path.join(
     TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_DIRECTORY,
-    TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + ".media")
+    TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_NAME + '.media')
 # added answer for warning
 NEW_ANSWER_EXAMPLE_MAP_COLLECTION_DIRECTORY = os.path.join(EXAMPLE_MAP_COLLECTION_DIRECTORY, 'new_answer')
 # default
@@ -153,11 +153,11 @@ ORIGINAL_COLLECTION_VERSION_001_PATH = os.path.join(
 
 # maps
 MAPS_DIRECTORY = os.path.join(SUPPORT_PATH, 'maps')
-NAME_EXAMPLE_MAP = "example map"
+NAME_EXAMPLE_MAP = 'example map'
 EXAMPLE_MAP_N_EDGES = 34
 NAME_MAP_GENERAL_PSYCHOLOGY = 'example_general_psychology'
-NAME_HYPERLINK_MEDIA = "serotonin.mp3"
-NEUROTRANSMITTERS_IMAGE_XMIND_URI = "attachments/09r2e442o8lppjfeblf7il2rmd.png"
+NAME_HYPERLINK_MEDIA = 'serotonin.mp3'
+NEUROTRANSMITTERS_IMAGE_XMIND_URI = 'attachments/09r2e442o8lppjfeblf7il2rmd.png'
 # original in support
 DIRECTORY_MAPS_ORIGINAL = os.path.join(MAPS_DIRECTORY, 'original')
 # question without answer
@@ -176,7 +176,7 @@ PATH_EXAMPLE_MAP_DEFAULT = os.path.join(DIRECTORY_MAPS_DEFAULT, NAME_EXAMPLE_MAP
 PATH_MAP_GENERAL_PSYCHOLOGY_DEFAULT = os.path.join(DIRECTORY_MAPS_DEFAULT, NAME_MAP_GENERAL_PSYCHOLOGY + '.xmind')
 PATH_HYPERLINK_MEDIA_DEFAULT = os.path.join(DIRECTORY_MAPS_DEFAULT, NAME_HYPERLINK_MEDIA)
 # changed
-NAME_NEW_PSYCHOLOGY = "new_psychology"
+NAME_NEW_PSYCHOLOGY = 'new_psychology'
 DIRECTORY_MAPS_CHANGED = os.path.join(MAPS_DIRECTORY, 'changes')
 PATH_EXAMPLE_MAP_CHANGED = os.path.join(DIRECTORY_MAPS_CHANGED, NAME_EXAMPLE_MAP + '.xmind')
 PATH_MAP_GENERAL_PSYCHOLOGY_CHANGED = os.path.join(DIRECTORY_MAPS_CHANGED, NAME_MAP_GENERAL_PSYCHOLOGY + '.xmind')
@@ -216,11 +216,12 @@ MAO_2_NODE_ID = '7blr5ubl6uf6c9beflm85jte19'
 CAN_BE_TRIGGERED_BY_NODE_ID = '7ite3obkfmbchr1pc6ib0o7rga'
 NOCICEPTORS_NODE_ID = '2mbb2crv3tdgr131i9j538n0ga'
 CHEMICAL_NODE_ID = '2jf5kkori2h7sdja7cgje5i71e'
-SEROTONIN_2_NODE_ID = "56ru8hj8k8361ppfrftrbahgvv"
-DOPAMINE_NODE_ID = "03eokjlomuockpeaqn2923nvvp"
+SEROTONIN_2_NODE_ID = '56ru8hj8k8361ppfrftrbahgvv'
+DOPAMINE_NODE_ID = '03eokjlomuockpeaqn2923nvvp'
 ADRENALINE_NODE_ID = '3f5lmmd8mjhe3gkbnaih1m9q8j'
-NORADRENALINE_NODE_ID = "73mo29opsuegqobtttlt2vbaqj"
-BIOGENIC_AMINES_2_NODE_ID = "3oqcv5qlqhn28u1opce5i27709"
+NORADRENALINE_NODE_ID = '73mo29opsuegqobtttlt2vbaqj'
+BIOGENIC_AMINES_2_NODE_ID = '3oqcv5qlqhn28u1opce5i27709'
+MAO_3_NODE_ID = '725pgmukesg0vqmof25tfm132n'
 MULTIPLE_PARENTS_NODE_IDS = [SEROTONIN_2_NODE_ID, DOPAMINE_NODE_ID, ADRENALINE_NODE_ID, NORADRENALINE_NODE_ID]
 AFFECTS_MULTIPLE_CHILDREN_NODE_IDS = [SLEEP_NODE_ID, PAIN_1_NODE_ID, PSYCHOLOGICAL_DISORDERS_NODE_ID]
 # edges
@@ -228,33 +229,36 @@ INVESTIGATES_EDGE_ID = '4kdqkutdha46uns1j8jndi43ht'
 TYPES_EDGE_ID = '485fcs7jl72gtqesace4v8igf0'
 EXAMPLE_IMAGE_EDGE_ID = '08eq1rdricsp1nt1b7aa181sq4'
 AFFECTS_EDGE_ID = '4lrqok8ac9hec8u2c2ul4mpo4k'
-PRONOUNCIATION_EDGE_ID = "4s27e1mvsb5jqoiuaqmnlo8m71"
+PRONOUNCIATION_EDGE_ID = '4s27e1mvsb5jqoiuaqmnlo8m71'
 DIFFERENCE_EDGE_ID = '077tf3ovn4gc1j1dqte7or33fl'
 SPLITS_UP_EDGE_ID = '61irckf1nloq42brfmbu0ke92v'
-ARE_EDGE_ID = "6iivm8tpoqj2c0euaabtput14l"
+ARE_EDGE_ID = '6iivm8tpoqj2c0euaabtput14l'
 CONSIST_OF_EDGE_ID = '0eaob1gla0j1qriki94n2os9oe'
 MODULATED_BY_EDGE_ID = '7avqd95hi5tvj0kjcg2lne603g'
 EXAMPLE_EDGE_ID = '7e1s0urn8376a2q371nujihuab'
+STANDS_FOR_EDGE_ID = '351v1hg3rt5vejrq10c1p3tko0'
 EMPTY_EDGE_3_ID = '668iln3nrlmk5ibhnf4lvbbnmo'
 TRIGGERED_BY_EDGE_ID = '4rdraflh6n2hl4a459g2urdkr6'
 CAN_BE_EDGE_ID = '4q3e21ritrvitgmjialvadn2m6'
 # edges from smr_world
-EDGE_WITH_MEDIA_XMIND_ID = "7ite3obkfmbcasdf12asd123ga"
+EDGE_WITH_MEDIA_XMIND_ID = '7ite3obkfmbcasdf12asd123ga'
 # edge from xmind test file
 
 # nodes
 INFORMATION_TRANSFER_AND_PROCESSING_NODE_ID = '4okvq29odoin406qmiq86vv1i1'
 PERCEPTION_NODE_ID = '4jf2lp878e4rn7pm85lca1vahr'
-NEUROTRANSMITTERS_NODE_ID = "4r6avbt0pbuam4fg07jod0ubec"
+NEUROTRANSMITTERS_NODE_ID = '4r6avbt0pbuam4fg07jod0ubec'
 SEROTONIN_MEDIA_HYPERLINK_NODE_ID = '1s7h0rvsclrnvs8qq9u71acml5'
-EMPTY_NODE_ID = "6b0ho6vvcs4pcacchhsgju7513"
+EMPTY_NODE_ID = '6b0ho6vvcs4pcacchhsgju7513'
 ONE_OR_MORE_AMINE_GROUPS_NODE_ID = '0s0is5027b7r6akh3he0nbu478'
 ENZYMES_NODE_ID = '5e2cicue01ikp5vnq5pp46np83'
 NEUROTRANSMITTERS_IMAGE_ATTACHMENT_NAME = 'attachments/629d18n2i73im903jkrjmr98fg.png'
 NEUROTRANSMITTERS_NODE_CONTENT = TopicContentDto(image=NEUROTRANSMITTERS_IMAGE_ATTACHMENT_NAME,
                                                  title='neurotransmitters')
+# topic content dtos
+ARE_EDGE_CONTENT = TopicContentDto(title='are')
 # Media hyperlink path as saved in content.xml, replace backslash with slash, since xmind saves paths with slashes
-UNIX_HYPERLINK_MEDIA_PATH = PATH_HYPERLINK_MEDIA_TEMPORARY.replace("\\", "/")
+UNIX_HYPERLINK_MEDIA_PATH = PATH_HYPERLINK_MEDIA_TEMPORARY.replace('\\', '/')
 MEDIA_HYPERLINK_NODE_CONTENT = TopicContentDto(media=PATH_HYPERLINK_MEDIA_TEMPORARY)
 DE_ATTACHMENT_NAME = 'attachments/395ke7i9a6nkutu85fcpa66as2.mp4'
 MEDIA_ATTACHMENT_NODE_CONTENT: TopicContentDto = TopicContentDto(media=DE_ATTACHMENT_NAME)
@@ -274,10 +278,9 @@ EDGE_FOLLOWING_MULTIPLE_NOTES_FOREIGN_NOTE_PICKLE = \
     b'dopamine, adrenaline, noradrenaline</li>\x1fare\x1fbiogenic ' \
     b'amines\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f\x1f|{|{{{|\x7f{\x94ub.'
 EDGE_FOLLOWING_MULTIPLE_NODES_NOTE_ID = 12345
-MULTIPLE_PARENTS_CONTENTS = [TopicContentDto(title=i) for i in ["Serotonin", "dopamine", "adrenaline", "noradrenaline"]]
+MULTIPLE_PARENTS_CONTENTS = [TopicContentDto(title=i) for i in ['Serotonin', 'dopamine', 'adrenaline', 'noradrenaline']]
 MULTIPLE_PARENTS_CLASS_NAMES = [class_from_content(i) for i in MULTIPLE_PARENTS_CONTENTS]
-MULTIPLE_PARENTS_CHILD_CONTENT = TopicContentDto(title="biogenic amines")
+MULTIPLE_PARENTS_CHILD_CONTENT = TopicContentDto(title='biogenic amines')
 MULTIPLE_PARENTS_CHILD_CLASS_NAME = class_from_content(MULTIPLE_PARENTS_CHILD_CONTENT)
-MULTIPLE_PARENTS_CHILD_NODE_ID = "3oqcv5qlqhn28u1opce5i27709"
-MULTIPLE_PARENTS_RELATION_CONTENT = TopicContentDto(title="are")
-MULTIPLE_PARENTS_RELATION_CLASS_NAME = relation_class_from_content(MULTIPLE_PARENTS_RELATION_CONTENT)
+MULTIPLE_PARENTS_CHILD_NODE_ID = '3oqcv5qlqhn28u1opce5i27709'
+MULTIPLE_PARENTS_RELATION_CLASS_NAME = relation_class_from_content(ARE_EDGE_CONTENT)

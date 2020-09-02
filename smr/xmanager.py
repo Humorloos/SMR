@@ -232,8 +232,7 @@ class XManager:
             assert self.manifest and self.soup
             self._update_zip()
 
-    def set_node_content(self, node_id: str, content: TopicContentDto, media_directory: str,
-                         smr_world: SmrWorld) -> None:
+    def set_node_content(self, node_id: str, content: TopicContentDto, media_directory: str) -> None:
         """
         Sets an xmind node's title and image to the ones specified in the content dto
         :param node_id: the node's xmind_id
@@ -242,9 +241,9 @@ class XManager:
         :param smr_world: the smr world to register newly added and removed images
         """
         node = self.get_node_by_id(node_id)
-        self._set_topic_content(topic=node, content=content, media_directory=media_directory, smr_world=smr_world)
+        self._set_topic_content(topic=node, content=content, media_directory=media_directory)
 
-    def set_edge_content(self, edge: XmindTopicDto, media_directory: str, smr_world: SmrWorld) -> None:
+    def set_edge_content(self, edge: XmindTopicDto, media_directory: str) -> None:
         """
         Sets an xmind edge's title and image to the ones specified in the content dto
         :param edge: xmind topic dto of the edge of which to set the content
@@ -252,20 +251,19 @@ class XManager:
         :param smr_world: the smr world to register newly added and removed images
         """
         edge = self.get_edge_by_id(edge.node_id)
-        self._set_topic_content(topic=edge, content=edge.content, media_directory=media_directory, smr_world=smr_world)
+        self._set_topic_content(topic=edge, content=edge.content, media_directory=media_directory)
 
-    def _set_topic_content(self, topic: Union[XmindEdge, XmindNode], content: TopicContentDto, media_directory: str,
-                           smr_world: SmrWorld) -> None:
+    def _set_topic_content(self, topic: Union[XmindEdge, XmindNode], content: TopicContentDto, media_directory: str) -> None:
         """
         Sets an xmind topic's title and image to the ones specified in the content dto
         :param topic: the topic to set the content for
         :param content: the topic's content
         :param media_directory: anki's collection.media directory to get images from
-        :param smr_world: the smr world to register newly added and removed images
         """
         if content.title != topic.title:
             topic.title = content.title
             self.did_introduce_changes = True
+        # TODO: add support for changing media
         # change the image if
         # - the note has an image and the node not
         # - the images of note and tag are different or
@@ -273,10 +271,10 @@ class XManager:
         if (content.image and not topic.image or content.image and content.image != topic.image) or \
                 topic.image and not content.image:
             self.set_topic_image(topic=topic, image_name=content.image,
-                                 media_directory=media_directory, smr_world=smr_world)
+                                 media_directory=media_directory)
 
     def set_topic_image(self, topic: Union[XmindNode, XmindEdge], image_name: Optional[str],
-                        media_directory: str, smr_world: SmrWorld) -> None:
+                        media_directory: str) -> None:
         """
         Sets the image of an xmind node.
         - If no note image is specified, removes the image from the specified node
@@ -286,15 +284,12 @@ class XManager:
         :param image_name: an xmind uri acquired from the note's field that specifies the image to set or None if you
         want to remove the image
         :param media_directory: anki's collection.media directory where all media files are saved
-        :param smr_world: the in which to save a new entry for new files or from which to delete removed images
-        :return:
         """
         self.did_introduce_changes = True
         # only remove the image from the map if no note_image was specified
         if not image_name:
             self.manifest.find('file-entry', attrs={"full-path": topic.image}).decompose()
             self.file_bin.append(topic.image)
-            smr_world.remove_xmind_media_to_anki_file(xmind_uri=topic.image)
             del topic.image
             return
         # Add image to list of images to add
@@ -308,15 +303,12 @@ class XManager:
             file_entry['full-path'] = image_name
             file_entry['media-type'] = new_media_type
             self.manifest.find('manifest').append(file_entry)
-            smr_world.add_xmind_media_to_anki_files([XmindMediaToAnkiFilesDto(*2 * [image_name])])
             return
         # Change the image if the node already has an image
         file_entry = self.manifest.find('file-entry', attrs={"full-path": topic.image})
         file_entry['full-path'] = image_name
         file_entry['media-type'] = new_media_type
         self.file_bin.append(topic.image)
-        smr_world.remove_xmind_media_to_anki_file(xmind_uri=topic.image)
-        smr_world.add_xmind_media_to_anki_files([XmindMediaToAnkiFilesDto(*2 * [image_name])])
         topic.image = image_name
 
     def _update_zip(self) -> None:

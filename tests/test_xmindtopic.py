@@ -166,3 +166,10 @@ def test_relation_class_name(x_manager):
     edge.image = 'some image.png'
     # then
     assert edge.relation_class_name == 'ximage_some_image_extension_png_xrelation'
+
+
+def test_order_number_node(x_manager):
+    # given
+    node = x_manager.get_node_by_id(cts.EMPTY_NODE_ID)
+    # then
+    assert node.order_number == 5

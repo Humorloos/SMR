@@ -14,16 +14,16 @@ from tests import constants as cts
 
 def test_set_up(empty_smr_world, empty_anki_collection_session):
     # given
-    expected_tables = ["store", "objs", "datas", "ontologies", "ontology_alias", "prop_fts", "resources",
+    expected_tables = {"store", "objs", "datas", "ontologies", "ontology_alias", "prop_fts", "resources",
                        "ontology_lives_in_deck", "xmind_files", "xmind_sheets", "xmind_media_to_anki_files",
-                       "xmind_edges", "smr_notes", "xmind_nodes", "smr_triples"]
-    expected_databases = [0]
+                       "xmind_edges", "smr_notes", "xmind_nodes", "smr_triples"}
+    expected_databases = {0}
     cut = empty_smr_world
     # when
     cut.set_up()
-    smrworld_tables = [r[0] for r in
-                       cut.graph.execute("SELECT name from sqlite_master where type = 'table'").fetchall()]
-    smrworld_databases = [r[0] for r in cut.graph.execute('PRAGMA database_list').fetchall()]
+    smrworld_tables = {r[0] for r in
+                       cut.graph.execute("SELECT name from sqlite_master where type = 'table'").fetchall()}
+    smrworld_databases = {r[0] for r in cut.graph.execute('PRAGMA database_list').fetchall()}
     # then
     assert smrworld_tables == expected_tables
     assert smrworld_databases == expected_databases
@@ -190,6 +190,16 @@ def test_add_smr_triples(smr_world_4_tests):
     # then
     assert list(cut.graph.execute("SELECT * FROM main.smr_triples WHERE edge_id = '{}'".format(
         test_edge_id)).fetchall())[0] == expected_entry
+
+
+def test_add_smr_triples_foreign_key_constraint(smr_world_with_example_map):
+    # given
+    cut = smr_world_with_example_map
+    # when
+    with pytest.raises(IntegrityError) as error_info:
+        cut.add_smr_triples([SmrTripleDto('this', 'is', 'invalid')])
+    # then
+    assert error_info.value.args[0] == 'FOREIGN KEY constraint failed'
 
 
 def test_get_smr_note_question_fields(smr_world_4_tests):
@@ -412,6 +422,7 @@ def test_get_xmind_edges_in_sheet(smr_world_with_example_map):
     assert len(edges[cts.ARE_EDGE_ID]['parent_node_ids']) == 4
     assert len(edges[cts.AFFECTS_EDGE_ID]['child_node_ids']) == 3
     assert len(edges[cts.AFFECTS_EDGE_ID]['parent_node_ids']) == 1
+    assert edges[cts.ARE_EDGE_ID]['xmind_edge'].content == cts.ARE_EDGE_CONTENT
 
 
 def test_remove_xmind_sheets(smr_world_with_example_map):
@@ -438,6 +449,21 @@ def test_remove_xmind_edges(smr_world_with_example_map):
     assert cts.ARE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_triples")]
     assert cts.EXAMPLE_IMAGE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_notes")]
     assert cts.ARE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_notes")]
+
+
+def test_remove_xmind_edges_foreign_key_cascade(smr_world_with_example_map):
+    # given
+    cut = smr_world_with_example_map
+    edges_2_remove = {'68381mk1p7p5ko95bg7eh4trbh', '1soij3rlgbkct9eq3uo7117sa9', '351v1hg3rt5vejrq10c1p3tko0',
+                      '0eaob1gla0j1qriki94n2os9oe', '61irckf1nloq42brfmbu0ke92v', '7e1s0urn8376a2q371nujihuab',
+                      '32dt8d2dflh4lr5oqc2oqqad28', '6iivm8tpoqj2c0euaabtput14l'}
+    # when
+    cut.remove_xmind_edges(edges_2_remove)
+    # then
+    assert len(cut._get_records(
+        f"""select * from main.smr_notes where edge_id IN ('{"', '".join(edges_2_remove)}')""")) == 0
+    assert len(cut._get_records(
+        f"""select * from main.smr_triples where edge_id IN ('{"', '".join(edges_2_remove)}')""")) == 0
 
 
 def test_move_smr_triples(smr_world_with_example_map):

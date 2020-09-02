@@ -2,7 +2,6 @@ import pytest
 
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.xmanager import XManager, TopicNotFoundError
-from smr.xmindtopic import XmindNode
 from tests import constants as cts
 
 
@@ -32,47 +31,38 @@ def test_read_attachment(x_manager):
     assert type(attachment) == bytes
 
 
-def test_set_topic_image_remove(x_manager, changed_collection_with_example_map, smr_world_with_example_map):
+def test_set_topic_image_remove(x_manager, changed_collection_with_example_map):
     node = x_manager.get_node_by_id(cts.NEUROTRANSMITTERS_NODE_ID)
     old_image = node.image
     # when
     x_manager.set_topic_image(topic=node, image_name=None,
-                              media_directory=cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
-                              smr_world=smr_world_with_example_map)
+                              media_directory=cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
     # then
     assert node.image is None
-    with pytest.raises(TypeError) as error_info:
-        smr_world_with_example_map.get_anki_file_name_from_xmind_uri(old_image)
-    assert error_info.value.args[0] == '\'NoneType\' object is not subscriptable'
     assert x_manager.did_introduce_changes is True
     assert x_manager.file_bin[0] == old_image
 
 
-def test_set_topic_image_add(x_manager, changed_collection_with_example_map, smr_world_with_example_map,
-                             tag_for_tests, xmind_node):
+def test_set_topic_image_add(x_manager, changed_collection_with_example_map, tag_for_tests, xmind_node):
     expected_image = cts.NEW_IMAGE_NAME
     # when
     x_manager.set_topic_image(topic=xmind_node, image_name=cts.NEW_IMAGE_NAME,
-                              media_directory=cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
-                              smr_world=smr_world_with_example_map)
+                              media_directory=cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
     # then
     assert xmind_node.image == expected_image
-    assert smr_world_with_example_map.get_anki_file_name_from_xmind_uri(expected_image) == expected_image
     assert x_manager.did_introduce_changes is True
     assert len(x_manager.file_bin) == 0
 
 
-def test_set_node_image_change(x_manager, smr_world_with_example_map):
+def test_set_node_image_change(x_manager):
     node = x_manager.get_node_by_id(cts.NEUROTRANSMITTERS_NODE_ID)
     expected_image = cts.NEW_IMAGE_NAME
     old_image = node.image
     # when
     x_manager.set_topic_image(topic=node, image_name=cts.NEW_IMAGE_NAME,
-                              media_directory=cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
-                              smr_world=smr_world_with_example_map)
+                              media_directory=cts.TEMPORARY_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA)
     # then
     assert node.image == expected_image
-    assert smr_world_with_example_map.get_anki_file_name_from_xmind_uri(expected_image) == expected_image
     assert x_manager.did_introduce_changes is True
     assert x_manager.file_bin[0] == old_image
 
@@ -95,11 +85,11 @@ def test_remove_node_invalid_removal(x_manager):
     assert error_info.value.args[0] == 'Topic has subtopics, can not remove.'
 
 
-def test_save_changes(x_manager, smr_world_with_example_map):
+def test_save_changes(x_manager):
     # given
     new_node_content = TopicContentDto(image=cts.NEW_IMAGE_NAME, title='new node title')
     x_manager.set_node_content(node_id=cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID, content=new_node_content,
-                               media_directory=cts.TEST_COLLECTIONS_DIRECTORY, smr_world=smr_world_with_example_map)
+                               media_directory=cts.TEST_COLLECTIONS_DIRECTORY)
     # when
     x_manager.save_changes()
     # then
@@ -107,14 +97,13 @@ def test_save_changes(x_manager, smr_world_with_example_map):
         cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID) == new_node_content
 
 
-def test_set_node_content(x_manager, smr_world_with_example_map):
+def test_set_node_content(x_manager):
     # given
     new_node_content = TopicContentDto(image=cts.NEW_IMAGE_NAME, title='new node title')
     # when
     x_manager.set_node_content(node_id=cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID, content=new_node_content,
-                               media_directory=cts.TEST_COLLECTIONS_DIRECTORY, smr_world=smr_world_with_example_map)
+                               media_directory=cts.TEST_COLLECTIONS_DIRECTORY)
     # then
-    assert smr_world_with_example_map.get_xmind_uri_from_anki_file_name(cts.NEW_IMAGE_NAME) == cts.NEW_IMAGE_NAME
     assert x_manager.get_node_content_by_id(cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID) == new_node_content
 
 

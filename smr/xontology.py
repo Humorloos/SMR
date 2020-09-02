@@ -60,38 +60,43 @@ class XOntology(Ontology):
         """
         return self.get(self.smr_world.storid_from_edge_id(edge_id))
 
-    def add_node(self, parent_node_ids: List[str], parent_edge: XmindTopicDto, relationship_class_name: str,
-                 node_2_add: XmindTopicDto):
+    def add_node(self, parent_node_ids: List[str], parent_edge: XmindTopicDto,
+                 node_2_add: XmindTopicDto, relation_class_name: Optional[str] = None):
         """
         - If the concept for the node already exists, adds the node id to the concept's node ids, else creates the
         concept
         - Connects the concept to its parents with the specified edge's information
         :param parent_edge: xmind node dto of the edge preceding the node to add
-        :param relationship_class_name: class name of the relationship with which to connect the new node
+        :param relation_class_name: class name of the relationship with which to connect the new node
         :param node_2_add: xmind node dto of the node to add with already updated content
         :param parent_node_ids: xmind node ids of the parent nodes of the node to add
         """
         self.add_concept_from_node(node_2_add)
         for parent_node_id in parent_node_ids:
             self.connect_concepts(child_node_id=node_2_add.node_id, parent_node_id=parent_node_id,
-                                  relationship_class_name=relationship_class_name, edge_id=parent_edge.node_id)
+                                  edge_id=parent_edge.node_id, relation_class_name=relation_class_name)
 
-    def connect_concepts(self, parent_node_id: str, relationship_class_name: str,
-                         edge_id: str, child_node_id: str) -> None:
+    def connect_concepts(self, parent_node_id: str, child_node_id: str, edge_id: str,
+                         relation_class_name: Optional[str] = None) -> None:
         """
         - assigns the child concept to the parent concept with the specified relation
         - assigns the parent concept to the child concept with the relation 'Parent'
         :param child_node_id: the child concept in the relation
         :param parent_node_id: the parent concept in the relation
-        :param relationship_class_name: the relation's class name
         :param edge_id: id of the xmind edge that belongs to the added relation
+        :param relation_class_name: the relation's class name
         """
         parent_concept = self.get_concept_from_node_id(parent_node_id)
         child_concept = self.get_concept_from_node_id(child_node_id)
-        current_children = getattr(parent_concept, relationship_class_name)
+        try:
+            relation_class_name = self.get_relation_from_edge_id(edge_id).name
+        except TypeError:
+            # add relation to ontology
+            self.add_relation(relation_class_name)
+        current_children = getattr(parent_concept, relation_class_name)
         new_children = current_children + [child_concept]
-        setattr(parent_concept, relationship_class_name, new_children)
-        self.XmindId[parent_concept, getattr(self, relationship_class_name), child_concept].append(edge_id)
+        setattr(parent_concept, relation_class_name, new_children)
+        self.XmindId[parent_concept, getattr(self, relation_class_name), child_concept].append(edge_id)
         current_parents = getattr(child_concept, PARENT_RELATION_NAME)
         new_parents = current_parents + [parent_concept]
         setattr(child_concept, PARENT_RELATION_NAME, new_parents)
@@ -125,8 +130,8 @@ class XOntology(Ontology):
                 relationship_property.domain = [self.Concept]
                 relationship_property.range = [self.Concept]
 
-    def remove_node(self, parent_node_ids: List[str], parent_edge_id: str, node_id: str,
-                    children: Dict[str, List[str]]):
+    def remove_node(self, parent_node_ids: List[str], node_id: str,
+                    children: Dict[str, List[str]], parent_edge_id: Optional[str] = None):
         """
         Removes the node's xmind id from the respective concept
          - if there are more nodes left belonging to the concept, removes the relations between parent and child
@@ -141,18 +146,37 @@ class XOntology(Ontology):
         only necessary in case of renaming a node)
         """
         concept = self.get_concept_from_node_id(node_id)
+        if parent_edge_id is not None:
+            self.disconnect_node(parent_node_ids=parent_node_ids, parent_edge_id=parent_edge_id, concept=concept,
+                                 children=children)
+        self.destroy_node(concept, node_id)
+
+    @staticmethod
+    def destroy_node(concept, node_id):
+        """
+        Removes the specified node id from the concept and destroys it if no more node ids are left
+        :param concept:
+        :param node_id:
+        """
         currently_associated_ids = concept.XmindId
         currently_associated_ids.remove(node_id)
         if not currently_associated_ids:
             destroy_entity(concept)
-        else:
-            # remove the relations between the node and its parents and its children in case the concept itself is not
-            # removed
-            self.remove_relations(parents=[self.get_concept_from_node_id(i) for i in parent_node_ids],
-                                  children=[concept], edge_id=parent_edge_id)
-            for child_edge_id, child_node_ids in children.items():
-                child_concepts = [self.get_concept_from_node_id(i) for i in child_node_ids]
-                self.remove_relations(parents=[concept], children=child_concepts, edge_id=child_edge_id)
+
+    def disconnect_node(self, parent_node_ids: List[str], parent_edge_id: str, concept: ThingClass,
+                        children: Dict[str, List[str]]):
+        """
+        removes the relations between the specified concepts and its parents and its children
+        :param parent_node_ids: list of node ids belonging to the parent nodes of the edge preceding the node to remove
+        :param parent_edge_id: xmind id of the node's parent edge
+        :param concept: the concept to disconnect
+        :param children: dictionary where keys are edge_ids of edges following the node to remove and values are
+        """
+        self.remove_relations(parents=[self.get_concept_from_node_id(i) for i in parent_node_ids],
+                              children=[concept], edge_id=parent_edge_id)
+        for child_edge_id, child_node_ids in children.items():
+            child_concepts = [self.get_concept_from_node_id(i) for i in child_node_ids]
+            self.remove_relations(parents=[concept], children=child_concepts, edge_id=child_edge_id)
 
     def rename_node(self, parent_node_ids: List[str], xmind_edge: Optional[XmindTopicDto], xmind_node: XmindTopicDto,
                     children: Dict[str, List[str]]) -> None:
@@ -174,17 +198,16 @@ class XOntology(Ontology):
         child_relation_names = [self.get_relation_from_edge_id(i).name for i in children]
         self.remove_node(parent_node_ids=parent_node_ids, parent_edge_id=parent_edge_id, node_id=xmind_node.node_id,
                          children=children)
-        self.add_node(parent_edge=xmind_edge, relationship_class_name=parent_relation_name,
+        self.add_node(parent_edge=xmind_edge, relation_class_name=parent_relation_name,
                       node_2_add=xmind_node, parent_node_ids=parent_node_ids)
         # connect concept to former children of removed node
         for (edge_id, child_node_ids), child_relation_name in zip(children.items(), child_relation_names):
             for child_node_id in child_node_ids:
-                self.connect_concepts(
-                    child_node_id=child_node_id, parent_node_id=xmind_node.node_id,
-                    relationship_class_name=child_relation_name, edge_id=edge_id)
+                self.connect_concepts(child_node_id=child_node_id, parent_node_id=xmind_node.node_id, edge_id=edge_id,
+                                      relation_class_name=child_relation_name)
 
-    def change_relationship_class_name(self, parent_node_ids: List[str], child_node_ids: List[str],
-                                       xmind_edge: XmindTopicDto) -> None:
+    def rename_relation(self, parent_node_ids: List[str], child_node_ids: List[str],
+                        xmind_edge: XmindTopicDto) -> None:
         """
         - Changes a relation in the ontology by removing the old relation from parents and children and adding the new
         relation from the specified xmind edge
@@ -198,12 +221,10 @@ class XOntology(Ontology):
         self.remove_relations(parents=parents, children=children, edge_id=xmind_edge.node_id)
         # Add new relation
         class_text = relation_class_from_content(xmind_edge.content)
-        self.add_relation(class_text)
         for parent_node_id in parent_node_ids:
             for child_node_id in child_node_ids:
-                self.connect_concepts(
-                    parent_node_id=parent_node_id, relationship_class_name=class_text, child_node_id=child_node_id,
-                    edge_id=xmind_edge.node_id)
+                self.connect_concepts(parent_node_id=parent_node_id, child_node_id=child_node_id,
+                                      edge_id=xmind_edge.node_id, relation_class_name=class_text)
 
     def move_edge(self, old_parent_node_ids: List[str], new_parent_node_ids: List[str], edge_id: str,
                   child_node_ids: List[str]) -> None:
@@ -215,14 +236,14 @@ class XOntology(Ontology):
         :param child_node_ids: xmind node ids of the relation's children
         :return:
         """
-        relation_class_name = self.get_relation_from_edge_id(edge_id).name
         old_parents = [self.get_concept_from_node_id(i) for i in old_parent_node_ids]
         children = [self.get_concept_from_node_id(i) for i in child_node_ids]
+        relation_class_name = self.get_relation_from_edge_id(edge_id).name
         self.remove_relations(parents=old_parents, children=children, edge_id=edge_id)
         for parent_node_id in new_parent_node_ids:
             for child_node_id in child_node_ids:
-                self.connect_concepts(parent_node_id=parent_node_id, relationship_class_name=relation_class_name,
-                                      edge_id=edge_id, child_node_id=child_node_id)
+                self.connect_concepts(parent_node_id=parent_node_id, edge_id=edge_id, child_node_id=child_node_id,
+                                      relation_class_name=relation_class_name)
 
     def move_node(self, old_parent_node_ids: Set[str], new_parent_node_ids: List[str], old_parent_edge_id: str,
                   new_parent_edge_id: str, node_id: str) -> None:
@@ -236,13 +257,11 @@ class XOntology(Ontology):
         :param node_id: xmind id of the node to move
         :return:
         """
-        relation_class_name = self.get_relation_from_edge_id(new_parent_edge_id).name
         self.remove_relations(parents=[self.get_concept_from_node_id(i) for i in old_parent_node_ids],
                               children=[self.get_concept_from_node_id(node_id)],
                               edge_id=old_parent_edge_id)
         for parent_node_id in new_parent_node_ids:
-            self.connect_concepts(parent_node_id=parent_node_id, relationship_class_name=relation_class_name,
-                                  edge_id=new_parent_edge_id, child_node_id=node_id)
+            self.connect_concepts(parent_node_id=parent_node_id, edge_id=new_parent_edge_id, child_node_id=node_id)
 
     def remove_relations(self, parents: List[ThingClass], children: List[ThingClass],
                          edge_id: str) -> None:
@@ -284,7 +303,7 @@ class XOntology(Ontology):
             self.remove_node(parent_node_ids=node['parent_node_ids'], parent_edge_id=node['parent_edge_id'],
                              node_id=node['node_id'], children={})
         # finally, remove the root node which is not included in the output of nodes_2_remove and has no parent_node_ids
-        self.remove_node(parent_node_ids=[], parent_edge_id='', node_id=root_node_id, children={})
+        self.remove_node(parent_node_ids=[], node_id=root_node_id, children={})
 
     def _set_up_classes(self) -> None:
         """

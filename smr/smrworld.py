@@ -2,6 +2,8 @@ import os
 from collections import namedtuple
 from typing import List, TextIO, Tuple, Dict, Union, Optional, Set
 
+from sqlite3 import OperationalError
+
 from anki import Collection
 from anki.importing.noteimp import ForeignNote, ForeignCard
 from anki.utils import joinFields, intTime
@@ -126,11 +128,8 @@ WHERE iri LIKE '%{PARENT_RELATION_NAME}'""").fetchone()[0]
         """
         Sets up SMR's database architecture. Use this method once to set up the database for the first time.
         """
-        sql_file: TextIO = open(os.path.join(ADDON_PATH, SQL_FILE_NAME), 'r')
-        sql_code: List[str] = sql_file.read().split(';')
-        sql_file.close()
-        for statement in sql_code:
-            self.graph.execute(statement)
+        with open(os.path.join(ADDON_PATH, SQL_FILE_NAME), 'r') as sql_file:
+            self.graph.db.executescript(sql_file.read())
         self.save()
 
     def add_ontology_lives_in_deck(self, ontology_base_iri: str, deck_id: int) -> None:
@@ -177,9 +176,6 @@ WHERE iri LIKE '%{PARENT_RELATION_NAME}'""").fetchone()[0]
         for e in entities:
             self.graph.db.execute("REPLACE INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?)",
                                   tuple(e))
-
-    # self.graph.db.executemany("REPLACE INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?)",
-    #                                   (tuple(e) for e in entities))
 
     def add_smr_triples(self, entities: List[SmrTripleDto]) -> None:
         """
@@ -509,12 +505,13 @@ group by root_id""").fetchall()
         self.graph.execute("DETACH DATABASE ?", (ANKI_COLLECTION_DB_NAME,))
         anki_collection.reopen()
 
-    def remove_xmind_media_to_anki_file(self, xmind_uri: str) -> None:
+    def remove_xmind_media_2_anki_files(self, xmind_uris: Set[str]) -> None:
         """
-        Removes an entry from the xmind_media_to_anki_files relation
-        :param xmind_uri: the uri that identifies the entry to delete
+        Removes the entries from the xmind_media_to_anki_files relation
+        :param xmind_uris: the xmind file uris that identify the entries to delete
         """
-        self.graph.execute("DELETE FROM main.xmind_media_to_anki_files WHERE xmind_uri = ?", (xmind_uri,))
+        self.graph.execute(
+            f"""DELETE FROM xmind_media_to_anki_files WHERE xmind_uri IN ('{"', '".join(xmind_uris)}')""")
 
     def storid_from_node_id(self, node_id: str) -> int:
         """
@@ -544,7 +541,6 @@ limit 1""").fetchone()[0]
         Removes all entries with the specified node ids from the relation xmind nodes
         :param xmind_nodes_2_remove: List of node ids of the nodes to remove
         """
-        self.turn_on_foreign_keys()
         self.graph.execute(f"""DELETE FROM xmind_nodes WHERE node_id IN ('{"', '".join(xmind_nodes_2_remove)}')""")
 
     def remove_xmind_edges(self, edge_ids: Set[str]):
@@ -553,7 +549,6 @@ limit 1""").fetchone()[0]
         cascade also all smr notes and smr triples with the specified edge ids from the respective relations
         :param edge_ids: Set of edge ids of the edges to remove
         """
-        self.turn_on_foreign_keys()
         self.graph.execute(f"""DELETE FROM xmind_edges WHERE edge_id IN ('{"', '".join(edge_ids)}')""")
 
     def generate_notes(self, col, edge_ids) -> Dict[str, ForeignNote]:
@@ -692,7 +687,7 @@ WHERE sheet_id = '{sheet_id}'""")
                 edges[record.edge_id]['parent_node_ids'].add(record.parent_node_id)
                 edges[record.edge_id]['child_node_ids'].add(record.child_node_id)
             except KeyError:
-                edges[record.edge_id] = {'xmind_edge': XmindTopicDto(record[:-3]),
+                edges[record.edge_id] = {'xmind_edge': XmindTopicDto(*record[:-3]),
                                          'note_id': record.note_id,
                                          'parent_node_ids': {record.parent_node_id},
                                          'child_node_ids': {record.child_node_id}}
@@ -730,7 +725,6 @@ LIMIT 1""").fetchone()[0]
         cascading also removes all nodes and edges, and smr notes and triples belonging to the sheet
         :param sheet_ids: xmind ids of the sheets to remove
         """
-        self.turn_on_foreign_keys()
         self.graph.execute(f"""
 DELETE from main.xmind_sheets where main.xmind_sheets.sheet_id IN ('{"', '".join(sheet_ids)}')""")
 
@@ -739,6 +733,12 @@ DELETE from main.xmind_sheets where main.xmind_sheets.sheet_id IN ('{"', '".join
         turns on foreign key features for the sqlite database, has to be called before deletions or updates of
         referenced keys to make use of cascade clauses and foreign key constraints
         """
+        # try to commit the current transaction before turning on foreign keys because they cannot be turned inside
+        # a transaction
+        try:
+            self.graph.execute('COMMIT')
+        except OperationalError:
+            pass
         self.graph.execute('PRAGMA foreign_keys=ON')
 
     def move_smr_triple_edges(self, new_data: List[Tuple[str, str]], old_data: List[Tuple[str, str]]):
