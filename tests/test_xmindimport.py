@@ -10,6 +10,7 @@ from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInpu
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.template import add_x_model
 from smr.xmindimport import XmindImporter
+from smr.xontology import XOntology
 
 
 @pytest.fixture
@@ -21,8 +22,9 @@ def xmind_importer_4_integration(empty_anki_collection_function, mocker, patch_a
 def set_up_importer_4_integration(col, mocker, map_path):
     collection = col
     add_x_model(collection)
-    cut = XmindImporter(col=collection, file=map_path)
-    test_deck_id = cut.col.decks.id(name="test_deck")
+    test_deck_id = col.decks.id(name=cts.TEST_DECK_NAME)
+    cut = XmindImporter(col=collection, file=map_path, onto=XOntology(test_deck_id, aqt.mw.smr_world))
+
     mocker.spy(cut, "read_edge")
     mocker.spy(cut, "read_node_if_concept")
     mocker.spy(cut, "_import_sheet")
@@ -110,13 +112,12 @@ def test_import_file(xmind_importer, mocker, x_manager):
     cut = xmind_importer
     mocker.patch.object(cut, "_import_sheet")
     mocker.patch.object(cut, "_mw")
-    cut.deck_id = cts.TEST_DECK_ID
+    mocker.patch.object(cut, "onto")
     # when
     cut._import_file()
     # then
     assert cut._import_sheet.call_count == 2
     assert cut.files_2_import[0].directory == cts.DIRECTORY_MAPS_TEMPORARY
-    assert cut.files_2_import[0].deck_id == cts.TEST_DECK_ID
     assert cut.files_2_import[0].file_name == cts.NAME_EXAMPLE_MAP
 
 
@@ -133,6 +134,7 @@ def test__import_sheet(xmind_importer, mocker, x_manager):
     cut._import_sheet(sheet_2_import)
     # then
     assert cut.mw.progress.update.call_count == 1
+    # noinspection PyUnresolvedReferences
     assert cut.mw.app.processEvents.call_count == 1
     assert cut.read_node_if_concept.call_count == 30
     assert cut.read_edge.call_count == 22
@@ -301,7 +303,7 @@ def test_import_sheet(xmind_importer_4_integration):
         XmindFileDto(directory=cts.DIRECTORY_MAPS_DEFAULT, file_name=cts.NAME_EXAMPLE_MAP, map_last_modified=5,
                      file_last_modified=5.0, deck_id=test_deck_id))
     # when
-    cut.import_sheet(sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID, deck_id=test_deck_id)
+    cut.import_sheet(sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     cut.finish_import()
     # then
     assert cut._import_sheet.call_count == 1

@@ -58,6 +58,7 @@ ORIGINAL_SMR_WORLD_WITH_EXAMPLE_MAP_PATH = os.path.join(
 EMPTY_SMR_WORLD_NAME = 'empty_smr_world.sqlite3'
 
 # collections
+TEST_DECK_NAME = "testdeck"
 TEST_COLLECTIONS_DIRECTORY = os.path.join(SUPPORT_PATH, 'collections')
 # empty collections
 EMPTY_COLLECTIONS_DIRECTORY = os.path.join(TEST_COLLECTIONS_DIRECTORY, 'empty')
@@ -201,6 +202,7 @@ ABSENT_XMIND_FILE_PATH = os.path.join(SUPPORT_PATH, 'absent_file.xmind')
 # sheets
 BIOLOGICAL_PSYCHOLOGY_SHEET_ID = '2485j5qgetfevlt00vhrn53961'
 CLINICAL_PSYCHOLOGY_SHEET_ID = '1bt0u8ahp0p8d41j6pto2d9q8t'
+NEW_SHEET_SHEET_ID = '1n45ja8a68noq3hkfp6an49q4f'
 # nodes
 SEROTONIN_1_NODE_ID = '122vli15fp65smkg4v6pq54gi3'
 BIOLOGICAL_PSYCHOLOGY_NODE_ID = '0pbme7b9sg9en8qqmmn9jj06od'

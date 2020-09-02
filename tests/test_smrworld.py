@@ -502,3 +502,13 @@ def test_move_smr_triple_nodes(smr_world_with_example_map):
     assert cut.get_smr_note_reference_fields([cts.EMPTY_EDGE_3_ID])[
                cts.EMPTY_EDGE_3_ID] == 'biological psychology<li>investigates: information transfer and ' \
                                        'processing</li><li>modulated by: perception</li>'
+
+
+def test_get_tag_by_sheet_id(smr_world_with_example_map, collection_with_example_map):
+    # given
+    cut = smr_world_with_example_map
+    # when
+    tag = cut.get_tag_by_sheet_id(sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID,
+                                  anki_collection=collection_with_example_map)
+    # then
+    assert tag == ' testdeck::example_map::biological_psychology '

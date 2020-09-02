@@ -54,7 +54,7 @@ def main():
         pass
     collection = Collection(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
     add_x_model(collection)
-    deck_id = collection.decks.id('testdeck')
+    deck_id = collection.decks.id(cts.TEST_DECK_NAME)
     # Import the example map to the deck 'testdeck'
     aqt.mw = MagicMock()
     smr_world_path = os.path.join(cts.SMR_WORLD_DIRECTORY, cts.EMPTY_SMR_WORLD_NAME)

@@ -24,6 +24,14 @@ SQL_FILE_NAME = 'smrworld.sql'
 ANKI_COLLECTION_DB_NAME = "anki_collection"
 SMR_WORLD_PATH = os.path.join(USER_PATH, FILE_NAME)
 ANNOTATED_PROPERTY_STORID = 85
+# noinspection SqlResolve
+TAGS_CTE = """
+with tags as (
+    select sheet_id, ' ' || replace(ad.name || '::' || xf.file_name || '::' || xs.name, ' ', '_') || ' ' tag
+         from xmind_sheets xs
+         join xmind_files xf on xs.file_directory = xf.directory and xs.file_name = xf.file_name
+         join anki_collection.decks ad on xf.deck_id = ad.id
+)"""
 
 Node2Remove: Dict[str, Union[XmindTopicDto, List[str]]]
 
@@ -422,13 +430,21 @@ WHERE edge_id in ({"'" + "', '".join(edge_ids) + "'"})
         """
         with AnkiCollectionAttachment(smr_world=self, anki_collection=anki_collection):
             tags = self.graph.execute(f"""-- noinspection SqlResolveForFile
-select xe.edge_id edge_id, ad.name || '::' || xf.file_name || '::' || xs.name tag
+{TAGS_CTE}
+select xe.edge_id edge_id, tag
 from xmind_edges xe
-         join xmind_sheets xs on xe.sheet_id = xs.sheet_id
-         join xmind_files xf on xs.file_directory = xf.directory and xs.file_name = xf.file_name
-         join anki_collection.decks ad on xf.deck_id = ad.id
+    join tags on xe.sheet_id = tags.sheet_id
 where edge_id in ({"'" + "', '".join(edge_ids) + "'"})""").fetchall()
-            return {row[0]: " " + row[1].replace(" ", "_") + " " for row in tags}
+            return {row[0]: row[1] for row in tags}
+
+    def get_tag_by_sheet_id(self, sheet_id: str, anki_collection: Collection) -> str:
+        """
+        Gets the tag associated with the sheet belonging to the specified sheet id
+        :param sheet_id: the sheet id of the sheet to get the tag forf
+        :param anki_collection: the anki collection to get the deck name from
+        """
+        with AnkiCollectionAttachment(smr_world=self, anki_collection=anki_collection):
+            return self._get_records(f"""{TAGS_CTE} SELECT tag FROM tags WHERE sheet_id = '{sheet_id}'""")[0].tag
 
     def get_smr_note_answer_fields(self, edge_ids: List[str]) -> Dict[str, List[str]]:
         """

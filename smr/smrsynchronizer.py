@@ -211,17 +211,19 @@ class SmrSynchronizer:
                     self.xmind_files_2_update.append(xmind_file)
                 local_change = xmind_file.file_path in self.changed_smr_notes
                 # use the appropriate strategy for getting updates
-                if not local_change and not remote_change:
-                    continue
-                elif local_change and not remote_change:
-                    self._process_local_changes(xmind_file)
-                elif not local_change and remote_change:
-                    self._process_remote_file_changes(file=xmind_file, deck_id=smr_deck.deck_id)
-                    self.importer.finish_import()
+                if local_change:
+                    if remote_change:
+                        self.process_local_and_remote_changes()
+                    else:
+                        self._process_local_changes(xmind_file)
+                        self.x_manager.save_changes()
                 else:
-                    self.process_local_and_remote_changes()
-                # apply updates to the all mediums
-                self.x_manager.save_changes()
+                    if remote_change:
+                        self._process_remote_file_changes(xmind_file)
+                        self.importer.finish_import()
+                    else:
+                        continue
+                # apply updates to the all systems
                 self._synchronize_ontology()
                 self._synchronize_smr_world()
                 self._synchronize_anki_collection()
@@ -282,6 +284,7 @@ class SmrSynchronizer:
         # adjusted. Do so after removals to avoid finding anki notes that were already deleted
         self.smr_world.add_or_replace_smr_notes(self.smr_notes_2_update + list(self.anki_notes_2_update.values()))
         del self.smr_notes_2_update
+        self.smr_world.save()
 
     def _synchronize_ontology(self):
         """
@@ -317,7 +320,7 @@ class SmrSynchronizer:
         # Remove nodes from ontology
         for concept in self.concepts_2_remove:
             self.onto.disconnect_node(parent_node_ids=concept['parent_node_ids'], parent_edge_id=concept[
-                'edge_id'], concept=concept['concept'], children={})
+                'parent_edge_id'], concept=concept['concept'], children={})
         for concept in self.concepts_2_remove:
             self.onto.destroy_node(concept=concept['concept'], node_id=concept['node_id'])
         del self.concepts_2_remove
@@ -387,7 +390,7 @@ Invalid answer removal: Cannot remove answer "{field_from_content(xmind_node.con
 follow this answer in the xmind map. I restored the answer. If you want to remove the answer, do it in the concept \
 map and then synchronize.""")
         # Add node to concepts to remove
-        self.concepts_2_remove.append({'node_id': xmind_node.node_id, 'edge_id': xmind_edge.node_id,
+        self.concepts_2_remove.append({'node_id': xmind_node.node_id, 'parent_edge_id': xmind_edge.node_id,
                                        'parent_node_ids': parent_node_ids,
                                        'concept': self.onto.get_concept_from_node_id(xmind_node.node_id)})
         # Add node to nodes to remove
@@ -520,13 +523,13 @@ remove the file from your xmind map and synchronize. I added the file to the not
                 else:
                     pass
 
-    def _process_remote_file_changes(self, file: XmindFileDto, deck_id: int):
+    def _process_remote_file_changes(self, file: XmindFileDto):
         sheets_status = self.smr_world.get_xmind_sheets_in_file(file_directory=file.directory, file_name=file.file_name)
         sheet_ids_remote = list(self.x_manager.sheets)
-        self.importer = XmindImporter(col=self.col, file=file.file_path)
+        self.importer = XmindImporter(col=self.col, file=file.file_path, onto=self.onto)
         for sheet_id in set(list(sheets_status) + sheet_ids_remote):
             if sheet_id not in sheets_status:
-                self.importer.import_sheet(sheet_id=sheet_id, deck_id=deck_id)
+                self.importer.import_sheet(sheet_id=sheet_id)
             elif sheet_id not in sheet_ids_remote:
                 self._remove_sheet(sheet_id)
             elif sheets_status[sheet_id].last_modified != self.x_manager.sheets[sheet_id].last_modified:
@@ -618,8 +621,6 @@ remove the file from your xmind map and synchronize. I added the file to the not
         remote_edge_dto.last_modified = edge_status['xmind_edge'].last_modified
         if edge_status['xmind_edge'].content != edge_remote.content:
             # update ontology relation
-            # TODO: Add the edge id here to the dict
-            assert False
             self.relations_2_rename.append({
                 'parent_node_ids': [node.id for node in edge_remote.parent_nodes],
                 'xmind_edge': remote_edge_dto,

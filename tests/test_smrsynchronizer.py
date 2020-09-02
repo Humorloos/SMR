@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from assertpy import assert_that
 
 import aqt
 import tests.constants as cts
@@ -145,8 +146,8 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     generate_new_file(cts.PATH_EXAMPLE_MAP_CHANGED, cts.PATH_EXAMPLE_MAP_TEMPORARY)
     generate_new_file(cts.PATH_MAP_GENERAL_PSYCHOLOGY_CHANGED, cts.PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY)
     generate_new_file(cts.PATH_HYPERLINK_MEDIA_CHANGED, cts.PATH_HYPERLINK_MEDIA_TEMPORARY)
-    generate_new_file(cts.PATH_MAP_NEW_PSYCHOLOGY, os.path.join(cts.DIRECTORY_MAPS_TEMPORARY,
-                                                                cts.NAME_NEW_PSYCHOLOGY + '.xmind'))
+    generate_new_file(cts.PATH_MAP_NEW_PSYCHOLOGY, os.path.join(
+        cts.DIRECTORY_MAPS_TEMPORARY, cts.NAME_NEW_PSYCHOLOGY + '.xmind'))
     mocker.patch('aqt.mw')
     aqt.mw.smr_world = smr_world_with_example_map
     aqt.mw.col = collection_with_example_map
@@ -155,4 +156,13 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     # when
     cut.synchronize()
     # then
+    assert_that(cut.onto.information_transfer_and_processing.new_question_xrelation).contains(
+        cut.onto.answer_1, cut.onto.answer_2)
+    assert_that([n['xmind_node'].title for n in cut.smr_world.get_xmind_nodes_in_sheet(
+        cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID).values()]).contains('answer 1', 'answer 2', 'answer 2.1', 'answer 3.1')
+    assert_that([r.name for r in cut.smr_world._get_records('select * from main.xmind_sheets')]).contains(
+        'biological psychology', 'general psychology', 'New sheet')
+    assert_that(cut.col.tags.all()).contains_only(
+        'testdeck::example_general_psychology::general_psychology', 'testdeck::example_map::biological_psychology',
+        'testdeck::example_map::New_sheet')
     assert False

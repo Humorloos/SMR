@@ -28,11 +28,12 @@ class XmindImporter(NoteImporter):
     log: List[str]
     needMapper = False
 
-    def __init__(self, col: Collection, file: str):
+    def __init__(self, col: Collection, file: str, onto: Optional[XOntology] = None):
         NoteImporter.__init__(self, col, file)
         self.mw: AnkiQt = aqt.mw
         self.smr_world: SmrWorld = self.mw.smr_world
-        self.translator = None
+        # if no ontology is provided, it is assigned later
+        self.onto = onto
         self.is_running: bool = True
         self.notes_2_import: Dict[str, ForeignNote] = {}
         self.media_uris_2_add = None
@@ -44,11 +45,8 @@ class XmindImporter(NoteImporter):
         self.edges_2_import: List[XmindTopicDto] = []
         self.smr_notes_2_add: List[SmrNoteDto] = []
         # deck id, deck name, and repair are specified in deck selection dialog
-        self.deck_id: Optional[int] = None
         self.deck_name: str = ''
         self.repair: bool = False
-        # ontology is assigned when deck_id was selected
-        self.onto: Optional[XOntology] = None
         # fields from NoteImporter:
         self.model: NoteType = col.models.byName(X_MODEL_NAME)
         self.allowHTML: bool = True
@@ -61,7 +59,7 @@ class XmindImporter(NoteImporter):
     @property
     def deck_name(self):
         if not self._deck_name:
-            self.deck_name = self.col.decks.get(self.deck_id)['name']
+            self.deck_name = self.col.decks.get(self.onto.deck_id)['name']
         return self._deck_name
 
     @deck_name.setter
@@ -79,10 +77,6 @@ class XmindImporter(NoteImporter):
     @edge_ids_2_make_notes_of.setter
     def edge_ids_2_make_notes_of(self, value: Set[str]):
         self._edge_ids_2_make_notes_of = value
-
-    @property
-    def deck_id(self) -> Optional[int]:
-        return self._deck_id
 
     @property
     def files_2_import(self) -> List[XmindFileDto]:
@@ -171,10 +165,6 @@ class XmindImporter(NoteImporter):
     @smr_world.setter
     def smr_world(self, value: SmrWorld):
         self._smr_world = value
-
-    @deck_id.setter
-    def deck_id(self, value):
-        self._deck_id = value
 
     @property
     def onto(self) -> XOntology:
@@ -267,9 +257,8 @@ class XmindImporter(NoteImporter):
         - Generates the notes to be imported on finish import from the imported data
         :param user_inputs: user inputs from the deck selection dialog
         """
-        self.deck_id = user_inputs.deck_id
         self.repair = user_inputs.repair
-        self.onto = XOntology(deck_id=self.deck_id, smr_world=self.smr_world)
+        self.onto = XOntology(deck_id=user_inputs.deck_id, smr_world=self.smr_world)
         # Set model to Stepwise map retrieval model
         self.mw.progress.start(immediate=True, label='importing...')
         self.mw.app.processEvents()
@@ -292,14 +281,11 @@ class XmindImporter(NoteImporter):
             self.media_2_anki_files_2_import.append(XmindMediaToAnkiFilesDto(
                 xmind_uri=uri, anki_file_name=new_media_name))
 
-    def import_sheet(self, sheet_id: str, deck_id: int):
+    def import_sheet(self, sheet_id: str):
         """
         Imports only the sheet with the specified id and adds its contents to the smr world
         :param sheet_id: xmind id of the sheet to import
-        :param deck_id: anki id of the deck to import the notes to
         """
-        self.deck_id = deck_id
-        self.onto = XOntology(deck_id=self.deck_id, smr_world=self.smr_world)
         self._import_sheet(sheet_id)
 
     def _import_file(self):
@@ -311,7 +297,7 @@ class XmindImporter(NoteImporter):
         self.files_2_import.append(XmindFileDto(
             directory=directory, file_name=file_name,
             map_last_modified=self.x_manager.map_last_modified, file_last_modified=self.x_manager.file_last_modified,
-            deck_id=self.deck_id))
+            deck_id=self.onto.deck_id))
         for sheet in self.x_manager.sheets:
             if self.is_running:
                 self._import_sheet(sheet)
@@ -430,11 +416,11 @@ class XmindImporter(NoteImporter):
         - Adds card ids from imported notes to the triples they belong to in the smr world
         """
         # Add all notes to the collection
-        self.col.decks.select(self.deck_id)
-        deck = self.col.decks.get(self.deck_id)
+        self.col.decks.select(self.onto.deck_id)
+        deck = self.col.decks.get(self.onto.deck_id)
         deck['mid'] = self.model['id']
         self.col.decks.save(deck)
-        self.model['did'] = self.deck_id
+        self.model['did'] = self.onto.deck_id
         self.col.models.save(self.model)
         self.importNotes(list(self.notes_2_import.values()))
         # Link imported notes to edges

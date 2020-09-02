@@ -1,4 +1,5 @@
 import pytest
+from assertpy import assert_that
 
 import tests.constants as cts
 from smr.dto.topiccontentdto import TopicContentDto
@@ -89,6 +90,11 @@ def test_field_from_content(smr_world_with_example_map):
 
 
 def test_remove_notes_by_sheet_id(note_manager, smr_world_with_example_map):
+    # given
     cut = note_manager
+    # when
     cut.remove_notes_by_sheet_id(sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID, smr_world=smr_world_with_example_map)
+    # then
     assert len(cut.col.find_notes('')) == 11
+    assert_that(cut.col.tags.all()).contains_only('testdeck::example_general_psychology::general_psychology',
+                                                  'testdeck::example_map::clinical_psychology')
