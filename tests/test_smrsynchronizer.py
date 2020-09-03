@@ -184,3 +184,7 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     assert cut.smr_world.get_smr_note_reference_fields([cts.EXAMPLE_IMAGE_EDGE_ID])[cts.EXAMPLE_IMAGE_EDGE_ID][
            :196] == cut.smr_world.get_smr_note_reference_fields([cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID])[
                         cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID][:196]
+    assert cut.smr_world._get_records(
+        "select order_number from main.xmind_nodes where title = 'psychological disorders'")[0][0] == 1
+    assert cut.col.getNote(cut.col.findNotes('affects')[0]).fields[2] == 'psychological disorders'
+# TODO: Add assertion that image was removed correctly

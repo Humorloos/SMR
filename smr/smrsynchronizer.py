@@ -442,14 +442,12 @@ map and then synchronize.""")
                                                    parent_node_ids=note_data_status['parents'])
                         anki_note_was_changed = True
                     else:
-                        # TODO: check if case of answers changing position is covered in example map
                         question_conent_local = content_from_field(field=local_answer_field, smr_world=self.smr_world)
                         if not answer_id:
                             self._add_answer(answer_content=question_conent_local, xmind_edge=note_data_status['edge'])
                             anki_note_was_changed = True
                         # change answer if content was changed
                         elif question_conent_local != answer_data_status['node'].content:
-                            # TODO: check if exists and if not add case where an image is removed in the map + test
                             content_status = answer_data_status['node'].content
                             self._register_topic_media_changes(
                                 content_status=content_status, content_local=question_conent_local, media_is_image=True)
