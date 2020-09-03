@@ -552,7 +552,6 @@ remove the file from your xmind map and synchronize. I added the file to the not
                 node_data_status = nodes_status[node_id]
                 self._register_remote_node_removal(node_data_status)
             elif nodes_status[node_id]['xmind_node'].last_modified != nodes_remote[node_id].last_modified:
-                # TODO: make sure case of moved answer is covered by changed example map
                 self._register_remote_node_changes(node_data_status=nodes_status[node_id],
                                                    node_remote=nodes_remote[node_id])
 

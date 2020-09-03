@@ -171,9 +171,16 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
         'New sheet', 'first new sheet topic', 'another one', 'yet another one', 'answer to this other question',
         'yet another answer')
     assert cut.onto.another_one.question_following_these_multiple_answers_xrelation == [cut.onto.yet_another_answer]
-    assert_that([c.new_question_following_multiple_answers_xrelation for c in [cut.onto.enzymes, cut.onto.new_answer]])\
-        .is_length(2)\
-        .contains_only([cut.onto.answer_following_mult_answers])
+    assert_that([c.new_question_following_multiple_answers_xrelation for c in [
+        cut.onto.Margret, cut.onto.new_answer]]).is_length(2).contains_only([cut.onto.answer_following_mult_answers])
     assert cut.onto.enzymes.example_xrelation == []
     assert cut.col.findNotes('enzymes example') == []
-    assert cut.smr_world._get_records("select * from main.xmind_nodes where title = 'MAO'") == []
+    assert cut.onto.neurotransmitters_changed_textximage_629d18n2i73im903jkrjmr98fg_extension_png.types_xrelation == [
+        cut.onto.biogenic_amines, cut.onto.enzymes]
+    assert set(cut.col.getNote(n).fields[1] for n in cut.col.findNotes('neurotransmitters changed text')) == {
+        'pronounciation', 'completely unrelated animation', 'affects', 'types', 'example (former image)',
+        'difference to MAO', 'requires', 'new question following multiple answers all there', 'mult bridge question',
+        'question to new bridge answer'}
+    assert cut.smr_world.get_smr_note_reference_fields([cts.EXAMPLE_IMAGE_EDGE_ID])[cts.EXAMPLE_IMAGE_EDGE_ID][
+           :196] == cut.smr_world.get_smr_note_reference_fields([cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID])[
+                        cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID][:196]

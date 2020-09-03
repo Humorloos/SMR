@@ -242,6 +242,7 @@ STANDS_FOR_EDGE_ID = '351v1hg3rt5vejrq10c1p3tko0'
 EMPTY_EDGE_3_ID = '668iln3nrlmk5ibhnf4lvbbnmo'
 TRIGGERED_BY_EDGE_ID = '4rdraflh6n2hl4a459g2urdkr6'
 CAN_BE_EDGE_ID = '4q3e21ritrvitgmjialvadn2m6'
+COMPLETELY_UNRELATED_ANIMATION_EDGE_ID = '4vfsmbd1fmn6s0tqmlj4cei7pe'
 # edges from smr_world
 EDGE_WITH_MEDIA_XMIND_ID = '7ite3obkfmbcasdf12asd123ga'
 # edge from xmind test file
