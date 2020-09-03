@@ -21,12 +21,6 @@
   - investigates
     - information transfer and processing
 	  - _modulated by (changed question)_ **changed question, with changed index (from 2 to 1)**
-        - enzymes
-          - ~~example~~ **everything after _example_ was also removed**
-          - 
-            - other enzymes **question following empty edge with answer**
-              - question to new bridge answer
-                - answer to that question
         - _new answer_ **Added answer with following questions**
           - question to new answer
             - answer to new answer
@@ -54,6 +48,12 @@
                             - mult bridge answer
                       - new question following multiple answers all there **new question following multiple answers with old answers**
                         - all there answer
+            - enzymes **answer with changed position**
+              - ~~example~~ **everything after _example_ was also removed**
+              - 
+                - other enzymes **question following empty edge with answer**
+                  - question to new bridge answer
+                    - answer to that question
       - _new question_ **New question with following questions**
         - answer 1
           - new question 2
