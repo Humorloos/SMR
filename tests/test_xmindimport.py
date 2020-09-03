@@ -35,14 +35,14 @@ def set_up_importer_4_integration(col, mocker, map_path):
 @pytest.fixture
 def xmind_importer_import_node_if_concept(mocker, xmind_importer):
     importer = xmind_importer
-    mocker.patch.object(importer, "_onto")
+    mocker.patch.object(importer, "onto")
     yield importer
 
 
 @pytest.fixture(scope='function')
 def xmind_importer_import_edge(xmind_importer, mocker):
     importer = xmind_importer
-    mocker.patch.object(importer, "_onto")
+    mocker.patch.object(importer, "onto")
     mocker.patch.object(importer, "_mw")
     return importer
 
@@ -128,7 +128,7 @@ def test__import_sheet(xmind_importer, mocker, x_manager):
     mocker.patch.object(cut, "_mw")
     mocker.patch.object(cut, "read_node_if_concept")
     mocker.patch.object(cut, "read_edge")
-    mocker.patch.object(cut, "_onto")
+    mocker.patch.object(cut, "onto")
     cut._active_manager = x_manager
     # when
     cut._import_sheet(sheet_2_import)

@@ -618,17 +618,17 @@ natural join smr_notes sn""")
         return {record.edge_id: SmrNoteDto(note_id=record.note_id, edge_id=record.edge_id,
                                            last_modified=intTime()) for record in child_records}
 
-    def get_note_ids_from_sheet_id(self, sheet_id: str) -> List[int]:
+    def get_note_ids_from_sheet_id(self, sheet_id: str) -> Set[int]:
         """
         Gets all note ids that are associated to the sheet with the specified id
         :param sheet_id: the xmind sheet id of the sheet to get the note ids for
-        :return: a list of all note ids associated to the sheet
+        :return: a set of all note ids associated to the sheet
         """
-        return [r[0] for r in self.graph.execute("""
+        return {r[0] for r in self.graph.execute("""
 SELECT note_id
 from smr_notes
 join xmind_edges xe on smr_notes.edge_id = xe.edge_id
-where sheet_id = ?""", (sheet_id,))]
+where sheet_id = ?""", (sheet_id,))}
 
     def get_nodes_2_remove_by_sheet(self, sheet_id: str) -> List['Node2Remove']:
         """

@@ -167,14 +167,6 @@ class XmindImporter(NoteImporter):
         self._smr_world = value
 
     @property
-    def onto(self) -> XOntology:
-        return self._onto
-
-    @onto.setter
-    def onto(self, value: XOntology):
-        self._onto = value
-
-    @property
     def smr_notes_2_add(self) -> List[SmrNoteDto]:
         return self._smr_notes_2_add
 

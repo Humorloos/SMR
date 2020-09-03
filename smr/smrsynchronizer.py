@@ -37,7 +37,7 @@ class SmrSynchronizer:
         self.smr_world = aqt.mw.smr_world
         self.note_manager = XNoteManager(col=aqt.mw.col)
         self.col = aqt.mw.col
-        self.log = []
+        self.must_remove_anki_tags = False
 
     @property
     def x_manager(self) -> XManager:
@@ -87,13 +87,9 @@ class SmrSynchronizer:
     def col(self, value: Collection):
         self._col = value
 
-    @property
+    @cached_property
     def log(self) -> List[str]:
-        return self._log
-
-    @log.setter
-    def log(self, value: List[str]):
-        self._log = value
+        return []
 
     @cached_property
     def xmind_files_2_update(self) -> List[XmindFileDto]:
@@ -147,10 +143,6 @@ class SmrSynchronizer:
     @cached_property
     def anki_notes_2_update(self) -> Dict[str, SmrNoteDto]:
         return self.smr_world.get_updated_child_smr_notes(list(self.edge_ids_of_anki_notes_2_update))
-
-    @cached_property
-    def anki_sheets_2_remove(self) -> List[str]:
-        return []
 
     @cached_property
     def onto_sheets_2_remove(self) -> Dict[str, str]:
@@ -245,9 +237,9 @@ class SmrSynchronizer:
         self.col.remove_notes(list(self.anki_notes_2_remove))
         del self.anki_notes_2_remove
         # bulk remove notes for removed sheets
-        for sheet_id in self.anki_sheets_2_remove:
-            self.note_manager.remove_notes_by_sheet_id(sheet_id, self.smr_world)
-        del self.anki_sheets_2_remove
+        if self.must_remove_anki_tags:
+            self.must_remove_anki_tags = False
+            self.note_manager.clear_unused_tags()
         self.note_manager.save_col()
 
     def _synchronize_smr_world(self):
@@ -662,7 +654,8 @@ remove the file from your xmind map and synchronize. I added the file to the not
         adds the needed data for removing the sheet with the specified id to the respective data structures
         :param sheet_id: xmind sheet id of the sheet to remove
         """
-        self.anki_sheets_2_remove.append(sheet_id)
+        self.anki_notes_2_remove.update(self.smr_world.get_note_ids_from_sheet_id(sheet_id))
+        self.must_remove_anki_tags = True
         self.onto_sheets_2_remove[sheet_id] = self.smr_world.get_root_node_id(sheet_id)
         self.xmind_sheets_2_remove.append(sheet_id)
 

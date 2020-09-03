@@ -431,7 +431,7 @@ def test_remove_xmind_sheets(smr_world_with_example_map):
     # when
     cut.remove_xmind_sheets([cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID])
     # then
-    assert cut.get_note_ids_from_sheet_id(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == []
+    assert cut.get_note_ids_from_sheet_id(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == set()
     assert cut.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
     assert cut.get_xmind_nodes_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
     assert len(cut.get_xmind_sheets_in_file(cts.DIRECTORY_MAPS_TEMPORARY, cts.NAME_EXAMPLE_MAP)) == 1

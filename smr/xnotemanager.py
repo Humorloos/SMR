@@ -147,15 +147,10 @@ class XNoteManager:
     def model(self, value: ModelManager):
         self._model = value
 
-    def remove_notes_by_sheet_id(self, sheet_id: str, smr_world: SmrWorld) -> None:
+    def clear_unused_tags(self) -> None:
         """
-        - Removes all notes belonging to the specified sheet from the collection
-        - Removes the tags belonging to the sheet from the collection
-        :param sheet_id: id of the sheet to remove the notes for
-        :param smr_world: the smr world to get the note ids from
+        removes unused tags from the collection
         """
-        note_ids_in_sheet = smr_world.get_note_ids_from_sheet_id(sheet_id)
-        self.col.remove_notes(note_ids_in_sheet)
         self.col.tags.registerNotes()
 
     def save_col(self) -> None:
