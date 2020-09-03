@@ -263,7 +263,6 @@ class XManager:
         if content.title != topic.title:
             topic.title = content.title
             self.did_introduce_changes = True
-        # TODO: add support for changing media
         # change the image if
         # - the note has an image and the node not
         # - the images of note and tag are different or

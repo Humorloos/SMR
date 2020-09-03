@@ -165,4 +165,15 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     assert_that(cut.col.tags.all()).contains_only(
         'testdeck::example_general_psychology::general_psychology', 'testdeck::example_map::biological_psychology',
         'testdeck::example_map::New_sheet')
-    assert False
+    assert len(cut.col.findNotes('New_Sheet')) == 3
+    assert_that([r['xmind_node'].title for r in cut.smr_world.get_xmind_nodes_in_sheet(
+        cts.NEW_SHEET_SHEET_ID).values()]).contains(
+        'New sheet', 'first new sheet topic', 'another one', 'yet another one', 'answer to this other question',
+        'yet another answer')
+    assert cut.onto.another_one.question_following_these_multiple_answers_xrelation == [cut.onto.yet_another_answer]
+    assert_that([c.new_question_following_multiple_answers_xrelation for c in [cut.onto.enzymes, cut.onto.new_answer]])\
+        .is_length(2)\
+        .contains_only([cut.onto.answer_following_mult_answers])
+    assert cut.onto.enzymes.example_xrelation == []
+    assert cut.col.findNotes('enzymes example') == []
+    assert cut.smr_world._get_records("select * from main.xmind_nodes where title = 'MAO'") == []

@@ -321,7 +321,6 @@ class SmrSynchronizer:
             self.onto.remove_sheet(sheet_id=sheet_id, root_node_id=root_node_id)
         del self.onto_sheets_2_remove
 
-    # TODO: Implement this, do not forget here that we need to add smr triples in this case
     def _add_answer(self, answer_content: TopicContentDto, xmind_edge: XmindTopicDto):
         print('add answer to map')
         print('add answer to ontology')
@@ -445,7 +444,6 @@ map and then synchronize.""")
                     else:
                         # TODO: check if case of answers changing position is covered in example map
                         question_conent_local = content_from_field(field=local_answer_field, smr_world=self.smr_world)
-                        # TODO: add answer to remote if added in anki (not implemented yet)
                         if not answer_id:
                             self._add_answer(answer_content=question_conent_local, xmind_edge=note_data_status['edge'])
                             anki_note_was_changed = True
