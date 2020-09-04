@@ -62,3 +62,7 @@
           - new question 3
             - answer 3.1
         - answer 2
+    - perception
+      - 
+        - Pain
+          - can be inhibited by _new image_ **added image in question in map**

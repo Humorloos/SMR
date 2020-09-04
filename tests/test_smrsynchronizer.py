@@ -197,5 +197,14 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     assert getattr(cut.onto.biogenic_amines, relation_class_from_content(
         TopicContentDto(title=former_image_title)))[0] == cut.onto.Serotonin
     assert len(cut.col.findNotes(former_image_title)) > 0
-    assert cut.smr_world.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)[cts.EXAMPLE_IMAGE_EDGE_ID][
-               'xmind_edge'].title == former_image_title
+    assert_that([n['xmind_edge'].content for n in cut.smr_world.get_xmind_edges_in_sheet(
+        cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID).values()]).contains(
+        TopicContentDto(title=former_image_title),
+        TopicContentDto(image='attachments/3rqffo150j4thev5vlag2sgcu6.png', title='can be inhibited by'))
+    assert cut.onto.Pain.can_be_inhibited_byximage_3rqffo150j4thev5vlag2sgcu6_extension_png_xrelation[
+               0] == cut.onto.Serotonin
+    assert cut.col.getNote(cut.col.findNotes('can be inhibited by')[0]).fields[
+               1] == 'can be inhibited by<br><img src="attachments3rqffo150j4thev5vlag2sgcu6.png">'
+
+# TODO: also add an image to an answer in the map and add a test for this
+# TODO: add test case for added media for remote sync for both answers and questions (can be the 环境很好 file)

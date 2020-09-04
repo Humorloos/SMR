@@ -24,6 +24,7 @@ def main():
         user_directory, 'collection.anki2'))
     generate_new_tree(src=cts.DEFAULT_COLLECTION_WITH_EXAMPLE_MAP_MEDIA, dst=os.path.join(
         user_directory, 'collection.media'))
+    generate_new_file(src=cts.PATH_EXAMPLE_MAP_DEFAULT, dst=cts.PATH_EXAMPLE_MAP_TEMPORARY)
 
 
 # Call the main function

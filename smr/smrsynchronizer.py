@@ -521,6 +521,8 @@ remove the file from your xmind map and synchronize. I added the file to the not
         """
         sheets_status = self.smr_world.get_xmind_sheets_in_file(file_directory=file.directory, file_name=file.file_name)
         sheet_ids_remote = list(self.x_manager.sheets)
+        # todo: at the moment we create two xmindimporters, one here and one later in synchronize_anki_collection. we
+        #  probably only need one.
         self.importer = XmindImporter(col=self.col, file=file.file_path, onto=self.onto)
         for sheet_id in set(list(sheets_status) + sheet_ids_remote):
             if sheet_id not in sheets_status:
@@ -612,12 +614,25 @@ remove the file from your xmind map and synchronize. I added the file to the not
         # register edge for renaming in ontology if necessary
         remote_edge_dto = edge_remote.dto
         remote_edge_dto.last_modified = edge_status['xmind_edge'].last_modified
-        if edge_status['xmind_edge'].content != edge_remote.content:
+        content_status = edge_status['xmind_edge'].content
+        content_remote = edge_remote.content
+        if content_status != content_remote:
             # update ontology relation
             self.relations_2_rename.append({
                 'parent_node_ids': [node.id for node in edge_remote.parent_nodes],
                 'xmind_edge': remote_edge_dto,
                 'child_node_ids': [node.id for node in edge_remote.non_empty_child_nodes]})
+            # update image if necessary
+            if content_remote.image is not None:
+                if content_status.image is not None:
+                    if content_remote.image != content_status.image:
+                        self.xmind_uris_2_remove.add(content_status.image)
+                        self.importer.media_uris_2_add.append(content_remote.image)
+                else:
+                    self.importer.media_uris_2_add.append(content_remote.image)
+            else:
+                if content_status.image is not None:
+                    self.xmind_uris_2_remove.add(content_status.image)
         # add edge id to edge ids of notes 2 update
         self.xmind_edges_2_update.append(remote_edge_dto)
         # add edge id to list of edge ids of anki notes to update
