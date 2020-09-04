@@ -1,7 +1,6 @@
 LICENSE.txt
 MANIFEST.in
 README.rst
-TODO.rst
 __init__.py
 annotation.py
 base.py
@@ -217,7 +216,6 @@ doc/html/_static/comment-close.png
 doc/html/_static/comment.png
 doc/html/_static/dialog-note.png
 doc/html/_static/dialog-seealso.png
-doc/html/_static/dialog-todo.png
 doc/html/_static/dialog-topic.png
 doc/html/_static/dialog-warning.png
 doc/html/_static/doctools.js

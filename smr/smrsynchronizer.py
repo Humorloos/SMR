@@ -469,7 +469,6 @@ map and then synchronize.""")
                 else:
                     self.smr_notes_2_update.append(note_data_status['note'])
 
-    # TODO: add test case local for adding media to the collection and the action itself to the test resource
     def _register_topic_media_changes(self, content_status, content_local, media_is_image: bool):
         if media_is_image:
             def update_action(syncer):

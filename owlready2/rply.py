@@ -5,21 +5,21 @@
 
 # Copyright (c) Alex Gaynor and individual contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
-# 
+#
 #     1. Redistributions of source code must retain the above copyright notice,
 #        this list of conditions and the following disclaimer.
-# 
+#
 #     2. Redistributions in binary form must reproduce the above copyright
 #        notice, this list of conditions and the following disclaimer in the
 #        documentation and/or other materials provided with the distribution.
-# 
+#
 #     3. Neither the name of rply nor the names of its contributors may be used
 #        to endorse or promote products derived from this software without
 #        specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 # ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -53,26 +53,26 @@ class IdentityDict(object):
   def __init__(self):
     self._contents = {}
     self._keepalive = []
-    
+
   def get(self, key, default = None):
     r = self._contents.get(id(key))
     if not r is None: return r[1]
     return default
-    
+
   def __getitem__(self, key): return self._contents[id(key)][1]
-  
+
   def __setitem__(self, key, value):
     idx = len(self._keepalive)
     self._keepalive.append(key)
     self._contents[id(key)] = key, value, idx
-    
+
   def __delitem__(self, key):
     del self._contents[id(key)]
     for idx, obj in enumerate(self._keepalive):
       if obj is key:
         del self._keepalive[idx]
         break
-      
+
   def __len__(self): return len(self._contents)
 
   def __iter__(self):
@@ -91,19 +91,19 @@ class Token(object):
     self.name = name
     self.value = value
     self.source_pos = source_pos
-    
+
   def __repr__(self):
     if self.name == self.value: return self.name
     return "%s:%s" % (self.name, repr(self.value))
-    
+
   def __eq__(self, other):
     if not isinstance(other, Token): return NotImplemented
     return (self.alias == other.alias) and (self.name == other.name) and (self.value == other.value)
-  
+
   def __hash__(self):
     return hash((self.alias, self.name, self.value))
-  
-  
+
+
 def rightmost_terminal(symbols, terminals):
   for sym in reversed(symbols):
     if sym in terminals: return sym
@@ -323,9 +323,9 @@ class LexerStream(object):
     self.lexer = lexer
     self.s = s
     self.idx = 0
-    
+
   def __iter__(self): return self
-  
+
   def next(self):
     while True:
       if self.idx >= len(self.s): raise StopIteration
@@ -336,7 +336,7 @@ class LexerStream(object):
           break
       else:
         break
-      
+
     for rule in self.lexer.rules:
       match = rule.matches(self.s, self.idx)
       if match:
@@ -354,26 +354,26 @@ try: # Brython
   from browser import window, load
   load("rply_re.js")
   exec_regexp = window.exec_regexp
-  
+
   class Rule(object):
     def __init__(self, name, pattern, flags = 0):
       self.name = name
       if not pattern.startswith("^"): pattern = "^" + pattern
       self.re = window.RegExp.new(pattern) #, flags)
-      
+
     def matches(self, s, pos):
       m = exec_regexp(self.re, s[pos:])
       if m: return pos + m[0], pos + m[0] + m[1]
       return None
-    
+
 except:
   import re
-  
+
   class Rule(object):
     def __init__(self, name, pattern, flags = 0):
       self.name = name
       self.re = re.compile(pattern, flags)
-      
+
     def matches(self, s, pos):
       m = self.re.match(s[pos:])
       if m:
@@ -381,7 +381,7 @@ except:
         return start + pos, end + pos
 
 
-  
+
 class LexerGenerator(object):
   def __init__(self):
     self.rules = []
@@ -390,7 +390,7 @@ class LexerGenerator(object):
   def add(self, name, pattern, flags = 0): self.rules.append(Rule(name, pattern, flags))
 
   def ignore(self, pattern, flags = 0): self.ignore_rules.append(Rule("", pattern, flags))
-  
+
   def build(self): return Lexer(self.rules, self.ignore_rules)
 
 
@@ -416,16 +416,16 @@ class LRParser(object):
           t, symstack, statestack, state
         )
         continue
-      
+
       if lookahead is None:
         if lookaheadstack:      lookahead = lookaheadstack.pop()
         else:
           try:                  lookahead = next(tokenizer)
           except StopIteration: lookahead = None
-          
+
         if lookahead is None:
           lookahead = Token("$end", "$end")
-          
+
       ltype = lookahead.name
       if ltype in self.lr_table.lr_action[current_state]:
         t = self.lr_table.lr_action[current_state][ltype]
@@ -444,7 +444,6 @@ class LRParser(object):
           n = symstack[-1]
           return n
       else:
-        # TODO: actual error handling here
         if self.error_handler is not None:
           if state is None: self.error_handler(lookahead)
           else:             self.error_handler(state, lookahead)
@@ -462,7 +461,7 @@ class LRParser(object):
           #print()
           #print("Error:", lookahead)
           raise ParsingError(None, lookahead.source_pos)
-        
+
   def _reduce_production(self, t, symstack, statestack, state):
     # reduce a symbol on the stack and emit a production
     p = self.lr_table.grammar.productions[-t]
@@ -586,7 +585,7 @@ class LRTable(object):
     self.default_reductions = default_reductions
     self.sr_conflicts = sr_conflicts
     self.rr_conflicts = rr_conflicts
-    
+
   @classmethod
   def from_cache(cls, grammar, data):
     lr_action = [
@@ -910,4 +909,4 @@ class LRTable(object):
         for a in f:
           if a not in laheads:
             laheads.append(a)
-    
+

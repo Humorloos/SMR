@@ -55,6 +55,7 @@ def test_synchronize_no_changes(smr_synchronizer_no_changes, mocker):
     assert cut._process_remote_file_changes.call_count == 0
     assert cut.process_local_and_remote_changes.call_count == 0
 
+    # TODO: add test case local for adding media to the collection and the action itself to the test resource
 
 def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker, changed_collection_with_example_map):
     # given

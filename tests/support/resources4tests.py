@@ -10,6 +10,7 @@ import aqt
 import tests.constants as cts
 from anki import Collection
 from conftest import generate_new_file, generate_new_tree
+from smr.consts import SMR_CONFIG
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.template import add_x_model
 from smr.xmindimport import XmindImporter
@@ -54,6 +55,7 @@ def main():
         pass
     collection = Collection(cts.TEMPORARY_EMPTY_COLLECTION_FUNCTION_PATH)
     add_x_model(collection)
+    collection.set_config('smr', SMR_CONFIG)
     deck_id = collection.decks.id(cts.TEST_DECK_NAME)
     # Import the example map to the deck 'testdeck'
     aqt.mw = MagicMock()
@@ -86,40 +88,53 @@ def main():
     collection.reopen()
     collection_changes = {
         " testdeck::example_general_psychology::general_psychology ": {
-            "{": "general psychologynew questionemotionsperception{"
+            "{": """\
+general psychologynew questionemotionsperception{"""
         },
         " testdeck::example_map::biological_psychology ": {
-            '|{{{{{{': 'biological psychology<li>investigates: information transfer and processing</li><li>requires: '
-                       'neurotransmitters <img src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: '
-                       'biogenic amines</li>former imageSerotonin new|{{{{{{',
-            '|{{{{{{{{': 'biological psychology<li>investigates: information transfer and '
-                         'processing</li><li>requires: neurotransmitters <img '
-                         'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic amines</li><li> '
-                         '<img src="attachments09r2e442o8lppjfeblf7il2rmd.png">: '
-                         'Serotonin</li>affectsSleepformerly pain|{{{{{{{{',
-            '|{|': 'biological psychology<li>investigates: information transfer and processing</li>modulated '
-                   'byenzymes<div><img src="paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg"><br></div>'
-                   '|{|',
-            '|{|{{{|': 'biological psychology<li>investigates: information transfer and processing</li><li>modulated '
-                       'by: enzymes</li><li>example: MAO</li>splits '
-                       'upSerotonindopamineadrenaline|{|{{{|',
-            '|{|{{{|{': 'biological psychology<li>investigates: information transfer and '
-                         'processing</li><li>modulated by: enzymes</li><li>example: MAO</li><li>splits up: Serotonin, '
-                         'dopamine, adrenaline, noradrenaline</li>are changed questionbiogenic '
-                         'amines|{|{{{|{'
+            '|{{{{{{': """\
+biological psychology<li>investigates: information transfer and processing</li><li>requires: neurotransmitters <img 
+src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic amines</li>former imageSerotonin 
+new|{{{{{{""",
+            '|{{{{{{{{': """\
+biological psychology<li>investigates: information transfer and processing</li><li>requires: neurotransmitters <img 
+src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic amines</li><li> <img 
+src="attachments09r2e442o8lppjfeblf7il2rmd.png">: Serotonin</li>affectsSleepformerly pain
+|{{{{{{{{""",
+            '|{|': f"""\
+biological psychology<li>investigates: information transfer and processing</li>modulated byenzymes<div><img 
+src="{cts.NEW_IMAGE_NAME}"><br></div>|{{|""",  # double curly brace here because of format string
+            '|{|{{{|': """\
+biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li>
+<li>example: MAO</li>splits upSerotonindopamineadrenaline|{|{{{|""",
+            '|{|{{{|{': """\
+biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li>
+<li>example: MAO</li><li>splits up: Serotonin, dopamine, adrenaline, noradrenaline</li>are changed questionbiogenic 
+amines|{|{{{|{""",
+            '|{|{|{{': f"""\
+biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li>
+<li>completely unrelated animation: (media)</li>means in englishvirtue [sound: {cts.NEW_MEDIA_NAME}]
+|{{|{{|{{{{"""  # double curly brace here because of format string
         },
         " testdeck::example_map::clinical_psychology ": {
-            '{': 'clinical psychologyinvestigatespsychological disorders alt{',
-            '{{{': 'clinical psychology<li>investigates: psychological disorders</li>examplesnew '
-                   'disorderschizophrenia{{{',
-            '{{{{{': 'clinical psychology<li>investigates: psychological disorders</li><li>examples: anxiety '
-                     'disorders</li>example answer 1phobias{{{{{',
-            '{{{|{': 'clinical psychology<li>investigates: psychological disorders</li><li>examples: '
-                     'schizophrenia</li>possible causes answer 2biochemical factors{{{|{'
+            '{': """\
+clinical psychologyinvestigatespsychological disorders alt{""",
+            '{{{': """\
+clinical psychology<li>investigates: psychological disorders</li>examplesnew disorderschizophrenia
+{{{""",
+            '{{{{{': """
+clinical psychology<li>investigates: psychological disorders</li><li>examples: anxiety disorders</li>example answer 1
+phobias{{{{{""",
+            '{{{|{': """\
+clinical psychology<li>investigates: psychological disorders</li><li>examples: schizophrenia</li>possible causes 
+answer 2biochemical factors{{{|{"""
         }
     }
     change_collection(collection, collection_changes)
-    collection.media.add_file(os.path.join(cts.TEST_COLLECTIONS_DIRECTORY, cts.NEW_IMAGE_NAME))
+    new_media = [os.path.join(cts.TEST_COLLECTIONS_DIRECTORY, name) for name in
+                 [cts.NEW_IMAGE_NAME, cts.NEW_MEDIA_NAME]]
+    for media_path in new_media:
+        collection.media.add_file(media_path)
     # save collection to collection with example map changes
     save_collection(collection, media_dir=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_MEDIA,
                     collection_path=cts.DEFAULT_CHANGED_COLLECTION_WITH_EXAMPLE_MAP_PATH)
