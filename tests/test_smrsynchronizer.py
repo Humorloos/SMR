@@ -94,6 +94,7 @@ def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker, chang
     assert cut.col.getNote(cut.col.findNotes('in english')[0]).fields[2] == 'virtue'
     assert getattr(cut.onto, class_from_content(TopicContentDto(
         media=cts.DE_ATTACHMENT_NAME))).means_in_english_xrelation[0] == cut.onto.virtue
+    assert x_manager.get_edge_by_id(cts.EXAMPLE_IMAGE_EDGE_ID).content == TopicContentDto(title='former image')
 
 
 def test_synchronize_answer_added_error(mocker, smr_world_with_example_map):

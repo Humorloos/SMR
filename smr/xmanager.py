@@ -238,20 +238,19 @@ class XManager:
         :param node_id: the node's xmind_id
         :param content: the node's content
         :param media_directory: the anki's collection.media directory to get images from
-        :param smr_world: the smr world to register newly added and removed images
         """
         node = self.get_node_by_id(node_id)
         self._set_topic_content(topic=node, content=content, media_directory=media_directory)
 
-    def set_edge_content(self, edge: XmindTopicDto, media_directory: str) -> None:
+    def set_edge_content(self, edge_id: str, content: TopicContentDto, media_directory: str) -> None:
         """
         Sets an xmind edge's title and image to the ones specified in the content dto
-        :param edge: xmind topic dto of the edge of which to set the content
+        :param edge_id: the edge's xmind id
         :param media_directory: the anki's collection.media directory to get images from
-        :param smr_world: the smr world to register newly added and removed images
+        :param content: the content to set for the edge
         """
-        edge = self.get_edge_by_id(edge.node_id)
-        self._set_topic_content(topic=edge, content=edge.content, media_directory=media_directory)
+        edge = self.get_edge_by_id(edge_id)
+        self._set_topic_content(topic=edge, content=content, media_directory=media_directory)
 
     def _set_topic_content(self, topic: Union[XmindEdge, XmindNode], content: TopicContentDto, media_directory: str) -> None:
         """

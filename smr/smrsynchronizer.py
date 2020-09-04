@@ -357,7 +357,8 @@ note.""")
         :param parent_node_ids: list of xmind node ids of the parent nodes of the edge to change
         :param child_node_ids: list of xmind node ids of the child nodes of the edge to change
         """
-        self.x_manager.set_edge_content(edge=xmind_edge, media_directory=self.note_manager.media_directory)
+        self.x_manager.set_edge_content(edge_id=xmind_edge.node_id, content=xmind_edge.content,
+                                        media_directory=self.note_manager.media_directory)
         # Add node ids and edge to relations to change
         self.relations_2_rename.append({
             'parent_node_ids': parent_node_ids, 'xmind_edge': xmind_edge, 'child_node_ids': child_node_ids})
