@@ -9,11 +9,11 @@ from anki import Collection
 from conftest import generate_new_file
 import smr.smrsynchronizer
 from smr.dto.topiccontentdto import TopicContentDto
-from smr.fieldtranslator import CHILD_RELATION_NAME
+from smr.fieldtranslator import CHILD_RELATION_NAME, relation_class_from_content, class_from_content
 from smr.smrsynchronizer import SmrSynchronizer
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
-from smr.xnotemanager import XNoteManager
+from smr.xnotemanager import XNoteManager, field_from_content
 
 
 @pytest.fixture
@@ -55,7 +55,6 @@ def test_synchronize_no_changes(smr_synchronizer_no_changes, mocker):
     assert cut._process_remote_file_changes.call_count == 0
     assert cut.process_local_and_remote_changes.call_count == 0
 
-    # TODO: add test case local for adding media to the collection and the action itself to the test resource
 
 def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker, changed_collection_with_example_map):
     # given
@@ -66,8 +65,9 @@ def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker, chang
     # when
     cut.synchronize()
     # then
-    assert XManager(cts.PATH_EXAMPLE_MAP_TEMPORARY).get_node_content_by_id(cts.ENZYMES_NODE_ID) == TopicContentDto(
-        image='paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg', title='enzymes')
+    x_manager = XManager(cts.PATH_EXAMPLE_MAP_TEMPORARY)
+    assert x_manager.get_node_content_by_id(cts.ENZYMES_NODE_ID) == TopicContentDto(
+        image=cts.NEW_IMAGE_NAME, title='enzymes')
     assert changed_collection_with_example_map.db.first(
         "select flds from notes where tags = ' testdeck::example_map::biological_psychology ' "
         "and sfld = '|{|{{{|~{'") == [
@@ -89,7 +89,11 @@ def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker, chang
     assert getattr(cut.onto.Serotonin_new, CHILD_RELATION_NAME) == [cut.onto.get_concept_from_node_id(
         cts.MAO_1_NODE_ID)]
     assert len(cut.smr_world._get_records("SELECT * from main.xmind_nodes where title = 'Serotonin new'")) == 1
-    assert len(cut.smr_world.get_changed_smr_notes(cut.col)) == 0
+    print(cut.log)
+    assert f'Cannot add media "{cts.NEW_MEDIA_NAME}"' in cut.log[0]
+    assert cut.col.getNote(cut.col.findNotes('in english')[0]).fields[2] == 'virtue'
+    assert getattr(cut.onto, class_from_content(TopicContentDto(
+        media=cts.DE_ATTACHMENT_NAME))).means_in_english_xrelation[0] == cut.onto.virtue
 
 
 def test_synchronize_answer_added_error(mocker, smr_world_with_example_map):

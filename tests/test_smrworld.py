@@ -277,7 +277,7 @@ def test_get_changed_smr_notes(smr_world_with_example_map, changed_collection_wi
     assert_that(values[0].keys()).contains('biological psychology', 'clinical psychology')
     example_map_sheets = changed_smr_notes[cts.PATH_EXAMPLE_MAP_TEMPORARY]
     sheet_biological_psychology = example_map_sheets['biological psychology']
-    assert len(sheet_biological_psychology) == 5
+    assert len(sheet_biological_psychology) == 6
     assert len(example_map_sheets['clinical psychology']) == 4
     assert len(list(values[1].values())[0]) == 1
     note_following_multiple_answers = next(edge for edge in sheet_biological_psychology.values() if

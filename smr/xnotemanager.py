@@ -75,7 +75,7 @@ def title_from_field(field: str) -> str:
     :param field: the anki note field to extract the title from
     :return: the title of the field
     """
-    return BeautifulSoup(re.sub(IMAGE_REGEX + "|" + MEDIA_REGEX, "", field), "html.parser").text
+    return BeautifulSoup(re.sub(IMAGE_REGEX + "|" + MEDIA_REGEX, "", field), "html.parser").text.strip()
 
 
 def image_from_field(field: str, smr_world: SmrWorld) -> Optional[str]:

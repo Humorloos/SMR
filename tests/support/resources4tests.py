@@ -93,40 +93,40 @@ general psychologynew questionemotionsperception{"""
         },
         " testdeck::example_map::biological_psychology ": {
             '|{{{{{{': """\
-biological psychology<li>investigates: information transfer and processing</li><li>requires: neurotransmitters <img 
-src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic amines</li>former imageSerotonin 
+biological psychology<li>investigates: information transfer and processing</li><li>requires: neurotransmitters <img \
+src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic amines</li>former imageSerotonin \
 new|{{{{{{""",
             '|{{{{{{{{': """\
-biological psychology<li>investigates: information transfer and processing</li><li>requires: neurotransmitters <img 
-src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic amines</li><li> <img 
-src="attachments09r2e442o8lppjfeblf7il2rmd.png">: Serotonin</li>affectsSleepformerly pain
+biological psychology<li>investigates: information transfer and processing</li><li>requires: neurotransmitters <img \
+src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: biogenic amines</li><li> <img \
+src="attachments09r2e442o8lppjfeblf7il2rmd.png">: Serotonin</li>affectsSleepformerly pain\
 |{{{{{{{{""",
             '|{|': f"""\
-biological psychology<li>investigates: information transfer and processing</li>modulated byenzymes<div><img 
+biological psychology<li>investigates: information transfer and processing</li>modulated byenzymes<div><img \
 src="{cts.NEW_IMAGE_NAME}"><br></div>|{{|""",  # double curly brace here because of format string
             '|{|{{{|': """\
-biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li>
+biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li>\
 <li>example: MAO</li>splits upSerotonindopamineadrenaline|{|{{{|""",
             '|{|{{{|{': """\
-biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li>
-<li>example: MAO</li><li>splits up: Serotonin, dopamine, adrenaline, noradrenaline</li>are changed questionbiogenic 
-amines|{|{{{|{""",
+biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li>\
+<li>example: MAO</li><li>splits up: Serotonin, dopamine, adrenaline, noradrenaline</li>are changed question\
+biogenic amines|{|{{{|{""",
             '|{|{|{{': f"""\
-biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li>
-<li>completely unrelated animation: (media)</li>means in englishvirtue [sound: {cts.NEW_MEDIA_NAME}]
-|{{|{{|{{{{"""  # double curly brace here because of format string
+biological psychology<li>investigates: information transfer and processing</li><li>modulated by: enzymes</li>\
+<li>completely unrelated animation: (media)</li>means in englishvirtue [sound:{cts.NEW_MEDIA_NAME}]\
+|{{|{{|{{{{"""  # double curly brace here because of format string
         },
         " testdeck::example_map::clinical_psychology ": {
             '{': """\
 clinical psychologyinvestigatespsychological disorders alt{""",
             '{{{': """\
-clinical psychology<li>investigates: psychological disorders</li>examplesnew disorderschizophrenia
-{{{""",
+clinical psychology<li>investigates: psychological disorders</li>examplesnew disorderschizophrenia\
+{{{""",
             '{{{{{': """
-clinical psychology<li>investigates: psychological disorders</li><li>examples: anxiety disorders</li>example answer 1
+clinical psychology<li>investigates: psychological disorders</li><li>examples: anxiety disorders</li>example answer 1\
 phobias{{{{{""",
             '{{{|{': """\
-clinical psychology<li>investigates: psychological disorders</li><li>examples: schizophrenia</li>possible causes 
+clinical psychology<li>investigates: psychological disorders</li><li>examples: schizophrenia</li>possible causes \
 answer 2biochemical factors{{{|{"""
         }
     }

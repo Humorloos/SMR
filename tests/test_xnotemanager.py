@@ -43,6 +43,13 @@ def test_media_from_field(smr_world_with_example_map):
     assert media == cts.PATH_HYPERLINK_MEDIA_TEMPORARY
 
 
+def test_media_from_field_new_media(smr_world_with_example_map):
+    # when
+    media = media_from_field(f'virtue [sound:{cts.NEW_MEDIA_NAME}]', smr_world_with_example_map)
+    # then
+    assert media == cts.NEW_MEDIA_NAME
+
+
 def test_media_from_field_no_media(smr_world_with_example_map):
     # when
     media = media_from_field('no image', smr_world_with_example_map)
@@ -70,6 +77,13 @@ def test_title_from_field_with_html_tags():
     title = title_from_field('enzymes<div><img src="paste-cbf726a37a2fa4c403412f84fd921145335bd0b0.jpg"><br></div>')
     # then
     assert title == "enzymes"
+
+
+def test_title_from_field_with_trailing_whitespace():
+    # when
+    title = title_from_field(f'virtue [sound:{cts.NEW_MEDIA_NAME}]')
+    # then
+    assert title == "virtue"
 
 
 def test_content_from_field(smr_world_with_example_map):

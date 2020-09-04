@@ -487,13 +487,13 @@ group by root_id""").fetchall()
         """
         Gets the xmind_uri stored in the relation xmind_media_to_anki_files for the provided anki file name
         :param anki_file_name: the anki file name to get the xmind uri for
-        :return: the xmind file uri, None if there is no entry for the file yet
+        :return: the xmind file uri, the file name itself if there is no entry for the file yet
         """
         try:
             return self.graph.execute("SELECT xmind_uri FROM xmind_media_to_anki_files WHERE anki_file_name = ?",
                                       (anki_file_name,)).fetchone()[0]
         except TypeError:
-            return None
+            return anki_file_name
 
     def get_anki_file_name_from_xmind_uri(self, xmind_uri: str) -> Optional[str]:
         """
