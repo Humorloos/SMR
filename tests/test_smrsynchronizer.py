@@ -182,8 +182,9 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     assert cut.col.findNotes('enzymes example') == []
     assert cut.onto.neurotransmitters_changed_textximage_629d18n2i73im903jkrjmr98fg_extension_png.types_xrelation == [
         cut.onto.biogenic_amines, cut.onto.enzymes]
+    former_image_title = 'example (former image)'
     assert set(cut.col.getNote(n).fields[1] for n in cut.col.findNotes('neurotransmitters changed text')) == {
-        'pronounciation', 'completely unrelated animation', 'affects', 'types', 'example (former image)',
+        'pronounciation', 'completely unrelated animation', 'affects', 'types', former_image_title,
         'difference to MAO', 'requires', 'new question following multiple answers all there', 'mult bridge question',
         'question to new bridge answer'}
     assert cut.smr_world.get_smr_note_reference_fields([cts.EXAMPLE_IMAGE_EDGE_ID])[cts.EXAMPLE_IMAGE_EDGE_ID][
@@ -192,4 +193,8 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     assert cut.smr_world._get_records(
         "select order_number from main.xmind_nodes where title = 'psychological disorders'")[0][0] == 1
     assert cut.col.getNote(cut.col.findNotes('affects')[0]).fields[2] == 'psychological disorders'
-# TODO: Add assertion that image was removed correctly
+    assert getattr(cut.onto.biogenic_amines, relation_class_from_content(
+        TopicContentDto(title=former_image_title)))[0] == cut.onto.Serotonin
+    assert len(cut.col.findNotes(former_image_title)) > 0
+    assert cut.smr_world.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)[cts.EXAMPLE_IMAGE_EDGE_ID][
+               'xmind_edge'].title == former_image_title
