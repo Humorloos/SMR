@@ -208,3 +208,6 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
 
 # TODO: also add an image to an answer in the map and add a test for this
 # TODO: add test case for added media for remote sync for both answers and questions (can be the 环境很好 file)
+# TODO: add file selection dialog if file was not found
+# TODO: add log entries for changes made
+# TODO: show log after sync

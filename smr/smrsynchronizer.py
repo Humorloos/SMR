@@ -204,6 +204,7 @@ class SmrSynchronizer:
                 local_change = xmind_file.file_path in self.changed_smr_notes
                 # use the appropriate strategy for getting updates
                 if local_change:
+                    self.importer = XmindImporter(col=self.col, file=xmind_file.file_path, onto=self.onto)
                     if remote_change:
                         self.process_local_and_remote_changes()
                     else:
@@ -211,6 +212,7 @@ class SmrSynchronizer:
                         self.x_manager.save_changes()
                 else:
                     if remote_change:
+                        self.importer = XmindImporter(col=self.col, file=xmind_file.file_path, onto=self.onto)
                         self._process_remote_file_changes(xmind_file)
                         self.importer.finish_import()
                     else:
@@ -224,9 +226,8 @@ class SmrSynchronizer:
     def _synchronize_anki_collection(self):
         # update anki notes affected by changes
         changed_notes = self.smr_world.generate_notes(self.col, list(self.anki_notes_2_update))
-        importer = XmindImporter(col=self.col, file='')
-        importer.tagModified = 'yes'
-        importer.addUpdates(rows=[
+        self.importer.tagModified = 'yes'
+        self.importer.addUpdates(rows=[
             [self.anki_notes_2_update[edge_id].last_modified, self.col.usn(), foreign_note.fieldsStr,
              foreign_note.tags[0], self.anki_notes_2_update[edge_id].note_id, foreign_note.fieldsStr] for
             edge_id, foreign_note in changed_notes.items()])
@@ -521,9 +522,6 @@ remove the file from your xmind map and synchronize. I added the file to the not
         """
         sheets_status = self.smr_world.get_xmind_sheets_in_file(file_directory=file.directory, file_name=file.file_name)
         sheet_ids_remote = list(self.x_manager.sheets)
-        # todo: at the moment we create two xmindimporters, one here and one later in synchronize_anki_collection. we
-        #  probably only need one.
-        self.importer = XmindImporter(col=self.col, file=file.file_path, onto=self.onto)
         for sheet_id in set(list(sheets_status) + sheet_ids_remote):
             if sheet_id not in sheets_status:
                 self.importer.import_sheet(sheet_id=sheet_id)

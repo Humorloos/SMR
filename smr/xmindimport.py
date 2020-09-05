@@ -35,7 +35,7 @@ class XmindImporter(NoteImporter):
         # if no ontology is provided, it is assigned later
         self.onto = onto
         self.is_running: bool = True
-        self.notes_2_import: Dict[str, ForeignNote] = {}
+        self.notes_2_import = {}
         self.media_uris_2_add = None
         # entity lists for imports
         self.files_2_import: List[XmindFileDto] = []
