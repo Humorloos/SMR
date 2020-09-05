@@ -7,6 +7,7 @@ import aqt as aqt
 import smr.consts as cts
 from anki import Collection
 from anki.utils import splitFields
+from aqt.emptycards import show_empty_cards
 from owlready2 import ThingClass
 from smr.cachedproperty import cached_property
 from smr.dto.smrnotedto import SmrNoteDto
@@ -237,6 +238,9 @@ class SmrSynchronizer:
         # remove notes with note_ids from list of anki notes to remove
         self.col.remove_notes(list(self.anki_notes_2_remove))
         del self.anki_notes_2_remove
+        # remove empty cards
+        self.col.remove_cards_and_orphaned_notes([
+            c for n in self.col.backend.get_empty_cards().notes for c in n.card_ids])
         # bulk remove notes for removed sheets
         if self.must_remove_anki_tags:
             self.must_remove_anki_tags = False

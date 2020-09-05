@@ -198,6 +198,8 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     # Note in anki collection must reflect added media in node and edge in map:
     assert all(cts.NEW_MEDIA_NAME in field for field in
                cut.col.getNote(cut.col.findNotes('Question:"triggered by*"')[0]).fields[1:3])
+    # Cards in anki collection must reflect removed nodes in the map
+    assert len(cut.col.find_cards('Question:affects')) == 2
     assert get_field_by_identifier(cut.col.getNote(cut.col.findNotes('Question:"requires"')[0]).fields, 'id') == '{{|'
     assert cut.onto.another_one.question_following_these_multiple_answers_xrelation == [cut.onto.yet_another_answer]
     assert_that([c.new_question_following_multiple_answers_xrelation for c in [
@@ -230,4 +232,3 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
 # TODO: add file selection dialog if file was not found
 # TODO: add log entries for changes made
 # TODO: show log after sync
-# TODO: clear unused cards if necessary (if an answer was removed, the card belonging to it has to be removed too)
