@@ -27,6 +27,9 @@ def main():
     generate_new_file(src=cts.PATH_EXAMPLE_MAP_DEFAULT, dst=cts.PATH_EXAMPLE_MAP_TEMPORARY)
     generate_new_file(src=cts.PATH_MAP_GENERAL_PSYCHOLOGY_DEFAULT, dst=cts.PATH_MAP_GENERAL_PSYCHOLOGY_TEMPORARY)
     generate_new_file(src=cts.PATH_HYPERLINK_MEDIA_DEFAULT, dst=cts.PATH_HYPERLINK_MEDIA_TEMPORARY)
+    generate_new_file(src=cts.PATH_NEW_MEDIA_ORIGINAL, dst=cts.PATH_NEW_MEDIA_TEMPORARY)
+    # Get a copy of the new media file for the directory with changes
+    generate_new_file(src=cts.PATH_NEW_MEDIA_ORIGINAL, dst=cts.PATH_NEW_MEDIA_CHANGED)
     # Extract to maps directory
     try:
         os.unlink(cts.PATH_CONTENT_EXAMPLE_MAP)
@@ -131,8 +134,7 @@ answer 2biochemical factors{{{|{"""
         }
     }
     change_collection(collection, collection_changes)
-    new_media = [os.path.join(cts.TEST_COLLECTIONS_DIRECTORY, name) for name in
-                 [cts.NEW_IMAGE_NAME, cts.NEW_MEDIA_NAME]]
+    new_media = [os.path.join(cts.TEST_COLLECTIONS_DIRECTORY, cts.NEW_IMAGE_NAME), cts.PATH_NEW_MEDIA_ORIGINAL]
     for media_path in new_media:
         collection.media.add_file(media_path)
     # save collection to collection with example map changes

@@ -694,21 +694,22 @@ remove the file from your xmind map and synchronize. I added the file to the not
     def _register_remote_topic_media_changes(self, content_remote: TopicContentDto,
                                              content_status: TopicContentDto) -> None:
         """
-        Checks whether an image was added, removed or modified in the topic with the given content and adds it to the
-        list of uris to add / remove if necessary
+        Checks whether an image or media file was added, removed or modified in the topic with the given content and
+        adds it to the list of uris to add / remove if necessary
         :param content_remote: Topic content dto with the content of the topic in the xmind file
         :param content_status: Topic content dto with the content of the topic from the smr world
         """
-        if content_remote.image is not None:
-            if content_status.image is not None:
-                if content_remote.image != content_status.image:
-                    self.xmind_uris_2_remove.add(content_status.image)
-                    self.importer.media_uris_2_add.append(content_remote.image)
+        for media_remote, media_status in zip(*[(c.image, c.media) for c in (content_remote, content_status)]):
+            if media_remote is not None:
+                if media_status is not None:
+                    if media_remote != media_status:
+                        self.xmind_uris_2_remove.add(media_status)
+                        self.importer.media_uris_2_add.append(media_remote)
+                else:
+                    self.importer.media_uris_2_add.append(media_remote)
             else:
-                self.importer.media_uris_2_add.append(content_remote.image)
-        else:
-            if content_status.image is not None:
-                self.xmind_uris_2_remove.add(content_status.image)
+                if media_status is not None:
+                    self.xmind_uris_2_remove.add(media_status)
 
     def process_local_and_remote_changes(self):
         pass

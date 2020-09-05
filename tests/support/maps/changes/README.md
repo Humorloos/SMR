@@ -67,3 +67,5 @@
         - Pain
           - can be inhibited by _new image_ **added image in question in map**
             - Serotonin _new image_ **added image in answer in map**
+          - can be triggered by _new media_ **added media in question in map**
+            - nociceptors _new media_ **added media in answer in map**
