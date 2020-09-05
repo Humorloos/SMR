@@ -660,8 +660,12 @@ remove the file from your xmind map and synchronize. I added the file to the not
         content_status = edge_status['xmind_edge'].content
         content_remote = edge_remote.content
         if content_status != content_remote:
+            # if the node was empty before, generate a new note for it
             if content_status.is_empty():
                 self.importer.read_edge(edge_remote)
+            # if the node is empty now, remove the note later
+            elif content_remote.is_empty():
+                self.anki_notes_2_remove.add(edge_status['note_id'])
             # update ontology relation
             self.relations_2_rename.append({
                 'parent_node_ids': [node.id for node in edge_remote.parent_nodes],

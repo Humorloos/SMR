@@ -161,7 +161,11 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     cut = smr.smrsynchronizer.SmrSynchronizer()
     # when
     cut.synchronize()
+
     # then
+    def get_fields_by_question(question):
+        return cut.col.getNote(cut.col.findNotes(f'Question:"{question}"')[0]).fields
+
     # Ontology changes:
     # Edge in ontology must reflect changed content of edge in map
     assert_that(cut.onto.information_transfer_and_processing.new_question_xrelation).contains(
@@ -196,11 +200,16 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     # Notes in anki collection must reflect new edges in sheet "new sheet"
     assert len(cut.col.findNotes('New_Sheet')) == 3
     # Note in anki collection must reflect added media in node and edge in map:
-    assert all(cts.NEW_MEDIA_NAME in field for field in
-               cut.col.getNote(cut.col.findNotes('Question:"triggered by*"')[0]).fields[1:3])
+    assert all(cts.NEW_MEDIA_NAME in field for field in get_fields_by_question('triggered by*')[1:3])
     # Cards in anki collection must reflect removed nodes in the map
     assert len(cut.col.find_cards('Question:affects')) == 2
-    assert get_field_by_identifier(cut.col.getNote(cut.col.findNotes('Question:"requires"')[0]).fields, 'id') == '{{|'
+    # Notes in anki collection must reflect changes in order numbers in the map
+    assert get_field_by_identifier(get_fields_by_question('modulated by*'), 'id') == '{{{'
+    # Notes in anki must contain nodes that were moved to them as answers
+    assert [get_field_by_identifier(get_fields_by_question("types"), 'a' + f) for f in ['1', '2']] == [
+        'biogenic amines', 'enzymes']
+    # Notes in anki collection must be removed if the respective edges were set empty in the map
+    assert len(cut.col.findNotes('Reference:"*information transfer and processing</li>"')) == 2
     assert cut.onto.another_one.question_following_these_multiple_answers_xrelation == [cut.onto.yet_another_answer]
     assert_that([c.new_question_following_multiple_answers_xrelation for c in [
         cut.onto.Margret, cut.onto.new_answer]]).is_length(2).contains_only([cut.onto.answer_following_mult_answers])
@@ -209,10 +218,6 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     assert cut.onto.neurotransmitters_changed_textximage_629d18n2i73im903jkrjmr98fg_extension_png.types_xrelation == [
         cut.onto.biogenic_amines, cut.onto.enzymes]
     former_image_title = 'example (former image)'
-    assert set(cut.col.getNote(n).fields[1] for n in cut.col.findNotes('neurotransmitters changed text')) == {
-        'pronounciation', 'completely unrelated animation', 'affects', 'types', former_image_title,
-        'difference to MAO', 'requires', 'new question following multiple answers all there', 'mult bridge question',
-        'question to new bridge answer'}
     assert cut.smr_world.get_smr_note_reference_fields([cts.EXAMPLE_IMAGE_EDGE_ID])[cts.EXAMPLE_IMAGE_EDGE_ID][
            :196] == cut.smr_world.get_smr_note_reference_fields([cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID])[
                         cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID][:196]
@@ -235,4 +240,5 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
 # TODO: show log after sync
 # TODO: remove attribute last modified from all topic entities because we don't need it
 # TODO: for some reason empty edges in the map are not recognized if they are filled with content
-# TODO: add case where an edge is set empty
+# TODO: Change ontology to smr world mapping by introducing storids again (this will make it much easier to restore
+#  the integrity of the smr world and ontology in case of inconsistencies)
