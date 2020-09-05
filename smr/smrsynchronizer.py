@@ -18,8 +18,8 @@ from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
 from smr.xmindimport import XmindImporter
 from smr.xmindtopic import XmindEdge, XmindNode
-from smr.xnotemanager import field_by_identifier, XNoteManager, field_from_content, \
-    content_from_field, field_content_by_identifier
+from smr.xnotemanager import get_field_by_identifier, XNoteManager, field_from_content, \
+    content_from_field, get_field_content_by_identifier
 from smr.xontology import XOntology
 
 
@@ -96,8 +96,8 @@ class SmrSynchronizer:
         return []
 
     @cached_property
-    def xmind_edges_2_update(self) -> List[XmindTopicDto]:
-        return []
+    def xmind_edges_2_update(self) -> Dict[str, XmindTopicDto]:
+        return {}
 
     @cached_property
     def edge_ids_of_anki_notes_2_update(self) -> Set[str]:
@@ -117,8 +117,8 @@ class SmrSynchronizer:
         return []
 
     @cached_property
-    def xmind_nodes_2_update(self) -> List[XmindTopicDto]:
-        return []
+    def xmind_nodes_2_update(self) -> Dict[str, XmindTopicDto]:
+        return {}
 
     @cached_property
     def smr_notes_2_update(self) -> List[SmrNoteDto]:
@@ -252,9 +252,9 @@ class SmrSynchronizer:
         del self.xmind_files_2_update
         self.smr_world.add_xmind_media_to_anki_files(list(self.xmind_uris_2_anki_files_2_update))
         del self.xmind_uris_2_anki_files_2_update
-        self.smr_world.add_or_replace_xmind_edges(self.xmind_edges_2_update)
+        self.smr_world.add_or_replace_xmind_edges(list(self.xmind_edges_2_update.values()))
         del self.xmind_edges_2_update
-        self.smr_world.add_or_replace_xmind_nodes(self.xmind_nodes_2_update)
+        self.smr_world.add_or_replace_xmind_nodes(list(self.xmind_nodes_2_update.values()))
         del self.xmind_nodes_2_update
         # move edges
         self.smr_world.move_smr_triple_edges(new_data=self.smr_triple_edges_2_move['new_data'],
@@ -400,7 +400,7 @@ map and then synchronize.""")
                 anki_note_was_changed = False
                 fields = splitFields(note_data_status['note_fields'])
                 # get data for changing question if necessary
-                question_content_local = field_content_by_identifier(
+                question_content_local = get_field_content_by_identifier(
                     fields=fields, identifier='qt', smr_world=self.smr_world)
                 if question_content_local != note_data_status['edge'].content:
                     # register changes in files for smr world
@@ -415,11 +415,11 @@ map and then synchronize.""")
                     self._change_remote_question(
                         xmind_edge=note_data_status['edge'], parent_node_ids=note_data_status['parents'],
                         child_node_ids=[a['node'].node_id for a in note_data_status['answers'].values()])
-                    self.xmind_edges_2_update.append(note_data_status['edge'])
+                    self.xmind_edges_2_update[note_data_status['edge'].node_id] = note_data_status['edge']
                     anki_note_was_changed = True
                 # get data for changing answers if necessary
                 sorted_answers_status = sorted(note_data_status['answers'].items(), key=lambda item: item[0])
-                local_answer_fields = [field_by_identifier(fields=fields, identifier='a' + str(i))
+                local_answer_fields = [get_field_by_identifier(fields=fields, identifier='a' + str(i))
                                        for i in range(1, cts.X_MAX_ANSWERS + 1)]
                 for local_answer_field, answer_id, answer_data_status in zip_longest(
                         local_answer_fields, (a[0] for a in sorted_answers_status),
@@ -452,7 +452,7 @@ map and then synchronize.""")
                             self._change_remote_node(
                                 xmind_edge=note_data_status['edge'], parent_node_ids=note_data_status['parents'],
                                 xmind_node=answer_data_status['node'], children=answer_data_status['children'])
-                            self.xmind_nodes_2_update.append(answer_data_status['node'])
+                            self.xmind_nodes_2_update[answer_data_status['node'].node_id] = answer_data_status['node']
                             anki_note_was_changed = True
                         # do nothing if answer has not changed
                         else:
@@ -551,36 +551,72 @@ remove the file from your xmind map and synchronize. I added the file to the not
         edges_remote = self.x_manager.sheets[sheet_id].edges
         edges_status = self.smr_world.get_xmind_edges_in_sheet(sheet_id)
         for edge_id in set(list(edges_status) + list(edges_remote)):
-            if edge_id not in edges_status:
-                # the importer takes care of everything necessary concerning pure imports
-                self.importer.read_edge(edges_remote[edge_id])
-            elif edge_id not in edges_remote:
-                self._register_remote_edge_removal(edge_data=edges_status[edge_id])
-            elif edges_status[edge_id]['xmind_edge'].last_modified != edges_remote[edge_id].last_modified:
-                self._register_remote_edge_changes(edge_remote=edges_remote[edge_id], edge_status=edges_status[edge_id])
+            if edge_id in edges_remote:
+                edge_remote = edges_remote[edge_id]
+                if edge_id in edges_status:
+                    edge_data_status = edges_status[edge_id]
+                    if edge_data_status['xmind_edge'].last_modified != edge_remote.last_modified:
+                        self._register_remote_edge_changes(edge_remote=edge_remote, edge_status=edge_data_status)
+                    else:
+                        continue
+                else:
+                    # the importer takes care of everything necessary concerning pure imports
+                    self.importer.read_edge(edge_remote)
+                # register existing sibling edges for sort id updates if their order number has changed
+                for sibling_edge in edge_remote.sibling_edges:
+                    if sibling_edge.id in edges_status and not sibling_edge.order_number < edge_remote.order_number:
+                        self.edge_ids_of_anki_notes_2_update.add(sibling_edge.id)
+                        self.xmind_edges_2_update[sibling_edge.id] = sibling_edge.dto
+            else:
+                edge_data_status = edges_status[edge_id]
+                self._register_remote_edge_removal(edge_data=edge_data_status)
+                # register existing sibling edges for sort id updates if their order number has changed
+                for sibling_edge_id in edge_data_status['sibling_edge_ids']:
+                    if sibling_edge_id in edges_remote and not edges_status[sibling_edge_id][
+                                                                   'xmind_edge'].order_number < edge_data_status[
+                                                                   'xmind_edge'].order_number:
+                        self.edge_ids_of_anki_notes_2_update.add(sibling_edge_id)
+                        self.xmind_edges_2_update[sibling_edge_id] = edges_remote[sibling_edge_id].dto
         # nodes
         nodes_status = self.smr_world.get_xmind_nodes_in_sheet(sheet_id)
         nodes_remote = self.x_manager.sheets[sheet_id].nodes
         for node_id in set(list(nodes_status) + list(nodes_remote)):
-            if node_id not in nodes_status:
+            if node_id in nodes_remote:
                 node_remote = nodes_remote[node_id]
-                # if the node does not belong to a newly imported edge, also register its parent node for updating
-                if node_remote.parent_edge.id not in self.importer.edge_ids_2_make_notes_of:
-                    self.edge_ids_of_anki_notes_2_update.add(node_remote.parent_edge.id)
-                self.importer.read_node_if_concept(node_remote)
-
-            elif node_id not in nodes_remote:
+                if node_id in nodes_status:
+                    node_data_status = nodes_status[node_id]
+                    if node_data_status['xmind_node'].last_modified != node_remote.last_modified:
+                        self._register_remote_node_changes(node_data_status=node_data_status,
+                                                           node_remote=node_remote)
+                    else:
+                        continue
+                else:
+                    # if the node does not belong to a newly imported edge, also register its parent node for updating
+                    if node_remote.parent_edge.id not in self.importer.edge_ids_2_make_notes_of:
+                        self.edge_ids_of_anki_notes_2_update.add(node_remote.parent_edge.id)
+                    self.importer.read_node_if_concept(node_remote)
+                # register child edges of sibling nodes for sort id updates if their order number has changed
+                for sibling_node in node_remote.non_empty_sibling_nodes:
+                    if sibling_node.id in nodes_status and not sibling_node.order_number < node_remote.order_number:
+                        self.edge_ids_of_anki_notes_2_update.update({e.id for e in sibling_node.child_edges})
+                        self.xmind_nodes_2_update[sibling_node.id] = sibling_node.dto
+            else:
                 node_data_status = nodes_status[node_id]
                 self._register_remote_node_removal(node_data_status)
-            elif nodes_status[node_id]['xmind_node'].last_modified != nodes_remote[node_id].last_modified:
-                self._register_remote_node_changes(node_data_status=nodes_status[node_id],
-                                                   node_remote=nodes_remote[node_id])
+                # register existing child edges of sibling nodes for sort id updates if their order number has changed
+                for sibling_node_id in node_data_status['sibling_node_ids']:
+                    if sibling_node_id in nodes_remote and not nodes_status[sibling_node_id][
+                                                                   'xmind_node'].order_number < node_data_status[
+                                                                   'xmind_node'].order_number:
+                        self.edge_ids_of_anki_notes_2_update.update(
+                            {e.id for e in nodes_remote[sibling_node_id].child_edges})
+                        self.xmind_nodes_2_update[sibling_node_id] = nodes_remote[sibling_node_id].dto
 
     def _register_remote_edge_removal(self, edge_data: Dict[str, Union[XmindTopicDto, int, List[str]]]) -> None:
         """
         registers data for removing data belonging to an xmind edge from all required data structures
-        :param edge_data: A named tuple containing the note id belonging to the edge in the last slot and all the data
-        from the xmind edges relation in the first slots
+        :param edge_data: Dictionary containing a topic dto representing the edge to remove from the smr world,
+        and the note id
         """
         # we do not remove relations from the ontology explicitly since that is already part of removing nodes
         # add edge to smr world xmind edges to remove
@@ -609,6 +645,8 @@ remove the file from your xmind map and synchronize. I added the file to the not
                 self.smr_triple_edges_2_move['new_data'].append((parent_node_id, edge_remote.id))
             for parent_node_id in edge_status['parent_node_ids']:
                 self.smr_triple_edges_2_move['old_data'].append((parent_node_id, edge_remote.id))
+        elif '':
+            pass
         # register edge for renaming in ontology if necessary
         remote_edge_dto = edge_remote.dto
         remote_edge_dto.last_modified = edge_status['xmind_edge'].last_modified
@@ -623,7 +661,7 @@ remove the file from your xmind map and synchronize. I added the file to the not
             # update image if necessary
             self._register_remote_topic_media_changes(content_remote=content_remote, content_status=content_status)
         # add edge id to edge ids of notes 2 update
-        self.xmind_edges_2_update.append(remote_edge_dto)
+        self.xmind_edges_2_update[remote_edge_dto.node_id] = remote_edge_dto
         # add edge id to list of edge ids of anki notes to update
         self.edge_ids_of_anki_notes_2_update.add(edge_remote.id)
 
@@ -689,7 +727,7 @@ remove the file from your xmind map and synchronize. I added the file to the not
             else:
                 self.edge_ids_of_anki_notes_2_update.update(ce.id for ce in node_remote.child_edges)
         # add node to changes in smr world
-        self.xmind_nodes_2_update.append(node_remote.dto)
+        self.xmind_nodes_2_update[node_remote.id] = node_remote.dto
 
     def _register_remote_topic_media_changes(self, content_remote: TopicContentDto,
                                              content_status: TopicContentDto) -> None:

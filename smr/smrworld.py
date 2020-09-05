@@ -234,8 +234,8 @@ WHERE iri LIKE '%{PARENT_RELATION_NAME}'""").fetchone()[0]
         return {record.sheet_id: XmindSheetDto(*record) for record in self._get_records(
             f"SELECT * FROM xmind_sheets where file_directory = '{file_directory}' and file_name = '{file_name}'")}
 
-    def get_changed_smr_notes(self, collection: Collection) -> Dict[str, Dict[str, Dict[int, Union[
-        SmrNoteDto, XmindTopicDto, Set[str], Dict[int, Dict[str, Union[XmindTopicDto, Dict[str, Set[str]]]]]]]]]:
+    def get_changed_smr_notes(self, collection: Collection) -> Dict[str, Dict[str, Dict[int, Dict[str, Union[
+        SmrNoteDto, XmindTopicDto, str, Dict[int, Dict[str, Union[XmindTopicDto, Dict[str, Set[str]]]]], Set[str]]]]]]:
         """
         Gets all notes belonging to xmind files that were changed since the last smr synchronization
         :return: A hierarchical structure of dictionaries
@@ -667,20 +667,23 @@ order by si.sort_id desc""")
         :return: The nodes in a dictionary where keys are the nodes' xmind ids and values are Xmind nodes
         """
         records = self._get_records(f"""
-SELECT xn.*, st.edge_id, st.parent_node_id, sn.note_id
+SELECT xn.*, st.edge_id, st.parent_node_id, sn.note_id, st2.child_node_id sibling_node_id
 FROM xmind_nodes xn
          left outer join smr_triples st on xn.node_id = st.child_node_id
         left outer join main.smr_notes sn on st.edge_id = sn.edge_id
+left outer join smr_triples st2 on st.edge_id = st2.edge_id
 WHERE xn.sheet_id = '{sheet_id}'""")
         nodes = {}
         for record in records:
             try:
                 nodes[record.node_id]['parent_node_ids'].add(record.parent_node_id)
+                nodes[record.node_id]['sibling_node_ids'].add(record.sibling_node_id)
             except KeyError:
-                nodes[record.node_id] = {'xmind_node': XmindTopicDto(*record[:-3]),
+                nodes[record.node_id] = {'xmind_node': XmindTopicDto(*record[:-4]),
                                          'parent_edge_id': record.edge_id,
                                          'note_id': record.note_id,
-                                         'parent_node_ids': {record.parent_node_id}}
+                                         'parent_node_ids': {record.parent_node_id},
+                                         'sibling_node_ids': {record.sibling_node_id}}
         return nodes
 
     def get_xmind_edges_in_sheet(self, sheet_id: str) -> Dict[str, Dict[str, Union[XmindTopicDto, int, Set[str]]]]:
@@ -692,21 +695,24 @@ WHERE xn.sheet_id = '{sheet_id}'""")
         xmind edges in the first fields and the anki note id in the last field
         """
         records = self._get_records(f"""
-SELECT xe.*, sn.note_id, st.parent_node_id, st.child_node_id
+SELECT xe.*, sn.note_id, st.parent_node_id, st.child_node_id, st2.edge_id sibling_edge_id
 FROM xmind_edges xe
          left outer join smr_notes sn on xe.edge_id = sn.edge_id
 left outer join smr_triples st on xe.edge_id = st.edge_id
+left outer join main.smr_triples st2 on st.parent_node_id = st2.parent_node_id
 WHERE sheet_id = '{sheet_id}'""")
         edges = {}
         for record in records:
             try:
                 edges[record.edge_id]['parent_node_ids'].add(record.parent_node_id)
                 edges[record.edge_id]['child_node_ids'].add(record.child_node_id)
+                edges[record.edge_id]['sibling_edge_ids'].add(record.sibling_edge_id)
             except KeyError:
-                edges[record.edge_id] = {'xmind_edge': XmindTopicDto(*record[:-3]),
+                edges[record.edge_id] = {'xmind_edge': XmindTopicDto(*record[:-4]),
                                          'note_id': record.note_id,
                                          'parent_node_ids': {record.parent_node_id},
-                                         'child_node_ids': {record.child_node_id}}
+                                         'child_node_ids': {record.child_node_id},
+                                         'sibling_edge_ids': {record.sibling_edge_id}}
         return edges
 
     def get_root_node_id(self, sheet_id: str) -> str:

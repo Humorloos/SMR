@@ -403,6 +403,7 @@ def test_get_xmind_nodes_in_sheet(smr_world_with_example_map):
     # then
     assert len(nodes) == 29
     assert nodes[cts.BIOGENIC_AMINES_2_NODE_ID]['parent_node_ids'] == set(cts.MULTIPLE_PARENTS_NODE_IDS)
+    assert len(nodes[cts.NORADRENALINE_NODE_ID]['sibling_node_ids']) == 4
 
 
 def test_get_root_node_id(smr_world_with_example_map):
@@ -423,6 +424,7 @@ def test_get_xmind_edges_in_sheet(smr_world_with_example_map):
     assert len(edges[cts.AFFECTS_EDGE_ID]['child_node_ids']) == 3
     assert len(edges[cts.AFFECTS_EDGE_ID]['parent_node_ids']) == 1
     assert edges[cts.ARE_EDGE_ID]['xmind_edge'].content == cts.ARE_EDGE_CONTENT
+    assert len(edges[cts.PRONOUNCIATION_EDGE_ID]['sibling_edge_ids']) == 3
 
 
 def test_remove_xmind_sheets(smr_world_with_example_map):

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import urllib
 from abc import ABC
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Set
 
 from bs4 import Tag, BeautifulSoup
 
@@ -190,6 +190,10 @@ class XmindEdge(XmindTopic):
         else:
             return fieldtranslator.relation_class_from_content(self.content)
 
+    @cached_property
+    def sibling_edges(self) -> List[XmindEdge]:
+        return self.parent_nodes[0].child_edges
+
     @XmindTopic.is_empty.deleter
     def is_empty(self):
         XmindTopic.is_empty.__delete__(self)
@@ -235,5 +239,12 @@ class XmindNode(XmindTopic):
                           direct_parent_node=self) for tag, i in self.child_topic_tags_and_order_numbers]
 
     @cached_property
+    def sibling_nodes(self) -> List[XmindNode]:
+        if self.parent_edge is not None:
+            return self.parent_edge.child_nodes
+        else:
+            return []
+
+    @cached_property
     def non_empty_sibling_nodes(self) -> List[XmindNode]:
-        return [node for node in self.parent_edge.child_nodes if not node.is_empty]
+        return [node for node in self.sibling_nodes if not node.is_empty]

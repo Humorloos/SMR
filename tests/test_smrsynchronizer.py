@@ -13,7 +13,7 @@ from smr.fieldtranslator import CHILD_RELATION_NAME, relation_class_from_content
 from smr.smrsynchronizer import SmrSynchronizer
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
-from smr.xnotemanager import XNoteManager, field_from_content
+from smr.xnotemanager import XNoteManager, field_from_content, get_field_by_identifier
 
 
 @pytest.fixture
@@ -198,6 +198,7 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     # Note in anki collection must reflect added media in node and edge in map:
     assert all(cts.NEW_MEDIA_NAME in field for field in
                cut.col.getNote(cut.col.findNotes('Question:"triggered by*"')[0]).fields[1:3])
+    assert get_field_by_identifier(cut.col.getNote(cut.col.findNotes('Question:"requires"')[0]).fields, 'id') == '{{|'
     assert cut.onto.another_one.question_following_these_multiple_answers_xrelation == [cut.onto.yet_another_answer]
     assert_that([c.new_question_following_multiple_answers_xrelation for c in [
         cut.onto.Margret, cut.onto.new_answer]]).is_length(2).contains_only([cut.onto.answer_following_mult_answers])
@@ -226,7 +227,7 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     assert cut.col.getNote(cut.col.findNotes('can be inhibited by')[0]).fields[
                1] == 'can be inhibited by<br><img src="attachments3rqffo150j4thev5vlag2sgcu6.png">'
 
-# TODO: after map changes, sort ids of nodes may need to be changed
 # TODO: add file selection dialog if file was not found
 # TODO: add log entries for changes made
 # TODO: show log after sync
+# TODO: clear unused cards if necessary (if an answer was removed, the card belonging to it has to be removed too)

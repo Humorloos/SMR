@@ -14,7 +14,7 @@ from smr.utils import get_smr_model_id, MEDIA_REGEX
 IMAGE_REGEX = r'<img src=\"(.*\.(' + '|'.join(cts.X_IMAGE_EXTENSIONS) + '))\">'
 
 
-def field_by_identifier(fields: List[str], identifier: str) -> str:
+def get_field_by_identifier(fields: List[str], identifier: str) -> str:
     """
     Given an anki fields list an an index identifier from the smr constants, gets the field that belongs to the
     identifier from the fields list
@@ -25,7 +25,7 @@ def field_by_identifier(fields: List[str], identifier: str) -> str:
     return fields[cts.SMR_FIELD_IDENTIFIERS.index(identifier)]
 
 
-def field_content_by_identifier(fields: List[str], identifier: str, smr_world: SmrWorld) -> TopicContentDto:
+def get_field_content_by_identifier(fields: List[str], identifier: str, smr_world: SmrWorld) -> TopicContentDto:
     """
     Given an anki fields list an an index identifier from the smr constants, gets the content of the field that
     belongs to the identifier from the fields list
@@ -34,7 +34,7 @@ def field_content_by_identifier(fields: List[str], identifier: str, smr_world: S
     :param smr_world: the smr world to get the xmind file uris from for images and media
     :return: the field's content as a string
     """
-    return content_from_field(field=field_by_identifier(fields=fields, identifier=identifier), smr_world=smr_world)
+    return content_from_field(field=get_field_by_identifier(fields=fields, identifier=identifier), smr_world=smr_world)
 
 
 def field_from_content(content: TopicContentDto, smr_world: SmrWorld) -> str:
