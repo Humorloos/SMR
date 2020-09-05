@@ -405,9 +405,9 @@ map and then synchronize.""")
                 if question_content_local != note_data_status['edge'].content:
                     # register changes in files for smr world
                     content_status = note_data_status['edge'].content
-                    self._register_topic_media_changes(
+                    self._register_local_topic_media_changes(
                         content_status=content_status, content_local=question_content_local, media_is_image=True)
-                    self._register_topic_media_changes(
+                    self._register_local_topic_media_changes(
                         content_status=content_status, content_local=question_content_local, media_is_image=False)
                     content_status.title = question_content_local.title
                     note_data_status['edge'].content = content_status
@@ -442,9 +442,9 @@ map and then synchronize.""")
                         # change answer if content was changed
                         elif answer_content_local != answer_data_status['node'].content:
                             content_status = answer_data_status['node'].content
-                            self._register_topic_media_changes(
+                            self._register_local_topic_media_changes(
                                 content_status=content_status, content_local=answer_content_local, media_is_image=True)
-                            self._register_topic_media_changes(
+                            self._register_local_topic_media_changes(
                                 content_status=content_status, content_local=answer_content_local,
                                 media_is_image=False)
                             content_status.title = answer_content_local.title
@@ -462,7 +462,7 @@ map and then synchronize.""")
                 else:
                     self.smr_notes_2_update.append(note_data_status['note'])
 
-    def _register_topic_media_changes(self, content_status, content_local, media_is_image: bool):
+    def _register_local_topic_media_changes(self, content_status, content_local, media_is_image: bool):
         """
         - checks whether image or media in the provided content dtos have been modified
         - if the checked media is of type image:
@@ -621,16 +621,7 @@ remove the file from your xmind map and synchronize. I added the file to the not
                 'xmind_edge': remote_edge_dto,
                 'child_node_ids': [node.id for node in edge_remote.non_empty_child_nodes]})
             # update image if necessary
-            if content_remote.image is not None:
-                if content_status.image is not None:
-                    if content_remote.image != content_status.image:
-                        self.xmind_uris_2_remove.add(content_status.image)
-                        self.importer.media_uris_2_add.append(content_remote.image)
-                else:
-                    self.importer.media_uris_2_add.append(content_remote.image)
-            else:
-                if content_status.image is not None:
-                    self.xmind_uris_2_remove.add(content_status.image)
+            self._register_remote_topic_media_changes(content_remote=content_remote, content_status=content_status)
         # add edge id to edge ids of notes 2 update
         self.xmind_edges_2_update.append(remote_edge_dto)
         # add edge id to list of edge ids of anki notes to update
@@ -665,6 +656,7 @@ remove the file from your xmind map and synchronize. I added the file to the not
         the node's parent edge's xmind id and the node's grandparent nodes' xmind ids
         :param node_remote: The xmind node taken from the current version of the xmind file
         """
+        # move node if necessary
         remote_parent_edge = node_remote.parent_edge
         if remote_parent_edge is not None and remote_parent_edge.id != node_data_status['parent_edge_id']:
             self.concepts_2_move.append({
@@ -677,7 +669,10 @@ remove the file from your xmind map and synchronize. I added the file to the not
             self.smr_triple_nodes_2_move['old_data'].append((node_data_status['parent_edge_id'], node_remote.id))
             self.edge_ids_of_anki_notes_2_update.add(node_data_status['parent_edge_id'])
             self.edge_ids_of_anki_notes_2_update.add(remote_parent_edge.id)
-        if node_remote.content != node_data_status['xmind_node'].content:
+        # change node content if necessary
+        content_remote = node_remote.content
+        content_status = node_data_status['xmind_node'].content
+        if content_remote != content_status:
             # add node to changes in ontology
             parent_node_ids = [n.id for n in
                                remote_parent_edge.parent_nodes] if remote_parent_edge is not None else []
@@ -686,6 +681,8 @@ remove the file from your xmind map and synchronize. I added the file to the not
                 {'xmind_node': node_remote.dto, 'xmind_edge': parent_edge_dto,
                  'parent_node_ids': parent_node_ids, 'children': {ce.id: [
                     cn.id for cn in ce.non_empty_child_nodes] for ce in node_remote.child_edges}})
+            # update image if necessary
+            self._register_remote_topic_media_changes(content_remote, content_status)
             # add parent edge to edge ids of anki notes to update
             if remote_parent_edge is not None:
                 self.edge_ids_of_anki_notes_2_update.add(remote_parent_edge.id)
@@ -693,6 +690,25 @@ remove the file from your xmind map and synchronize. I added the file to the not
                 self.edge_ids_of_anki_notes_2_update.update(ce.id for ce in node_remote.child_edges)
         # add node to changes in smr world
         self.xmind_nodes_2_update.append(node_remote.dto)
+
+    def _register_remote_topic_media_changes(self, content_remote: TopicContentDto,
+                                             content_status: TopicContentDto) -> None:
+        """
+        Checks whether an image was added, removed or modified in the topic with the given content and adds it to the
+        list of uris to add / remove if necessary
+        :param content_remote: Topic content dto with the content of the topic in the xmind file
+        :param content_status: Topic content dto with the content of the topic from the smr world
+        """
+        if content_remote.image is not None:
+            if content_status.image is not None:
+                if content_remote.image != content_status.image:
+                    self.xmind_uris_2_remove.add(content_status.image)
+                    self.importer.media_uris_2_add.append(content_remote.image)
+            else:
+                self.importer.media_uris_2_add.append(content_remote.image)
+        else:
+            if content_status.image is not None:
+                self.xmind_uris_2_remove.add(content_status.image)
 
     def process_local_and_remote_changes(self):
         pass

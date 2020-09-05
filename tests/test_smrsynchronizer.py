@@ -162,20 +162,31 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     # when
     cut.synchronize()
     # then
+    # Edge in ontology must reflect changed content of edge in map
     assert_that(cut.onto.information_transfer_and_processing.new_question_xrelation).contains(
         cut.onto.answer_1, cut.onto.answer_2)
-    assert_that([n['xmind_node'].title for n in cut.smr_world.get_xmind_nodes_in_sheet(
-        cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID).values()]).contains('answer 1', 'answer 2', 'answer 2.1', 'answer 3.1')
+    # Edge in ontology must reflect edge with added image and node with added image in map
+    assert cut.onto.Pain.can_be_inhibited_byximage_3rqffo150j4thev5vlag2sgcu6_extension_png_xrelation[
+               0] == cut.onto.Serotoninximage_3mt6o6tf2k523mssdhbrvb5fvm_extension_png
+    # Nodes in smr world must reflect changes in nodes in sheet "biological psychology"
+    assert_that([n['xmind_node'].content for n in cut.smr_world.get_xmind_nodes_in_sheet(
+        cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID).values()]).contains(
+        *[TopicContentDto(title=t) for t in ('answer 1', 'answer 2', 'answer 2.1', 'answer 3.1')],
+        TopicContentDto(image='attachments/3mt6o6tf2k523mssdhbrvb5fvm.png', title='Serotonin'))
+    # Sheets in smr world must reflect sheet changes in imported xmind files
     assert_that([r.name for r in cut.smr_world._get_records('select * from main.xmind_sheets')]).contains(
         'biological psychology', 'general psychology', 'New sheet')
+    # Nodes in smr world must reflect changes in nodes in sheet "new sheet"
+    assert_that([r['xmind_node'].content for r in cut.smr_world.get_xmind_nodes_in_sheet(
+        cts.NEW_SHEET_SHEET_ID).values()]).contains(*[TopicContentDto(title=t) for t in (
+        'New sheet', 'first new sheet topic', 'another one', 'yet another one', 'answer to this other question',
+        'yet another answer')])
+    # Tags in anki collection must reflect sheet changes in imported xmind files
     assert_that(cut.col.tags.all()).contains_only(
         'testdeck::example_general_psychology::general_psychology', 'testdeck::example_map::biological_psychology',
         'testdeck::example_map::New_sheet')
+    # Notes in anki collection must reflect new edges in sheet "new sheet"
     assert len(cut.col.findNotes('New_Sheet')) == 3
-    assert_that([r['xmind_node'].title for r in cut.smr_world.get_xmind_nodes_in_sheet(
-        cts.NEW_SHEET_SHEET_ID).values()]).contains(
-        'New sheet', 'first new sheet topic', 'another one', 'yet another one', 'answer to this other question',
-        'yet another answer')
     assert cut.onto.another_one.question_following_these_multiple_answers_xrelation == [cut.onto.yet_another_answer]
     assert_that([c.new_question_following_multiple_answers_xrelation for c in [
         cut.onto.Margret, cut.onto.new_answer]]).is_length(2).contains_only([cut.onto.answer_following_mult_answers])
@@ -201,12 +212,9 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
         cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID).values()]).contains(
         TopicContentDto(title=former_image_title),
         TopicContentDto(image='attachments/3rqffo150j4thev5vlag2sgcu6.png', title='can be inhibited by'))
-    assert cut.onto.Pain.can_be_inhibited_byximage_3rqffo150j4thev5vlag2sgcu6_extension_png_xrelation[
-               0] == cut.onto.Serotonin
     assert cut.col.getNote(cut.col.findNotes('can be inhibited by')[0]).fields[
                1] == 'can be inhibited by<br><img src="attachments3rqffo150j4thev5vlag2sgcu6.png">'
 
-# TODO: also add an image to an answer in the map and add a test for this
 # TODO: add test case for added media for remote sync for both answers and questions (can be the 环境很好 file)
 # TODO: add file selection dialog if file was not found
 # TODO: add log entries for changes made

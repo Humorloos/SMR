@@ -66,3 +66,4 @@
       - 
         - Pain
           - can be inhibited by _new image_ **added image in question in map**
+            - Serotonin _new image_ **added image in answer in map**
