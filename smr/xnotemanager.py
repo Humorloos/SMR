@@ -9,10 +9,9 @@ from anki.backend_pb2 import NoteTypeNameID
 from anki.models import ModelManager
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.smrworld import SmrWorld
-from smr.utils import get_smr_model_id
+from smr.utils import get_smr_model_id, MEDIA_REGEX
 
 IMAGE_REGEX = r'<img src=\"(.*\.(' + '|'.join(cts.X_IMAGE_EXTENSIONS) + '))\">'
-MEDIA_REGEX = r'\[sound:(.*\.(' + '|'.join(cts.X_MEDIA_EXTENSIONS) + r'))]'
 
 
 def field_by_identifier(fields: List[str], identifier: str) -> str:
@@ -107,7 +106,7 @@ def media_from_field(field: str, smr_world: SmrWorld) -> Optional[str]:
     :return: the xmind file uri, None if the field does not contain any media
     """
     try:
-        anki_file_name = re.search(MEDIA_REGEX, field).group(1)
+        anki_file_name = re.search(MEDIA_REGEX, field).group(2)
     except AttributeError:
         return None
     return smr_world.get_xmind_uri_from_anki_file_name(anki_file_name)

@@ -226,6 +226,7 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     assert cut.col.getNote(cut.col.findNotes('can be inhibited by')[0]).fields[
                1] == 'can be inhibited by<br><img src="attachments3rqffo150j4thev5vlag2sgcu6.png">'
 
+# TODO: after map changes, sort ids of nodes may need to be changed
 # TODO: add file selection dialog if file was not found
 # TODO: add log entries for changes made
 # TODO: show log after sync
