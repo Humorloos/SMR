@@ -660,6 +660,8 @@ remove the file from your xmind map and synchronize. I added the file to the not
         content_status = edge_status['xmind_edge'].content
         content_remote = edge_remote.content
         if content_status != content_remote:
+            if content_status.is_empty():
+                self.importer.read_edge(edge_remote)
             # update ontology relation
             self.relations_2_rename.append({
                 'parent_node_ids': [node.id for node in edge_remote.parent_nodes],
