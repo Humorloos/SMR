@@ -559,9 +559,8 @@ remove the file from your xmind map and synchronize. I added the file to the not
                 edge_remote = edges_remote[edge_id]
                 if edge_id in edges_status:
                     edge_data_status = edges_status[edge_id]
-                    if edge_data_status['xmind_edge'].last_modified != edge_remote.last_modified:
-                        self._register_remote_edge_changes(edge_remote=edge_remote, edge_status=edge_data_status)
-                    else:
+                    # do not register changes in sibling edges if the edge was not moved
+                    if not self._register_remote_edge_changes(edge_remote=edge_remote, edge_status=edge_data_status):
                         continue
                 else:
                     # the importer takes care of everything necessary concerning pure imports
@@ -589,10 +588,8 @@ remove the file from your xmind map and synchronize. I added the file to the not
                 node_remote = nodes_remote[node_id]
                 if node_id in nodes_status:
                     node_data_status = nodes_status[node_id]
-                    if node_data_status['xmind_node'].last_modified != node_remote.last_modified:
-                        self._register_remote_node_changes(node_data_status=node_data_status,
-                                                           node_remote=node_remote)
-                    else:
+                    if not self._register_remote_node_changes(node_data_status=node_data_status,
+                                                           node_remote=node_remote):
                         continue
                 else:
                     # if the node does not belong to a newly imported edge, also register its parent node for updating
@@ -631,12 +628,16 @@ remove the file from your xmind map and synchronize. I added the file to the not
             self.anki_notes_2_remove.add(note_id)
 
     def _register_remote_edge_changes(self, edge_remote: XmindEdge,
-                                      edge_status: Dict[str, Union[XmindTopicDto, int, Set[str]]]) -> None:
+                                      edge_status: Dict[str, Union[XmindTopicDto, int, Set[str]]]) -> bool:
         """
-        registers data for updating data belonging to an xmind edge in all required data structures
+        - registers data for updating data belonging to an xmind edge in all required data structures
+        - checks whether the edge was moved and returns the result of the check
         :param edge_remote: Xmind Edge as extracted from the xmind file
         :param edge_status: Dictionary containing all necessary data from the smr world
+        :return: Whether the edge was moved
         """
+        index_was_changed = False
+        edge_was_changed = False
         # register edge for moving in ontology and smr_world if necessary
         remote_parent_node_ids = set(pn.id for pn in edge_remote.parent_nodes)
         if remote_parent_node_ids != edge_status['parent_node_ids']:
@@ -649,11 +650,13 @@ remove the file from your xmind map and synchronize. I added the file to the not
                 self.smr_triple_edges_2_move['new_data'].append((parent_node_id, edge_remote.id))
             for parent_node_id in edge_status['parent_node_ids']:
                 self.smr_triple_edges_2_move['old_data'].append((parent_node_id, edge_remote.id))
-        elif '':
-            pass
+            index_was_changed = True
+            edge_was_changed = True
+        elif edge_remote.order_number != edge_status['xmind_edge'].order_number:
+            index_was_changed = True
+            edge_was_changed = True
         # register edge for renaming in ontology if necessary
         remote_edge_dto = edge_remote.dto
-        remote_edge_dto.last_modified = edge_status['xmind_edge'].last_modified
         content_status = edge_status['xmind_edge'].content
         content_remote = edge_remote.content
         if content_status != content_remote:
@@ -662,12 +665,15 @@ remove the file from your xmind map and synchronize. I added the file to the not
                 'parent_node_ids': [node.id for node in edge_remote.parent_nodes],
                 'xmind_edge': remote_edge_dto,
                 'child_node_ids': [node.id for node in edge_remote.non_empty_child_nodes]})
-            # update image if necessary
+            # update media if necessary
             self._register_remote_topic_media_changes(content_remote=content_remote, content_status=content_status)
-        # add edge id to edge ids of notes 2 update
-        self.xmind_edges_2_update[remote_edge_dto.node_id] = remote_edge_dto
-        # add edge id to list of edge ids of anki notes to update
-        self.edge_ids_of_anki_notes_2_update.add(edge_remote.id)
+            edge_was_changed = True
+        if edge_was_changed:
+            # add edge id to edge ids of notes 2 update
+            self.xmind_edges_2_update[remote_edge_dto.node_id] = remote_edge_dto
+            # add edge id to list of edge ids of anki notes to update
+            self.edge_ids_of_anki_notes_2_update.add(edge_remote.id)
+        return index_was_changed
 
     def _register_remote_node_removal(self, node_status: Dict[str, Union[XmindTopicDto, str, List[str]]]) -> None:
         """
@@ -688,16 +694,20 @@ remove the file from your xmind map and synchronize. I added the file to the not
             self.edge_ids_of_anki_notes_2_update.add(node_status['parent_edge_id'])
 
     def _register_remote_node_changes(self, node_data_status: Dict[str, Union[XmindTopicDto, str, List[str]]],
-                                      node_remote: XmindNode) -> None:
+                                      node_remote: XmindNode) -> bool:
         """
         - If the specified node was moved in the map, registers the necessary data for adjusting ontology,
         smr world anki collection to the move
         - If the content of the specified node was changed, registers the necessary data for changing the related
         data in the ontology, smr world and anki collection
+        - checks whether the index of the node was changed and returns the result of the check
         :param node_data_status: Dictionary of the topic content dto representing the changed node in the smr world,
         the node's parent edge's xmind id and the node's grandparent nodes' xmind ids
         :param node_remote: The xmind node taken from the current version of the xmind file
+        :return: whether the index of the node was changed
         """
+        index_was_changed = False
+        node_was_changed = False
         # move node if necessary
         remote_parent_edge = node_remote.parent_edge
         if remote_parent_edge is not None and remote_parent_edge.id != node_data_status['parent_edge_id']:
@@ -711,6 +721,12 @@ remove the file from your xmind map and synchronize. I added the file to the not
             self.smr_triple_nodes_2_move['old_data'].append((node_data_status['parent_edge_id'], node_remote.id))
             self.edge_ids_of_anki_notes_2_update.add(node_data_status['parent_edge_id'])
             self.edge_ids_of_anki_notes_2_update.add(remote_parent_edge.id)
+            index_was_changed = True
+            node_was_changed = True
+        elif node_data_status['xmind_node'].order_number != node_remote.order_number:
+            self.edge_ids_of_anki_notes_2_update.add(node_data_status['parent_edge_id'])
+            index_was_changed = True
+            node_was_changed = True
         # change node content if necessary
         content_remote = node_remote.content
         content_status = node_data_status['xmind_node'].content
@@ -730,8 +746,11 @@ remove the file from your xmind map and synchronize. I added the file to the not
                 self.edge_ids_of_anki_notes_2_update.add(remote_parent_edge.id)
             else:
                 self.edge_ids_of_anki_notes_2_update.update(ce.id for ce in node_remote.child_edges)
-        # add node to changes in smr world
-        self.xmind_nodes_2_update[node_remote.id] = node_remote.dto
+            node_was_changed = True
+        if node_was_changed:
+            # add node to changes in smr world
+            self.xmind_nodes_2_update[node_remote.id] = node_remote.dto
+        return index_was_changed
 
     def _register_remote_topic_media_changes(self, content_remote: TopicContentDto,
                                              content_status: TopicContentDto) -> None:

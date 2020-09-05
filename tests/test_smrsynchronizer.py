@@ -232,3 +232,4 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
 # TODO: add file selection dialog if file was not found
 # TODO: add log entries for changes made
 # TODO: show log after sync
+# TODO: remove attribute last modified from all topic entities because we don't need it
