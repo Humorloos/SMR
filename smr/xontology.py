@@ -71,7 +71,6 @@ class XOntology(Ontology):
         :param node_2_add: xmind node dto of the node to add with already updated content
         :param parent_node_ids: xmind node ids of the parent nodes of the node to add
         """
-        self.add_concept_from_node(node_2_add)
         for parent_node_id in parent_node_ids:
             self.connect_concepts(child_node_id=node_2_add.node_id, parent_node_id=parent_node_id,
                                   edge_id=parent_edge.node_id, relation_class_name=relation_class_name)
@@ -102,11 +101,11 @@ class XOntology(Ontology):
         setattr(child_concept, PARENT_RELATION_NAME, new_parents)
         self.XmindId[child_concept, getattr(self, PARENT_RELATION_NAME), parent_concept].append(edge_id)
 
-    def add_concept_from_node(self, node: XmindTopicDto):
+    def add_concept_from_node(self, node: XmindTopicDto) -> int:
         """
         Adds a new concept to the ontology and returns it
         :param node: the node dto to create the concept from
-        :return: the concept
+        :return: the concept's storid
         """
         # Some concept names (e.g. 'are') can lead to errors, so catch them
         try:
@@ -114,14 +113,15 @@ class XOntology(Ontology):
         except TypeError:
             raise NameError('Invalid concept name')
         concept.XmindId.append(node.node_id)
+        return concept.storid
 
-    def add_relation(self, relationship_class_name: str):
+    def add_relation(self, relationship_class_name: str) -> int:
         """
         if the specified relation has not been created yet, creates it and returns it
         :param relationship_class_name: class text of the relationship property between parent and child concept
-        :return: the created or acquired relationship property
+        :return: the created or acquired relationship property's storid
         """
-        relationship_property: ObjectPropertyClass = getattr(self, relationship_class_name)
+        relationship_property = getattr(self, relationship_class_name)
         # add objectproperty if not yet in ontology
         if not relationship_property or not isinstance(relationship_property, ObjectPropertyClass):
             with self:
@@ -129,6 +129,7 @@ class XOntology(Ontology):
                 relationship_property = types.new_class(relationship_class_name, (owlready2.ObjectProperty,))
                 relationship_property.domain = [self.Concept]
                 relationship_property.range = [self.Concept]
+        return relationship_property.storid
 
     def remove_node(self, parent_node_ids: List[str], node_id: str,
                     children: Dict[str, List[str]], parent_edge_id: Optional[str] = None):
@@ -206,25 +207,24 @@ class XOntology(Ontology):
                 self.connect_concepts(child_node_id=child_node_id, parent_node_id=xmind_node.node_id, edge_id=edge_id,
                                       relation_class_name=child_relation_name)
 
-    def rename_relation(self, parent_node_ids: List[str], child_node_ids: List[str],
-                        xmind_edge: XmindTopicDto) -> None:
+    def rename_relation(self, parent_node_ids: List[str], relation_class_name: str, child_node_ids: List[str],
+                        edge_id: str) -> None:
         """
         - Changes a relation in the ontology by removing the old relation from parents and children and adding the new
         relation from the specified xmind edge
         :param child_node_ids: ontology storids of the children to assign the new relation to
         :param parent_node_ids: xmind node ids of the parents to assign the new relation to
-        :param xmind_edge: xmind topic dto containing id and content of the edge representing the new relation to be set
+        :param edge_id: xmind topic dto containing id and content of the edge representing the new relation to be set
         """
         parents = [self.get_concept_from_node_id(node_id) for node_id in parent_node_ids]
         children = [self.get_concept_from_node_id(node_id) for node_id in child_node_ids]
         # Remove old relation
-        self.remove_relations(parents=parents, children=children, edge_id=xmind_edge.node_id)
+        self.remove_relations(parents=parents, children=children, edge_id=edge_id)
         # Add new relation
-        class_text = relation_class_from_content(xmind_edge.content)
         for parent_node_id in parent_node_ids:
             for child_node_id in child_node_ids:
                 self.connect_concepts(parent_node_id=parent_node_id, child_node_id=child_node_id,
-                                      edge_id=xmind_edge.node_id, relation_class_name=class_text)
+                                      edge_id=edge_id, relation_class_name=relation_class_name)
 
     def move_edge(self, old_parent_node_ids: List[str], new_parent_node_ids: List[str], edge_id: str,
                   child_node_ids: List[str]) -> None:

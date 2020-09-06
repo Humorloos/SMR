@@ -95,6 +95,10 @@ def test_synchronize_local_changes(smr_synchronizer_local_changes, mocker, chang
     assert getattr(cut.onto, class_from_content(TopicContentDto(
         media=cts.DE_ATTACHMENT_NAME))).means_in_english_xrelation[0] == cut.onto.virtue
     assert x_manager.get_edge_by_id(cts.EXAMPLE_IMAGE_EDGE_ID).content == TopicContentDto(title='former image')
+    # All nodes and edges in the smr world must be mapped to a concept or relation in the ontology
+    # Anki collection changes:
+    assert cut.smr_world._get_records("""select storid from main.xmind_nodes where storid is null 
+        union select storid from main.xmind_edges where storid is null""") == []
 
 
 def test_synchronize_answer_added_error(mocker, smr_world_with_example_map):
@@ -198,7 +202,10 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     assert cut.smr_world.get_smr_note_reference_fields([cts.EXAMPLE_IMAGE_EDGE_ID])[cts.EXAMPLE_IMAGE_EDGE_ID][
            :186] == cut.smr_world.get_smr_note_reference_fields([cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID])[
                         cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID][:186]
+    # All nodes and edges in the smr world must be mapped to a concept or relation in the ontology
     # Anki collection changes:
+    assert cut.smr_world._get_records("""select storid from main.xmind_nodes where storid is null 
+        union select storid from main.xmind_edges where storid is null""") == []
     # Tags in anki collection must reflect sheet changes in imported xmind files
     assert_that(cut.col.tags.all()).contains_only(
         'testdeck::example_general_psychology::general_psychology', 'testdeck::example_map::biological_psychology',
@@ -242,3 +249,4 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
 # TODO: add file selection dialog if file was not found
 # TODO: add log entries for changes made
 # TODO: show log after sync
+# TODO: make sure xmind sheets are updated after remote sync

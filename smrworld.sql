@@ -38,12 +38,13 @@ CREATE TABLE xmind_media_to_anki_files
 
 CREATE TABLE xmind_edges
 (
-    edge_id       TEXT PRIMARY KEY,
-    sheet_id      TEXT,
-    title         TEXT,
-    image         TEXT,
-    link          TEXT,
-    order_number  INTEGER,
+    edge_id      TEXT PRIMARY KEY,
+    sheet_id     TEXT,
+    title        TEXT,
+    image        TEXT,
+    link         TEXT,
+    order_number INTEGER,
+    storid       INTEGER,
     FOREIGN KEY (sheet_id) REFERENCES xmind_sheets (sheet_id)
         ON UPDATE CASCADE,
     FOREIGN KEY (image) REFERENCES xmind_media_to_anki_files (xmind_uri)
@@ -51,21 +52,28 @@ CREATE TABLE xmind_edges
         ON UPDATE CASCADE,
     FOREIGN KEY (link) REFERENCES xmind_media_to_anki_files (xmind_uri)
         ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    FOREIGN KEY (storid) REFERENCES resources (storid)
         ON UPDATE CASCADE
 );
 CREATE TABLE xmind_nodes
 (
-    node_id       TEXT PRIMARY KEY,
-    sheet_id      TEXT,
-    title         TEXT,
-    image         TEXT,
-    link          TEXT,
-    order_number  INTEGER,
+    node_id      TEXT PRIMARY KEY,
+    sheet_id     TEXT,
+    title        TEXT,
+    image        TEXT,
+    link         TEXT,
+    order_number INTEGER,
+    storid       INTEGER,
     FOREIGN KEY (sheet_id) REFERENCES xmind_sheets (sheet_id)
         ON UPDATE CASCADE,
     FOREIGN KEY (image) REFERENCES xmind_media_to_anki_files (xmind_uri)
+        ON DELETE RESTRICT
         ON UPDATE CASCADE,
     FOREIGN KEY (link) REFERENCES xmind_media_to_anki_files (xmind_uri)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    FOREIGN KEY (storid) REFERENCES resources (storid)
         ON UPDATE CASCADE
 );
 CREATE TABLE smr_notes

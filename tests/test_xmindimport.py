@@ -8,6 +8,7 @@ import tests.constants as cts
 from smr.consts import X_MODEL_NAME
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.dto.xmindfiledto import XmindFileDto
+from smr.fieldtranslator import CHILD_RELATION_NAME
 from smr.template import add_x_model
 from smr.xmindimport import XmindImporter
 from smr.xontology import XOntology
@@ -244,6 +245,9 @@ def test_initialize_import_import_import_notes_to_correct_deck(xmind_importer_4_
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == n_cards_example_map
     assert cut.col.db.execute('select type from cards') == n_cards_example_map * [[0]]
+    # Empty edges in the smr world must have the storid of the child relation name in the ontology
+    assert cut.smr_world._get_records(f"select storid from xmind_edges where edge_id = '{cts.EMPTY_EDGE_3_ID}'")[
+               0].storid == getattr(cut.onto, CHILD_RELATION_NAME).storid
 
 
 # noinspection PyPep8Naming

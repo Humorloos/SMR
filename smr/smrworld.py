@@ -172,7 +172,7 @@ WHERE iri LIKE '%{PARENT_RELATION_NAME}'""").fetchone()[0]
         already exist
         :param entities: List of entries for the xmind nodes relation
         """
-        self.graph.db.executemany("REPLACE INTO main.xmind_nodes VALUES (?, ?, ?, ?, ?, ?)",
+        self.graph.db.executemany("REPLACE INTO main.xmind_nodes VALUES (?, ?, ?, ?, ?, ?, ?)",
                                   (tuple(e) for e in entities))
 
     def add_or_replace_xmind_edges(self, entities: List[XmindTopicDto]) -> None:
@@ -182,7 +182,7 @@ WHERE iri LIKE '%{PARENT_RELATION_NAME}'""").fetchone()[0]
         :param entities: List of entries for the xmind edges relation
         """
         for e in entities:
-            self.graph.db.execute("REPLACE INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?)",
+            self.graph.db.execute("REPLACE INTO main.xmind_edges VALUES (?, ?, ?, ?, ?, ?, ?)",
                                   tuple(e))
 
     def add_smr_triples(self, entities: List[SmrTripleDto]) -> None:

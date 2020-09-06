@@ -2,7 +2,7 @@ import tests.constants as cts
 from owlready2 import ObjectPropertyClass
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindtopicdto import XmindTopicDto
-from smr.fieldtranslator import PARENT_RELATION_NAME
+from smr.fieldtranslator import PARENT_RELATION_NAME, relation_class_from_content
 
 
 def test_xontology(x_ontology):
@@ -109,10 +109,10 @@ def test_rename_relation(ontology_with_example_map):
     cut = ontology_with_example_map
     parent_node_ids = cts.MULTIPLE_PARENTS_NODE_IDS
     child_node_id = cts.MULTIPLE_PARENTS_CHILD_NODE_ID
-    xmind_edge = XmindTopicDto(node_id=cts.ARE_EDGE_ID)
-    xmind_edge.content = TopicContentDto(title='new question', image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI)
+    class_name = relation_class_from_content(TopicContentDto(
+        title='new question', image=cts.NEUROTRANSMITTERS_IMAGE_XMIND_URI))
     # when
-    cut.rename_relation(parent_node_ids=parent_node_ids, child_node_ids=[child_node_id], xmind_edge=xmind_edge)
+    cut.rename_relation(parent_node_ids=parent_node_ids, relation_class_name=class_name, child_node_ids=[child_node_id], edge_id=cts.ARE_EDGE_ID)
     # then
     new_property = cut.get_relation_from_edge_id(cts.ARE_EDGE_ID)
     assert new_property.name == 'new_questionximage_09r2e442o8lppjfeblf7il2rmd_extension_png_xrelation'
@@ -149,10 +149,12 @@ def test_remove_node_does_not_remove_concept_if_nodes_left(ontology_with_example
 def test_add_node(ontology_with_example_map):
     # given
     cut = ontology_with_example_map
+    node = XmindTopicDto(node_id='some id', title='some title', image='abcde.png', link='fghij.mp3')
+    cut.add_concept_from_node(node)
     # when
     cut.add_node(parent_edge=XmindTopicDto(node_id="1scualcvt0scjd9iaoblg568ld"),
                  relation_class_name='can_be_inhibited_by_xrelation',
-                 node_2_add=XmindTopicDto(node_id='some id', title='some title', image='abcde.png', link='fghij.mp3'),
+                 node_2_add=node,
                  parent_node_ids=['5asru7kdmre8059cemi8p5lm3v'])
     # then
     assert [c.name for c in cut.Pain.can_be_inhibited_by_xrelation] == [
@@ -162,12 +164,12 @@ def test_add_node(ontology_with_example_map):
 def test_rename_node(ontology_with_example_map):
     # given
     cut = ontology_with_example_map
+    node = XmindTopicDto(node_id=cts.BIOGENIC_AMINES_2_NODE_ID, title='nothing', image='abcde.png', link='fghij.mp3')
+    cut.add_concept_from_node(node)
     # when
-    cut.rename_node(parent_node_ids=cts.MULTIPLE_PARENTS_NODE_IDS,
-                    xmind_edge=XmindTopicDto(title='are', node_id=cts.ARE_EDGE_ID),
-                    xmind_node=XmindTopicDto(node_id=cts.BIOGENIC_AMINES_2_NODE_ID, title='nothing', image='abcde.png',
-                                             link='fghij.mp3'),
-                    children={cts.CONSIST_OF_EDGE_ID: [cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID]})
+    cut.rename_node(parent_node_ids=cts.MULTIPLE_PARENTS_NODE_IDS, xmind_edge=XmindTopicDto(
+        title='are', node_id=cts.ARE_EDGE_ID), xmind_node=node, children={cts.CONSIST_OF_EDGE_ID: [
+        cts.ONE_OR_MORE_AMINE_GROUPS_NODE_ID]})
     # then
     new_concept = cut.get_concept_from_node_id(cts.BIOGENIC_AMINES_2_NODE_ID)
     assert getattr(new_concept, PARENT_RELATION_NAME) == [getattr(cut, n) for n in cts.MULTIPLE_PARENTS_CLASS_NAMES]

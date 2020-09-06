@@ -144,7 +144,7 @@ def verify_add_xmind_node(expected_entry, cut, x_manager, tag_id, node_content):
 
 def test_add_or_replace_xmind_edges(smr_world_4_tests, x_manager):
     # given
-    expected_entry = (cts.TYPES_EDGE_ID, cts.TEST_SHEET_ID, 'types', None, None, 1)
+    expected_entry = (cts.TYPES_EDGE_ID, cts.TEST_SHEET_ID, 'types', None, None, 1, None)
     manager = x_manager
     edge = manager.get_edge_by_id(cts.TYPES_EDGE_ID)
     edge_content = edge.content

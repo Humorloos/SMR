@@ -17,6 +17,7 @@ class XmindTopicDto(EntityDto):
     image: Optional[str] = None
     link: Optional[str] = None
     order_number: Optional[int] = None
+    storid: Optional[int] = None
 
     @property
     def content(self) -> TopicContentDto:

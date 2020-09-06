@@ -6,6 +6,7 @@ from anki import Collection
 from anki.importing.noteimp import NoteImporter, ForeignNote, ADD_MODE
 from anki.models import NoteType
 from aqt.main import AnkiQt
+from smr.cachedproperty import cached_property
 from smr.consts import X_MODEL_NAME, SMR_NOTE_FIELD_NAMES
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.dto.smrnotedto import SmrNoteDto
@@ -41,8 +42,6 @@ class XmindImporter(NoteImporter):
         self.files_2_import: List[XmindFileDto] = []
         self.sheets_2_import: List[XmindSheetDto] = []
         self.media_2_anki_files_2_import: List[XmindMediaToAnkiFilesDto] = []
-        self.nodes_2_import: List[XmindTopicDto] = []
-        self.edges_2_import: List[XmindTopicDto] = []
         self.smr_notes_2_add: List[SmrNoteDto] = []
         # deck id, deck name, and repair are specified in deck selection dialog
         self.deck_name: str = ''
@@ -94,13 +93,13 @@ class XmindImporter(NoteImporter):
     def media_2_anki_files_2_import(self, value: List[XmindMediaToAnkiFilesDto]):
         self._media_2_anki_files_2_import = value
 
-    @property
-    def nodes_2_import(self) -> List[XmindTopicDto]:
-        return self._nodes_2_import
+    @cached_property
+    def nodes_2_import(self) -> Dict[str, XmindTopicDto]:
+        return {}
 
-    @property
-    def edges_2_import(self) -> List[XmindTopicDto]:
-        return self._edges_2_import
+    @cached_property
+    def edges_2_import(self) -> Dict[str, List[XmindTopicDto]]:
+        return {}
 
     @property
     def smr_triples_2_import(self) -> Dict[str, List[SmrTripleDto]]:
@@ -177,14 +176,6 @@ class XmindImporter(NoteImporter):
     @files_2_import.setter
     def files_2_import(self, value):
         self._files_2_import = value
-
-    @nodes_2_import.setter
-    def nodes_2_import(self, value):
-        self._nodes_2_import = value
-
-    @edges_2_import.setter
-    def edges_2_import(self, value):
-        self._edges_2_import = value
 
     @smr_notes_2_add.setter
     def smr_notes_2_add(self, value):
@@ -373,11 +364,13 @@ class XmindImporter(NoteImporter):
         if topic.media:
             self.media_uris_2_add.append(topic.media)
         # add the edge to the list of edges to add to the smr_world
-        topic_2_import = topic.dto
         if type_is_node:
-            self.nodes_2_import.append(topic_2_import)
+            self.nodes_2_import[topic.id] = topic.dto
         else:
-            self.edges_2_import.append(topic_2_import)
+            try:
+                self.edges_2_import[topic.relation_class_name].append(topic.dto)
+            except KeyError:
+                self.edges_2_import[topic.relation_class_name] = [topic.dto]
 
     def finish_import(self) -> None:
         """
@@ -432,9 +425,9 @@ class XmindImporter(NoteImporter):
         # Add all media and images to the smr world
         self.smr_world.add_xmind_media_to_anki_files(self._media_2_anki_files_2_import)
         # Add all nodes to the smr world
-        self.smr_world.add_or_replace_xmind_nodes(self.nodes_2_import)
+        self.smr_world.add_or_replace_xmind_nodes(list(self.nodes_2_import.values()))
         # Add all edges to the smr world
-        self.smr_world.add_or_replace_xmind_edges(self.edges_2_import)
+        self.smr_world.add_or_replace_xmind_edges([e for e_l in self.edges_2_import.values() for e in e_l])
         # Add all triples to the smr world
         self.smr_world.add_smr_triples([triple for values in self.smr_triples_2_import.values() for triple in values])
 
@@ -445,7 +438,11 @@ class XmindImporter(NoteImporter):
         """
         # add concepts to ontology
         for node in self.nodes_4_concepts:
-            self.onto.add_concept_from_node(node.dto)
+            self.nodes_2_import[node.id].storid = self.onto.add_concept_from_node(node.dto)
+        for relation_class_name, edges in self.edges_2_import.items():
+            storid = self.onto.add_relation(relation_class_name)
+            for edge in edges:
+                edge.storid = storid
         for relation_class_name in self.smr_triples_2_import:
             # connect concepts in triples
             for triple in self.smr_triples_2_import[relation_class_name]:
