@@ -625,36 +625,6 @@ from smr_notes
 join xmind_edges xe on smr_notes.edge_id = xe.edge_id
 where sheet_id = ?""", (sheet_id,))}
 
-    def get_nodes_2_remove_by_sheet(self, sheet_id: str) -> List['Node2Remove']:
-        """
-        Gets the data for removing all nodes in the sheet with the specified xmind sheet id, sorted descending on
-        sort ids of edges so that leave nodes are positioned before center nodes and nodes can be deleted without
-        having to consider their children
-        :param sheet_id: xmind id of the sheet to get the nodes for
-        :return: List of Dictionaries with all required data for XOntology's function remove_node()
-        """
-        sort_id_cte_clause = get_sort_id_recursive_cte_clause(f"e.sheet_id = '{sheet_id}'")
-        records = self._get_records(f"""{sort_id_cte_clause},
-     sort_ids as (
-         select root_id edge_id, group_concat(row, '') sort_id
-         from rows
-         group by root_id)
-select st.parent_node_id, si.edge_id, st.child_node_id node_id
-from sort_ids si
-         join smr_triples st on si.edge_id = st.edge_id
-order by si.sort_id desc""")
-        nodes_2_remove = []
-        first_record = records.pop(0)
-        node_2_remove = get_node_2_remove(first_record)
-        for record in records:
-            if record.node_id == node_2_remove['node_id']:
-                node_2_remove['parent_node_ids'].append(record.parent_node_id)
-            else:
-                nodes_2_remove.append(node_2_remove)
-                node_2_remove = get_node_2_remove(record)
-        nodes_2_remove.append(node_2_remove)
-        return nodes_2_remove
-
     def get_xmind_nodes_in_sheet(self, sheet_id: str) -> Dict[str, Dict[str, Union[XmindTopicDto, str, List[str]]]]:
         """
         Gets all nodes that belong to the sheet with the specified id

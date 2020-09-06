@@ -277,22 +277,6 @@ class XOntology(Ontology):
                 if not parent_triples:
                     child.smrparent_xrelation.remove(parent)
 
-    def remove_sheet(self, sheet_id: str, root_node_id: str) -> None:
-        """
-        Removes all nodes and the relations associated to the nodes belonging to the specified sheet from the ontology
-        :param sheet_id: the xmind id of the sheet to remove the nodes for
-        :param root_node_id: the xmind node id of the root node of the sheet
-        """
-        # get all ids of nodes belonging to a sheet ordered by sort id so that leaves are positioned first,
-        # together with parent edges (only ids and content) and parent node ids
-        nodes_2_remove = self.smr_world.get_nodes_2_remove_by_sheet(sheet_id)
-        # remove all nodes starting from leave nodes continuing towards the root
-        for node in nodes_2_remove:
-            self.remove_node(parent_node_ids=node['parent_node_ids'], parent_edge_id=node['parent_edge_id'],
-                             node_id=node['node_id'], children={})
-        # finally, remove the root node which is not included in the output of nodes_2_remove and has no parent_node_ids
-        self.remove_node(parent_node_ids=[], node_id=root_node_id, children={})
-
     def _set_up_classes(self) -> None:
         """
         Sets up all necessary classes and relationships for representing concept maps as ontologies.

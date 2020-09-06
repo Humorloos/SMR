@@ -3,6 +3,7 @@ from owlready2 import ObjectPropertyClass
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.fieldtranslator import PARENT_RELATION_NAME, relation_class_from_content
+from smr.xontology import XOntology
 
 
 def test_xontology(x_ontology):
@@ -175,18 +176,6 @@ def test_get_concept_from_node_id(ontology_with_example_map):
 def test_get_relation_from_edge_id(ontology_with_example_map):
     assert ontology_with_example_map.get_relation_from_edge_id(cts.TYPES_EDGE_ID) == \
            ontology_with_example_map.types_xrelation
-
-
-def test_remove_sheet(ontology_with_example_map):
-    # given
-    cut = ontology_with_example_map
-    # when
-    cut.remove_sheet(sheet_id=cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID, root_node_id=cts.BIOLOGICAL_PSYCHOLOGY_NODE_ID)
-    # then
-    assert not cut.Pain
-    assert not cut.information_transfer_and_processing
-    assert not cut.chemical
-    assert not cut.Serotonin.pronounciation_xrelation
 
 
 def test_move_edge(ontology_with_example_map):

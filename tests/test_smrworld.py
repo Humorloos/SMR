@@ -9,6 +9,7 @@ from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.dto.xmindsheetdto import XmindSheetDto
 from smr.smrworld import sort_id_from_order_number
+from smr.xontology import XOntology
 from tests import constants as cts
 
 
@@ -377,14 +378,6 @@ def test_get_note_ids_from_sheet_id(smr_world_with_example_map):
     assert len(notes_in_sheet) == 19
 
 
-def test_get_nodes_2_remove_by_sheet(smr_world_with_example_map):
-    # when
-    nodes_2_remove = smr_world_with_example_map.get_nodes_2_remove_by_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
-    # then
-    assert nodes_2_remove[-1]['node_id'] == cts.CLINICAL_PSYCHOLOGY_1_NODE_ID
-    assert nodes_2_remove[0]['parent_edge_id'] == cts.CAN_BE_TRIGGERED_BY_NODE_ID
-
-
 def test_sort_id_from_order_number():
     # when
     sort_ids = [sort_id_from_order_number(i) for i in range(1, 21)]
@@ -424,7 +417,7 @@ def test_get_xmind_edges_in_sheet(smr_world_with_example_map):
     assert len(edges[cts.PRONOUNCIATION_EDGE_ID]['sibling_edge_ids']) == 3
 
 
-def test_remove_xmind_sheets(smr_world_with_example_map):
+def test_remove_xmind_sheets(smr_world_with_example_map, collection_with_example_map):
     # given
     cut = smr_world_with_example_map
     # when
@@ -434,6 +427,9 @@ def test_remove_xmind_sheets(smr_world_with_example_map):
     assert cut.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
     assert cut.get_xmind_nodes_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID) == {}
     assert len(cut.get_xmind_sheets_in_file(cts.DIRECTORY_MAPS_TEMPORARY, cts.NAME_EXAMPLE_MAP)) == 1
+    assert cut._get_records("select * from main.resources where iri like '%Pain'") == []
+    assert not XOntology(collection_with_example_map.decks.id('testdeck', create=False),
+                         cut).Serotonin.pronounciation_xrelation
 
 
 def test_remove_xmind_edges(smr_world_with_example_map):

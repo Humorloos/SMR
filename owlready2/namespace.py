@@ -1024,8 +1024,7 @@ class Ontology(Namespace, _GraphManager):
             finally:
                 fileobj.close()
         else:
-            if reload or (reload_if_newer and (os.path.getmtime(
-                    f) > self.graph.get_last_update_time())) or (
+            if reload or (reload_if_newer and (os.path.getmtime(f) > self.graph.get_last_update_time())) or (
                     self.graph.get_last_update_time() == 0.0):
                 if _LOG_LEVEL: print(
                     "* Owlready2 *     ...loading ontology %s from %s..." % (

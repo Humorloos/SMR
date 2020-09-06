@@ -322,10 +322,6 @@ class SmrSynchronizer:
         for concept in self.concepts_2_remove:
             self.onto.destroy_node(concept=concept['concept'], node_id=concept['node_id'])
         del self.concepts_2_remove
-        # Remove nodes from ontology by sheets
-        for sheet_id, root_node_id in self.onto_sheets_2_remove.items():
-            self.onto.remove_sheet(sheet_id=sheet_id, root_node_id=root_node_id)
-        del self.onto_sheets_2_remove
 
     def _add_answer(self, answer_content: TopicContentDto, xmind_edge: XmindTopicDto):
         print('add answer to map')

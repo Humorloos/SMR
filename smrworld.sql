@@ -97,6 +97,17 @@ CREATE TABLE smr_triples
     FOREIGN KEY (child_node_id) REFERENCES xmind_nodes (node_id)
         ON UPDATE CASCADE
 );
+CREATE VIEW onto_triples as
+select st.parent_node_id,
+       st.edge_id,
+       st.child_node_id,
+       pn.storid parent_storid,
+       e.storid  edge_storid,
+       cn.storid child_storid
+from smr_triples st
+         join xmind_nodes pn on st.parent_node_id = pn.node_id
+         join xmind_edges e on st.edge_id = e.edge_id
+         join xmind_nodes cn on st.child_node_id = cn.node_id;
 CREATE TRIGGER on_delete_sheets
     AFTER DELETE
     ON xmind_sheets
@@ -113,12 +124,34 @@ BEGIN
     WHERE xmind_sheets.file_directory = OLD.directory
       AND xmind_sheets.file_name = OLD.file_name;
 END;
-CREATE TRIGGER on_delete_nodes
-    AFTER DELETE
+CREATE TRIGGER delete_triples_on_delete_nodes
+    BEFORE DELETE
     ON xmind_nodes
 BEGIN
     DELETE FROM smr_triples WHERE smr_triples.parent_node_id = OLD.node_id;
     DELETE FROM smr_triples WHERE smr_triples.child_node_id = OLD.node_id;
+END;
+CREATE TRIGGER delete_objs_on_delete_triples
+    BEFORE DELETE
+    ON smr_triples
+BEGIN
+    DELETE
+    FROM objs
+    WHERE (s, o) = (select (select storid from xmind_nodes where node_id = OLD.parent_node_id),
+                           (select storid from xmind_nodes where node_id = OLD.child_node_id));
+    DELETE
+    FROM objs
+    WHERE (s, o) = (select (select storid from xmind_nodes where node_id = OLD.child_node_id),
+                           (select storid from xmind_nodes where node_id = OLD.parent_node_id));
+END;
+CREATE TRIGGER delete_concepts_on_delete_nodes
+    AFTER DELETE
+    ON xmind_nodes
+    WHEN not EXISTS(select *
+                    from xmind_nodes
+                    where storid = OLD.storid)
+BEGIN
+    DELETE FROM resources WHERE storid = OLD.storid;
 END;
 CREATE TRIGGER on_delete_edges
     AFTER DELETE
@@ -126,6 +159,15 @@ CREATE TRIGGER on_delete_edges
 BEGIN
     DELETE FROM smr_triples WHERE smr_triples.edge_id = OLD.edge_id;
     DELETE FROM smr_notes WHERE smr_notes.edge_id = OLD.edge_id;
+END;
+CREATE TRIGGER delete_relations_on_delete_edges
+    AFTER DELETE
+    ON xmind_edges
+    WHEN not EXISTS(select *
+                    from xmind_edges
+                    where storid = OLD.storid)
+BEGIN
+    DELETE FROM resources WHERE storid = OLD.storid;
 END;
 CREATE INDEX smr_triples_parent_node_id
     ON smr_triples (parent_node_id);
