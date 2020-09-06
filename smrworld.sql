@@ -43,7 +43,6 @@ CREATE TABLE xmind_edges
     title         TEXT,
     image         TEXT,
     link          TEXT,
-    last_modified INTEGER,
     order_number  INTEGER,
     FOREIGN KEY (sheet_id) REFERENCES xmind_sheets (sheet_id)
         ON UPDATE CASCADE,
@@ -61,7 +60,6 @@ CREATE TABLE xmind_nodes
     title         TEXT,
     image         TEXT,
     link          TEXT,
-    last_modified INTEGER,
     order_number  INTEGER,
     FOREIGN KEY (sheet_id) REFERENCES xmind_sheets (sheet_id)
         ON UPDATE CASCADE,

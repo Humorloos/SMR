@@ -16,7 +16,6 @@ class XmindTopicDto(EntityDto):
     title: str = ""
     image: Optional[str] = None
     link: Optional[str] = None
-    last_modified: Optional[int] = None
     order_number: Optional[int] = None
 
     @property

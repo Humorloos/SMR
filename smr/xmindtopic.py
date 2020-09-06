@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import os
-import urllib
 from abc import ABC
-from typing import List, Optional, Tuple, Set
+from typing import List, Optional, Tuple
+from urllib.parse import unquote
 
 from bs4 import Tag, BeautifulSoup
 
@@ -43,10 +43,10 @@ class XmindTopic(ABC):
             # for media that was referenced via hyperlink, return an absolute path
             else:
                 if self.hyperlink[5:7] == "//":
-                    return os.path.normpath(urllib.parse.unquote(self.hyperlink[7:]))
+                    return os.path.normpath(unquote(self.hyperlink[7:]))
                 # for media with relative path, also get an absolute path
                 else:
-                    return os.path.join(os.path.split(self.file_path)[0], urllib.parse.unquote(self.hyperlink[5:]))
+                    return os.path.join(os.path.split(self.file_path)[0], unquote(self.hyperlink[5:]))
 
     @cached_property
     def image_tag(self) -> Optional[Tag]:
@@ -130,10 +130,6 @@ class XmindTopic(ABC):
         return self.tag['id']
 
     @cached_property
-    def last_modified(self) -> int:
-        return int(self.tag['timestamp'])
-
-    @cached_property
     def soup(self):
         return BeautifulSoup(features="html.parser")
 
@@ -153,7 +149,7 @@ class XmindTopic(ABC):
     @cached_property
     def dto(self) -> XmindTopicDto:
         return XmindTopicDto(node_id=self.id, sheet_id=self.sheet_id, title=self.title, image=self.image,
-                             link=self.media, last_modified=self.last_modified, order_number=self.order_number)
+                             link=self.media, order_number=self.order_number)
 
     def decompose(self):
         """

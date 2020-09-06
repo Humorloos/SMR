@@ -161,8 +161,9 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     cut = smr.smrsynchronizer.SmrSynchronizer()
     # when
     cut.synchronize()
-
     # then
+    former_image_title = 'example (former image)'
+
     def get_fields_by_question(question):
         return cut.col.getNote(cut.col.findNotes(f'Question:"{question}"')[0]).fields
 
@@ -192,6 +193,11 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
         cts.NEW_SHEET_SHEET_ID).values()]).contains(*[TopicContentDto(title=t) for t in (
         'New sheet', 'first new sheet topic', 'another one', 'yet another one', 'answer to this other question',
         'yet another answer')])
+    # Edges in smr world must reflect changes in the reference field due to moved nodes (here "enzymes" was moved
+    # to be a sibling of "biogenic amines"
+    assert cut.smr_world.get_smr_note_reference_fields([cts.EXAMPLE_IMAGE_EDGE_ID])[cts.EXAMPLE_IMAGE_EDGE_ID][
+           :186] == cut.smr_world.get_smr_note_reference_fields([cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID])[
+                        cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID][:186]
     # Anki collection changes:
     # Tags in anki collection must reflect sheet changes in imported xmind files
     assert_that(cut.col.tags.all()).contains_only(
@@ -217,10 +223,6 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     assert cut.col.findNotes('enzymes example') == []
     assert cut.onto.neurotransmitters_changed_textximage_629d18n2i73im903jkrjmr98fg_extension_png.types_xrelation == [
         cut.onto.biogenic_amines, cut.onto.enzymes]
-    former_image_title = 'example (former image)'
-    assert cut.smr_world.get_smr_note_reference_fields([cts.EXAMPLE_IMAGE_EDGE_ID])[cts.EXAMPLE_IMAGE_EDGE_ID][
-           :196] == cut.smr_world.get_smr_note_reference_fields([cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID])[
-                        cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID][:196]
     assert cut.smr_world._get_records(
         "select order_number from main.xmind_nodes where title = 'psychological disorders'")[0][0] == 1
     assert cut.col.getNote(cut.col.findNotes('affects')[0]).fields[2] == 'psychological disorders'
@@ -235,10 +237,8 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
                1] == 'can be inhibited by<br><img src="attachments3rqffo150j4thev5vlag2sgcu6.png">'
     assert cut.col.getNote(cut.col.findNotes('Question:"for example"')[0])
 
+# TODO: Change ontology to smr world mapping by introducing storids again (this will make it much easier to restore
+#  the integrity of the smr world and ontology in case of inconsistencies)
 # TODO: add file selection dialog if file was not found
 # TODO: add log entries for changes made
 # TODO: show log after sync
-# TODO: remove attribute last modified from all topic entities because we don't need it
-# TODO: for some reason empty edges in the map are not recognized if they are filled with content
-# TODO: Change ontology to smr world mapping by introducing storids again (this will make it much easier to restore
-#  the integrity of the smr world and ontology in case of inconsistencies)

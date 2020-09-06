@@ -1,24 +1,24 @@
-edge_id,sheet_id,title,image,link,last_modified,order_number
-edge id,sheet id,edge title,edge image,edge media,1.57831E+12,1
-32dt8d2dflh4lr5oqc2oqqad28,sheet id,,,,1.57807E+12,1
-4kdqkutdha46uns1j8jndi43ht,sheet id,investigates,,,1.57304E+12,2
-730ahk5oc4himfrdvkqc5ci1o2,sheet id,requires,,,1.57919E+12,1
-4r6avbt0pbuasierhasgh12348ec,sheet id,types,,,1.57303E+12,1
-08eq1rdricsp1nt1b7aa181sq4,sheet id,,attachments/09r2e442o8lppjfeblf7il2rmd.png,,1.5792E+12,1
-4lrqok8ac9hec8u2c2ul4mpo4k,sheet id,affects,,,1.57303E+12,1
-4s27e1mvsb5jqoiuaqmnlo8m71,sheet id,pronounciation,,,1.57832E+12,2
-68381mk1p7p5ko95bg7eh4trbh,sheet id,,,,1.59482E+12,3
-077tf3ovn4gc1j1dqte7or33fl,sheet id,difference,,,1.59482E+12,1
-7avqd95hi5tvj0kjcg2lne603g,sheet id,modulated by,,,1.57303E+12,2
-7e1s0urn8376a2q371nujihuab,sheet id,example,,,1.57303E+12,1
-351v1hg3rt5vejrq10c1p3tko0,sheet id,stands for,,,1.57303E+12,1
-61irckf1nloq42brfmbu0ke92v,sheet id,splits up,,,1.57303E+12,2
-6iivm8tpoqj2c0euaabtput14l,sheet id,are,,,1.57303E+12,1
-4vfsmbd1fmn6s0tqmlj4cei7pe,sheet id,completely unrelated animation,,,1.57303E+12,2
-668iln3nrlmk5ibhnf4lvbbnmo,sheet id,,,,1.57303E+12,1
-1scualcvt0scjd9iaoblg568ld,sheet id,can be inhibited by,,,1.57303E+12,1
-4rdraflh6n2hl4a459g2urdkr6,sheet id,triggered by,,,1.57303E+12,2
-4q3e21ritrvitgmjialvadn2m6,sheet id,can be,,,1.57303E+12,1
-7ite3obkfmbchr1pc6ib0o7rga,sheet id,can be triggered by,,,1.57303E+12,1
-7ite3obkfmbcasdf12asd123ga,sheet id,some media edge title,,some media,1.57303E+12,1
-7ipkhjdorhgcasdf12asd123ga,sheet id,edge after edge with media,,,1.57303E+12,1
+edge_id,sheet_id,title,image,link,order_number
+edge id,sheet id,edge title,edge image,edge media,1
+32dt8d2dflh4lr5oqc2oqqad28,sheet id,,,,1
+4kdqkutdha46uns1j8jndi43ht,sheet id,investigates,,,2
+730ahk5oc4himfrdvkqc5ci1o2,sheet id,requires,,,1
+4r6avbt0pbuasierhasgh12348ec,sheet id,types,,,1
+08eq1rdricsp1nt1b7aa181sq4,sheet id,,attachments/09r2e442o8lppjfeblf7il2rmd.png,,1
+4lrqok8ac9hec8u2c2ul4mpo4k,sheet id,affects,,,1
+4s27e1mvsb5jqoiuaqmnlo8m71,sheet id,pronounciation,,,2
+68381mk1p7p5ko95bg7eh4trbh,sheet id,,,,3
+077tf3ovn4gc1j1dqte7or33fl,sheet id,difference,,,1
+7avqd95hi5tvj0kjcg2lne603g,sheet id,modulated by,,,2
+7e1s0urn8376a2q371nujihuab,sheet id,example,,,1
+351v1hg3rt5vejrq10c1p3tko0,sheet id,stands for,,,1
+61irckf1nloq42brfmbu0ke92v,sheet id,splits up,,,2
+6iivm8tpoqj2c0euaabtput14l,sheet id,are,,,1
+4vfsmbd1fmn6s0tqmlj4cei7pe,sheet id,completely unrelated animation,,,2
+668iln3nrlmk5ibhnf4lvbbnmo,sheet id,,,,1
+1scualcvt0scjd9iaoblg568ld,sheet id,can be inhibited by,,,1
+4rdraflh6n2hl4a459g2urdkr6,sheet id,triggered by,,,2
+4q3e21ritrvitgmjialvadn2m6,sheet id,can be,,,1
+7ite3obkfmbchr1pc6ib0o7rga,sheet id,can be triggered by,,,1
+7ite3obkfmbcasdf12asd123ga,sheet id,some media edge title,,some media,1
+7ipkhjdorhgcasdf12asd123ga,sheet id,edge after edge with media,,,1
