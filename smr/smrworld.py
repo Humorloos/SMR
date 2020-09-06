@@ -530,7 +530,7 @@ group by root_id""").fetchall()
         :param node_id: the xmind id to get the storid for
         :return: the storid
         """
-        return self.graph.execute("SELECT s FROM datas WHERE o = ?", (node_id,)).fetchone()[0]
+        return self._get_records(f"select storid from main.xmind_nodes where node_id = '{node_id}'")[0].storid
 
     def storid_from_edge_id(self, edge_id: str) -> int:
         """

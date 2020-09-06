@@ -41,7 +41,6 @@ class XmindImporter(NoteImporter):
         # entity lists for imports
         self.files_2_import: List[XmindFileDto] = []
         self.sheets_2_import: List[XmindSheetDto] = []
-        self.media_2_anki_files_2_import: List[XmindMediaToAnkiFilesDto] = []
         self.smr_notes_2_add: List[SmrNoteDto] = []
         # deck id, deck name, and repair are specified in deck selection dialog
         self.deck_name: str = ''
@@ -85,17 +84,9 @@ class XmindImporter(NoteImporter):
     def sheets_2_import(self) -> List[XmindSheetDto]:
         return self._sheets_2_import
 
-    @property
-    def media_2_anki_files_2_import(self) -> List[XmindMediaToAnkiFilesDto]:
-        return self._media_2_anki_files_2_import
-
-    @media_2_anki_files_2_import.setter
-    def media_2_anki_files_2_import(self, value: List[XmindMediaToAnkiFilesDto]):
-        self._media_2_anki_files_2_import = value
-
     @cached_property
-    def nodes_2_import(self) -> Dict[str, XmindTopicDto]:
-        return {}
+    def media_2_anki_files_2_import(self) -> List[XmindMediaToAnkiFilesDto]:
+        return []
 
     @cached_property
     def edges_2_import(self) -> Dict[str, List[XmindTopicDto]]:
@@ -191,17 +182,9 @@ class XmindImporter(NoteImporter):
     def media_uris_2_add(self, value: List[str]):
         self._media_uris_2_add = value
 
-    @property
-    def nodes_4_concepts(self) -> List[XmindNode]:
-        try:
-            return self._nodes_4_concepts
-        except AttributeError:
-            self._nodes_4_concepts = []
-            return self._nodes_4_concepts
-
-    @nodes_4_concepts.setter
-    def nodes_4_concepts(self, value: List[XmindNode]):
-        self.nodes_4_concepts = value
+    @cached_property
+    def nodes_4_concepts(self) -> List[XmindTopicDto]:
+        return []
 
     def newData(self, n: ForeignNote) -> List:
         """
@@ -322,7 +305,7 @@ class XmindImporter(NoteImporter):
         """
         if not node.is_empty:
             # register the concept for this node in the ontology
-            self.nodes_4_concepts.append(node)
+            self.nodes_4_concepts.append(node.dto)
             # register relations of this node to its parent nodes
             if node.parent_edge is not None:
                 smr_triples = [SmrTripleDto(parent_node_id=parent_node.id, edge_id=node.parent_edge.id,
@@ -364,9 +347,7 @@ class XmindImporter(NoteImporter):
         if topic.media:
             self.media_uris_2_add.append(topic.media)
         # add the edge to the list of edges to add to the smr_world
-        if type_is_node:
-            self.nodes_2_import[topic.id] = topic.dto
-        else:
+        if not type_is_node:
             try:
                 self.edges_2_import[topic.relation_class_name].append(topic.dto)
             except KeyError:
@@ -384,8 +365,8 @@ class XmindImporter(NoteImporter):
         """
         if not self.is_running:
             return
-        self._add_entities_2_ontology()
         self.add_media_2_anki_collection()
+        self._add_entities_2_ontology()
         self.add_entities_2_smr_world()
         # Create Notes from all edges
         self.notes_2_import = self.smr_world.generate_notes(self.col, edge_ids=self.edge_ids_2_make_notes_of)
@@ -418,14 +399,6 @@ class XmindImporter(NoteImporter):
         Adds all entities in the respective lists to the respective relations (except notes and cards since they
         need to be imported to the anki collection first)
         """
-        # Add all files to the smr world
-        self.smr_world.add_or_replace_xmind_files(self.files_2_import)
-        # Add all sheets to the smr world
-        self.smr_world.add_xmind_sheets(self.sheets_2_import)
-        # Add all media and images to the smr world
-        self.smr_world.add_xmind_media_to_anki_files(self._media_2_anki_files_2_import)
-        # Add all nodes to the smr world
-        self.smr_world.add_or_replace_xmind_nodes(list(self.nodes_2_import.values()))
         # Add all edges to the smr world
         self.smr_world.add_or_replace_xmind_edges([e for e_l in self.edges_2_import.values() for e in e_l])
         # Add all triples to the smr world
@@ -436,9 +409,14 @@ class XmindImporter(NoteImporter):
         Adds all the nodes from which we want to generate concepts to the ontology and connects them with the
         respective edges
         """
+        # Add all files to the smr world
+        self.smr_world.add_or_replace_xmind_files(self.files_2_import)
+        # Add all sheets to the smr world
+        self.smr_world.add_xmind_sheets(self.sheets_2_import)
+        # Add all media and images to the smr world
+        self.smr_world.add_xmind_media_to_anki_files(self.media_2_anki_files_2_import)
         # add concepts to ontology
-        for node in self.nodes_4_concepts:
-            self.nodes_2_import[node.id].storid = self.onto.add_concept_from_node(node.dto)
+        self.onto.add_concepts_from_nodes(self.nodes_4_concepts)
         for relation_class_name, edges in self.edges_2_import.items():
             storid = self.onto.add_relation(relation_class_name)
             for edge in edges:

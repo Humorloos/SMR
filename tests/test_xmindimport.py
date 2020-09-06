@@ -152,7 +152,6 @@ def test_import_node_if_concept_root(xmind_importer_import_node_if_concept, xmin
     cut.read_node_if_concept(node=xmind_node)
     # then
     assert len(cut.media_uris_2_add) == 0
-    assert len(cut.nodes_2_import) == 1
     assert len(cut.nodes_4_concepts) == 1
     assert len(cut.smr_triples_2_import) == 0
 
@@ -177,7 +176,6 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
     # when
     cut.read_node_if_concept(node=node)
     # then
-    assert len(cut.nodes_2_import) == 1
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.nodes_4_concepts) == 1
     assert len(cut.smr_triples_2_import['are_xrelation']) == 4
@@ -222,6 +220,7 @@ def test_finish_import(patch_aqt_mw_smr_world_and_col_with_example_map, mocker):
     # given
     cut = XmindImporter(col=aqt.mw.col, file=cts.PATH_EXAMPLE_MAP_TEMPORARY)
     mocker.patch.object(cut, "import_notes_and_cards")
+    mocker.patch.object(cut, "_add_entities_2_ontology")
     cut.notes_2_import = cut.smr_world.generate_notes(col=cut.col, edge_ids=[
         cts.TYPES_EDGE_ID, cts.SPLITS_UP_EDGE_ID, cts.CONSIST_OF_EDGE_ID])
     # when

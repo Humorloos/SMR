@@ -250,3 +250,17 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
 # TODO: add log entries for changes made
 # TODO: show log after sync
 # TODO: make sure xmind sheets are updated after remote sync
+# TODO: create triggers for collecting old image and media entries after removals: like this:
+#  CREATE TRIGGER delete_xmind_media_on_delete_nodes
+#     AFTER DELETE
+#     ON xmind_nodes
+#     WHEN not EXISTS(select *
+#                      from xmind_nodes
+#                      where link = OLD.link
+#                      union
+#                      select *
+#                      from xmind_edges
+#                      where link = OLD.link)
+# BEGIN
+#     ...
+# END;

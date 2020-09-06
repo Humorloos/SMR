@@ -9,8 +9,7 @@ from owlready2.prop import destroy_entity, ObjectPropertyClass
 from smr.cachedproperty import cached_property
 from smr.consts import USER_PATH
 from smr.dto.xmindtopicdto import XmindTopicDto
-from smr.fieldtranslator import PARENT_RELATION_NAME, CHILD_RELATION_NAME, class_from_content, \
-    relation_class_from_content
+from smr.fieldtranslator import PARENT_RELATION_NAME, CHILD_RELATION_NAME, class_from_content
 from smr.smrworld import SmrWorld
 
 
@@ -60,21 +59,6 @@ class XOntology(Ontology):
         """
         return self.get(self.smr_world.storid_from_edge_id(edge_id))
 
-    def add_node(self, parent_node_ids: List[str], parent_edge: XmindTopicDto,
-                 node_2_add: XmindTopicDto, relation_class_name: Optional[str] = None):
-        """
-        - If the concept for the node already exists, adds the node id to the concept's node ids, else creates the
-        concept
-        - Connects the concept to its parents with the specified edge's information
-        :param parent_edge: xmind node dto of the edge preceding the node to add
-        :param relation_class_name: class name of the relationship with which to connect the new node
-        :param node_2_add: xmind node dto of the node to add with already updated content
-        :param parent_node_ids: xmind node ids of the parent nodes of the node to add
-        """
-        for parent_node_id in parent_node_ids:
-            self.connect_concepts(child_node_id=node_2_add.node_id, parent_node_id=parent_node_id,
-                                  edge_id=parent_edge.node_id, relation_class_name=relation_class_name)
-
     def connect_concepts(self, parent_node_id: str, child_node_id: str, edge_id: str,
                          relation_class_name: Optional[str] = None) -> None:
         """
@@ -101,19 +85,21 @@ class XOntology(Ontology):
         setattr(child_concept, PARENT_RELATION_NAME, new_parents)
         self.XmindId[child_concept, getattr(self, PARENT_RELATION_NAME), parent_concept].append(edge_id)
 
-    def add_concept_from_node(self, node: XmindTopicDto) -> int:
+    def add_concepts_from_nodes(self, nodes: List[XmindTopicDto]):
         """
-        Adds a new concept to the ontology and returns it
-        :param node: the node dto to create the concept from
+        Adds a new concept to the ontology if necessary and adds / updates the related nodes in the smr world
+        :param nodes: the node dto to create the concept from
         :return: the concept's storid
         """
-        # Some concept names (e.g. 'are') can lead to errors, so catch them
-        try:
-            concept = self.Concept(class_from_content(node.content))
-        except TypeError:
-            raise NameError('Invalid concept name')
-        concept.XmindId.append(node.node_id)
-        return concept.storid
+        for node in nodes:
+            # Some concept names (e.g. 'are') can lead to errors, so catch them
+            try:
+                concept = self.Concept(class_from_content(node.content))
+            except TypeError:
+                raise NameError('Invalid concept name')
+            concept.XmindId.append(node.node_id)
+            node.storid = concept.storid
+        self.smr_world.add_or_replace_xmind_nodes(nodes)
 
     def add_relation(self, relationship_class_name: str) -> int:
         """
@@ -180,7 +166,7 @@ class XOntology(Ontology):
             self.remove_relations(parents=[concept], children=child_concepts, edge_id=child_edge_id)
 
     def rename_node(self, parent_node_ids: List[str], xmind_edge: Optional[XmindTopicDto], xmind_node: XmindTopicDto,
-                    children: Dict[str, List[str]]) -> None:
+                    children: Dict[str, List[str]]):
         """
         changes the name of a node while retaining the relations to related concepts (children and parents)
         :param parent_node_ids: node ids of all nodes preceding the node to change
@@ -199,8 +185,10 @@ class XOntology(Ontology):
         child_relation_names = [self.get_relation_from_edge_id(i).name for i in children]
         self.remove_node(parent_node_ids=parent_node_ids, parent_edge_id=parent_edge_id, node_id=xmind_node.node_id,
                          children=children)
-        self.add_node(parent_edge=xmind_edge, relation_class_name=parent_relation_name,
-                      node_2_add=xmind_node, parent_node_ids=parent_node_ids)
+        self.add_concepts_from_nodes([xmind_node])
+        for parent_node_id in parent_node_ids:
+            self.connect_concepts(child_node_id=xmind_node.node_id, parent_node_id=parent_node_id,
+                                  edge_id=xmind_edge.node_id, relation_class_name=parent_relation_name)
         # connect concept to former children of removed node
         for (edge_id, child_node_ids), child_relation_name in zip(children.items(), child_relation_names):
             for child_node_id in child_node_ids:
