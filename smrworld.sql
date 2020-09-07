@@ -97,17 +97,6 @@ CREATE TABLE smr_triples
     FOREIGN KEY (child_node_id) REFERENCES xmind_nodes (node_id)
         ON UPDATE CASCADE
 );
-CREATE VIEW onto_triples as
-select st.parent_node_id,
-       st.edge_id,
-       st.child_node_id,
-       pn.storid parent_storid,
-       e.storid  edge_storid,
-       cn.storid child_storid
-from smr_triples st
-         join xmind_nodes pn on st.parent_node_id = pn.node_id
-         join xmind_edges e on st.edge_id = e.edge_id
-         join xmind_nodes cn on st.child_node_id = cn.node_id;
 CREATE TRIGGER on_delete_sheets
     AFTER DELETE
     ON xmind_sheets
@@ -124,32 +113,152 @@ BEGIN
     WHERE xmind_sheets.file_directory = OLD.directory
       AND xmind_sheets.file_name = OLD.file_name;
 END;
-CREATE TRIGGER delete_triples_on_delete_nodes
-    BEFORE DELETE
+-- Triggers for deleting object relations after removing/renaming nodes
+CREATE TRIGGER delete_objs_and_triples_on_delete_nodes
+    AFTER DELETE
     ON xmind_nodes
 BEGIN
+    DELETE
+    FROM objs
+    WHERE EXISTS(SELECT NULL
+                 FROM smr_triples st
+                          left outer join xmind_nodes pn on st.parent_node_id = pn.node_id
+                          join xmind_edges e on st.edge_id = e.edge_id
+                          left outer join xmind_nodes cn on st.child_node_id = cn.node_id
+                 where (
+--                  Remove parent node's child relation
+                         st.child_node_id = old.node_id
+                         and objs.s = pn.storid
+                         and objs.p = e.storid
+                         and objs.o = old.storid
+                         and not EXISTS(SELECT NULL
+                                        FROM smr_triples st2
+                                                 join xmind_nodes pn2 on st2.parent_node_id = pn2.node_id
+                                                 join xmind_edges e2 on st2.edge_id = e2.edge_id
+                                                 join xmind_nodes cn2 on st2.child_node_id = cn2.node_id
+                                        WHERE cn2.storid = old.storid
+                                          and e2.storid = e.storid
+                                          and pn2.storid = pn.storid)
+                     )
+--                     Remove node's parent relation
+                    or (
+                         not EXISTS(SELECT NULL
+                                    FROM smr_triples st2
+                                             join xmind_nodes pn2 on st2.parent_node_id = pn2.node_id
+                                             join xmind_nodes cn2 on st2.child_node_id = cn2.node_id
+                                    WHERE cn2.storid = old.storid
+                                      and pn2.storid = pn.storid) and objs.s = old.storid and objs.p = 305 and
+                         objs.o = pn.storid and
+                         st.child_node_id = old.node_id
+                     )
+                    or (
+--                  Remove node's child relation
+                         not EXISTS(SELECT NULL
+                                    FROM smr_triples st2
+                                             join xmind_nodes pn2 on st2.parent_node_id = pn2.node_id
+                                             join xmind_edges e2 on st2.edge_id = e2.edge_id
+                                             join xmind_nodes cn2 on st2.child_node_id = cn2.node_id
+                                    WHERE pn2.storid = old.storid
+                                      and e2.storid = e.storid
+                                      and cn2.storid = cn.storid) and objs.s = old.storid and objs.p = e.storid and
+                         objs.o = cn.storid and
+                         st.parent_node_id = old.node_id
+                     )
+                    or (
+--                         Remove child node's parent relation
+                         not EXISTS(SELECT NULL
+                                    FROM smr_triples st2
+                                             join xmind_nodes pn2 on st2.parent_node_id = pn2.node_id
+                                             join xmind_nodes cn2 on st2.child_node_id = cn2.node_id
+                                    WHERE pn2.storid = old.storid
+                                      and cn2.storid = cn.storid) and objs.s = cn.storid and objs.p = 305 and
+                         objs.o = old.storid and
+                         st.parent_node_id = old.node_id
+                     )
+              );
     DELETE FROM smr_triples WHERE smr_triples.parent_node_id = OLD.node_id;
     DELETE FROM smr_triples WHERE smr_triples.child_node_id = OLD.node_id;
 END;
-CREATE TRIGGER delete_objs_on_delete_triples
-    BEFORE DELETE
-    ON smr_triples
+CREATE TRIGGER delete_objs_on_rename_node
+    AFTER UPDATE
+    on xmind_nodes
+    WHEN NEW.storid is NULL
 BEGIN
     DELETE
     FROM objs
-    WHERE (s, o) = (select (select storid from xmind_nodes where node_id = OLD.parent_node_id),
-                           (select storid from xmind_nodes where node_id = OLD.child_node_id));
-    DELETE
-    FROM objs
-    WHERE (s, o) = (select (select storid from xmind_nodes where node_id = OLD.child_node_id),
-                           (select storid from xmind_nodes where node_id = OLD.parent_node_id));
+    WHERE EXISTS(SELECT NULL
+                 FROM smr_triples st
+                          join xmind_nodes pn on st.parent_node_id = pn.node_id
+                          join xmind_edges e on st.edge_id = e.edge_id
+                          join xmind_nodes cn on st.child_node_id = cn.node_id
+                 where (
+--                  Remove parent node's child relation
+                         st.child_node_id = old.node_id
+                         and objs.s = pn.storid
+                         and objs.p = e.storid
+                         and objs.o = old.storid
+                         and not EXISTS(SELECT NULL
+                                        FROM smr_triples st2
+                                                 join xmind_nodes pn2 on st2.parent_node_id = pn2.node_id
+                                                 join xmind_edges e2 on st2.edge_id = e2.edge_id
+                                                 join xmind_nodes cn2 on st2.child_node_id = cn2.node_id
+                                        WHERE cn2.storid = old.storid
+                                          and e2.storid = e.storid
+                                          and pn2.storid = pn.storid)
+                     )
+--                     Remove node's parent relation
+                    or (
+                         not EXISTS(SELECT NULL
+                                    FROM smr_triples st2
+                                             join xmind_nodes pn2 on st2.parent_node_id = pn2.node_id
+                                             join xmind_nodes cn2 on st2.child_node_id = cn2.node_id
+                                    WHERE cn2.storid = old.storid
+                                      and pn2.storid = pn.storid) and objs.s = old.storid and objs.p = 305 and
+                         objs.o = pn.storid and
+                         st.child_node_id = old.node_id
+                     )
+                    or (
+--                  Remove node's child relation
+                         not EXISTS(SELECT NULL
+                                    FROM smr_triples st2
+                                             join xmind_nodes pn2 on st2.parent_node_id = pn2.node_id
+                                             join xmind_edges e2 on st2.edge_id = e2.edge_id
+                                             join xmind_nodes cn2 on st2.child_node_id = cn2.node_id
+                                    WHERE pn2.storid = old.storid
+                                      and e2.storid = e.storid
+                                      and cn2.storid = cn.storid) and objs.s = old.storid and objs.p = e.storid and
+                         objs.o = cn.storid and
+                         st.parent_node_id = old.node_id
+                     )
+                    or (
+--                         Remove child node's parent relation
+                         not EXISTS(SELECT NULL
+                                    FROM smr_triples st2
+                                             join xmind_nodes pn2 on st2.parent_node_id = pn2.node_id
+                                             join xmind_nodes cn2 on st2.child_node_id = cn2.node_id
+                                    WHERE pn2.storid = old.storid
+                                      and cn2.storid = cn.storid) and objs.s = cn.storid and objs.p = 305 and
+                         objs.o = old.storid and
+                         st.parent_node_id = old.node_id
+                     )
+              );
 END;
+-- Triggers for removing concepts after deleting/renaming nodes
 CREATE TRIGGER delete_concepts_on_delete_nodes
     AFTER DELETE
     ON xmind_nodes
-    WHEN not EXISTS(select *
+    WHEN not EXISTS(select NULL
                     from xmind_nodes
                     where storid = OLD.storid)
+BEGIN
+    DELETE FROM resources WHERE storid = OLD.storid;
+END;
+CREATE TRIGGER delete_concepts_on_rename_node
+    AFTER UPDATE
+    on xmind_nodes
+    WHEN NEW.storid is null and not EXISTS(select NULL
+                                           from xmind_nodes
+                                           where storid = OLD.storid)
 BEGIN
     DELETE FROM resources WHERE storid = OLD.storid;
 END;
@@ -163,7 +272,7 @@ END;
 CREATE TRIGGER delete_relations_on_delete_edges
     AFTER DELETE
     ON xmind_edges
-    WHEN not EXISTS(select *
+    WHEN not EXISTS(select NULL
                     from xmind_edges
                     where storid = OLD.storid)
 BEGIN

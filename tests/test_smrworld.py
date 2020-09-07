@@ -8,6 +8,7 @@ from smr.dto.smrtripledto import SmrTripleDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.dto.xmindsheetdto import XmindSheetDto
+from smr.fieldtranslator import CHILD_RELATION_NAME, relation_class_from_content
 from smr.smrworld import sort_id_from_order_number
 from smr.xontology import XOntology
 from tests import constants as cts
@@ -299,17 +300,31 @@ def test_storid_from_edge_id(ontology_with_example_map):
     assert ontology_with_example_map.get(storid) == ontology_with_example_map.types_xrelation
 
 
-def test_remove_xmind_nodes(smr_world_with_example_map):
+def test_remove_xmind_nodes(smr_world_with_example_map, collection_with_example_map):
     # given
     cut = smr_world_with_example_map
     # when
-    cut.remove_xmind_nodes([cts.NEUROTRANSMITTERS_NODE_ID, cts.MAO_1_NODE_ID])
+    cut.remove_xmind_nodes([cts.NEUROTRANSMITTERS_NODE_ID, cts.MAO_1_NODE_ID, cts.NOCICEPTORS_NODE_ID])
     # then
     remaining_node_ids = [e[0] for e in cut.graph.execute("select node_id from xmind_nodes").fetchall()]
     assert cts.NEUROTRANSMITTERS_NODE_ID not in remaining_node_ids
     assert cts.MAO_1_NODE_ID not in remaining_node_ids
+    # triples must be removed
     assert cut._get_records(f"""
 select * from main.smr_triples where parent_node_id = '{cts.MAO_1_NODE_ID}'""") == []
+    # ontology:
+    onto = XOntology(collection_with_example_map.decks.id('testdeck', create=False), cut)
+    mao = onto.MAO
+    # node's child relation that is still present at different location must not be removed
+    assert len(mao.difference_xrelation) == 1
+    # node's child relation that was only part of the deleted node must be removed
+    assert len(mao.types_in_humans_xrelation) == 0
+    # node's parent relation must be removed
+    assert len(mao.smrparent_xrelation) == 0
+    # parent node's child relation must be removed
+    assert len(onto.Pain.triggered_by_xrelation) == 0
+    # child node's parent relation must be removed
+    assert len(onto.chemical.smrparent_xrelation) == 0
 
 
 def test_get_smr_note_reference_fields(smr_world_with_example_map):
@@ -507,3 +522,25 @@ def test_get_tag_by_sheet_id(smr_world_with_example_map, collection_with_example
                                   anki_collection=collection_with_example_map)
     # then
     assert tag == ' testdeck::example_map::biological_psychology '
+
+
+def test_disconnect_node(smr_world_with_example_map, collection_with_example_map):
+    # given
+    cut = smr_world_with_example_map
+    # when
+    cut.disconnect_node(cts.SEROTONIN_1_NODE_ID)
+    # then
+    cut.save()
+    onto = XOntology(collection_with_example_map.decks.id('testdeck', create=False), cut)
+    serotonin = onto.Serotonin
+    # node's parent relation to "biogenic amines" must be removed
+    assert len(serotonin.smrparent_xrelation) == 5
+    # node's child relation to "MAO" must not be removed since there is another case of this type of relation in the map
+    assert len(getattr(serotonin, CHILD_RELATION_NAME)) == 1
+    # node's child relation affects relations must be removed
+    assert len(serotonin.affects_xrelation) == 0
+    # child node's parent relation must be removed
+    assert serotonin not in onto.Pain.smrparent_xrelation
+    # parent node's child relation must be removed
+    assert len(getattr(onto.biogenic_amines,
+                       relation_class_from_content(TopicContentDto(image=cts.EXAMPLE_IMAGE_ATTACHMENT_NAME)))) == 0

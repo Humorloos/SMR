@@ -114,14 +114,6 @@ class SmrSynchronizer:
         return []
 
     @cached_property
-    def concepts_2_remove(self) -> List[Dict[str, Union[List[str], str, ThingClass]]]:
-        return []
-
-    @cached_property
-    def onto_sheets_2_remove(self) -> Dict[str, str]:
-        return {}
-
-    @cached_property
     def xmind_files_2_update(self) -> List[XmindFileDto]:
         return []
 
@@ -315,13 +307,6 @@ class SmrSynchronizer:
                 parent_node_ids=relation['parent_node_ids'], relation_class_name=relation_class_name,
                 child_node_ids=relation['child_node_ids'], edge_id=edge_2_rename.node_id)
         del self.relations_2_rename
-        # Remove nodes from ontology
-        for concept in self.concepts_2_remove:
-            self.onto.disconnect_node(parent_node_ids=concept['parent_node_ids'], parent_edge_id=concept[
-                'parent_edge_id'], concept=concept['concept'], children={})
-        for concept in self.concepts_2_remove:
-            self.onto.destroy_node(concept=concept['concept'], node_id=concept['node_id'])
-        del self.concepts_2_remove
 
     def _add_answer(self, answer_content: TopicContentDto, xmind_edge: XmindTopicDto):
         print('add answer to map')

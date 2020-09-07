@@ -764,6 +764,14 @@ WHERE edge_id = ?""", new_data)
 DELETE FROM main.smr_triples
 WHERE edge_id = ? and child_node_id = ?""", old_data)
 
+    def disconnect_node(self, node_id: str) -> None:
+        """
+        Sets the storid of the node with the specified xmind node id to null which causes the triggers to remove all
+        associated relations and the concept if it is not represented by any concepts anymore
+        :param node_id: the xmind id of the node to disconnect
+        """
+        self.graph.execute(f"UPDATE xmind_nodes set storid = null where node_id = '{node_id}'")
+
 
 class AnkiCollectionAttachment:
     """

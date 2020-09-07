@@ -117,54 +117,6 @@ class XOntology(Ontology):
                 relationship_property.range = [self.Concept]
         return relationship_property.storid
 
-    def remove_node(self, parent_node_ids: List[str], node_id: str,
-                    children: Dict[str, List[str]], parent_edge_id: Optional[str] = None):
-        """
-        Removes the node's xmind id from the respective concept
-         - if there are more nodes left belonging to the concept, removes the relations between parent and child
-         nodes and specified node
-         - if there are no more nodes left belonging to the concept, destroys the concept
-        :param parent_node_ids: list of node ids belonging to the parent nodes of the edge preceding the node to remove
-        :param node_id: xmind id of the node to delete
-        :param parent_edge_id: xmind id of the node's parent edge
-        :param children: dictionary where keys are edge_ids of edges following the node to remove and values are
-        dictionaries containing the edge's node_ids and a list of node ids belonging to the edge's child nodes
-        parent nodes of the node to be deleted (only necessary when removing a node in the middle of a map which is
-        only necessary in case of renaming a node)
-        """
-        concept = self.get_concept_from_node_id(node_id)
-        if parent_edge_id is not None:
-            self.disconnect_node(parent_node_ids=parent_node_ids, parent_edge_id=parent_edge_id, concept=concept,
-                                 children=children)
-        self.destroy_node(concept, node_id)
-
-    @staticmethod
-    def destroy_node(concept, node_id):
-        """
-        Removes the specified node id from the concept and destroys it if no more node ids are left
-        :param concept:
-        :param node_id:
-        """
-        currently_associated_ids = concept.XmindId
-        currently_associated_ids.remove(node_id)
-        if not currently_associated_ids:
-            destroy_entity(concept)
-
-    def disconnect_node(self, parent_node_ids: List[str], parent_edge_id: str, concept: ThingClass,
-                        children: Dict[str, List[str]]):
-        """
-        removes the relations between the specified concepts and its parents and its children
-        :param parent_node_ids: list of node ids belonging to the parent nodes of the edge preceding the node to remove
-        :param parent_edge_id: xmind id of the node's parent edge
-        :param concept: the concept to disconnect
-        :param children: dictionary where keys are edge_ids of edges following the node to remove and values are
-        """
-        self.remove_relations(parents=[self.get_concept_from_node_id(i) for i in parent_node_ids],
-                              children=[concept], edge_id=parent_edge_id)
-        for child_edge_id, child_node_ids in children.items():
-            child_concepts = [self.get_concept_from_node_id(i) for i in child_node_ids]
-            self.remove_relations(parents=[concept], children=child_concepts, edge_id=child_edge_id)
-
     def rename_node(self, parent_node_ids: List[str], xmind_edge: Optional[XmindTopicDto], xmind_node: XmindTopicDto,
                     children: Dict[str, List[str]]):
         """
@@ -180,11 +132,9 @@ class XOntology(Ontology):
             parent_edge_id = xmind_edge.node_id
             parent_relation_name = self.get_relation_from_edge_id(parent_edge_id).name
         else:
-            parent_edge_id = None
             parent_relation_name = None
         child_relation_names = [self.get_relation_from_edge_id(i).name for i in children]
-        self.remove_node(parent_node_ids=parent_node_ids, parent_edge_id=parent_edge_id, node_id=xmind_node.node_id,
-                         children=children)
+        self.smr_world.disconnect_node(node_id=xmind_node.node_id)
         self.add_concepts_from_nodes([xmind_node])
         for parent_node_id in parent_node_ids:
             self.connect_concepts(child_node_id=xmind_node.node_id, parent_node_id=parent_node_id,
