@@ -7,14 +7,12 @@ import aqt as aqt
 import smr.consts as cts
 from anki import Collection
 from anki.utils import splitFields
-from owlready2 import ThingClass
 from smr.cachedproperty import cached_property
 from smr.dto.smrnotedto import SmrNoteDto
 from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
 from smr.dto.xmindmediatoankifilesdto import XmindMediaToAnkiFilesDto
 from smr.dto.xmindtopicdto import XmindTopicDto
-from smr.fieldtranslator import relation_class_from_content
 from smr.smrworld import SmrWorld
 from smr.xmanager import XManager
 from smr.xmindimport import XmindImporter
@@ -98,19 +96,15 @@ class SmrSynchronizer:
         return self.smr_world.get_changed_smr_notes(self.col)
 
     @cached_property
-    def relations_2_move(self) -> List[Dict[str, Union[str, List[str]]]]:
-        return []
-
-    @cached_property
     def concepts_2_move(self) -> List[Dict[str, Union[str, List[str], Set[str]]]]:
         return []
 
     @cached_property
-    def concepts_2_rename(self) -> Dict[str, Dict[str, Union[List[str], XmindTopicDto, Dict[str, List[str]]]]]:
-        return {}
+    def concepts_2_rename(self) -> List[XmindTopicDto]:
+        return []
 
     @cached_property
-    def relations_2_rename(self) -> List[Dict[str, Union[List[str], XmindTopicDto]]]:
+    def relations_2_rename(self) -> List[XmindTopicDto]:
         return []
 
     @cached_property
@@ -134,12 +128,12 @@ class SmrSynchronizer:
         return []
 
     @cached_property
-    def smr_triple_edges_2_move(self) -> Dict[str, List[Tuple[str, str]]]:
-        return {'new_data': [], 'old_data': []}
+    def smr_triple_edges_2_move(self) -> Dict[str, Set[str]]:
+        return {}
 
     @cached_property
-    def smr_triple_nodes_2_move(self) -> Dict[str, List[Tuple[str, str]]]:
-        return {'new_data': [], 'old_data': []}
+    def smr_triple_nodes_2_move(self) -> Dict[str, str]:
+        return {}
 
     @cached_property
     def xmind_nodes_2_remove(self) -> List[str]:
@@ -208,7 +202,6 @@ class SmrSynchronizer:
                         continue
                 # apply updates to the all systems
                 self._synchronize_ontology()
-                self._synchronize_smr_world()
                 self._synchronize_anki_collection()
         aqt.mw.progress.finish()
 
@@ -235,27 +228,39 @@ class SmrSynchronizer:
             self.note_manager.clear_unused_tags()
         self.note_manager.save_col()
 
-    def _synchronize_smr_world(self):
+    def _synchronize_ontology(self):
         """
-        makes all necessary changes to the smr world
+        Makes all necessary changes to the ontology that are not covered by XmindImport
         """
+        # Add smr world media and node updates before renaming to overwrite nodes that are updated without renaming
+        # and avoid foreign key constraint violations
+        self.smr_world.add_xmind_media_to_anki_files(list(self.xmind_uris_2_anki_files_2_update))
+        del self.xmind_uris_2_anki_files_2_update
+        self.smr_world.add_or_replace_xmind_nodes(list(self.xmind_nodes_2_update.values()))
+        del self.xmind_nodes_2_update
+        self.smr_world.add_or_replace_xmind_edges(list(self.xmind_edges_2_update.values()))
+        del self.xmind_edges_2_update
+        # Change relation names in ontology and assign new storids to respective edges
+        for relation in self.relations_2_rename:
+            self.onto.rename_relation(relation)
+        del self.relations_2_rename
+        # Rename nodes in ontology and assign new storids to respective nodes
+        for node in self.concepts_2_rename:
+            self.onto.rename_node(xmind_node=node)
+        del self.concepts_2_rename
+        # Move edges first to avoid nodes that were moved from moved edges to be reattached to the edges
+        self.onto.move_edges(self.smr_triple_edges_2_move)
+        del self.smr_triple_edges_2_move
+        # Move nodes
+        self.onto.move_nodes(self.smr_triple_nodes_2_move)
+        del self.smr_triple_nodes_2_move
         # updates
         self.smr_world.add_or_replace_xmind_files(self.xmind_files_2_update)
         del self.xmind_files_2_update
-        self.smr_world.add_or_replace_xmind_edges(list(self.xmind_edges_2_update.values()))
-        del self.xmind_edges_2_update
-        # move edges
-        self.smr_world.move_smr_triple_edges(new_data=self.smr_triple_edges_2_move['new_data'],
-                                             old_data=self.smr_triple_edges_2_move['old_data'])
-        del self.smr_triple_edges_2_move
-        # move nodes
-        self.smr_world.move_smr_triple_nodes(new_data=self.smr_triple_nodes_2_move['new_data'],
-                                             old_data=self.smr_triple_nodes_2_move['old_data'])
-        del self.smr_triple_nodes_2_move
         # removals
-        self.smr_world.remove_xmind_nodes(self.xmind_nodes_2_remove)
+        self.onto.remove_xmind_nodes(self.xmind_nodes_2_remove)
         del self.xmind_nodes_2_remove
-        self.smr_world.remove_xmind_edges(self.xmind_edges_2_remove)
+        self.onto.remove_xmind_edges(self.xmind_edges_2_remove)
         del self.xmind_edges_2_remove
         self.smr_world.remove_xmind_media_2_anki_files(self.xmind_uris_2_remove)
         del self.xmind_uris_2_remove
@@ -267,47 +272,6 @@ class SmrSynchronizer:
         del self.smr_notes_2_update
         self.smr_world.save()
 
-    def _synchronize_ontology(self):
-        """
-        Makes all necessary changes to the ontology that are not covered by XmindImport
-        """
-        # First move entities to avoid conflicts when trying to rename moved entities
-        # Move edges first to avoid nodes that were moved from moved edges to be reattached to the edges
-        for relation in self.relations_2_move:
-            self.onto.move_edge(old_parent_node_ids=relation['old_parent_node_ids'],
-                                new_parent_node_ids=relation['new_parent_node_ids'],
-                                edge_id=relation['edge_id'],
-                                child_node_ids=relation['child_node_ids'])
-        del self.relations_2_move
-        # Move nodes
-        for concept in self.concepts_2_move:
-            self.onto.move_node(old_parent_node_ids=concept['old_parent_node_ids'],
-                                new_parent_node_ids=concept['new_parent_node_ids'],
-                                old_parent_edge_id=concept['old_parent_edge_id'],
-                                new_parent_edge_id=concept['new_parent_edge_id'],
-                                node_id=concept['node_id'])
-        del self.concepts_2_move
-        # Add smr world media and node updates before renaming to overwrite nodes that are updated without renaming
-        # and avoid foreign key constraint violations
-        self.smr_world.add_xmind_media_to_anki_files(list(self.xmind_uris_2_anki_files_2_update))
-        del self.xmind_uris_2_anki_files_2_update
-        self.smr_world.add_or_replace_xmind_nodes(list(self.xmind_nodes_2_update.values()))
-        del self.xmind_nodes_2_update
-        # Rename nodes in ontology and assign new storids to respective nodes
-        for concept in self.concepts_2_rename.values():
-            self.onto.rename_node(parent_node_ids=concept['parent_node_ids'], xmind_edge=concept['xmind_edge'],
-                                  xmind_node=concept['xmind_node'], children=concept['children'])
-        del self.concepts_2_rename
-        # Change relation names in ontology and assign new storids to respective edges
-        for relation in self.relations_2_rename:
-            edge_2_rename = relation['xmind_edge']
-            relation_class_name = relation_class_from_content(edge_2_rename.content)
-            self.xmind_edges_2_update[edge_2_rename.node_id].storid = self.onto.add_relation(relation_class_name)
-            self.onto.rename_relation(
-                parent_node_ids=relation['parent_node_ids'], relation_class_name=relation_class_name,
-                child_node_ids=relation['child_node_ids'], edge_id=edge_2_rename.node_id)
-        del self.relations_2_rename
-
     def _add_answer(self, answer_content: TopicContentDto, xmind_edge: XmindTopicDto):
         print('add answer to map')
         print('add answer to ontology')
@@ -318,45 +282,34 @@ question "{field_from_content(content=xmind_edge.content, smr_world=self.smr_wor
 anki is not yet supported, instead, add the answer in your xmind map and synchronize. I removed the answer from the \
 note.""")
 
-    def _change_remote_node(self, xmind_edge: XmindTopicDto, parent_node_ids: Set[str], xmind_node: XmindTopicDto,
-                            children: Dict[str, List[str]]) -> None:
+    def _change_remote_node(self, xmind_node: XmindTopicDto) -> None:
         """
         Changes a node's content in the xmind map and in the ontology
-        :param xmind_edge: the xmind edge preceding the node to change
-        :param parent_node_ids: list of node ids of parent nodes of the preceding edge
         :param xmind_node: xmind node dto of the node to change
-        :param children: dictionary where keys are edge_ids of edges following the node to change and values are
         lists of xmind node ids belonging to the edge's child nodes
         """
         self.x_manager.set_node_content(node_id=xmind_node.node_id, content=xmind_node.content,
                                         media_directory=self.note_manager.media_directory)
         # Change answer in Ontology
-        self.concepts_2_rename[xmind_node.node_id] = {'xmind_node': xmind_node, 'xmind_edge': xmind_edge,
-                                                      'parent_node_ids': parent_node_ids, 'children': children}
+        self.concepts_2_rename.append(xmind_node)
 
-    def _change_remote_question(self, xmind_edge: XmindTopicDto, parent_node_ids: Set[str],
-                                child_node_ids: List[str]):
+    def _change_remote_question(self, xmind_edge: XmindTopicDto):
         """
         - Changes the content of the xmind edge that belongs to the specified note data to the local question content
         - Changes the relationship class name in the ontology according to the new content
         :param xmind_edge: xmind node dto of the edge representing the question to be changed. The content must
         already be updated to the new value.
-        :param parent_node_ids: list of xmind node ids of the parent nodes of the edge to change
-        :param child_node_ids: list of xmind node ids of the child nodes of the edge to change
         """
         self.x_manager.set_edge_content(edge_id=xmind_edge.node_id, content=xmind_edge.content,
                                         media_directory=self.note_manager.media_directory)
         # Add node ids and edge to relations to change
-        self.relations_2_rename.append({
-            'parent_node_ids': parent_node_ids, 'xmind_edge': xmind_edge, 'child_node_ids': child_node_ids})
+        self.relations_2_rename.append(xmind_edge)
 
-    def _try_to_remove_answer(self, xmind_edge: XmindTopicDto, xmind_node: XmindTopicDto,
-                              parent_node_ids: Set[str]):
+    def _try_to_remove_answer(self, xmind_edge: XmindTopicDto, xmind_node: XmindTopicDto):
         """
         checks whether an answer is a leave node and if it is, removes it from the xmind map and the ontology
         :param xmind_edge: xmind node dto of the edge preceding the node to delete
         :param xmind_node: xmind node dto of the node to delete
-        :param parent_node_ids: List of node ids of the parents of the node to delete
         """
         # Remove node from map
         try:
@@ -368,10 +321,6 @@ Invalid answer removal: Cannot remove answer "{field_from_content(xmind_node.con
 {self.smr_world.get_smr_note_reference_fields([xmind_edge.node_id])[xmind_edge.node_id]}), because more questions \
 follow this answer in the xmind map. I restored the answer. If you want to remove the answer, do it in the concept \
 map and then synchronize.""")
-        # Add node to concepts to remove
-        self.concepts_2_remove.append({'node_id': xmind_node.node_id, 'parent_edge_id': xmind_edge.node_id,
-                                       'parent_node_ids': parent_node_ids,
-                                       'concept': self.onto.get_concept_from_node_id(xmind_node.node_id)})
         # Add node to nodes to remove
         self.xmind_nodes_2_remove.append(xmind_node.node_id)
 
@@ -398,10 +347,7 @@ map and then synchronize.""")
                     content_status.title = question_content_local.title
                     note_data_status['edge'].content = content_status
                     # change question in  map
-                    self._change_remote_question(
-                        xmind_edge=note_data_status['edge'], parent_node_ids=note_data_status['parents'],
-                        child_node_ids=[a['node'].node_id for a in note_data_status['answers'].values()])
-                    self.xmind_edges_2_update[note_data_status['edge'].node_id] = note_data_status['edge']
+                    self._change_remote_question(xmind_edge=note_data_status['edge'])
                     anki_note_was_changed = True
                 # get data for changing answers if necessary
                 sorted_answers_status = sorted(note_data_status['answers'].items(), key=lambda item: item[0])
@@ -417,8 +363,7 @@ map and then synchronize.""")
                         # try to remove answer from remote if not present in anki anymore
                         else:
                             self._try_to_remove_answer(xmind_edge=note_data_status['edge'],
-                                                       xmind_node=answer_data_status['node'],
-                                                       parent_node_ids=note_data_status['parents'])
+                                                       xmind_node=answer_data_status['node'])
                             anki_note_was_changed = True
                     else:
                         answer_content_local = content_from_field(field=local_answer_field, smr_world=self.smr_world)
@@ -435,9 +380,7 @@ map and then synchronize.""")
                                 media_is_image=False)
                             content_status.title = answer_content_local.title
                             answer_data_status['node'].content = content_status
-                            self._change_remote_node(
-                                xmind_edge=note_data_status['edge'], parent_node_ids=note_data_status['parents'],
-                                xmind_node=answer_data_status['node'], children=answer_data_status['children'])
+                            self._change_remote_node(xmind_node=answer_data_status['node'])
                             anki_note_was_changed = True
                         # do nothing if answer has not changed
                         else:
@@ -522,7 +465,6 @@ remove the file from your xmind map and synchronize. I added the file to the not
         """
         self.anki_notes_2_remove.update(self.smr_world.get_note_ids_from_sheet_id(sheet_id))
         self.must_remove_anki_tags = True
-        self.onto_sheets_2_remove[sheet_id] = self.smr_world.get_root_node_id(sheet_id)
         self.xmind_sheets_2_remove.append(sheet_id)
 
     def _register_remote_sheet_changes(self, sheet_id):
@@ -635,15 +577,7 @@ remove the file from your xmind map and synchronize. I added the file to the not
         remote_parent_node_ids = set(pn.id for pn in edge_remote.parent_nodes)
         edge_status = edge_data_status['xmind_edge']
         if remote_parent_node_ids != edge_data_status['parent_node_ids']:
-            self.relations_2_move.append({
-                'old_parent_node_ids': edge_data_status['parent_node_ids'],
-                'new_parent_node_ids': remote_parent_node_ids,
-                'edge_id': edge_remote.id,
-                'child_node_ids': edge_data_status['child_node_ids']})
-            for parent_node_id in remote_parent_node_ids:
-                self.smr_triple_edges_2_move['new_data'].append((parent_node_id, edge_remote.id))
-            for parent_node_id in edge_data_status['parent_node_ids']:
-                self.smr_triple_edges_2_move['old_data'].append((parent_node_id, edge_remote.id))
+            self.smr_triple_edges_2_move[edge_remote.id] = remote_parent_node_ids
             index_was_changed = True
             edge_was_changed = True
         elif edge_remote.order_number != edge_status.order_number:
@@ -661,10 +595,7 @@ remove the file from your xmind map and synchronize. I added the file to the not
             elif content_remote.is_empty():
                 self.anki_notes_2_remove.add(edge_data_status['note_id'])
             # update ontology relation
-            self.relations_2_rename.append({
-                'parent_node_ids': [node.id for node in edge_remote.parent_nodes],
-                'xmind_edge': remote_edge_dto,
-                'child_node_ids': [node.id for node in edge_remote.non_empty_child_nodes]})
+            self.relations_2_rename.append(remote_edge_dto)
             # update media if necessary
             self._register_remote_topic_media_changes(content_remote=content_remote, content_status=content_status)
             edge_was_changed = True
@@ -682,12 +613,6 @@ remove the file from your xmind map and synchronize. I added the file to the not
         :param node_status: dictionary with the xmind node as an xmind topic dto, the node's parent edge's xmind id
         and a list of the node's grandparent node's xmind ids
         """
-        # register node for removal from ontology
-        self.concepts_2_remove.append(
-            {'node_id': node_status['xmind_node'].node_id,
-             'parent_edge_id': node_status['parent_edge_id'],
-             'parent_node_ids': node_status['parent_node_ids'],
-             'concept': self.onto.get_concept_from_node_id(node_status['xmind_node'].node_id)})
         # register node for removal from smr world
         self.xmind_nodes_2_remove.append(node_status['xmind_node'].node_id)
         # add parent edge to edges of anki notes to update
@@ -713,13 +638,11 @@ remove the file from your xmind map and synchronize. I added the file to the not
         remote_parent_edge = node_remote.parent_edge
         if remote_parent_edge is not None and remote_parent_edge.id != node_data_status['parent_edge_id']:
             self.concepts_2_move.append({
-                'old_parent_node_ids': node_data_status['parent_node_ids'],
-                'new_parent_node_ids': [n.id for n in node_remote.parent_edge.parent_nodes],
+                'new_parent_node_ids': {n.id for n in node_remote.parent_edge.parent_nodes},
                 'old_parent_edge_id': node_data_status['parent_edge_id'],
                 'new_parent_edge_id': node_remote.parent_edge.id,
                 'node_id': node_remote.id})
-            self.smr_triple_nodes_2_move['new_data'].append((node_remote.id, node_remote.parent_edge.id))
-            self.smr_triple_nodes_2_move['old_data'].append((node_data_status['parent_edge_id'], node_remote.id))
+            self.smr_triple_nodes_2_move[node_remote.parent_edge.id] = node_remote.id
             self.edge_ids_of_anki_notes_2_update.add(node_data_status['parent_edge_id'])
             self.edge_ids_of_anki_notes_2_update.add(remote_parent_edge.id)
             index_was_changed = True
@@ -737,14 +660,8 @@ remove the file from your xmind map and synchronize. I added the file to the not
         content_status = node_data_status['xmind_node'].content
         if content_remote != content_status:
             # add node to changes in ontology
-            parent_node_ids = [n.id for n in
-                               remote_parent_edge.parent_nodes] if remote_parent_edge is not None else []
-            parent_edge_dto = remote_parent_edge.dto if remote_parent_edge is not None else None
-            self.concepts_2_rename[node_remote.id] = {
-                'xmind_node': node_remote.dto, 'xmind_edge': parent_edge_dto,
-                'parent_node_ids': parent_node_ids, 'children': {ce.id: [
-                    cn.id for cn in ce.non_empty_child_nodes] for ce in node_remote.child_edges}}
-            # update image if necessary
+            self.concepts_2_rename.append(node_remote.dto)
+            # update image and media if necessary
             self._register_remote_topic_media_changes(content_remote, content_status)
             # add parent edge to edge ids of anki notes to update
             if remote_parent_edge is not None:

@@ -3,12 +3,12 @@ from sqlite3 import IntegrityError, OperationalError
 import pytest
 from assertpy import assert_that
 
-from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.smrtripledto import SmrTripleDto
+from smr.dto.topiccontentdto import TopicContentDto
 from smr.dto.xmindfiledto import XmindFileDto
-from smr.dto.xmindtopicdto import XmindTopicDto
 from smr.dto.xmindsheetdto import XmindSheetDto
-from smr.fieldtranslator import CHILD_RELATION_NAME, relation_class_from_content
+from smr.dto.xmindtopicdto import XmindTopicDto
+from smr.fieldtranslator import CHILD_RELATION_NAME, PARENT_RELATION_NAME
 from smr.smrworld import sort_id_from_order_number
 from smr.xontology import XOntology
 from tests import constants as cts
@@ -288,43 +288,27 @@ def test_get_changed_smr_notes(smr_world_with_example_map, changed_collection_wi
 
 def test_storid_from_node_id(ontology_with_example_map):
     # when
-    storid = ontology_with_example_map.smr_world.storid_from_node_id('78k8nsh3vfibpmq73kangacbll')
+    storid = ontology_with_example_map.world.storid_from_node_id('78k8nsh3vfibpmq73kangacbll')
     # then
     assert ontology_with_example_map.get(storid) == ontology_with_example_map.biogenic_amines
 
 
 def test_storid_from_edge_id(ontology_with_example_map):
     # when
-    storid = ontology_with_example_map.smr_world.storid_from_edge_id(cts.TYPES_EDGE_ID)
+    storid = ontology_with_example_map.world.storid_from_edge_id(cts.TYPES_EDGE_ID)
     # then
     assert ontology_with_example_map.get(storid) == ontology_with_example_map.types_xrelation
 
 
-def test_remove_xmind_nodes(smr_world_with_example_map, collection_with_example_map):
+def test_remove_xmind_nodes_does_not_remove_concept_if_nodes_left(ontology_with_example_map):
     # given
-    cut = smr_world_with_example_map
+    cut = ontology_with_example_map
     # when
-    cut.remove_xmind_nodes([cts.NEUROTRANSMITTERS_NODE_ID, cts.MAO_1_NODE_ID, cts.NOCICEPTORS_NODE_ID])
+    cut.remove_xmind_nodes([cts.SEROTONIN_1_NODE_ID])
     # then
-    remaining_node_ids = [e[0] for e in cut.graph.execute("select node_id from xmind_nodes").fetchall()]
-    assert cts.NEUROTRANSMITTERS_NODE_ID not in remaining_node_ids
-    assert cts.MAO_1_NODE_ID not in remaining_node_ids
-    # triples must be removed
-    assert cut._get_records(f"""
-select * from main.smr_triples where parent_node_id = '{cts.MAO_1_NODE_ID}'""") == []
-    # ontology:
-    onto = XOntology(collection_with_example_map.decks.id('testdeck', create=False), cut)
-    mao = onto.MAO
-    # node's child relation that is still present at different location must not be removed
-    assert len(mao.difference_xrelation) == 1
-    # node's child relation that was only part of the deleted node must be removed
-    assert len(mao.types_in_humans_xrelation) == 0
-    # node's parent relation must be removed
-    assert len(mao.smrparent_xrelation) == 0
-    # parent node's child relation must be removed
-    assert len(onto.Pain.triggered_by_xrelation) == 0
-    # child node's parent relation must be removed
-    assert len(onto.chemical.smrparent_xrelation) == 0
+    assert type(cut.Serotonin) == cut.Concept
+    assert not cut.Serotonin.affects_xrelation
+    assert not getattr(cut.Sleep, PARENT_RELATION_NAME)
 
 
 def test_get_smr_note_reference_fields(smr_world_with_example_map):
@@ -390,7 +374,7 @@ def test_get_note_ids_from_sheet_id(smr_world_with_example_map):
     # when
     notes_in_sheet = smr_world_with_example_map.get_note_ids_from_sheet_id(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
-    assert len(notes_in_sheet) == 19
+    assert len(notes_in_sheet) == 21
 
 
 def test_sort_id_from_order_number():
@@ -406,7 +390,7 @@ def test_get_xmind_nodes_in_sheet(smr_world_with_example_map):
     # when
     nodes = cut.get_xmind_nodes_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
-    assert len(nodes) == 29
+    assert len(nodes) == 33
     assert nodes[cts.BIOGENIC_AMINES_2_NODE_ID]['parent_node_ids'] == set(cts.MULTIPLE_PARENTS_NODE_IDS)
     assert len(nodes[cts.NORADRENALINE_NODE_ID]['sibling_node_ids']) == 4
 
@@ -424,7 +408,7 @@ def test_get_xmind_edges_in_sheet(smr_world_with_example_map):
     # when
     edges = cut.get_xmind_edges_in_sheet(cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID)
     # then
-    assert len(edges) == 22
+    assert len(edges) == 25
     assert len(edges[cts.ARE_EDGE_ID]['parent_node_ids']) == 4
     assert len(edges[cts.AFFECTS_EDGE_ID]['child_node_ids']) == 3
     assert len(edges[cts.AFFECTS_EDGE_ID]['parent_node_ids']) == 1
@@ -447,73 +431,6 @@ def test_remove_xmind_sheets(smr_world_with_example_map, collection_with_example
                          cut).Serotonin.pronounciation_xrelation
 
 
-def test_remove_xmind_edges(smr_world_with_example_map):
-    # given
-    cut = smr_world_with_example_map
-    # when
-    cut.remove_xmind_edges({cts.EXAMPLE_IMAGE_EDGE_ID, cts.ARE_EDGE_ID})
-    # then
-    assert cts.EXAMPLE_IMAGE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.xmind_edges")]
-    assert cts.ARE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.xmind_edges")]
-    assert cts.EXAMPLE_IMAGE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_triples")]
-    assert cts.ARE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_triples")]
-    assert cts.EXAMPLE_IMAGE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_notes")]
-    assert cts.ARE_EDGE_ID not in [r.edge_id for r in cut._get_records("select * from main.smr_notes")]
-
-
-def test_remove_xmind_edges_foreign_key_cascade(smr_world_with_example_map):
-    # given
-    cut = smr_world_with_example_map
-    edges_2_remove = {'68381mk1p7p5ko95bg7eh4trbh', '1soij3rlgbkct9eq3uo7117sa9', '351v1hg3rt5vejrq10c1p3tko0',
-                      '0eaob1gla0j1qriki94n2os9oe', '61irckf1nloq42brfmbu0ke92v', '7e1s0urn8376a2q371nujihuab',
-                      '32dt8d2dflh4lr5oqc2oqqad28', '6iivm8tpoqj2c0euaabtput14l'}
-    # when
-    cut.remove_xmind_edges(edges_2_remove)
-    # then
-    assert len(cut._get_records(
-        f"""select * from main.smr_notes where edge_id IN ('{"', '".join(edges_2_remove)}')""")) == 0
-    assert len(cut._get_records(
-        f"""select * from main.smr_triples where edge_id IN ('{"', '".join(edges_2_remove)}')""")) == 0
-
-
-def test_move_smr_triples(smr_world_with_example_map):
-    # given
-    cut = smr_world_with_example_map
-    # when
-    cut.move_smr_triple_edges(new_data=[
-        (cts.SEROTONIN_2_NODE_ID, cts.AFFECTS_EDGE_ID), (cts.DOPAMINE_NODE_ID, cts.AFFECTS_EDGE_ID),
-        (cts.ADRENALINE_NODE_ID, cts.AFFECTS_EDGE_ID), (cts.NORADRENALINE_NODE_ID, cts.AFFECTS_EDGE_ID),
-        (cts.SEROTONIN_MEDIA_HYPERLINK_NODE_ID, cts.CONSIST_OF_EDGE_ID)],
-        old_data=[(cts.SEROTONIN_1_NODE_ID, cts.AFFECTS_EDGE_ID),
-                  (cts.BIOGENIC_AMINES_2_NODE_ID, cts.CONSIST_OF_EDGE_ID)])
-    # then
-    references = cut.get_smr_note_reference_fields([cts.AFFECTS_EDGE_ID, cts.CONSIST_OF_EDGE_ID])
-    assert references[cts.AFFECTS_EDGE_ID] == 'biological psychology<li>investigates: information transfer and ' \
-                                              'processing</li><li>modulated by: enzymes</li><li>example: ' \
-                                              'MAO</li><li>splits up: Serotonin, dopamine, adrenaline, ' \
-                                              'noradrenaline</li>'
-    assert references[cts.CONSIST_OF_EDGE_ID] == 'biological psychology<li>investigates: information transfer and ' \
-                                                 'processing</li><li>requires: neurotransmitters<br><img ' \
-                                                 'src="attachments629d18n2i73im903jkrjmr98fg.png"></li><li>types: ' \
-                                                 'biogenic amines</li><li><img ' \
-                                                 'src="attachments09r2e442o8lppjfeblf7il2rmd.png">: ' \
-                                                 'Serotonin</li><li>pronounciation: (media)</li>'
-
-
-def test_move_smr_triple_nodes(smr_world_with_example_map):
-    # given
-    cut = smr_world_with_example_map
-    # when
-    cut.move_smr_triple_nodes(new_data=[(cts.PERCEPTION_NODE_ID, cts.MODULATED_BY_EDGE_ID),
-                                        (cts.SLEEP_NODE_ID, cts.EMPTY_EDGE_3_ID)],
-                              old_data=[(cts.INVESTIGATES_EDGE_ID, cts.PERCEPTION_NODE_ID),
-                                        (cts.AFFECTS_EDGE_ID, cts.SLEEP_NODE_ID)])
-    # then
-    assert cut.get_smr_note_reference_fields([cts.EMPTY_EDGE_3_ID])[
-               cts.EMPTY_EDGE_3_ID] == 'biological psychology<li>investigates: information transfer and ' \
-                                       'processing</li><li>modulated by: perception</li>'
-
-
 def test_get_tag_by_sheet_id(smr_world_with_example_map, collection_with_example_map):
     # given
     cut = smr_world_with_example_map
@@ -524,23 +441,61 @@ def test_get_tag_by_sheet_id(smr_world_with_example_map, collection_with_example
     assert tag == ' testdeck::example_map::biological_psychology '
 
 
-def test_disconnect_node(smr_world_with_example_map, collection_with_example_map):
+def test_get_edge_parent_and_child_storids(ontology_with_example_map):
+    # given
+    onto = ontology_with_example_map
+    cut = onto.world
+    # when
+    parent_storids, child_storids = cut.get_edge_parent_and_child_storids(cts.ARE_EDGE_ID)
+    # then
+    assert_that([onto.get(i) for i in parent_storids]).contains(
+        onto.Serotonin, onto.dopamine, onto.adrenaline, onto.noradrenaline)
+    assert onto.get(child_storids.pop()) == onto.biogenic_amines
+
+
+def test_get_storid_triples_from_smr_triples(ontology_with_example_map):
+    # given
+    onto = ontology_with_example_map
+    cut = onto.world
+    # when
+    storid_triple = cut.get_storid_triples_from_smr_triples(
+        [SmrTripleDto(cts.SEROTONIN_1_NODE_ID, cts.AFFECTS_EDGE_ID, cts.SLEEP_NODE_ID)]).pop()
+    # then
+
+    assert onto.get(storid_triple[0]) == onto.Serotonin
+    assert onto.get(storid_triple[1]) == onto.affects_xrelation
+    assert onto.get(storid_triple[2]) == onto.Sleep
+
+
+def test_get_storid_triples_surrounding_node(ontology_with_example_map):
+    # given
+    onto = ontology_with_example_map
+    cut = onto.world
+    # when
+    storid_triples = cut.get_storid_triples_surrounding_node(cts.NOCICEPTORS_NODE_ID)
+    # then
+    assert_that([onto.get(t['parent_storid']) for t in storid_triples]).contains(onto.nociceptors, onto.Pain)
+    assert_that([onto.get(t['relation_storid']) for t in storid_triples]).contains(
+        onto.triggered_by_xrelation, onto.can_be_xrelation)
+    assert_that([onto.get(t['child_storid']) for t in storid_triples]).contains(onto.nociceptors, onto.chemical)
+
+
+# TODO: Use views in triggers in smrworld.sql
+def test_get_parent_node_ids_from_edge_id(smr_world_with_example_map):
     # given
     cut = smr_world_with_example_map
     # when
-    cut.disconnect_node(cts.SEROTONIN_1_NODE_ID)
+    parent_node_ids = cut.get_parent_node_ids_from_edge_id(cts.ARE_EDGE_ID)
     # then
-    cut.save()
-    onto = XOntology(collection_with_example_map.decks.id('testdeck', create=False), cut)
-    serotonin = onto.Serotonin
-    # node's parent relation to "biogenic amines" must be removed
-    assert len(serotonin.smrparent_xrelation) == 5
-    # node's child relation to "MAO" must not be removed since there is another case of this type of relation in the map
-    assert len(getattr(serotonin, CHILD_RELATION_NAME)) == 1
-    # node's child relation affects relations must be removed
-    assert len(serotonin.affects_xrelation) == 0
-    # child node's parent relation must be removed
-    assert serotonin not in onto.Pain.smrparent_xrelation
-    # parent node's child relation must be removed
-    assert len(getattr(onto.biogenic_amines,
-                       relation_class_from_content(TopicContentDto(image=cts.EXAMPLE_IMAGE_ATTACHMENT_NAME)))) == 0
+    assert parent_node_ids == set(cts.MULTIPLE_PARENTS_NODE_IDS)
+
+
+def test_remove_smr_triples_by_child_node_ids(ontology_with_example_map):
+    # given
+    onto = ontology_with_example_map
+    cut = onto.world
+    # when
+    cut.remove_smr_triples_by_child_node_ids([(cts.NORADRENALINE_NODE_ID,)])
+    onto.reload()
+    # then
+    assert_that(onto.MAO.splits_up_xrelation).does_not_contain(onto.noradrenaline)

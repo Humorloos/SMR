@@ -137,8 +137,8 @@ def test__import_sheet(xmind_importer, mocker, x_manager):
     assert cut.mw.progress.update.call_count == 1
     # noinspection PyUnresolvedReferences
     assert cut.mw.app.processEvents.call_count == 1
-    assert cut.read_node_if_concept.call_count == 30
-    assert cut.read_edge.call_count == 22
+    assert cut.read_node_if_concept.call_count == 34
+    assert cut.read_edge.call_count == 25
     assert cut.current_sheet_import == sheet_2_import
     assert cut.sheets_2_import[0].sheet_id == cts.BIOLOGICAL_PSYCHOLOGY_SHEET_ID
     assert cut.sheets_2_import[0].file_directory == cts.DIRECTORY_MAPS_TEMPORARY
@@ -178,7 +178,7 @@ def test_import_node_if_concept_following_multiple_concepts(xmind_importer_impor
     # then
     assert len(cut.media_uris_2_add) == 0
     assert len(cut.nodes_4_concepts) == 1
-    assert len(cut.smr_triples_2_import['are_xrelation']) == 4
+    assert len(cut.smr_triples_2_import) == 4
 
 
 def test_import_edge(xmind_importer_import_edge, x_ontology):
@@ -232,15 +232,15 @@ def test_finish_import(patch_aqt_mw_smr_world_and_col_with_example_map, mocker):
 def test_initialize_import_import_import_notes_to_correct_deck(xmind_importer_4_integration):
     # given
     cut, test_deck_id = xmind_importer_4_integration
-    n_cards_example_map = 35
+    n_cards_example_map = 38
     # when
     cut.initialize_import(DeckSelectionDialogUserInputsDTO(deck_id=test_deck_id))
     cut.finish_import()
     # then
     assert cut._import_file.call_count == 1
     assert cut._import_sheet.call_count == 2
-    assert cut.read_edge.call_count == 31
-    assert cut.read_node_if_concept.call_count == 42
+    assert cut.read_edge.call_count == 34
+    assert cut.read_node_if_concept.call_count == 46
     assert len(cut.log) == 1
     assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == n_cards_example_map
     assert cut.col.db.execute('select type from cards') == n_cards_example_map * [[0]]
@@ -310,11 +310,11 @@ def test_import_sheet(xmind_importer_4_integration):
     cut.finish_import()
     # then
     assert cut._import_sheet.call_count == 1
-    assert cut.read_edge.call_count == 22
-    assert cut.read_node_if_concept.call_count == 30
+    assert cut.read_edge.call_count == 25
+    assert cut.read_node_if_concept.call_count == 34
     assert len(cut.log) == 1
-    assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == 25
-    assert cut.col.db.execute('select type from cards') == 25 * [[0]]
+    assert len(cut.col.db.execute("select * from cards where did = ?", test_deck_id)) == 28
+    assert cut.col.db.execute('select type from cards') == 28 * [[0]]
 
 
 def test_initialize_import_question_without_answer(xmind_importer_4_integration, empty_anki_collection_function,

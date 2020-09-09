@@ -158,7 +158,7 @@ def x_ontology(mocker, patch_empty_smr_world) -> xontology.XOntology:
     x_ontology = xontology.XOntology(99999, get_or_create_smr_world())
     yield x_ontology
     # noinspection PyProtectedMember
-    x_ontology.smr_world.close()
+    x_ontology.world.close()
 
 
 @pytest.fixture

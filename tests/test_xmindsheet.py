@@ -19,8 +19,8 @@ def test_xmind_sheet(xmind_sheet, mocker):
     # given
     mocker.spy(xmind_sheet, '_set_nodes_and_edges')
     # then
-    assert len(xmind_sheet.nodes) == 30
-    assert len(xmind_sheet.edges) == 22
+    assert len(xmind_sheet.nodes) == 34
+    assert len(xmind_sheet.edges) == 25
     assert xmind_sheet._set_nodes_and_edges.call_count == 1
 
 

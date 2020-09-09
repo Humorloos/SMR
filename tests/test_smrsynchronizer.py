@@ -182,6 +182,11 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
     assert getattr(cut.onto.Pain, relation_class_from_content(TopicContentDto(
         title='triggered by', media=cts.PATH_NEW_MEDIA_TEMPORARY)))[0] == getattr(cut.onto, class_from_content(
         TopicContentDto(title='nociceptors', media=cts.PATH_NEW_MEDIA_TEMPORARY)))
+    # Concepts in ontology must be connected to nodes that were moved in the map
+    assert getattr(cut.onto, class_from_content(TopicContentDto(
+        title='neurotransmitters changed text',
+        image=cts.NEUROTRANSMITTERS_IMAGE_ATTACHMENT_NAME))).types_xrelation == [
+        cut.onto.biogenic_amines, cut.onto.enzymes]
     # Smr world changes:
     # Nodes in smr world must reflect changes in nodes in sheet "biological psychology"
     assert_that([n['xmind_node'].content for n in cut.smr_world.get_xmind_nodes_in_sheet(
@@ -204,7 +209,7 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
                         cts.COMPLETELY_UNRELATED_ANIMATION_EDGE_ID][:186]
     # All nodes and edges in the smr world must be mapped to a concept or relation in the ontology
     # Anki collection changes:
-    assert cut.smr_world._get_records("""select storid from main.xmind_nodes where storid is null 
+    assert cut.smr_world._get_records("""select NULL from main.xmind_nodes where storid is null 
         union select storid from main.xmind_edges where storid is null""") == []
     # Tags in anki collection must reflect sheet changes in imported xmind files
     assert_that(cut.col.tags.all()).contains_only(
@@ -228,8 +233,6 @@ def test_synchronize_remote_changes(mocker, smr_world_with_example_map, collecti
         cut.onto.Margret, cut.onto.new_answer]]).is_length(2).contains_only([cut.onto.answer_following_mult_answers])
     assert cut.onto.enzymes.example_xrelation == []
     assert cut.col.findNotes('enzymes example') == []
-    assert cut.onto.neurotransmitters_changed_textximage_629d18n2i73im903jkrjmr98fg_extension_png.types_xrelation == [
-        cut.onto.biogenic_amines, cut.onto.enzymes]
     assert cut.smr_world._get_records(
         "select order_number from main.xmind_nodes where title = 'psychological disorders'")[0][0] == 1
     assert cut.col.getNote(cut.col.findNotes('affects')[0]).fields[2] == 'psychological disorders'

@@ -89,20 +89,12 @@ class XmindImporter(NoteImporter):
         return []
 
     @cached_property
-    def edges_2_import(self) -> Dict[str, List[XmindTopicDto]]:
-        return {}
+    def edges_2_import(self) -> List[XmindTopicDto]:
+        return []
 
-    @property
-    def smr_triples_2_import(self) -> Dict[str, List[SmrTripleDto]]:
-        try:
-            return self._smr_triples_2_import
-        except AttributeError:
-            self._smr_triples_2_import = {}
-            return self._smr_triples_2_import
-
-    @smr_triples_2_import.setter
-    def smr_triples_2_import(self, value: Dict[str, List[SmrTripleDto]]):
-        self._smr_triples_2_import = value
+    @cached_property
+    def smr_triples_2_import(self) -> List[SmrTripleDto]:
+        return []
 
     @property
     def mw(self) -> AnkiQt:
@@ -310,10 +302,7 @@ class XmindImporter(NoteImporter):
             if node.parent_edge is not None:
                 smr_triples = [SmrTripleDto(parent_node_id=parent_node.id, edge_id=node.parent_edge.id,
                                             child_node_id=node.id) for parent_node in node.parent_edge.parent_nodes]
-                try:
-                    self.smr_triples_2_import[node.parent_edge.relation_class_name].extend(smr_triples)
-                except KeyError:
-                    self.smr_triples_2_import[node.parent_edge.relation_class_name] = smr_triples
+                self.smr_triples_2_import.extend(smr_triples)
             # register data for this node for the smr world
             self._append_topic_data(topic=node, type_is_node=True)
 
@@ -348,10 +337,7 @@ class XmindImporter(NoteImporter):
             self.media_uris_2_add.append(topic.media)
         # add the edge to the list of edges to add to the smr_world
         if not type_is_node:
-            try:
-                self.edges_2_import[topic.relation_class_name].append(topic.dto)
-            except KeyError:
-                self.edges_2_import[topic.relation_class_name] = [topic.dto]
+            self.edges_2_import.append(topic.dto)
 
     def finish_import(self) -> None:
         """
@@ -367,7 +353,6 @@ class XmindImporter(NoteImporter):
             return
         self.add_media_2_anki_collection()
         self._add_entities_2_ontology()
-        self.add_entities_2_smr_world()
         # Create Notes from all edges
         self.notes_2_import = self.smr_world.generate_notes(self.col, edge_ids=self.edge_ids_2_make_notes_of)
         self.import_notes_and_cards()
@@ -394,16 +379,6 @@ class XmindImporter(NoteImporter):
         # remove log entries informing about duplicate fields
         self.log = [self.log[-1]]
 
-    def add_entities_2_smr_world(self) -> None:
-        """
-        Adds all entities in the respective lists to the respective relations (except notes and cards since they
-        need to be imported to the anki collection first)
-        """
-        # Add all edges to the smr world
-        self.smr_world.add_or_replace_xmind_edges([e for e_l in self.edges_2_import.values() for e in e_l])
-        # Add all triples to the smr world
-        self.smr_world.add_smr_triples([triple for values in self.smr_triples_2_import.values() for triple in values])
-
     def _add_entities_2_ontology(self):
         """
         Adds all the nodes from which we want to generate concepts to the ontology and connects them with the
@@ -417,13 +392,11 @@ class XmindImporter(NoteImporter):
         self.smr_world.add_xmind_media_to_anki_files(self.media_2_anki_files_2_import)
         # add concepts to ontology
         self.onto.add_concepts_from_nodes(self.nodes_4_concepts)
-        for relation_class_name, edges in self.edges_2_import.items():
-            storid = self.onto.add_relation(relation_class_name)
-            for edge in edges:
-                edge.storid = storid
-        for relation_class_name in self.smr_triples_2_import:
-            # connect concepts in triples
-            for triple in self.smr_triples_2_import[relation_class_name]:
-                self.onto.connect_concepts(
-                    edge_id=triple.edge_id, parent_node_id=triple.parent_node_id, child_node_id=triple.child_node_id,
-                    relation_class_name=relation_class_name)
+        # add relations to ontology
+        self.onto.add_relations_from_edges(self.edges_2_import)
+        # connect concepts in triples
+        storid_triples = self.smr_world.get_storid_triples_from_smr_triples(self.smr_triples_2_import)
+        for triple in storid_triples:
+            self.onto.connect_concepts(parent_storid=triple[0], relation_storid=triple[1], child_storid=triple[2])
+        # Add all triples to the smr world
+        self.smr_world.add_smr_triples(self.smr_triples_2_import)

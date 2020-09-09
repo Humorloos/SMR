@@ -1,6 +1,7 @@
 import dataclasses as dc
 from typing import Optional
 
+from smr.cachedproperty import cached_property
 from smr.dto.entitydto import EntityDto
 from smr.dto.topiccontentdto import TopicContentDto
 

@@ -1,8 +1,7 @@
 import os
 from collections import namedtuple
-from typing import List, TextIO, Tuple, Dict, Union, Optional, Set
-
-from sqlite3 import OperationalError
+from sqlite3 import OperationalError, Row
+from typing import List, Tuple, Dict, Union, Optional, Set, Any
 
 from anki import Collection
 from anki.importing.noteimp import ForeignNote, ForeignCard
@@ -114,8 +113,7 @@ class SmrWorld(World):
     def __init__(self):
         self.parent_storid = None
         self.field_translator = None
-        super().__init__()
-        self.set_backend(filename=SMR_WORLD_PATH)
+        super().__init__(filename=SMR_WORLD_PATH)
         self.turn_on_foreign_keys()
         self.save()
 
@@ -139,6 +137,15 @@ WHERE iri LIKE '%{PARENT_RELATION_NAME}'""").fetchone()[0]
         with open(os.path.join(ADDON_PATH, SQL_FILE_NAME), 'r') as sql_file:
             self.graph.db.executescript(sql_file.read())
         self.save()
+
+    def reload(self) -> None:
+        """
+        Reloads the smr world from the sqlite backend
+        """
+        self.save()
+        self.close()
+        self.graph = None
+        self.set_backend(filename=self.filename)
 
     def add_ontology_lives_in_deck(self, ontology_base_iri: str, deck_id: int) -> None:
         """
@@ -325,6 +332,17 @@ where sn.last_modified < cn.mod""")
                     record.parent_node_id)
         return smr_notes_in_files
 
+    def _get_rows(self, sql: str) -> List[Row]:
+        """
+        Executes the sql query and returns the results as a list of rows
+        :param sql: The sql query to execute
+        :return: The data as a list of rows where keys are column names and values are the query results
+        """
+        cursor = self.graph.execute(sql)
+        cursor.row_factory = Row
+        return cursor.fetchall()
+
+    # noinspection PyArgumentList
     def _get_records(self, sql: str) -> List['Record']:
         """
         Executes the sql query and returns the results as a list of named tuples
@@ -333,15 +351,18 @@ where sn.last_modified < cn.mod""")
         """
         cursor = self.graph.execute(sql)
         Record = namedtuple('Record', next(zip(*cursor.description)))
+        cursor.row_factory = lambda cur, row: Record(*row)
+        return cursor.fetchall()
 
-        # noinspection PyUnusedLocal
-        def record_factory(cur, row):
-            # noinspection PyArgumentList
-            return Record(*row)
-
-        cursor.row_factory = record_factory
-        data = cursor.fetchall()
-        return data
+    def _get_list(self, sql: str) -> List[Any]:
+        """
+        Executes the sql query and returns the results as a List
+        :param sql: Sql query with only one result per row
+        :return: The data in a list of single values
+        """
+        cursor = self.graph.execute(sql)
+        cursor.row_factory = lambda cur, row: row[0]
+        return cursor.fetchall()
 
     def add_or_replace_smr_notes(self, entities: List[SmrNoteDto]):
         """
@@ -362,6 +383,8 @@ WITH ancestor AS (
     SELECT t1.parent_node_id,
            t1.edge_id AS root_id,
            0          AS level,
+           n.order_number as node_order_number,
+           e.order_number as edge_order_number,
            {node_selection_clause}    AS node,
            ''         as edge
     FROM smr_triples t1
@@ -372,6 +395,8 @@ WITH ancestor AS (
     SELECT t.parent_node_id,
            a.root_id,
            a.level + 1,
+           n.order_number as node_order_number,
+           e.order_number as edge_order_number,
            {node_selection_clause},
 --            only this edge
            {edge_selection_clause}
@@ -380,7 +405,7 @@ WITH ancestor AS (
                   ON a.parent_node_id = t.child_node_id
              JOIN xmind_edges e ON t.edge_id = e.edge_id
              JOIN xmind_nodes n ON t.parent_node_id = n.node_id),
-     ancestry as (SELECT distinct * from ancestor),
+     ancestry as (SELECT distinct * from ancestor order by level, node_order_number, edge_order_number),
      concatenated as (
          select root_id, level, group_concat(node, ', ') as node, edge
          from ancestry
@@ -530,7 +555,7 @@ group by root_id""").fetchall()
         :param node_id: the xmind id to get the storid for
         :return: the storid
         """
-        return self._get_records(f"select storid from main.xmind_nodes where node_id = '{node_id}'")[0].storid
+        return self._get_rows(f"select storid from main.xmind_nodes where node_id = '{node_id}'")[0]['storid']
 
     def storid_from_edge_id(self, edge_id: str) -> int:
         """
@@ -538,29 +563,7 @@ group by root_id""").fetchall()
         :param edge_id: the xmind id to get the storid for
         :return: the storid
         """
-        return self.graph.execute(f"""
-SELECT oj.o
-from datas dt
-         join objs oj on dt.s = oj.s
-where dt.o = '{edge_id}'
-  and oj.p = {ANNOTATED_PROPERTY_STORID}
-  and not oj.o = {self.parent_storid}
-limit 1""").fetchone()[0]
-
-    def remove_xmind_nodes(self, xmind_nodes_2_remove: List[str]):
-        """
-        Removes all entries with the specified node ids from the relation xmind nodes
-        :param xmind_nodes_2_remove: List of node ids of the nodes to remove
-        """
-        self.graph.execute(f"""DELETE FROM xmind_nodes WHERE node_id IN ('{"', '".join(xmind_nodes_2_remove)}')""")
-
-    def remove_xmind_edges(self, edge_ids: Set[str]):
-        """
-        Removes all entries with the specified edge ids from the relation xmind edges and via sqlite foreign key
-        cascade also all smr notes and smr triples with the specified edge ids from the respective relations
-        :param edge_ids: Set of edge ids of the edges to remove
-        """
-        self.graph.execute(f"""DELETE FROM xmind_edges WHERE edge_id IN ('{"', '".join(edge_ids)}')""")
+        return self._get_records(f"select storid from main.xmind_edges where edge_id = '{edge_id}'")[0].storid
 
     def generate_notes(self, col, edge_ids) -> Dict[str, ForeignNote]:
         """
@@ -728,49 +731,150 @@ DELETE from main.xmind_sheets where main.xmind_sheets.sheet_id IN ('{"', '".join
             pass
         self.graph.execute('PRAGMA foreign_keys=ON')
 
-    def move_smr_triple_edges(self, new_data: List[Tuple[str, str]], old_data: List[Tuple[str, str]]):
+    def get_edge_id_2_parent_node_ids_dict(self, edge_ids: Set[str]) -> Dict[str, Set[str]]:
         """
-        Adds and removes records from the relation smr_triples so that the specified relations are moved from the old
-        parent nodes to the new parent nodes
-        :param new_data: list of tuples containing new parent node ids in the first index and the xmind id of the
-        edge to move in the second index
-        :param old_data: list of tuples containing old parent node ids in the first index and the xmind id of the
-        edge to move in the second index
+        Gets the parent node ids for the edges with the specified ids
+        :param edge_ids: Edge ids of the edges to get the parent node ids for
+        :return: dictionary where keys are the edge ids and values are sets of xmind node ids of the edge's parent nodes
         """
-        self.graph.db.executemany("""
-INSERT INTO smr_triples
-SELECT distinct ?, edge_id, child_node_id
-from smr_triples
-WHERE edge_id = ?""", new_data)
-        self.graph.db.executemany("""
-DELETE FROM main.smr_triples
-WHERE parent_node_id = ? and edge_id = ?""", old_data)
+        # get parent nodes for each edge
+        parent_records = self._get_records(f"""
+SELECT st.edge_id, st.parent_node_id from smr_triples st where edge_id in ({"'" + "', '".join(edge_ids) + "'"})""")
+        edge_parents = {}
+        for record in parent_records:
+            try:
+                edge_parents[record.edge_id].add(record.parent_node_id)
+            except KeyError:
+                edge_parents[record.edge_id] = {record.parent_node_id}
+        return edge_parents
 
-    def move_smr_triple_nodes(self, new_data, old_data):
+    def get_edge_id_2_child_node_ids_dict(self, edge_ids: Set[str]) -> Dict[str, Set[str]]:
         """
-        Adds and removes records from the relation smr_triples so that the specified nodes are moved from the old
-        parent edge to the new parent edge
-        :param new_data: list of tuples containing the xmind id of the node to move in the first index and the new
-        edge id in the second index
-        :param old_data: list of tuples containing the old edge id in the first index and the xmind id of the node to
-        move in the second index
+        Gets the child node ids for the edges with the specified ids
+        :param edge_ids: Edge ids of the edges to get the parent node ids for
+        :return: dictionary where keys are the edge ids and values are sets of xmind node ids of the edge's child nodes
         """
-        self.graph.db.executemany("""
-INSERT INTO smr_triples
-SELECT distinct parent_node_id, edge_id, ?
-from smr_triples
-WHERE edge_id = ?""", new_data)
-        self.graph.db.executemany("""
-DELETE FROM main.smr_triples
-WHERE edge_id = ? and child_node_id = ?""", old_data)
+        # get child nodes for each edge
+        child_records = self._get_records(f"""
+SELECT st.edge_id, st.child_node_id from smr_triples st where edge_id in ({"'" + "', '".join(edge_ids) + "'"})""")
+        edge_children = {}
+        for record in child_records:
+            try:
+                edge_children[record.edge_id].add(record.child_node_id)
+            except KeyError:
+                edge_children[record.edge_id] = {record.child_node_id}
+        return edge_children
 
-    def disconnect_node(self, node_id: str) -> None:
+    def get_edge_parent_and_child_storids(self, edge_id: str) -> Tuple[Set[int], Set[int]]:
         """
-        Sets the storid of the node with the specified xmind node id to null which causes the triggers to remove all
-        associated relations and the concept if it is not represented by any concepts anymore
-        :param node_id: the xmind id of the node to disconnect
+        Gets storids of concepts represented by parent and child nodes of the edge with the specified id
+        :param edge_id: xmind id of the edge to get the storids for
+        :return: set of parent storids and child storids
         """
-        self.graph.execute(f"UPDATE xmind_nodes set storid = null where node_id = '{node_id}'")
+        records = self._get_records(f"""
+select pn.storid parent_storid, cn.storid child_storid
+from smr_triples st
+         join xmind_nodes pn on
+    st.parent_node_id = pn.node_id
+         join xmind_nodes cn on st.child_node_id = cn.node_id
+where st.edge_id = '{edge_id}'""")
+        parent_storids = set()
+        child_storids = set()
+        for record in records:
+            parent_storids.add(record.parent_storid)
+            child_storids.add(record.child_storid)
+        return parent_storids, child_storids
+
+    def remove_smr_triples_by_child_node_ids(self, child_node_ids: List[Tuple[str]]) -> None:
+        """
+        Removes the smr triples with the specified child node ids from the smr world
+        :param child_node_ids: the child node ids of the smr triples to remove
+        """
+        self.graph.db.executemany(""" DELETE FROM main.smr_triples WHERE child_node_id = ?""", child_node_ids)
+
+    def remove_smr_triples_by_edge_ids(self, edge_ids: List[Tuple[str]]) -> None:
+        """
+        Removes the smr triples with the specified child node ids from the smr world
+        :param edge_ids: the child node ids of the smr triples to remove
+        """
+        self.graph.db.executemany(""" DELETE FROM main.smr_triples WHERE edge_id = ?""", edge_ids)
+
+    def get_storid_triples_from_smr_triples(self, smr_triples: List[SmrTripleDto]) -> Set[Tuple[int, int, int]]:
+        """
+        Gets triples of ontology storids for the specified smr triples
+        :param smr_triples: the smr triples to get the storids for
+        :return: Set of tuples where the first entry is the parent node's concept storid, the second entry is the
+        edge's relation storid and the third entry is the child node's concept storid
+
+        """
+        node_ids = set()
+        for t in smr_triples:
+            node_ids.add(t.parent_node_id)
+            node_ids.add(t.child_node_id)
+        node_dict = self.get_topic_id_2_storid_dict(node_ids)
+        edge_ids = {t.edge_id for t in smr_triples}
+        edge_rows = self._get_rows(
+            f"""select edge_id, storid from xmind_edges where edge_id in ({"'" + "', '".join(edge_ids) + "'"})""")
+        edge_dict = {r['edge_id']: r['storid'] for r in edge_rows}
+        storid_triples = set()
+        for t in smr_triples:
+            storid_triples.add((node_dict[t.parent_node_id], edge_dict[t.edge_id], node_dict[t.child_node_id]))
+        return storid_triples
+
+    def get_topic_id_2_storid_dict(self, topic_ids: Set[str]) -> Dict[str, int]:
+        """
+        Gets a dictionary where keys are the specified node ids and values are the storids associated to them in the
+        smr world
+        :param topic_ids: the node ids to get the dictionary for
+        :return: dictionary where keys are node ids and values are concept storids
+        """
+        topic_rows = self._get_rows(f"""
+select node_id topic_id, storid from xmind_nodes where node_id in ( {"'" + "', '".join(topic_ids) + "'"}) 
+UNION select edge_id topic_id, storid from xmind_edges where edge_id in ( {"'" + "', '".join(topic_ids) + "'"})""")
+        topic_dict = {r['topic_id']: r['storid'] for r in topic_rows}
+        return topic_dict
+
+    def get_storid_triples_surrounding_node(self, node_id: str) -> List[Row]:
+        """
+        Gets storids of triples preceding or following the node with the specified xmind id
+        :param node_id: id of the node to get the triples for
+        :return: List of rows where the first entry is the parent node's storid, the second entry is the edge's
+        storid and the third entry is the child node's storid
+        """
+        return self._get_rows(f"""SELECT pn.storid parent_storid, e.storid relation_storid, cn.storid child_storid
+from smr_triples st
+         join xmind_nodes pn on
+    st.parent_node_id = pn.node_id
+         join
+     xmind_edges e on st.edge_id = e.edge_id
+         join xmind_nodes cn on st.child_node_id = cn.node_id
+where st.child_node_id =
+      '{node_id}'
+   or st.parent_node_id =
+      '{node_id}'""")
+
+    def set_edge_storid(self, edge_id: str, storid: int) -> None:
+        """
+        Sets the specified storid for the edge with the specified edge id in the ontology
+        :param edge_id: the xmind id of the edge to set the storid for
+        :param storid: the storid to set for the edge
+        """
+        self.graph.execute(f"UPDATE xmind_edges SET storid = {storid} WHERE edge_id = '{edge_id}'")
+
+    def set_node_storid(self, node_id: str, storid: int) -> None:
+        """
+        Sets the specified storid for the node with the specified node id in the ontology
+        :param node_id: the xmind id of the node to set the storid for
+        :param storid: the storid to set for the node
+        """
+        self.graph.execute(f"UPDATE xmind_nodes SET storid = {storid} WHERE node_id = '{node_id}'")
+
+    def get_parent_node_ids_from_edge_id(self, edge_id: str) -> Set[str]:
+        """
+        Gets the xmind ids of parent nodes of the edge with the specified xmind edge id
+        :param edge_id: xmind id of the edge to get the parent node ids for
+        """
+        return set(self._get_list(f"select distinct parent_node_id from main.smr_triples where edge_id = '{edge_id}'"))
 
 
 class AnkiCollectionAttachment:

@@ -181,10 +181,7 @@ class XmindEdge(XmindTopic):
 
     @cached_property
     def relation_class_name(self) -> str:
-        if self.is_empty:
-            return fieldtranslator.CHILD_RELATION_NAME
-        else:
-            return fieldtranslator.relation_class_from_content(self.content)
+        return fieldtranslator.relation_class_from_content(self.content)
 
     @cached_property
     def sibling_edges(self) -> List[XmindEdge]:

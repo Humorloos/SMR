@@ -41,7 +41,10 @@ def relation_class_from_content(content: TopicContentDto) -> str:
     :param content: xmind node content DTO
     :return: a class name generated from the node's content
     """
-    return class_from_content(content) + "_xrelation"
+    if content.is_empty():
+        return CHILD_RELATION_NAME
+    else:
+        return class_from_content(content) + "_xrelation"
 
 
 PARENT_RELATION_NAME = relation_class_from_content(TopicContentDto(title=PARENT_NAME))
