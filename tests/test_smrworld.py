@@ -474,10 +474,10 @@ def test_get_storid_triples_surrounding_node(ontology_with_example_map):
     # when
     storid_triples = cut.get_storid_triples_surrounding_node(cts.NOCICEPTORS_NODE_ID)
     # then
-    assert_that([onto.get(t['parent_storid']) for t in storid_triples]).contains(onto.nociceptors, onto.Pain)
-    assert_that([onto.get(t['relation_storid']) for t in storid_triples]).contains(
+    assert_that([onto.get(t.parent_storid) for t in storid_triples]).contains(onto.nociceptors, onto.Pain)
+    assert_that([onto.get(t.relation_storid) for t in storid_triples]).contains(
         onto.triggered_by_xrelation, onto.can_be_xrelation)
-    assert_that([onto.get(t['child_storid']) for t in storid_triples]).contains(onto.nociceptors, onto.chemical)
+    assert_that([onto.get(t.child_storid) for t in storid_triples]).contains(onto.nociceptors, onto.chemical)
 
 
 # TODO: Use views in triggers in smrworld.sql

@@ -1,6 +1,7 @@
 import os
 from collections import namedtuple
-from sqlite3 import OperationalError, Row
+from contextlib import contextmanager
+from sqlite3 import OperationalError, Row, Cursor
 from typing import List, Tuple, Dict, Union, Optional, Set, Any
 
 from anki import Collection
@@ -113,8 +114,9 @@ class SmrWorld(World):
     def __init__(self):
         self.parent_storid = None
         self.field_translator = None
-        super().__init__(filename=SMR_WORLD_PATH)
+        super().__init__(filename=SMR_WORLD_PATH, exclusive=False)
         self.turn_on_foreign_keys()
+        # self.graph.execute("PRAGMA busy_timeout = 10000")
         self.save()
 
     @property
@@ -129,6 +131,16 @@ WHERE iri LIKE '%{PARENT_RELATION_NAME}'""").fetchone()[0]
     @parent_storid.setter
     def parent_storid(self, value: int):
         self._parent_storid = value
+
+    @contextmanager
+    def anki_collection_attachment(self, anki_collection: Collection):
+        """
+        Context Manager for queries that use joins with the anki collection
+        """
+        cursor = self.attach_anki_collection(anki_collection)
+        yield cursor
+        cursor.close()
+        self.detach_anki_collection(anki_collection)
 
     def set_up(self) -> None:
         """
@@ -258,8 +270,8 @@ WHERE iri LIKE '%{PARENT_RELATION_NAME}'""").fetchone()[0]
         - on the fifth level, keys are xmind topic ids of child edges of the respective answers and values are Sets
         of xmind ids of the child nodes of each respective edge
         """
-        with AnkiCollectionAttachment(self, collection):
-            data = self._get_records(f"""-- noinspection SqlResolve
+        with self.anki_collection_attachment(collection) as cursor:
+            cursor.execute(f"""-- noinspection SqlResolve
 select xs.file_directory,
        xs.file_name || '.xmind' file_name,
        xs.name                  sheet_name,
@@ -288,6 +300,7 @@ from smr_notes sn
          join xmind_nodes xcn on st.child_node_id = xcn.node_id
          left join smr_triples st2 on st2.parent_node_id = xcn.node_id
 where sn.last_modified < cn.mod""")
+            data = self._get_records_from_cursor(cursor)
         smr_notes_in_files = {}
         for record in data:
             file_path = os.path.join(record.file_directory, record.file_name)
@@ -332,6 +345,12 @@ where sn.last_modified < cn.mod""")
                     record.parent_node_id)
         return smr_notes_in_files
 
+    @staticmethod
+    def _get_records_from_cursor(cursor):
+        Record = namedtuple('Record', next(zip(*cursor.description)))
+        cursor.row_factory = lambda cur, row: Record(*row)
+        return cursor.fetchall()
+
     def _get_rows(self, sql: str) -> List[Row]:
         """
         Executes the sql query and returns the results as a list of rows
@@ -350,9 +369,7 @@ where sn.last_modified < cn.mod""")
         :return: The data as a list of named tuples where keys are column names and values are the query results
         """
         cursor = self.graph.execute(sql)
-        Record = namedtuple('Record', next(zip(*cursor.description)))
-        cursor.row_factory = lambda cur, row: Record(*row)
-        return cursor.fetchall()
+        return self._get_records_from_cursor(cursor)
 
     def _get_list(self, sql: str) -> List[Any]:
         """
@@ -448,14 +465,14 @@ WHERE edge_id in ({"'" + "', '".join(edge_ids) + "'"})
         :param edge_ids: the xmind edge ids to get the tags for
         :return: the tags in a dictionary where keys are the edge ids and values are the tags for the respective notes
         """
-        with AnkiCollectionAttachment(smr_world=self, anki_collection=anki_collection):
-            tags = self.graph.execute(f"""-- noinspection SqlResolveForFile
+        with self.anki_collection_attachment(anki_collection) as cursor:
+            tags = cursor.execute(f"""-- noinspection SqlResolveForFile
 {TAGS_CTE}
 select xe.edge_id edge_id, tag
 from xmind_edges xe
     join tags on xe.sheet_id = tags.sheet_id
 where edge_id in ({"'" + "', '".join(edge_ids) + "'"})""").fetchall()
-            return {row[0]: row[1] for row in tags}
+        return {row[0]: row[1] for row in tags}
 
     def get_tag_by_sheet_id(self, sheet_id: str, anki_collection: Collection) -> str:
         """
@@ -463,8 +480,8 @@ where edge_id in ({"'" + "', '".join(edge_ids) + "'"})""").fetchall()
         :param sheet_id: the sheet id of the sheet to get the tag forf
         :param anki_collection: the anki collection to get the deck name from
         """
-        with AnkiCollectionAttachment(smr_world=self, anki_collection=anki_collection):
-            return self._get_records(f"""{TAGS_CTE} SELECT tag FROM tags WHERE sheet_id = '{sheet_id}'""")[0].tag
+        with self.anki_collection_attachment(anki_collection) as cursor:
+            return cursor.execute(f"""{TAGS_CTE} SELECT tag FROM tags WHERE sheet_id = '{sheet_id}'""").fetchone()[0]
 
     def get_smr_note_answer_fields(self, edge_ids: List[str]) -> Dict[str, List[str]]:
         """
@@ -524,13 +541,15 @@ group by root_id""").fetchall()
         return self.graph.execute("SELECT anki_file_name FROM xmind_media_to_anki_files WHERE xmind_uri = ?",
                                   (xmind_uri,)).fetchone()[0]
 
-    def attach_anki_collection(self, anki_collection: Collection):
+    def attach_anki_collection(self, anki_collection: Collection) -> Cursor:
         """
         Attaches an anki collection to the smr world for joint queries to both databases
         :param anki_collection: the anki collection to attach to the smr_world
         """
         anki_collection.close(save=True)
-        self.graph.execute("ATTACH DATABASE ? as ?", (anki_collection.path, ANKI_COLLECTION_DB_NAME))
+        cursor = self.graph.db.cursor()
+        cursor.execute("ATTACH DATABASE ? as ?", (anki_collection.path, ANKI_COLLECTION_DB_NAME))
+        return cursor
 
     def detach_anki_collection(self, anki_collection: Collection):
         """
@@ -877,22 +896,6 @@ where st.child_node_id =
         return set(self._get_list(f"select distinct parent_node_id from main.smr_triples where edge_id = '{edge_id}'"))
 
 
-class AnkiCollectionAttachment:
-    """
-    Context Manager for queries that use joins with the anki collection
-    """
-
-    def __init__(self, smr_world: SmrWorld, anki_collection: Collection):
-        self.world = smr_world
-        self.collection = anki_collection
-
-    def __enter__(self):
-        self.world.attach_anki_collection(self.collection)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.world.detach_anki_collection(self.collection)
-
-
 def sort_id_from_order_number(order_number: int) -> chr:
     """
     converts the specified order number into a character used for sorting the notes generated from an xmind map. The
@@ -902,3 +905,37 @@ def sort_id_from_order_number(order_number: int) -> chr:
     :return: the character for the sort field
     """
     return chr(order_number + 122)
+
+# TODO: use contextmanager annotation for ankicollectionattachment:
+#  from contextlib import contextmanager
+#
+# @contextmanager
+# def OpenCursor(conn):
+#     cursor = conn.cursor()
+#     try:
+#         yield (cursor)
+#     except Exception as e:
+#         cursor.close()
+#         raise e
+#     else:
+#         cursor.close()
+# Usage without OpenCursor:
+#
+# def get(conn, key, default=None):
+#     cursor = conn.cursor()
+#     cursor.execute(f'SELECT value FROM table WHERE key=?', (key,))
+#     row = cursor.fetchone()
+#     if row:
+#         return (True)
+#     else:
+#         return (default)
+# Usage with OpenCursor as context manager:
+#
+# def get(conn, key, default=None):
+#     with OpenCursor(conn) as cursor:
+#         cursor.execute(f'SELECT value FROM table WHERE key=?', (key,))
+#         row = cursor.fetchone()
+#         if row:
+#             return (True)
+#         else:
+#             return (default)
