@@ -143,8 +143,8 @@ class XOntology(Ontology):
         self.add_concepts_from_nodes([xmind_node])
         storid_triples = self.world.get_storid_triples_surrounding_node(xmind_node.node_id)
         for triple in storid_triples:
-            self.connect_concepts(parent_storid=triple['parent_storid'], relation_storid=triple['relation_storid'],
-                                  child_storid=triple['child_storid'])
+            self.connect_concepts(parent_storid=triple.parent_storid, relation_storid=triple.relation_storid,
+                                  child_storid=triple.child_storid)
 
     def rename_relation(self, edge: XmindTopicDto) -> None:
         """
@@ -263,13 +263,7 @@ class XOntology(Ontology):
             class Concept(owlready2.Thing):
                 pass
 
-            class Root(Concept):
-                pass
-
             # standard object properties
             types.new_class(PARENT_RELATION_NAME, (owlready2.ObjectProperty,))
 
             types.new_class(CHILD_RELATION_NAME, (owlready2.ObjectProperty,))
-
-            class XmindId(owlready2.AnnotationProperty):
-                pass

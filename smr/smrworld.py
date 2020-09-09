@@ -853,14 +853,14 @@ UNION select edge_id topic_id, storid from xmind_edges where edge_id in ( {"'" +
         topic_dict = {r['topic_id']: r['storid'] for r in topic_rows}
         return topic_dict
 
-    def get_storid_triples_surrounding_node(self, node_id: str) -> List[Row]:
+    def get_storid_triples_surrounding_node(self, node_id: str) -> List['Record']:
         """
         Gets storids of triples preceding or following the node with the specified xmind id
         :param node_id: id of the node to get the triples for
         :return: List of rows where the first entry is the parent node's storid, the second entry is the edge's
         storid and the third entry is the child node's storid
         """
-        return self._get_rows(f"""SELECT pn.storid parent_storid, e.storid relation_storid, cn.storid child_storid
+        return self._get_records(f"""SELECT pn.storid parent_storid, e.storid relation_storid, cn.storid child_storid
 from smr_triples st
          join xmind_nodes pn on
     st.parent_node_id = pn.node_id
