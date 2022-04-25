@@ -1,25 +1,18 @@
 import json
-import shutil
-
 from time import sleep
+from typing import List
 
-from anki.importing.noteimp import NoteImporter
+import aqt
+from anki.importing.noteimp import NoteImporter, ADD_MODE
 from anki.utils import splitFields, joinFields, intTime, guid64, timestampID
 
-from .sheetselectors import *
-from .utils import *
-from .consts import *
+# from .sheetselectors import *
+from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
+from smr.utils import *
+from smr.consts import *
 
 
-# TODO: adjust sheet selection windows to adjust to the window size
-# TODO: check out hierarchical tags, may be useful
-# TODO: add warning when something is wrong with the map
-# TODO: Implement hints as part of the meta json instead of javascript and use
-#  sound=False to mute answers in hint
-# TODO: Implement warning if an audio file can't be found
-# TODO: Check for performance issues:
-#  https://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
-#  https://docs.python.org/3.6/library/profile.html
+# TODO: use main.py from new branch
 class XmindImporter(NoteImporter):
     needMapper = False
 
@@ -28,7 +21,7 @@ class XmindImporter(NoteImporter):
         self.model = col.models.byName(X_MODEL_NAME)
         self.sheets = None
         self.mw = aqt.mw
-        self.currentSheetImport = dict()
+        self.currentSheetImport = {}
         self.mediaDir = os.path.join(os.path.dirname(col.path),
                                      'collection.media')
         self.srcDir = tempfile.mkdtemp()
@@ -37,32 +30,33 @@ class XmindImporter(NoteImporter):
         self.deckId = ''
         self.notesToAdd = dict()
         self.running = True
-        self.soup = BeautifulSoup(self.xZip.read('content.xml'),
-                                  features='html.parser')
+        self.soup = BeautifulSoup(self.xZip.read('content.xml'), features='xml')
         self.tagList = self.soup('topic')
         self.repair = False
+        # Fields to make methods from super class work
+        self.needMapper: bool = True
+        self.mapping: List[str] = list(X_FLDS.values())
+        self.updateCount: int = 0
+        self.importMode: int = ADD_MODE
 
-    def run(self):
-        selectedSheets = self.get_x_sheets()
-        if not self.running:
-            return
-        self.importSheets(selectedSheets)
-
-    def importSheets(self, selectedSheets):
-        self.deckId = selectedSheets[0]['deckId']
-        self.repair = selectedSheets[0]['repair']
+    def importSheets(self, user_inputs: DeckSelectionDialogUserInputsDTO):
+        self.deckId = user_inputs.deck_id
+        self.repair = user_inputs.repair
         self.mw.progress.start(immediate=True, label='importing...')
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
-        for sheetImport in selectedSheets:
-            self.currentSheetImport = sheetImport
-            self.currentSheetImport['ID'] = \
-                self.currentSheetImport['sheet']['id']
-            self.notesToAdd[self.currentSheetImport['ID']] = list()
-            self.mw.progress.update(label='importing %s' % sheetImport['tag'],
-                                    maybeShow=False)
-            self.mw.app.processEvents()
-            self.importMap(sheetImport)
+        sheet = self.soup('sheet')[0]
+        tag = f'{user_inputs.deck_name}::{sheet.title.text.replace(" ", "_")}'
+        self.currentSheetImport = {
+            'sheet': sheet,
+            'tag': tag,
+            'deckId': user_inputs.deck_id,
+        }
+        self.currentSheetImport['ID'] = self.currentSheetImport['sheet']['id']
+        self.notesToAdd[self.currentSheetImport['ID']] = list()
+        self.mw.progress.update(label=f'importing {tag}', maybeShow=False)
+        self.mw.app.processEvents()
+        self.importMap(self.currentSheetImport)
         # add all notes to the collection
         if not self.running:
             return
@@ -81,22 +75,6 @@ class XmindImporter(NoteImporter):
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
         print("fertig")
-
-    # returns list of
-    def get_x_sheets(self):
-        # doc = load(self.file)
-        imp_sheets = self.soup('sheet')
-        doc_title = os.path.basename(self.file)[:-6]
-        if len(imp_sheets) > 1:
-            selector = MultiSheetSelector(imp_sheets, doc_title)
-        else:
-            selector = SingleSheetSelector(imp_sheets, doc_title)
-        self.mw.progress.finish()
-        selector.exec_()
-        if not selector.running:
-            self.running = False
-            self.log = ['Import canceled']
-        return selector.sheets
 
     def importMap(self, sheetImport: dict):
         rootTopic = sheetImport['sheet'].topic
@@ -551,6 +529,14 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         return cardUpdates
 
     def addNew(self, rows):
+        self.col.decks.select(self.deckId)
+
+        deck = self.col.decks.get(self.deckId)
+        deck['mid'] = self.model['id']
+        self.col.decks.save(deck)
+
+        self.model['did'] = self.deckId
+        self.col.models.save(self.model)
         for noteData in rows:
             self.col.addNote(self.noteFromNoteData(noteData))
             sleep(0.001)

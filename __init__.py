@@ -1,1 +1,1 @@
-from . import main
+import smr.main

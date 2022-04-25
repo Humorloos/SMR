@@ -1,12 +1,11 @@
 import json
 
-import aqt.main as sync
 from aqt.utils import tooltip
 
 from anki.utils import splitFields
 
-from .utils import *
-from .xminder import XmindImporter
+from smr.utils import *
+from smr.xminder import XmindImporter
 
 
 class MapSyncer:
@@ -63,15 +62,15 @@ class MapSyncer:
         content = xZip.read('content.xml')
         manifestContent = xZip.read("META-INF/manifest.xml")
         xZip.close()
-        soup = BeautifulSoup(content, features='html.parser')
-        self.manifest = BeautifulSoup(manifestContent, features='html.parser')
+        soup = BeautifulSoup(content, features='lxml')
+        self.manifest = BeautifulSoup(manifestContent, features='lxml')
         self.tagList = soup('topic')
         sheets2Sync = set(map(lambda n: n['meta']['sheetId'], notes4Doc))
         sheets2Sync = list(
             map(lambda s: soup.find('sheet', {'id': s}), sheets2Sync))
         for note in notes4Doc:
             self.syncNote(note)
-        self.updateZip(docPath, 'content.xml', str(soup))
+        self.updateZip(docPath, '../content.xml', str(soup))
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
         # import sheets again
@@ -192,17 +191,3 @@ class MapSyncer:
                          arcname=os.path.join('attachments', file))
             zf.writestr(zinfo_or_arcname='META-INF/manifest.xml',
                         data=str(self.manifest))
-
-
-# monkey patches
-
-
-def syncOnSync(self):
-    ############################################################################
-    mapSyncer = MapSyncer(self)
-    mapSyncer.syncMaps()
-    ############################################################################
-    self.unloadCollection(self._onSync)
-
-
-sync.AnkiQt.onSync = syncOnSync

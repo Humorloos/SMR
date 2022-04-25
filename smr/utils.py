@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 from anki.utils import ids2str
 
-from .consts import X_MODEL_NAME
+from smr.consts import X_MODEL_NAME
 
 
 # checks whether a node contains any text, images or link
@@ -169,7 +169,7 @@ def getNodeContent(tagList, tag):
         if content:
             content += '<br>'
         if href.startswith('file'):
-            mediaPath = urllib.parse.unquote(href[7:])
+            mediaPath = urllib.parse.unquote(href[5:])
             media['media'] = mediaPath
         else:
             mediaPath = href[4:]
@@ -228,7 +228,7 @@ def getChildnodes(tag):
 
 def titleFromContent(content):
     try:
-        return BeautifulSoup(content, features="html.parser").select('.title')[
+        return BeautifulSoup(content, features="lxml").select('.title')[
             0].text
     except IndexError:
         return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", content)

@@ -1,4 +1,4 @@
-from .consts import *
+from smr.consts import *
 
 
 # receives an id that represents the card to be created and returns a list with
@@ -56,4 +56,4 @@ def update_x_model(col):
 def set_x_model_fields(x_model):
     x_model['css'] = X_CARD_CSS
     x_model['sortf'] = list(X_FLDS.keys()).index('id')  # set sortfield to ID
-    x_model['vers'].append(X_MODEL_VERSION)
+    x_model['version'] = X_MODEL_VERSION
