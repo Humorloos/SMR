@@ -42,6 +42,10 @@ def add_x_model(col):
     set_x_model_fields(x_model)
 
     models.add(x_model)
+    # Set the sort index after adding the model and save again because it is reset to 0 otherwise (see
+    # https://forums.ankiweb.net/t/saving-a-model-sets-the-sort-field-index-to-0/2299)
+    col.models.set_sort_index(nt=x_model, idx=list(X_FLDS.keys()).index('id'))
+    col.models.save(x_model)
     return x_model
 
 def update_x_model(col):
@@ -55,5 +59,4 @@ def update_x_model(col):
 
 def set_x_model_fields(x_model):
     x_model['css'] = X_CARD_CSS
-    x_model['sortf'] = list(X_FLDS.keys()).index('id')  # set sortfield to ID
     x_model['version'] = X_MODEL_VERSION
