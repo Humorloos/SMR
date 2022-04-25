@@ -4,7 +4,7 @@ from typing import List
 
 import aqt
 from anki.importing.noteimp import NoteImporter, ADD_MODE
-from anki.utils import splitFields, joinFields, intTime, guid64, timestampID
+from anki.utils import split_fields, join_fields, int_time, guid64, timestamp_id
 
 # from .sheetselectors import *
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
@@ -17,7 +17,7 @@ class XmindImporter(NoteImporter):
 
     def __init__(self, col, file):
         NoteImporter.__init__(self, col, file)
-        self.model = col.models.byName(X_MODEL_NAME)
+        self.model = col.models.by_name(X_MODEL_NAME)
         self.sheets = None
         self.mw = aqt.mw
         self.currentSheetImport = {}
@@ -78,7 +78,7 @@ class XmindImporter(NoteImporter):
     def importMap(self, sheetImport: dict):
         rootTopic = sheetImport['sheet'].topic
         # Set model to Stepwise map retrieval model
-        xModel = self.col.models.byName(X_MODEL_NAME)
+        xModel = self.col.models.by_name(X_MODEL_NAME)
         self.col.decks.select(self.currentSheetImport['deckId'])
         self.col.decks.current()['mid'] = xModel['id']
         rootDict = getAnswerDict(rootTopic)
@@ -187,12 +187,12 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
 
         # add notes for questions following this note
         questionContent = replaceSound(
-            splitFields(noteData[6])[list(X_FLDS.keys()).index('qt')])
+            split_fields(noteData[6])[list(X_FLDS.keys()).index('qt')])
         ref = ref + '<li>' + questionContent
         for aId, answerDict in enumerate(answerDicts, start=1):
             if getChildnodes(answerDict['nodeTag']):
                 if answerDict['isAnswer']:
-                    ac = splitFields(noteData[6])[
+                    ac = split_fields(noteData[6])[
                         list(X_FLDS.keys()).index('a' + answerDict['aId'])]
                     answerContent = replaceSound(ac)
                 else:
@@ -229,7 +229,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         xMindMeta['nAnswers'] = len(answers)
         xMindMeta['siblings'] = siblings
         xMindMeta['connections'] = connections
-        xMindMeta['lastSync'] = intTime()
+        xMindMeta['lastSync'] = int_time()
         return json.dumps(xMindMeta)
 
     def addAttachment(self, attachment):
@@ -237,7 +237,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         self.xZip.extract(attachment, self.srcDir)
         # get image from subdirectory attachments in mediaDir
         srcPath = os.path.join(self.srcDir, attachment)
-        self.col.media.addFile(srcPath)
+        self.col.media.add_file(srcPath)
 
     def getNextQuestions(self, answerDicts: list, addCrosslinks=True,
                          goDeeper=True):
@@ -344,9 +344,9 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                                  siblings=siblings, connections=connections)
         noteList.append(meta)
 
-        nId = timestampID(self.col.db, "notes")
-        noteData = [nId, guid64(), self.model['id'], intTime(), self.col.usn(),
-                    self.currentSheetImport['tag'], joinFields(noteList), "",
+        nId = timestamp_id(self.col.db, "notes")
+        noteData = [nId, guid64(), self.model['id'], int_time(), self.col.usn(),
+                    self.currentSheetImport['tag'], join_fields(noteList), "",
                     "", 0, ""]
 
         return noteData, media
@@ -363,8 +363,8 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
 
     def noteFromNoteData(self, noteData):
         note = self.col.newNote()
-        note.model()['did'] = self.deckId
-        fields = splitFields(noteData[6])
+        note.note_type['did'] = self.deckId
+        fields = split_fields(noteData[6])
         note.fields = fields
         note.tags.append(noteData[5].replace(" ", ""))
         return note
@@ -421,16 +421,16 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             notesToAdd = []
             notesToUpdate = []
             oldQIdList = list(map(lambda n: json.loads(
-                splitFields(n[1])[list(X_FLDS.keys()).index('mt')])[
+                split_fields(n[1])[list(X_FLDS.keys()).index('mt')])[
                 'questionId'], existingNotes))
             for newNote in noteList:
-                newFields = splitFields(newNote[6])
+                newFields = split_fields(newNote[6])
                 newMeta = json.loads(newFields[list(X_FLDS.keys()).index('mt')])
                 newQId = newMeta['questionId']
                 try:
                     if self.repair:
                         print('')
-                        newQtxAw = joinFields(newFields[1:22])
+                        newQtxAw = join_fields(newFields[1:22])
                         oldTpl = tuple(
                             filter(lambda n: newQtxAw in n[1], existingNotes))[
                             0]
@@ -459,15 +459,15 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
     def removeOld(self, existingNotes):
         oldIds = list(map(lambda nt: nt[0], existingNotes))
-        self.col.remNotes(oldIds)
+        self.col.remove_notes(oldIds)
 
     def addUpdates(self, rows):
         for noteTpl in rows:
             fields = []
             # get List of aIds to check whether the cards for this note have
             # changed
-            fields.append(splitFields(noteTpl[0][1]))
-            fields.append(splitFields(noteTpl[1][6]))
+            fields.append(split_fields(noteTpl[0][1]))
+            fields.append(split_fields(noteTpl[1][6]))
             metas = list(
                 map(lambda f: json.loads(f[list(X_FLDS.keys()).index('mt')]),
                     fields))

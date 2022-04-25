@@ -6,7 +6,7 @@ from smr.template import *
 
 
 def get_or_create_model():
-    model = mw.col.models.byName(X_MODEL_NAME)
+    model = mw.col.models.by_name(X_MODEL_NAME)
     if not model:
         # create model
         model = add_x_model(mw.col)

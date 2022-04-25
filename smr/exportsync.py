@@ -4,7 +4,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 import aqt
 from aqt.utils import tooltip
 
-from anki.utils import splitFields
+from anki.utils import split_fields
 
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.utils import *
@@ -39,7 +39,7 @@ class MapSyncer:
         xNotes = list(aqt.mw.col.db.execute(
             "select id, mod, flds from notes where mid = %s" % xMid))
         for xNote in xNotes:
-            fields = splitFields(xNote[2])
+            fields = split_fields(xNote[2])
             meta = json.loads(fields[23])
             # If the last time the note was edited was at least 10 Seconds after it was imported
             if xNote[1] > (meta['lastSync'] + 10):
