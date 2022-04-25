@@ -1,20 +1,82 @@
 """monkey patches"""
-import random
-import time
-import json
-
-from aqt.qt import *
-from aqt.utils import askUserDialog
-import aqt.reviewer as reviewer
 
 # noinspection PyProtectedMember
-from anki.lang import _, ngettext
-from anki.sound import clearAudioQueue
-import anki.sched as scheduler
+import json
+import random
+import time
+import os
+from typing import Callable, Union, Any
 
-from .utils import *
-from .consts import *
+from PyQt5.QtWidgets import QMessageBox
+from anki import sched
+from anki.lang import ngettext, _
+from anki.utils import ids2str
+from aqt.sound import clearAudioQueue
+from anki.hooks import wrap
+from anki.importing.noteimp import NoteImporter
+from aqt import importing, deckbrowser, reviewer
+from aqt.deckbrowser import DeckBrowser
+from aqt.importing import ImportDialog
+from aqt.main import AnkiQt
+from aqt.utils import tooltip, showText, askUserDialog
 
+from smr.consts import X_FLDS
+from smr.exportsync import MapSyncer
+from smr.utils import isSMRDeck, getDueAnswersToNote, getNotesFromQIds
+from smr.xminder import XmindImporter
+from smr.ui.deckselectiondialog import DeckSelectionDialog
+
+IMPORT_CANCELLED_MESSAGE = 'Import cancelled'
+
+
+def patch_import_dialog(self: ImportDialog, mw: AnkiQt, importer: Union[NoteImporter, XmindImporter],
+                        _old: Callable) -> None:
+    """
+    Wraps around ImportDialog constructor to show the SMR deck selection dialog instead when importing an xmind file
+    :param self: the ImportDialog around which this function wraps
+    :param mw: the Anki main window
+    :param importer: the NoteImporter instance that is used with the import dialog
+    :param _old: the constructor around which this function wraps
+    """
+    if type(importer) == XmindImporter:
+        # noinspection PyUnresolvedReferences
+        deck_selection_dialog = DeckSelectionDialog(mw=mw, filename=os.path.basename(importer.file))
+        user_inputs = deck_selection_dialog.get_inputs()
+        if user_inputs.running:
+            # noinspection PyUnresolvedReferences
+            importer.importSheets(user_inputs)
+            log = "\n".join(importer.log)
+        else:
+            log = IMPORT_CANCELLED_MESSAGE
+        if "\n" not in log:
+            tooltip(log)
+        else:
+            showText(log)
+        return
+    _old(self, mw, importer)
+
+
+importing.ImportDialog.__init__ = wrap(importing.ImportDialog.__init__, patch_import_dialog, pos="around")
+
+
+# noinspection PyPep8Naming
+def patch__linkHandler(self, url: str, _old: Callable) -> Any:
+    """
+    Wraps around Deckbrowser's method _linkHandler() to trigger smr synchronization when users click the smr sync
+    button in deckbrowser
+    :param self: the deckbrowser
+    :param url: the command the linkhandler is supposed to be called with
+    :param _old: The actual _linkHandler() method around which this function wraps
+    :return: Nothing when the called with "sync", else the _linkHandler()'s return value
+    """
+    if url == "sync":
+        mapSyncer = MapSyncer()
+        mapSyncer.syncMaps()
+        return
+    return _old(self, url)
+
+
+deckbrowser.DeckBrowser._linkHandler = wrap(DeckBrowser._linkHandler, patch__linkHandler, pos="around")
 
 def showReviewer(self):
     self.mw.col.reset()
@@ -107,7 +169,7 @@ def schedGetCard(self, learnHistory=None):
         return card
 
 
-scheduler.Scheduler.getCard = schedGetCard
+sched.Scheduler.getCard = schedGetCard
 
 
 def sched_getCard(self, learnHistory=None):
@@ -142,7 +204,7 @@ def sched_getCard(self, learnHistory=None):
         return self._getLrnCard(collapse=True)
 
 
-scheduler.Scheduler._getCard = sched_getCard
+sched.Scheduler._getCard = sched_getCard
 
 
 def schedAnswerLrnCard(self, card, ease):
@@ -210,7 +272,7 @@ def schedAnswerLrnCard(self, card, ease):
     self._logLrn(card, ease, conf, leaving, type, lastLeft)
 
 
-scheduler.Scheduler._answerLrnCard = schedAnswerLrnCard
+sched.Scheduler._answerLrnCard = schedAnswerLrnCard
 
 
 def schedRescheduleLapse(self, card):
@@ -252,7 +314,7 @@ def schedRescheduleLapse(self, card):
     return delay
 
 
-scheduler.Scheduler._rescheduleLapse = schedRescheduleLapse
+sched.Scheduler._rescheduleLapse = schedRescheduleLapse
 
 
 def getNextSMRCard(self, learnHistory):
@@ -407,7 +469,7 @@ def getNextSMRCard(self, learnHistory):
     return self.getNextSMRCard(learnHistory)
 
 
-scheduler.Scheduler.getNextSMRCard = getNextSMRCard
+sched.Scheduler.getNextSMRCard = getNextSMRCard
 
 
 def getDueConnectionNotes(self, dueAnswers, meta):
@@ -424,7 +486,7 @@ def getDueConnectionNotes(self, dueAnswers, meta):
     return connections, dueConnectionNotes
 
 
-scheduler.Scheduler.getDueConnectionNotes = getDueConnectionNotes
+sched.Scheduler.getDueConnectionNotes = getDueConnectionNotes
 
 
 def getUrgentNote(self, nextNotes, nidList):
@@ -446,7 +508,7 @@ def getUrgentNote(self, nextNotes, nidList):
     return nextNote
 
 
-scheduler.Scheduler.getUrgentNote = getUrgentNote
+sched.Scheduler.getUrgentNote = getUrgentNote
 
 
 def getCardData(self, dueAnswers, cards, ntMt):
@@ -463,7 +525,7 @@ def getCardData(self, dueAnswers, cards, ntMt):
     return nextNotes
 
 
-scheduler.Scheduler.getCardData = getCardData
+sched.Scheduler.getCardData = getCardData
 
 
 def getNextAnswer(self, nid, aId):
@@ -478,7 +540,7 @@ def getNextAnswer(self, nid, aId):
     return self.col.getCard(answerId)
 
 
-scheduler.Scheduler.getNextAnswer = getNextAnswer
+sched.Scheduler.getNextAnswer = getNextAnswer
 
 
 def getAnswerFurtherDown(self, notes, dueAnswers, nidList):
@@ -505,4 +567,4 @@ def getAnswerFurtherDown(self, notes, dueAnswers, nidList):
     return None
 
 
-scheduler.Scheduler.getAnswerFurtherDown = getAnswerFurtherDown
+sched.Scheduler.getAnswerFurtherDown = getAnswerFurtherDown

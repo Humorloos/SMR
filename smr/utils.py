@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 from anki.utils import ids2str
 
-from .consts import X_MODEL_NAME
+from smr.consts import X_MODEL_NAME
 
 
 # checks whether a node contains any text, images or link
@@ -104,17 +104,15 @@ def getNotesFromSheet(sheetId, col):
 
 
 def isSMRDeck(did, col):
-    nidsInDeck = list(set(
-        sum(col.db.execute("select nid from cards where did = " + str(did)),
-            ())))
-    midsInDeck = list(set(sum(col.db.execute(
-        "select mid from notes where id in " + ids2str(nidsInDeck)), ())))
+    nidsInDeck = set(nid for nid_list in col.db.execute(
+        "select nid from cards where did = " + str(did)) for nid in nid_list)
+    midsInDeck = set(mid for mid_list in col.db.execute(
+        "select mid from notes where id in " + ids2str(nidsInDeck)) for mid in mid_list)
     return xModelId(col) in midsInDeck
 
 
 def xModelId(col):
-    return int(list(filter(lambda v: v['name'] == X_MODEL_NAME,
-                           list(col.models.models.values())))[0]['id'])
+    return col.models.id_for_name(X_MODEL_NAME)
 
 
 def getNotesFromQIds(qIds, col):
@@ -169,7 +167,7 @@ def getNodeContent(tagList, tag):
         if content:
             content += '<br>'
         if href.startswith('file'):
-            mediaPath = urllib.parse.unquote(href[7:])
+            mediaPath = urllib.parse.unquote(href[5:])
             media['media'] = mediaPath
         else:
             mediaPath = href[4:]
@@ -228,7 +226,7 @@ def getChildnodes(tag):
 
 def titleFromContent(content):
     try:
-        return BeautifulSoup(content, features="html.parser").select('.title')[
+        return BeautifulSoup(content, features="lxml").select('.title')[
             0].text
     except IndexError:
         return re.sub("(<br>)?(\[sound:.*\]|<img src=.*>)", "", content)

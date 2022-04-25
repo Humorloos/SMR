@@ -5,7 +5,7 @@ from aqt.qt import *
 from aqt.deckchooser import DeckChooser
 import aqt
 
-from .consts import ICONS_PATH
+from smr.consts import ICONS_PATH
 
 class SheetSelector(QDialog):
     def __init__(self, sheets, topic):
