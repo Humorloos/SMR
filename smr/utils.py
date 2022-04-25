@@ -104,11 +104,10 @@ def getNotesFromSheet(sheetId, col):
 
 
 def isSMRDeck(did, col):
-    nidsInDeck = list(set(
-        sum(col.db.execute("select nid from cards where did = " + str(did)),
-            ())))
-    midsInDeck = list(set(sum(col.db.execute(
-        "select mid from notes where id in " + ids2str(nidsInDeck)), ())))
+    nidsInDeck = set(nid for nid_list in col.db.execute(
+        "select nid from cards where did = " + str(did)) for nid in nid_list)
+    midsInDeck = set(mid for mid_list in col.db.execute(
+        "select mid from notes where id in " + ids2str(nidsInDeck)) for mid in mid_list)
     return xModelId(col) in midsInDeck
 
 

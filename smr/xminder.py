@@ -12,7 +12,6 @@ from smr.utils import *
 from smr.consts import *
 
 
-# TODO: use main.py from new branch
 class XmindImporter(NoteImporter):
     needMapper = False
 
