@@ -71,6 +71,7 @@ class XmindImporter(NoteImporter):
 
         self.log = [
             ", ".join(list(map(lambda l: " ".join(l), self.log)))]
+        self.mw.reset(guiOnly=True)
         self.mw.progress.finish()
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
