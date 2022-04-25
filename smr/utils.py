@@ -113,8 +113,7 @@ def isSMRDeck(did, col):
 
 
 def xModelId(col):
-    return int(list(filter(lambda v: v['name'] == X_MODEL_NAME,
-                           list(col.models.models.values())))[0]['id'])
+    return col.models.id_for_name(X_MODEL_NAME)
 
 
 def getNotesFromQIds(qIds, col):
