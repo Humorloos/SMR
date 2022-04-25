@@ -26,7 +26,7 @@ addHook("profileLoaded", on_profile_loaded)
 
 
 def importer_hook(importers):
-    importers.append((_("Xmind map (*.xmind)"), XmindImporter))
+    importers.append(("Xmind map (*.xmind)", XmindImporter))
 
 
 # Add xmind importer to importers
