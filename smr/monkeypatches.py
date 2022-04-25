@@ -61,7 +61,7 @@ def patch__linkHandler(self, url: str, _old: Callable) -> Any:
     :return: Nothing when the called with "sync", else the _linkHandler()'s return value
     """
     if url == "sync":
-        mapSyncer = MapSyncer(self)
+        mapSyncer = MapSyncer()
         mapSyncer.syncMaps()
         return
     return _old(self, url)
