@@ -250,7 +250,6 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                               answerDicts))
         answers = list(filter(lambda answerDict: answerDict['isAnswer'],
                               answerDicts))
-        # TODO: globalQUestions add connections as global questions check whtether thats true
         for bridge in bridges:
             globalQuestions.extend(self.getQuestionListForAnswer(bridge))
         for answer in answers:

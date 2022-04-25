@@ -169,8 +169,6 @@ class MapSyncer:
         imgTag = tag.find('xhtml:img')
         imgTag['xhtml:src'] = 'xap:' + newFullPath
 
-        # TODO: add code for changing images
-
     def update_zip(self, zipname, filename, data) -> None:
         """
         - replaces the content.xml file in the xmind file with the manager's content soup
