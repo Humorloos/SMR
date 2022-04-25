@@ -75,7 +75,6 @@ class XmindImporter(NoteImporter):
         self.mw.progress.finish()
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
-        print("fertig")
 
     def importMap(self, sheetImport: dict):
         rootTopic = sheetImport['sheet'].topic
@@ -484,6 +483,8 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                 if not aIds[0] == aIds[1]:
                     cardUpdates = self.getCardUpdates(aIds, noteTpl)
 
+            # fix for missing spaces in tags
+            noteTpl[1][5] = f' {noteTpl[1][5]} '
             # change contents of this note
             updateData = [noteTpl[1][3:7] + [noteTpl[0][0]]]
             self.col.db.executemany("""
