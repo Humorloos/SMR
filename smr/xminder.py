@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from time import sleep
 from typing import List
 
@@ -377,7 +378,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                 if files['media'].startswith(('attachments', 'resources')):
                     self.addAttachment(files['media'])
                 else:
-                    self.col.media.addFile(files['media'])
+                    self.col.media.add_file(Path(self.file).parent / files['media'])
 
     # receives an answer node and returns all questions following this answer
     # including questions following multiple topics as dictionaries of a
