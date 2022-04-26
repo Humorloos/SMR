@@ -55,8 +55,17 @@ After confirming the dialog, SMR will import the first sheet in the file into An
 Other sheets will be ignored.
 SMR will assign a tag consisting of the deck's name and the imported sheet's name.
 The tags are built hierarchically, i.e., if you import multiple different sheets into the same deck, you can find the cards belonging to sheets in the same deck under that deck's name in the browser.
-
 ![deck selector](screenshots/deckselector.png)
+
+#### Import Errors
+If your concept map has an error (e.g., a question without answers, or two concepts directly following each other without a bridge between them), the import will fail and SMR will show an error message similar to this:
+![import error](screenshots/missing_answers.png)
+The "Path" in the error message gives a hint, where the error is located.
+To find the error, you must proceed as follows:
+- Start at the root concept in your map ("biological psychology" in the example)
+- Go to the n-th child node of this concept, where n is the first number in the path ("investigates" in the example, because it is the second child of the root concept)
+- Continue navigating down in your map, following the numbers in the path seperated by points (e.g., in the second step in the example, I would navigate to the first child node of"investigates", which is "information transfer and processing")
+- Stop when you have found the error, which may not be located at the end of the path.
 
 ### 3. Synchronizing your concept maps
 
