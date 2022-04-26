@@ -5,20 +5,18 @@ import json
 import random
 import time
 import os
-from typing import Callable, Union, Any
+from typing import Callable, Union, Any, cast
 
-from PyQt5.QtWidgets import QMessageBox
-from anki import sched
-from anki.lang import ngettext, _
+from anki import scheduler
+from anki.cards import CardId
 from anki.utils import ids2str
-from aqt.sound import clearAudioQueue
 from anki.hooks import wrap
 from anki.importing.noteimp import NoteImporter
 from aqt import importing, deckbrowser, reviewer
 from aqt.deckbrowser import DeckBrowser
 from aqt.importing import ImportDialog
 from aqt.main import AnkiQt
-from aqt.utils import tooltip, showText, askUserDialog
+from aqt.utils import tooltip, showText
 
 from smr.consts import X_FLDS
 from smr.exportsync import MapSyncer
@@ -79,267 +77,57 @@ def patch__linkHandler(self, url: str, _old: Callable) -> Any:
 
 deckbrowser.DeckBrowser._linkHandler = wrap(DeckBrowser._linkHandler, patch__linkHandler, pos="around")
 
-def showReviewer(self):
-    self.mw.col.reset()
-    self.web.resetHandlers()
-    self.mw.setStateShortcuts(self._shortcutKeys())
-    self.web.onBridgeCmd = self._linkHandler
-    self.bottom.web.onBridgeCmd = self._linkHandler
-    self._reps = None
-    ############################################################################
+
+def patch_show(self):
     self.SMRMode = False
     if isSMRDeck(self.mw.col.decks.active()[0], self.mw.col):
         self.SMRMode = True
         self.learnHistory = list()
-    ############################################################################
-    self.nextCard()
 
 
-reviewer.Reviewer.show = showReviewer
+reviewer.Reviewer.show = wrap(old=reviewer.Reviewer.show, new=patch_show, pos='before')
 
 
-def reviewerNextCard(self):
-    elapsed = self.mw.col.timeboxReached()
-    if elapsed:
-        part1 = ngettext("%d card studied in", "%d cards studied in",
-                         elapsed[1]) % elapsed[1]
-        mins = int(round(elapsed[0] / 60))
-        part2 = ngettext("%s minute.", "%s minutes.", mins) % mins
-        fin = _("Finish")
-        diag = askUserDialog("%s %s" % (part1, part2),
-                             [_("Continue"), fin])
-        diag.setIcon(QMessageBox.Information)
-        if diag.run() == fin:
-            return self.mw.moveToState("deckBrowser")
-        self.mw.col.startTimebox()
-    if self.cardQueue:
-        # undone/edited cards to show
-        c = self.cardQueue.pop()
-        c.startTimer()
-        self.hadCardQueue = True
-    else:
-        if self.hadCardQueue:
-            # the undone/edited cards may be sitting in the regular queue;
-            # need to reset
-            self.mw.col.reset()
-            self.hadCardQueue = False
-        ########################################################################
-        if self.SMRMode:
-            c = self.mw.col.sched.getCard(self.learnHistory)
-            if not c:
-                self.mw.moveToState("overview")
-                return
-            if len(self.learnHistory) > 0 and self.learnHistory[-1][0] == c.nid:
-                self.learnHistory[-1][1].append(c.id)
-            else:
-                self.learnHistory.append([c.nid, [c.id]])
+def patch__get_next_v1_v2_card(self, _old):
+    if self.SMRMode:
+        c = self.mw.col.sched.getNextSMRCard(self.learnHistory)
+        if not c:
+            self.mw.moveToState("overview")
+            return
+        if len(self.learnHistory) > 0 and self.learnHistory[-1][0] == c.nid:
+            self.learnHistory[-1][1].append(c.id)
         else:
-            ####################################################################
-            c = self.mw.col.sched.getCard()
-    self.card = c
-    clearAudioQueue()
-    if not c:
-        self.mw.moveToState("overview")
+            self.learnHistory.append([c.nid, [c.id]])
+        c.start_timer()
+        self.card = c
         return
-    if self._reps is None or self._reps % 100 == 0:
-        # we recycle the webview periodically so webkit can free memory
-        self._initWeb()
-    self._showQuestion()
+    _old(self)
 
 
-reviewer.Reviewer.nextCard = reviewerNextCard
-
-
-def schedGetCard(self, learnHistory=None):
-    "Pop the next card from the queue. None if finished."
-    self._checkDay()
-    if not self._haveQueues:
-        self.reset()
-    ############################################################################
-    if isinstance(learnHistory, list):
-        card = self._getCard(learnHistory)
-    else:
-        card = self._getCard()
-        ########################################################################
-    if card:
-        self.col.log(card)
-        if not self._burySiblingsOnAnswer:
-            self._burySiblings(card)
-        self.reps += 1
-        card.startTimer()
-        return card
-
-
-sched.Scheduler.getCard = schedGetCard
-
-
-def sched_getCard(self, learnHistory=None):
-    "Return the next due card id, or None."
-    ############################################################################
-    if isinstance(learnHistory, list):
-        return self.getNextSMRCard(learnHistory)
-    else:
-        ########################################################################
-        # learning card due?
-        c = self._getLrnCard()
-        if c:
-            return c
-        # new first, or time for one?
-        if self._timeForNewCard():
-            c = self._getNewCard()
-            if c:
-                return c
-        # card due for review?
-        c = self._getRevCard()
-        if c:
-            return c
-        # day learning card due?
-        c = self._getLrnDayCard()
-        if c:
-            return c
-        # new cards left?
-        c = self._getNewCard()
-        if c:
-            return c
-        # collapse or finish
-        return self._getLrnCard(collapse=True)
-
-
-sched.Scheduler._getCard = sched_getCard
-
-
-def schedAnswerLrnCard(self, card, ease):
-    # ease 1=no, 2=yes, 3=remove
-    conf = self._lrnConf(card)
-    if card.odid and not card.wasNew:
-        type = 3
-    elif card.type == 2:
-        type = 2
-    else:
-        type = 0
-    leaving = False
-    # lrnCount was decremented once when card was fetched
-    lastLeft = card.left
-    # immediate graduate?
-    if ease == 3:
-        self._rescheduleAsRev(card, conf, True)
-        leaving = True
-    # graduation time?
-    elif ease == 2 and (card.left % 1000) - 1 <= 0:
-        self._rescheduleAsRev(card, conf, False)
-        leaving = True
-    else:
-        # one step towards graduation
-        if ease == 2:
-            # decrement real left count and recalculate left today
-            left = (card.left % 1000) - 1
-            card.left = self._leftToday(conf['delays'], left) * 1000 + left
-        # failed
-        else:
-            card.left = self._startingLeft(card)
-            resched = self._resched(card)
-            if 'mult' in conf and resched:
-                # review that's lapsed
-                card.ivl = max(1, conf['minInt'], card.ivl * conf['mult'])
-            else:
-                # new card; no ivl adjustment
-                pass
-            if resched and card.odid:
-                card.odue = self.today + 1
-        delay = self._delayForGrade(conf, card.left)
-        if card.due < time.time():
-            # not collapsed; add some randomness
-            delay *= random.uniform(1, 1.25)
-        card.due = int(time.time() + delay)
-        # due today?
-        if card.due < self.dayCutoff:
-            self.lrnCount += card.left // 1000
-            # if the queue is not empty and there's nothing else to do, make
-            # sure we don't put it at the head of the queue and end up showing
-            # it twice in a row
-            card.queue = 1
-            ####################################################################
-            # if self._lrnQueue and not self.revCount and not self.newCount:
-            #     smallestDue = self._lrnQueue[0][0]
-            #     card.due = max(card.due, smallestDue + 1)
-            # heappush(self._lrnQueue, (card.due, card.id))
-            ####################################################################
-        else:
-            # the card is due in one or more days, so we need to use the
-            # day learn queue
-            ahead = ((card.due - self.dayCutoff) // 86400) + 1
-            card.due = self.today + ahead
-            card.queue = 3
-    self._logLrn(card, ease, conf, leaving, type, lastLeft)
-
-
-sched.Scheduler._answerLrnCard = schedAnswerLrnCard
-
-
-def schedRescheduleLapse(self, card):
-    conf = self._lapseConf(card)
-    card.lastIvl = card.ivl
-    if self._resched(card):
-        card.lapses += 1
-        card.ivl = self._nextLapseIvl(card, conf)
-        card.factor = max(1300, card.factor - 200)
-        card.due = self.today + card.ivl
-        # if it's a filtered deck, update odue as well
-        if card.odid:
-            card.odue = card.due
-    # if suspended as a leech, nothing to do
-    delay = 0
-    if self._checkLeech(card, conf) and card.queue == -1:
-        return delay
-    # if no relearning steps, nothing to do
-    if not conf['delays']:
-        return delay
-    # record rev due date for later
-    if not card.odue:
-        card.odue = card.due
-    delay = self._delayForGrade(conf, 0)
-    card.due = int(delay + time.time())
-    card.left = self._startingLeft(card)
-    # queue 1
-    if card.due < self.dayCutoff:
-        self.lrnCount += card.left // 1000
-        card.queue = 1
-        ########################################################################
-        # heappush(self._lrnQueue, (card.due, card.id))
-        ########################################################################
-    else:
-        # day learn queue
-        ahead = ((card.due - self.dayCutoff) // 86400) + 1
-        card.due = self.today + ahead
-        card.queue = 3
-    return delay
-
-
-sched.Scheduler._rescheduleLapse = schedRescheduleLapse
+reviewer.Reviewer._get_next_v1_v2_card = wrap(old=reviewer.Reviewer._get_next_v1_v2_card,
+                                              new=patch__get_next_v1_v2_card, pos='around')
 
 
 def getNextSMRCard(self, learnHistory):
-    self._lrnQueue = self.col.db.list("""
-    select id from cards where did in %s and queue = 1 and due < ?""" %
-                                      self._deckLimit(), self.dayCutoff)
+    self._lrnQueue = self.col.db.all("""
+        select due, id from cards where did in %s and queue = 1 and due < ?""" %
+                                     self._deck_limit(), time.time())
+    self._lrnQueue = [cast(tuple[int, CardId], tuple(e)) for e in self._lrnQueue]
     self.lrnCount = len(self._lrnQueue)
-    self._lrnQueue = self.col.db.list("""
-        select id from cards where did in %s and queue = 1 and due < ?""" %
-                                      self._deckLimit(), time.time())
 
     self._revQueue = self.col.db.list("""
         select id from cards where did = ? and queue = 2 and due <= ?""",
-                                      self._revDids[0], self.today)
+                                      self._lrnDids[0], self.today)
     self.revCount = len(self._revQueue)
 
     self._newQueue = self.col.db.list("""
         select id from cards where did = ? and queue = 0 order by due, ord""",
-                                      self._revDids[0])
+                                      self._lrnDids[0])
     self.newCount = len(self._newQueue)
 
     nidList = dict()
     nidList['lrn'] = list(set(self.col.db.list(
-        """select nid from cards where id in """ + ids2str(self._lrnQueue))))
+        """select nid from cards where id in """ + ids2str([t[1] for t in self._lrnQueue]))))
     nidList['rev'] = list(set(self.col.db.list(
         """select nid from cards where id in """ + ids2str(self._revQueue))))
     nidList['new'] = list(set(self.col.db.list(
@@ -352,7 +140,6 @@ def getNextSMRCard(self, learnHistory):
         minIDLength = self.col.db.list("""
             select min(length(sfld)) from notes where id in """ + ids2str(
             nidList['all']))
-
         startingNotes = self.col.db.list(
             "select id from notes where LENGTH(sfld) = ? and id in " + ids2str(
                 nidList['lrn']), minIDLength[0])
@@ -373,12 +160,12 @@ def getNextSMRCard(self, learnHistory):
 
     # get last from last note that was studied
     lastNoteLst = learnHistory[-1]
-    dueAnswers = self._lrnQueue + self._revQueue + self._newQueue
+    dueAnswers = [t[1] for t in self._lrnQueue] + self._revQueue + self._newQueue
     dueAw2Note = getDueAnswersToNote(nId=lastNoteLst[0], dueAnswers=dueAnswers,
                                      col=self.col)
     awOrds = list(map(lambda t: t['ord'], dueAw2Note))
 
-    lstCrd = self.col.getCard(lastNoteLst[1][-1])
+    lstCrd = self.col.get_card(lastNoteLst[1][-1])
 
     # if that note has further due answers that follow it, return the next
     # Answer
@@ -386,7 +173,7 @@ def getNextSMRCard(self, learnHistory):
         return self.getNextAnswer(lastNoteLst[0], lstCrd.ord + 1)
 
     # get Children of the answers that were answered for the last note
-    lastNote = self.col.getNote(lastNoteLst[0])
+    lastNote = self.col.get_note(lastNoteLst[0])
     lstNtMt = json.loads(lastNote.fields[list(X_FLDS.keys()).index('mt')])
     lstCrds = list(map(lambda o: dict(ord=o), self.col.db.list(
         "select ord from cards where id in " + ids2str(lastNoteLst[1]))))
@@ -470,7 +257,7 @@ def getNextSMRCard(self, learnHistory):
     return self.getNextSMRCard(learnHistory)
 
 
-sched.Scheduler.getNextSMRCard = getNextSMRCard
+scheduler.v2.Scheduler.getNextSMRCard = getNextSMRCard
 
 
 def getDueConnectionNotes(self, dueAnswers, meta):
@@ -487,7 +274,7 @@ def getDueConnectionNotes(self, dueAnswers, meta):
     return connections, dueConnectionNotes
 
 
-sched.Scheduler.getDueConnectionNotes = getDueConnectionNotes
+scheduler.v2.Scheduler.getDueConnectionNotes = getDueConnectionNotes
 
 
 def getUrgentNote(self, nextNotes, nidList):
@@ -509,7 +296,7 @@ def getUrgentNote(self, nextNotes, nidList):
     return nextNote
 
 
-sched.Scheduler.getUrgentNote = getUrgentNote
+scheduler.v2.Scheduler.getUrgentNote = getUrgentNote
 
 
 def getCardData(self, dueAnswers, cards, ntMt):
@@ -526,11 +313,11 @@ def getCardData(self, dueAnswers, cards, ntMt):
     return nextNotes
 
 
-sched.Scheduler.getCardData = getCardData
+scheduler.v2.Scheduler.getCardData = getCardData
 
 
 def getNextAnswer(self, nid, aId):
-    dueAnswers = self._lrnQueue + self._revQueue + self._newQueue
+    dueAnswers = [t[1] for t in self._lrnQueue] + self._revQueue + self._newQueue
     dueAw2Note = list(self.col.db.execute(
         """select id, ord from cards where nid = ? and id in """ + ids2str(
             dueAnswers), nid))
@@ -538,10 +325,10 @@ def getNextAnswer(self, nid, aId):
     nextOrd = min(filter(lambda o: o >= aId, awOrds))
     answerId = dueAw2Note[awOrds.index(nextOrd)][0]
 
-    return self.col.getCard(answerId)
+    return self.col.get_card(answerId)
 
 
-sched.Scheduler.getNextAnswer = getNextAnswer
+scheduler.v2.Scheduler.getNextAnswer = getNextAnswer
 
 
 def getAnswerFurtherDown(self, notes, dueAnswers, nidList):
@@ -568,4 +355,4 @@ def getAnswerFurtherDown(self, notes, dueAnswers, nidList):
     return None
 
 
-sched.Scheduler.getAnswerFurtherDown = getAnswerFurtherDown
+scheduler.v2.Scheduler.getAnswerFurtherDown = getAnswerFurtherDown

@@ -7,7 +7,6 @@ import aqt
 from anki.importing.noteimp import NoteImporter, ADD_MODE
 from anki.utils import split_fields, join_fields, int_time, guid64, timestamp_id
 
-# from .sheetselectors import *
 from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from smr.utils import *
 from smr.consts import *
