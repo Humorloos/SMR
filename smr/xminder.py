@@ -29,7 +29,7 @@ class XmindImporter(NoteImporter):
         self.deckId = ''
         self.notesToAdd = dict()
         self.running = True
-        self.soup = BeautifulSoup(self.xZip.read('content.xml'), features='xml')
+        self.soup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
         self.tagList = self.soup('topic')
         self.repair = False
         # Fields to make methods from super class work

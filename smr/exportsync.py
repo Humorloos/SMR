@@ -66,8 +66,8 @@ class MapSyncer:
         content = xZip.read('content.xml')
         manifestContent = xZip.read("META-INF/manifest.xml")
         xZip.close()
-        soup = BeautifulSoup(content, features='xml')
-        self.manifest = BeautifulSoup(manifestContent, features='xml')
+        soup = BeautifulSoup(content, features='html.parser')
+        self.manifest = BeautifulSoup(manifestContent, features='html.parser')
         self.tagList = soup('topic')
         sheets2Sync = set(map(lambda n: n['meta']['sheetId'], notes4Doc))
         sheets2Sync = list(
