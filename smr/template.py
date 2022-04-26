@@ -49,13 +49,13 @@ def add_x_model(col):
     return x_model
 
 def update_x_model(col):
-    x_model = col.models.byName(X_MODEL_NAME)
+    x_model = col.models.by_name(X_MODEL_NAME)
     for cid, name in enumerate(X_CARD_NAMES, start=1):
         card = get_card(cid)
         x_model['tmpls'][cid - 1]['qfmt'] = card[0]
         x_model['tmpls'][cid - 1]['afmt'] = card[1]
     set_x_model_fields(x_model)
-    col.models.save()
+    col.models.save(x_model)
 
 def set_x_model_fields(x_model):
     x_model['css'] = X_CARD_CSS
