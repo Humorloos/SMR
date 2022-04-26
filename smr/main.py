@@ -1,12 +1,10 @@
 from aqt import deckbrowser, gui_hooks
 from anki import hooks
 
-from smr.config import *
-from smr.xminder import XmindImporter
+from .config import *
+from .xminder import XmindImporter
 # noinspection PyUnresolvedReferences
-import smr.monkeypatches
-# noinspection PyUnresolvedReferences
-import smr.exportsync
+from . import monkeypatches
 
 
 # import aqt.deckbrowser as deckbrowser

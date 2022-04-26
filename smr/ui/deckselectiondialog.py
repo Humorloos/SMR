@@ -5,13 +5,12 @@ from typing import Optional
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QDialog, QDesktopWidget
-
 from aqt import AnkiQt
-from smr.consts import ICONS_PATH
-
 import aqt
 from aqt.deckchooser import DeckChooser
-from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
+
+from ..consts import ICONS_PATH
+from ..dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 
 
 class DeckSelectionDialog(QDialog):

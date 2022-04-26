@@ -7,9 +7,9 @@ import aqt
 from anki.importing.noteimp import NoteImporter, ADD_MODE
 from anki.utils import split_fields, join_fields, int_time, guid64, timestamp_id
 
-from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
-from smr.utils import *
-from smr.consts import *
+from .dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
+from .utils import *
+from .consts import *
 
 
 class XmindImporter(NoteImporter):

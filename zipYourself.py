@@ -8,12 +8,30 @@ import zipfile
 def retrieve_file_paths(dirName):
     # setup file paths variable
     filePaths = []
-    exclude = {'.git', 'tests', '__pycache__'}
+    directories_2_exclude = {
+        '.git',
+        'tests',
+        '__pycache__',
+        '.idea',
+        'icons',
+        'resources',
+        'screenshots',
+    }
+    files_2_exlude = {
+        '.gitignore',
+        'CHANGELOG.md',
+        'content.xml',
+        'license.txt',
+        'README.md',
+        'requirements.txt',
+        'requirements2.txt',
+        'zipYourself.py',
+    }
     # Read all directory, subdirectories and file lists
     for root, directories, files in os.walk(dirName):
-        directories[:] = [d for d in directories if d not in exclude]
+        directories[:] = [d for d in directories if d not in directories_2_exclude]
         for filename in files:
-            if not (filename == '.gitignore'):
+            if not (filename in files_2_exlude):
                 # Create the full filepath by using os module.
                 filePath = os.path.join(root, filename)
                 filePaths.append(filePath)

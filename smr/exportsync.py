@@ -6,9 +6,9 @@ from aqt.utils import tooltip
 
 from anki.utils import split_fields
 
-from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
-from smr.utils import *
-from smr.xminder import XmindImporter
+from .dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
+from .utils import *
+from .xminder import XmindImporter
 
 
 class MapSyncer:

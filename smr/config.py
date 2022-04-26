@@ -1,8 +1,7 @@
-from ximports.xversion import LooseVersion
-
 from aqt import mw
 
-from smr.template import *
+from ..ximports.xversion import LooseVersion
+from .template import *
 
 
 def get_or_create_model():
