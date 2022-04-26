@@ -13,7 +13,6 @@ def retrieve_file_paths(dirName):
         'tests',
         '__pycache__',
         '.idea',
-        'icons',
         'resources',
         'screenshots',
     }
