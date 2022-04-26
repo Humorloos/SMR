@@ -4,13 +4,14 @@
 **[1. Creating a concept map](https://github.com/Humorloos/SMR#1-creating-a-concept-map)** <br>
 <sup>
 [Bridges](https://github.com/Humorloos/SMR#bridges)<br>
-[Crosslinks](https://github.com/Humorloos/SMR#crosslinks)<br>
-[Connections](https://github.com/Humorloos/SMR#connections)<br>
 [Questions following multiple Answers](https://github.com/Humorloos/SMR#questions-following-multiple-answers)<br>
 [Multimedia](https://github.com/Humorloos/SMR#multimedia)<br>
 [Answer Limit](https://github.com/Humorloos/SMR#answer-limit)<br>
 </sup>
 **[2. Importing your concept maps](https://github.com/Humorloos/SMR#2-importing-your-concept-maps)**<br>
+<sup>
+[Import Errors](https://github.com/Humorloos/SMR#import-errors)<br>
+</sup>
 **[3. Synchronizing your concept maps](https://github.com/Humorloos/SMR#3-synchronizing-your-concept-maps)**<br>
 <sup>
 [Repair Checkbox](https://github.com/Humorloos/SMR#repair-checkbox)<br>
