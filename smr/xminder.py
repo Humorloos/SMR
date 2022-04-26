@@ -58,6 +58,7 @@ class XmindImporter(NoteImporter):
         self.importMap(self.currentSheetImport)
         # add all notes to the collection
         if not self.running:
+            self.mw.progress.finish()
             return
         self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
                     ['removed', 0, 'notes']]
