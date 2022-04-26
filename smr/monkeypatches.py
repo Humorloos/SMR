@@ -41,6 +41,7 @@ def patch_import_dialog(self: ImportDialog, mw: AnkiQt, importer: Union[NoteImpo
     if type(importer) == XmindImporter:
         # noinspection PyUnresolvedReferences
         deck_selection_dialog = DeckSelectionDialog(mw=mw, filename=os.path.basename(importer.file))
+        deck_selection_dialog.deck.cleanup()
         user_inputs = deck_selection_dialog.get_inputs()
         if user_inputs.running:
             # noinspection PyUnresolvedReferences
