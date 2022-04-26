@@ -30,7 +30,7 @@ class MapSyncer:
         for doc2Sync in docs2Sync:
             self.syncDoc(doc2Sync)
 
-        aqt.mw.col.tags.registerNotes()
+        aqt.mw.col.tags.clear_unused_tags()
         aqt.mw.progress.finish()
 
     def getNotes2Sync(self):
