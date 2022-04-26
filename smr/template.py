@@ -30,11 +30,11 @@ def add_x_model(col):
     x_model = models.new(X_MODEL_NAME)
     # Add fields:
     for fldId in X_FLDS_IDS:
-        fld = models.newField(X_FLDS[fldId])
+        fld = models.new_field(X_FLDS[fldId])
         models.addField(x_model, fld)
     # Add templates
     for cid, name in enumerate(X_CARD_NAMES, start=1):
-        template = models.newTemplate(name)
+        template = models.new_template(name)
         card = get_card(cid)
         template['qfmt'] = card[0]
         template['afmt'] = card[1]
@@ -44,7 +44,7 @@ def add_x_model(col):
     models.add(x_model)
     # Set the sort index after adding the model and save again because it is reset to 0 otherwise (see
     # https://forums.ankiweb.net/t/saving-a-model-sets-the-sort-field-index-to-0/2299)
-    col.models.set_sort_index(nt=x_model, idx=list(X_FLDS.keys()).index('id'))
+    col.models.set_sort_index(notetype=x_model, idx=list(X_FLDS.keys()).index('id'))
     col.models.save(x_model)
     return x_model
 
