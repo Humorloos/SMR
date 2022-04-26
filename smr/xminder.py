@@ -7,9 +7,9 @@ import aqt
 from anki.importing.noteimp import NoteImporter, ADD_MODE
 from anki.utils import split_fields, join_fields, int_time, guid64, timestamp_id
 
-from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
-from smr.utils import *
-from smr.consts import *
+from .dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
+from .utils import *
+from .consts import *
 
 
 class XmindImporter(NoteImporter):
@@ -29,7 +29,7 @@ class XmindImporter(NoteImporter):
         self.deckId = ''
         self.notesToAdd = dict()
         self.running = True
-        self.soup = BeautifulSoup(self.xZip.read('content.xml'), features='xml')
+        self.soup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
         self.tagList = self.soup('topic')
         self.repair = False
         # Fields to make methods from super class work

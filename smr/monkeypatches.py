@@ -18,11 +18,11 @@ from aqt.importing import ImportDialog
 from aqt.main import AnkiQt
 from aqt.utils import tooltip, showText
 
-from smr.consts import X_FLDS
-from smr.exportsync import MapSyncer
-from smr.utils import isSMRDeck, getDueAnswersToNote, getNotesFromQIds
-from smr.xminder import XmindImporter
-from smr.ui.deckselectiondialog import DeckSelectionDialog
+from .consts import X_FLDS
+from .exportsync import MapSyncer
+from .utils import isSMRDeck, getDueAnswersToNote, getNotesFromQIds
+from .xminder import XmindImporter
+from .ui.deckselectiondialog import DeckSelectionDialog
 
 IMPORT_CANCELLED_MESSAGE = 'Import cancelled'
 

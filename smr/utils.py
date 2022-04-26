@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 from anki.utils import ids2str
 
-from smr.consts import X_MODEL_NAME
+from .consts import X_MODEL_NAME
 
 
 # checks whether a node contains any text, images or link

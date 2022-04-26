@@ -6,9 +6,9 @@ from aqt.utils import tooltip
 
 from anki.utils import split_fields
 
-from smr.dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
-from smr.utils import *
-from smr.xminder import XmindImporter
+from .dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
+from .utils import *
+from .xminder import XmindImporter
 
 
 class MapSyncer:
@@ -30,7 +30,7 @@ class MapSyncer:
         for doc2Sync in docs2Sync:
             self.syncDoc(doc2Sync)
 
-        aqt.mw.col.tags.registerNotes()
+        aqt.mw.col.tags.clear_unused_tags()
         aqt.mw.progress.finish()
 
     def getNotes2Sync(self):
@@ -66,8 +66,8 @@ class MapSyncer:
         content = xZip.read('content.xml')
         manifestContent = xZip.read("META-INF/manifest.xml")
         xZip.close()
-        soup = BeautifulSoup(content, features='xml')
-        self.manifest = BeautifulSoup(manifestContent, features='xml')
+        soup = BeautifulSoup(content, features='html.parser')
+        self.manifest = BeautifulSoup(manifestContent, features='html.parser')
         self.tagList = soup('topic')
         sheets2Sync = set(map(lambda n: n['meta']['sheetId'], notes4Doc))
         sheets2Sync = list(
