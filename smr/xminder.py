@@ -364,7 +364,6 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
 
     def noteFromNoteData(self, noteData):
         note = self.col.newNote()
-        note.note_type['did'] = self.deckId
         fields = split_fields(noteData[6])
         note.fields = fields
         note.tags.append(noteData[5].replace(" ", ""))
