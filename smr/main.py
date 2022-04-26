@@ -1,6 +1,4 @@
-from anki.hooks import addHook
-from anki.lang import _
-from aqt import deckbrowser
+from aqt import deckbrowser, gui_hooks
 from anki import hooks
 
 from smr.config import *
@@ -21,8 +19,9 @@ def on_profile_loaded():
     deckbrowser.DeckBrowser.drawLinks.append(["", "sync", "SMR Sync"])
     mw.reset()
 
+
 # Add-on setup at profile-load time
-addHook("profileLoaded", on_profile_loaded)
+gui_hooks.profile_did_open.append(on_profile_loaded)
 
 
 def importer_hook(importers):
