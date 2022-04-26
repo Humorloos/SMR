@@ -2,9 +2,10 @@
 import os
 from typing import Optional
 
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QDialog, QDesktopWidget
+from PyQt6 import QtWidgets
+from PyQt6.QtCore import QRect
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QDialog, QWidget
 from aqt import AnkiQt
 import aqt
 from aqt.deckchooser import DeckChooser
@@ -29,7 +30,7 @@ class DeckSelectionDialog(QDialog):
         self._repair = False
         self.tags = dict()
         self._build()
-        self.exec_()
+        self.exec()
 
     def reject(self):
         self._running = False
@@ -52,8 +53,8 @@ class DeckSelectionDialog(QDialog):
         self.setWindowIcon(QIcon(os.path.join(ICONS_PATH, "icon.ico")))
         self.resize(self.width, self.height)
 
-        widget = QtWidgets.QWidget(self)
-        widget.setGeometry(QtCore.QRect(10, 10, self.width - 20, self.height - 20))
+        widget = QWidget(self)
+        widget.setGeometry(QRect(10, 10, self.width - 20, self.height - 20))
 
         col_1 = QtWidgets.QVBoxLayout(widget)
         col_1.setContentsMargins(0, 0, 0, 0)
@@ -84,16 +85,16 @@ class DeckSelectionDialog(QDialog):
 
         buttons = QtWidgets.QDialogButtonBox(widget)
         buttons.setStandardButtons(
-            QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+            QtWidgets.QDialogButtonBox.StandardButton.Cancel | QtWidgets.QDialogButtonBox.StandardButton.Ok)
         col_1_row_2.addWidget(buttons)
 
         col_1.addLayout(col_1_row_1)
         col_1.addLayout(col_1_row_2)
 
         frame = self.frameGeometry()
-        window_center = QDesktopWidget().availableGeometry().center()
+        window_center = self.screen().availableGeometry().center()
         frame.moveCenter(window_center)
         self.move(frame.topLeft())
 
-        buttons.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.accept)
-        buttons.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reject)
+        buttons.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).clicked.connect(self.accept)
+        buttons.button(QtWidgets.QDialogButtonBox.StandardButton.Cancel).clicked.connect(self.reject)
