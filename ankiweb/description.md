@@ -1,6 +1,6 @@
 With Stepwise Map Retrieval you can import, synchronize, and review concept maps created in Xmind 8 in Anki.
 
-<img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/example.png" alt="concept map example" />
+<img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/map_description.png" alt="concept map example" />
 <img src="https://raw.githubusercontent.com/Humorloos/SMR/master/screenshots/mult_card.png" alt="imported card example"/>
 
 You can find more detailed instructions <a href="https://github.com/Humorloos/SMR/blob/master/README.md#stepwise-map-retrieval" rel="nofollow">here</a>.
