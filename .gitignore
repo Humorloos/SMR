@@ -1,2 +1,7 @@
 
 /desktop.ini
+/.idea/
+/smr/tests/.pytest_cache/
+/smr/tests/UI tests/.pytest_cache/
+/user_files/
+/requirements2.txt

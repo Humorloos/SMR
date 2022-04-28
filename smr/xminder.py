@@ -1,34 +1,26 @@
 import json
-import shutil
-
+from pathlib import Path
 from time import sleep
+from typing import List
 
-from anki.importing.noteimp import NoteImporter
-from anki.utils import splitFields, joinFields, intTime, guid64, timestampID
+import aqt
+from anki.importing.noteimp import NoteImporter, ADD_MODE
+from anki.utils import split_fields, join_fields, int_time, guid64, timestamp_id
 
-from .sheetselectors import *
+from .dto.deckselectiondialoguserinputsdto import DeckSelectionDialogUserInputsDTO
 from .utils import *
 from .consts import *
 
 
-# TODO: adjust sheet selection windows to adjust to the window size
-# TODO: check out hierarchical tags, may be useful
-# TODO: add warning when something is wrong with the map
-# TODO: Implement hints as part of the meta json instead of javascript and use
-#  sound=False to mute answers in hint
-# TODO: Implement warning if an audio file can't be found
-# TODO: Check for performance issues:
-#  https://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
-#  https://docs.python.org/3.6/library/profile.html
 class XmindImporter(NoteImporter):
     needMapper = False
 
     def __init__(self, col, file):
         NoteImporter.__init__(self, col, file)
-        self.model = col.models.byName(X_MODEL_NAME)
+        self.model = col.models.by_name(X_MODEL_NAME)
         self.sheets = None
         self.mw = aqt.mw
-        self.currentSheetImport = dict()
+        self.currentSheetImport = {}
         self.mediaDir = os.path.join(os.path.dirname(col.path),
                                      'collection.media')
         self.srcDir = tempfile.mkdtemp()
@@ -37,34 +29,36 @@ class XmindImporter(NoteImporter):
         self.deckId = ''
         self.notesToAdd = dict()
         self.running = True
-        self.soup = BeautifulSoup(self.xZip.read('content.xml'),
-                                  features='html.parser')
+        self.soup = BeautifulSoup(self.xZip.read('content.xml'), features='html.parser')
         self.tagList = self.soup('topic')
         self.repair = False
+        # Fields to make methods from super class work
+        self.needMapper: bool = True
+        self.mapping: List[str] = list(X_FLDS.values())
+        self.updateCount: int = 0
+        self.importMode: int = ADD_MODE
 
-    def run(self):
-        selectedSheets = self.get_x_sheets()
-        if not self.running:
-            return
-        self.importSheets(selectedSheets)
-
-    def importSheets(self, selectedSheets):
-        self.deckId = selectedSheets[0]['deckId']
-        self.repair = selectedSheets[0]['repair']
+    def importSheets(self, user_inputs: DeckSelectionDialogUserInputsDTO):
+        self.deckId = user_inputs.deck_id
+        self.repair = user_inputs.repair
         self.mw.progress.start(immediate=True, label='importing...')
         self.mw.app.processEvents()
         self.mw.checkpoint("Import")
-        for sheetImport in selectedSheets:
-            self.currentSheetImport = sheetImport
-            self.currentSheetImport['ID'] = \
-                self.currentSheetImport['sheet']['id']
-            self.notesToAdd[self.currentSheetImport['ID']] = list()
-            self.mw.progress.update(label='importing %s' % sheetImport['tag'],
-                                    maybeShow=False)
-            self.mw.app.processEvents()
-            self.importMap(sheetImport)
+        sheet = self.soup('sheet')[0]
+        tag = f'{user_inputs.deck_name}::{sheet.title.text.replace(" ", "_")}'
+        self.currentSheetImport = {
+            'sheet': sheet,
+            'tag': tag,
+            'deckId': user_inputs.deck_id,
+        }
+        self.currentSheetImport['ID'] = self.currentSheetImport['sheet']['id']
+        self.notesToAdd[self.currentSheetImport['ID']] = list()
+        self.mw.progress.update(label=f'importing {tag}', maybeShow=False)
+        self.mw.app.processEvents()
+        self.importMap(self.currentSheetImport)
         # add all notes to the collection
         if not self.running:
+            self.mw.progress.finish()
             return
         self.log = [['Added', 0, 'notes'], ['updated', 0, 'notes'],
                     ['removed', 0, 'notes']]
@@ -77,31 +71,15 @@ class XmindImporter(NoteImporter):
 
         self.log = [
             ", ".join(list(map(lambda l: " ".join(l), self.log)))]
+        self.mw.reset()
         self.mw.progress.finish()
         # Remove temp dir and its files
         shutil.rmtree(self.srcDir)
-        print("fertig")
-
-    # returns list of
-    def get_x_sheets(self):
-        # doc = load(self.file)
-        imp_sheets = self.soup('sheet')
-        doc_title = os.path.basename(self.file)[:-6]
-        if len(imp_sheets) > 1:
-            selector = MultiSheetSelector(imp_sheets, doc_title)
-        else:
-            selector = SingleSheetSelector(imp_sheets, doc_title)
-        self.mw.progress.finish()
-        selector.exec_()
-        if not selector.running:
-            self.running = False
-            self.log = ['Import canceled']
-        return selector.sheets
 
     def importMap(self, sheetImport: dict):
         rootTopic = sheetImport['sheet'].topic
         # Set model to Stepwise map retrieval model
-        xModel = self.col.models.byName(X_MODEL_NAME)
+        xModel = self.col.models.by_name(X_MODEL_NAME)
         self.col.decks.select(self.currentSheetImport['deckId'])
         self.col.decks.current()['mid'] = xModel['id']
         rootDict = getAnswerDict(rootTopic)
@@ -210,12 +188,12 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
 
         # add notes for questions following this note
         questionContent = replaceSound(
-            splitFields(noteData[6])[list(X_FLDS.keys()).index('qt')])
+            split_fields(noteData[6])[list(X_FLDS.keys()).index('qt')])
         ref = ref + '<li>' + questionContent
         for aId, answerDict in enumerate(answerDicts, start=1):
             if getChildnodes(answerDict['nodeTag']):
                 if answerDict['isAnswer']:
-                    ac = splitFields(noteData[6])[
+                    ac = split_fields(noteData[6])[
                         list(X_FLDS.keys()).index('a' + answerDict['aId'])]
                     answerContent = replaceSound(ac)
                 else:
@@ -252,7 +230,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         xMindMeta['nAnswers'] = len(answers)
         xMindMeta['siblings'] = siblings
         xMindMeta['connections'] = connections
-        xMindMeta['lastSync'] = intTime()
+        xMindMeta['lastSync'] = int_time()
         return json.dumps(xMindMeta)
 
     def addAttachment(self, attachment):
@@ -260,7 +238,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
         self.xZip.extract(attachment, self.srcDir)
         # get image from subdirectory attachments in mediaDir
         srcPath = os.path.join(self.srcDir, attachment)
-        self.col.media.addFile(srcPath)
+        self.col.media.add_file(srcPath)
 
     def getNextQuestions(self, answerDicts: list, addCrosslinks=True,
                          goDeeper=True):
@@ -272,7 +250,6 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                               answerDicts))
         answers = list(filter(lambda answerDict: answerDict['isAnswer'],
                               answerDicts))
-        # TODO: globalQUestions add connections as global questions check whtether thats true
         for bridge in bridges:
             globalQuestions.extend(self.getQuestionListForAnswer(bridge))
         for answer in answers:
@@ -368,9 +345,9 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                                  siblings=siblings, connections=connections)
         noteList.append(meta)
 
-        nId = timestampID(self.col.db, "notes")
-        noteData = [nId, guid64(), self.model['id'], intTime(), self.col.usn(),
-                    self.currentSheetImport['tag'], joinFields(noteList), "",
+        nId = timestamp_id(self.col.db, "notes")
+        noteData = [nId, guid64(), self.model['id'], int_time(), self.col.usn(),
+                    self.currentSheetImport['tag'], join_fields(noteList), "",
                     "", 0, ""]
 
         return noteData, media
@@ -387,8 +364,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
 
     def noteFromNoteData(self, noteData):
         note = self.col.newNote()
-        note.model()['did'] = self.deckId
-        fields = splitFields(noteData[6])
+        fields = split_fields(noteData[6])
         note.fields = fields
         note.tags.append(noteData[5].replace(" ", ""))
         return note
@@ -401,7 +377,7 @@ An answer to the question "%s" (path: %s) contains a hyperlink to a deleted node
                 if files['media'].startswith(('attachments', 'resources')):
                     self.addAttachment(files['media'])
                 else:
-                    self.col.media.addFile(files['media'])
+                    self.col.media.add_file(Path(self.file).parent / files['media'])
 
     # receives an answer node and returns all questions following this answer
     # including questions following multiple topics as dictionaries of a
@@ -445,16 +421,16 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
             notesToAdd = []
             notesToUpdate = []
             oldQIdList = list(map(lambda n: json.loads(
-                splitFields(n[1])[list(X_FLDS.keys()).index('mt')])[
+                split_fields(n[1])[list(X_FLDS.keys()).index('mt')])[
                 'questionId'], existingNotes))
             for newNote in noteList:
-                newFields = splitFields(newNote[6])
+                newFields = split_fields(newNote[6])
                 newMeta = json.loads(newFields[list(X_FLDS.keys()).index('mt')])
                 newQId = newMeta['questionId']
                 try:
                     if self.repair:
                         print('')
-                        newQtxAw = joinFields(newFields[1:22])
+                        newQtxAw = join_fields(newFields[1:22])
                         oldTpl = tuple(
                             filter(lambda n: newQtxAw in n[1], existingNotes))[
                             0]
@@ -483,15 +459,15 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
 
     def removeOld(self, existingNotes):
         oldIds = list(map(lambda nt: nt[0], existingNotes))
-        self.col.remNotes(oldIds)
+        self.col.remove_notes(oldIds)
 
     def addUpdates(self, rows):
         for noteTpl in rows:
             fields = []
             # get List of aIds to check whether the cards for this note have
             # changed
-            fields.append(splitFields(noteTpl[0][1]))
-            fields.append(splitFields(noteTpl[1][6]))
+            fields.append(split_fields(noteTpl[0][1]))
+            fields.append(split_fields(noteTpl[1][6]))
             metas = list(
                 map(lambda f: json.loads(f[list(X_FLDS.keys()).index('mt')]),
                     fields))
@@ -505,6 +481,8 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
                 if not aIds[0] == aIds[1]:
                     cardUpdates = self.getCardUpdates(aIds, noteTpl)
 
+            # fix for missing spaces in tags
+            noteTpl[1][5] = f' {noteTpl[1][5]} '
             # change contents of this note
             updateData = [noteTpl[1][3:7] + [noteTpl[0][0]]]
             self.col.db.executemany("""
@@ -551,6 +529,14 @@ A Question titled "%s" (Path %s) is missing answers. Please adjust your Concept 
         return cardUpdates
 
     def addNew(self, rows):
+        self.col.decks.select(self.deckId)
+
+        deck = self.col.decks.get(self.deckId)
+        deck['mid'] = self.model['id']
+        self.col.decks.save(deck)
+
+        self.model['did'] = self.deckId
+        self.col.models.save(self.model)
         for noteData in rows:
             self.col.addNote(self.noteFromNoteData(noteData))
             sleep(0.001)

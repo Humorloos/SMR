@@ -1,0 +1,5 @@
+aqt==2.1.51
+pandas==1.4.2
+PyQtWebEngine~=5.15.5
+pytest-mock==3.7.0
+pywin32==303
