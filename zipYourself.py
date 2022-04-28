@@ -15,6 +15,7 @@ def retrieve_file_paths(dirName):
         '.idea',
         'resources',
         'screenshots',
+        'ankiweb',
     }
     files_2_exlude = {
         '.gitignore',
