@@ -61,6 +61,7 @@ The tags are built hierarchically, i.e., if you import multiple different sheets
 #### Import Errors
 If your concept map has an error (e.g., a question without answers, or two concepts directly following each other without a bridge between them), the import will fail and SMR will show an error message similar to this:
 ![import error](screenshots/missing_answers.png)
+
 The "Path" in the error message gives a hint, where the error is located.
 To find the error, you must proceed as follows:
 - Start at the root concept in your map ("biological psychology" in the example)
